@@ -730,10 +730,12 @@ export default function SoundboardDemo() {
         .then((data) => {
           if (data.album) {
             const a = data.album;
-            setFetchedAlbums((prev) => ({
-              ...prev,
-              [id]: { ...a, artist: a.artistName || a.artist || "", year: a.releaseYear || a.year || null },
-            }));
+            const normalized = { ...a, artist: a.artistName || a.artist || "", year: a.releaseYear || a.year || null };
+            setFetchedAlbums((prev) => ({ ...prev, [id]: normalized }));
+            // Also update liveAlbums so cover shows in search grid
+            if (normalized.coverArtUrl && normalized.coverArtUrl !== "none") {
+              setLiveAlbums((prev) => prev.map((al) => al.id === id ? { ...al, coverArtUrl: normalized.coverArtUrl } : al));
+            }
           }
         })
         .catch(() => {});
@@ -1808,10 +1810,12 @@ export default function SoundboardDemo() {
               {!albumSearchLoading && filtered.map((album) => {
                 const rev = reviewFor(album.id);
                 const status = listenStatus[album.id];
+                // Use fetchedAlbums version if available (has cover art after first click)
+                const displayAlbum = fetchedAlbums[album.id] || album;
                 return (
-                  <div key={album.id} onClick={() => openAlbum(album.id)}>
+                  <div key={album.id} onClick={() => openAlbum(album.id, album)}>
                     <div className="sb-cover-wrap">
-                      <AlbumCover album={album} size={150} />
+                      <AlbumCover album={displayAlbum} size={150} />
                     </div>
                     <div style={{ marginTop: 9 }}>
                       <div className="ui-sans" style={{ fontSize: 13.5, fontWeight: 600, lineHeight: 1.3 }}>{album.title}</div>
