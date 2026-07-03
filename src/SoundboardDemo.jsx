@@ -494,17 +494,6 @@ function useTheme() {
 function albumById(id) {
   return ALBUMS.find((a) => a.id === id);
 }
-
-// Maps a real API album (artistName, releaseYear) to the shape the demo
-// expects (artist, year) so all existing rendering code works unchanged.
-function normalizeAlbum(a) {
-  return {
-    ...a,
-    artist: a.artistName || a.artist || "",
-    year: a.releaseYear || a.year || null,
-  };
-}
-
 function HeadphoneMark({ size = 18, color = "#fff" }) {
   return (
     <svg width={size} height={size} viewBox="0 0 100 100" fill="none">
@@ -591,23 +580,6 @@ export default function SoundboardDemo() {
       .catch(() => setAuthUser(null))
       .finally(() => setAuthChecked(true));
   }, []);
-
-  // Debounced album search -- fires 300ms after the user stops typing.
-  // Falls back to the mock ALBUMS array if the API is unreachable.
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setAlbumSearchLoading(true);
-      const url = query.trim()
-        ? `${BACKEND_URL}/api/albums?search=${encodeURIComponent(query.trim())}&limit=50`
-        : `${BACKEND_URL}/api/albums?limit=50`;
-      fetch(url, { credentials: "include" })
-        .then((res) => res.json())
-        .then((data) => setLiveAlbums((data.albums || []).map(normalizeAlbum)))
-        .catch(() => setLiveAlbums([]))
-        .finally(() => setAlbumSearchLoading(false));
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [query]);
 
   const [view, setView] = useState({ name: "home" });
   const [homeTab, setHomeTab] = useState("feed"); // "feed" | "news"
@@ -698,6 +670,31 @@ export default function SoundboardDemo() {
   const [toast, setToast] = useState(null);
   const [fetchedAlbums, setFetchedAlbums] = useState({});
 
+  // Debounced album search — fires 300ms after the user stops typing.
+  // Uses the real backend API if available, falls back to mock ALBUMS.
+  useEffect(() => {
+    if (!query.trim()) {
+      setLiveAlbums([]);
+      return;
+    }
+    const timer = setTimeout(() => {
+      setAlbumSearchLoading(true);
+      fetch(`${BACKEND_URL}/api/albums?search=${encodeURIComponent(query.trim())}&limit=50`, { credentials: "include" })
+        .then((res) => res.json())
+        .then((data) => {
+          const albums = (data.albums || []).map((a) => ({
+            ...a,
+            artist: a.artistName || a.artist || "",
+            year: a.releaseYear || a.year || null,
+          }));
+          setLiveAlbums(albums);
+        })
+        .catch(() => setLiveAlbums([]))
+        .finally(() => setAlbumSearchLoading(false));
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [query]);
+
   function flash(msg) {
     setToast(msg);
     setTimeout(() => setToast(null), 1800);
@@ -718,17 +715,20 @@ export default function SoundboardDemo() {
     setDraftLeastFavTrack(existing ? existing.leastFavTrack || "" : "");
     setAlbumTab("albumMixes");
     setView({ name: "album", id });
-    // Fetch real album data (includes cover art lazy-loaded on first view)
-    // and cache it so the detail page shows real info.
+    // Fetch real album data (cover art, etc.) and cache it
     if (!fetchedAlbums[id]) {
       fetch(`${BACKEND_URL}/api/albums/${id}`, { credentials: "include" })
-        .then((res) => res.json())
+        .then((r) => r.json())
         .then((data) => {
           if (data.album) {
-            setFetchedAlbums((prev) => ({ ...prev, [id]: normalizeAlbum(data.album) }));
+            const a = data.album;
+            setFetchedAlbums((prev) => ({
+              ...prev,
+              [id]: { ...a, artist: a.artistName || a.artist || "", year: a.releaseYear || a.year || null },
+            }));
           }
         })
-        .catch(() => {}); // silently fall back to mock data if fetch fails
+        .catch(() => {});
     }
   }
 
