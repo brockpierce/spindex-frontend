@@ -696,21 +696,19 @@ export default function SoundboardDemo() {
   const [newMixTitle, setNewMixTitle] = useState("");
   const [showNewMix, setShowNewMix] = useState(null); // null | "album" | "song"
   const [toast, setToast] = useState(null);
+  const [fetchedAlbums, setFetchedAlbums] = useState({});
 
   function flash(msg) {
     setToast(msg);
     setTimeout(() => setToast(null), 1800);
   }
 
-  // `filtered` now comes from the real API via liveAlbums state.
-  // Falls back to mock ALBUMS while the first load is still in flight.
-  const filtered = liveAlbums.length > 0 ? liveAlbums : ALBUMS;
-
   function reviewFor(albumId) {
     return reviews.find((r) => r.albumId === albumId);
   }
 
-  const [fetchedAlbums, setFetchedAlbums] = useState({});
+  const filtered = liveAlbums.length > 0 ? liveAlbums : ALBUMS;
+
 
   function openAlbum(id) {
     const existing = reviewFor(id);
