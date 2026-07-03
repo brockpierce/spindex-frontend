@@ -699,7 +699,7 @@ export default function SoundboardDemo() {
       .then((r) => r.json())
       .then((data) => {
         if (data.reviews) {
-          setReviews(data.reviews.map((r) => ({
+          const mapped = data.reviews.map((r) => ({
             id: r.id,
             albumId: r.albumId,
             rating: r.rating,
@@ -708,14 +708,44 @@ export default function SoundboardDemo() {
             leastFavTrack: r.leastFavTrack || "",
             date: r.createdAt ? new Date(r.createdAt).toISOString().slice(0, 10) : "",
             username: authUser.username,
-          })));
+          }));
+          setReviews(mapped);
+          // Prefetch album data for each review
+          mapped.forEach((r) => {
+            fetch(`${BACKEND_URL}/api/albums/${r.albumId}`, { credentials: "include" })
+              .then((res) => res.json())
+              .then((d) => {
+                if (d.album) {
+                  const a = d.album;
+                  setFetchedAlbums((prev) => ({ ...prev, [r.albumId]: { ...a, artist: a.artistName || "", year: a.releaseYear || null } }));
+                }
+              })
+              .catch(() => {});
+          });
         }
       })
       .catch(() => {});
     // Favorites
     fetch(`${BACKEND_URL}/api/favorites/me`, { credentials: "include" })
       .then((r) => r.json())
-      .then((data) => { if (data.favorites) setFavorites(data.favorites.map((f) => f.albumId)); })
+      .then((data) => {
+        if (data.favorites) {
+          const ids = data.favorites.map((f) => f.albumId);
+          setFavorites(ids);
+          // Prefetch album data for each favorite so they show correctly
+          ids.forEach((id) => {
+            fetch(`${BACKEND_URL}/api/albums/${id}`, { credentials: "include" })
+              .then((r) => r.json())
+              .then((d) => {
+                if (d.album) {
+                  const a = d.album;
+                  setFetchedAlbums((prev) => ({ ...prev, [id]: { ...a, artist: a.artistName || "", year: a.releaseYear || null } }));
+                }
+              })
+              .catch(() => {});
+          });
+        }
+      })
       .catch(() => {});
   }, [authUser]);
 
@@ -2561,11 +2591,23 @@ export default function SoundboardDemo() {
               <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 10 }}>favorite albums</div>
               <div style={{ display: "flex", gap: 16 }}>
                 {favorites.map((id) => {
-                  const album = albumById(id);
+                  const album = fetchedAlbums[id] || albumById(id);
+                  // Trigger a fetch if we don't have real data for this album yet
+                  if (!fetchedAlbums[id] && album.title === "Unknown Album") {
+                    fetch(`${BACKEND_URL}/api/albums/${id}`, { credentials: "include" })
+                      .then((r) => r.json())
+                      .then((data) => {
+                        if (data.album) {
+                          const a = data.album;
+                          setFetchedAlbums((prev) => ({ ...prev, [id]: { ...a, artist: a.artistName || "", year: a.releaseYear || null } }));
+                        }
+                      })
+                      .catch(() => {});
+                  }
                   return (
                     <div key={id} onClick={() => openAlbum(id)} className="sb-cover-wrap">
                       <AlbumCover album={album} size={96} />
-                      <div className="ui-sans" style={{ fontSize: 11.5, fontWeight: 600, marginTop: 6, maxWidth: 96 }}>{album.title}</div>
+                      <div className="ui-sans" style={{ fontSize: 11.5, fontWeight: 600, marginTop: 6, maxWidth: 96 }}>{album.title !== "Unknown Album" ? album.title : "..."}</div>
                     </div>
                   );
                 })}
