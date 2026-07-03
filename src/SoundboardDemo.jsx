@@ -495,6 +495,21 @@ function albumById(id) {
   return ALBUMS.find((a) => a.id === id);
 }
 
+// In the main component, real album data is resolved via fetchedAlbums state.
+// This module-level version is used by standalone components that don't have
+// access to that state -- it only falls back to mock data, which is fine for
+// the demo's community reviews and mix card rendering.
+
+// Maps a real API album (artistName, releaseYear) to the shape the demo
+// expects (artist, year) so all existing rendering code works unchanged.
+function normalizeAlbum(a) {
+  return {
+    ...a,
+    artist: a.artistName || a.artist || "",
+    year: a.releaseYear || a.year || null,
+  };
+}
+
 function HeadphoneMark({ size = 18, color = "#fff" }) {
   return (
     <svg width={size} height={size} viewBox="0 0 100 100" fill="none">
@@ -532,6 +547,16 @@ function RatingBlocks({ value, onChange, size = 14 }) {
 
 function AlbumCover({ album, size = 92 }) {
   const { BLUE } = useTheme();
+  const coverUrl = album?.coverArtUrl && album.coverArtUrl !== "none" ? album.coverArtUrl : null;
+  if (coverUrl) {
+    return (
+      <img
+        src={coverUrl}
+        alt={album.title}
+        style={{ width: size, height: size, borderRadius: Math.max(8, size * 0.14), objectFit: "cover", flexShrink: 0 }}
+      />
+    );
+  }
   return (
     <div
       style={{
@@ -571,6 +596,23 @@ export default function SoundboardDemo() {
       .catch(() => setAuthUser(null))
       .finally(() => setAuthChecked(true));
   }, []);
+
+  // Debounced album search -- fires 300ms after the user stops typing.
+  // Falls back to the mock ALBUMS array if the API is unreachable.
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setAlbumSearchLoading(true);
+      const url = query.trim()
+        ? `${BACKEND_URL}/api/albums?search=${encodeURIComponent(query.trim())}&limit=50`
+        : `${BACKEND_URL}/api/albums?limit=50`;
+      fetch(url, { credentials: "include" })
+        .then((res) => res.json())
+        .then((data) => setLiveAlbums((data.albums || []).map(normalizeAlbum)))
+        .catch(() => setLiveAlbums([]))
+        .finally(() => setAlbumSearchLoading(false));
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [query]);
 
   const [view, setView] = useState({ name: "home" });
   const [homeTab, setHomeTab] = useState("feed"); // "feed" | "news"
@@ -621,6 +663,8 @@ export default function SoundboardDemo() {
     };
   }, [accentKey, darkMode]);
   const [query, setQuery] = useState("");
+  const [liveAlbums, setLiveAlbums] = useState([]);
+  const [albumSearchLoading, setAlbumSearchLoading] = useState(false);
   const [albumTags, setAlbumTags] = useState(INITIAL_ALBUM_TAGS);
   const [reviewComments, setReviewComments] = useState(INITIAL_REVIEW_COMMENTS);
   const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS);
@@ -663,15 +707,15 @@ export default function SoundboardDemo() {
     setTimeout(() => setToast(null), 1800);
   }
 
-  const filtered = useMemo(() => {
-    if (!query.trim()) return ALBUMS;
-    const q = query.toLowerCase();
-    return ALBUMS.filter((a) => a.title.toLowerCase().includes(q) || a.artist.toLowerCase().includes(q));
-  }, [query]);
+  // `filtered` now comes from the real API via liveAlbums state.
+  // Falls back to mock ALBUMS while the first load is still in flight.
+  const filtered = liveAlbums.length > 0 ? liveAlbums : ALBUMS;
 
   function reviewFor(albumId) {
     return reviews.find((r) => r.albumId === albumId);
   }
+
+  const [fetchedAlbums, setFetchedAlbums] = useState({});
 
   function openAlbum(id) {
     const existing = reviewFor(id);
@@ -681,6 +725,18 @@ export default function SoundboardDemo() {
     setDraftLeastFavTrack(existing ? existing.leastFavTrack || "" : "");
     setAlbumTab("albumMixes");
     setView({ name: "album", id });
+    // Fetch real album data (includes cover art lazy-loaded on first view)
+    // and cache it so the detail page shows real info.
+    if (!fetchedAlbums[id]) {
+      fetch(`${BACKEND_URL}/api/albums/${id}`, { credentials: "include" })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.album) {
+            setFetchedAlbums((prev) => ({ ...prev, [id]: normalizeAlbum(data.album) }));
+          }
+        })
+        .catch(() => {}); // silently fall back to mock data if fetch fails
+    }
   }
 
   function saveReview(albumId) {
@@ -1745,7 +1801,10 @@ export default function SoundboardDemo() {
               </>
             )}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: "20px 16px" }}>
-              {filtered.map((album) => {
+              {albumSearchLoading && (
+                <div className="ui-sans" style={{ color: MUTE, fontSize: 13, gridColumn: "1 / -1", padding: "20px 0" }}>searching...</div>
+              )}
+              {!albumSearchLoading && filtered.map((album) => {
                 const rev = reviewFor(album.id);
                 const status = listenStatus[album.id];
                 return (
@@ -1755,7 +1814,7 @@ export default function SoundboardDemo() {
                     </div>
                     <div style={{ marginTop: 9 }}>
                       <div className="ui-sans" style={{ fontSize: 13.5, fontWeight: 600, lineHeight: 1.3 }}>{album.title}</div>
-                      <div className="ui-sans" style={{ fontSize: 12, color: MUTE, marginTop: 1 }}>{album.artist} · {album.year}</div>
+                      <div className="ui-sans" style={{ fontSize: 12, color: MUTE, marginTop: 1 }}>{album.artist || album.artistName} · {album.year || album.releaseYear}</div>
                       <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 6, minHeight: 16 }}>
                         {rev && <span style={{ fontSize: 11, fontWeight: 600, color: BLUE }}>{rev.rating}/10</span>}
                         {!rev && status === "listened" && <span style={{ fontSize: 10, color: MUTE, letterSpacing: "0.02em" }}>LISTENED</span>}
@@ -1777,7 +1836,7 @@ export default function SoundboardDemo() {
 
         {/* ---------------- ALBUM DETAIL ---------------- */}
         {view.name === "album" && (() => {
-          const album = albumById(view.id);
+          const album = fetchedAlbums[view.id] || albumById(view.id);
           const existing = reviewFor(album.id);
           const status = listenStatus[album.id];
           const isFav = favorites.includes(album.id);
