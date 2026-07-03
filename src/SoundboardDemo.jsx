@@ -15,7 +15,7 @@ import { Search, Heart, Plus, X, ChevronLeft, User, ListMusic, Check, Settings, 
 // screen to work. Once the backend is deployed somewhere real, this URL
 // changes to that live address instead of localhost.
 // ---------------------------------------------------------------------------
-const BACKEND_URL = "http://localhost:3001";
+const BACKEND_URL = "https://spindex-backend.onrender.com";
 
 function nowTimestamp() {
   const d = new Date();
