@@ -707,7 +707,7 @@ export default function SoundboardDemo() {
   const filtered = liveAlbums.length > 0 ? liveAlbums : ALBUMS;
 
 
-  function openAlbum(id) {
+  function openAlbum(id, albumObj) {
     const existing = reviewFor(id);
     setDraftRating(existing ? existing.rating : 0);
     setDraftText(existing ? existing.text : "");
@@ -715,7 +715,15 @@ export default function SoundboardDemo() {
     setDraftLeastFavTrack(existing ? existing.leastFavTrack || "" : "");
     setAlbumTab("albumMixes");
     setView({ name: "album", id });
-    // Fetch real album data (cover art, etc.) and cache it
+    // If we already have the album object (e.g. from search results), cache it immediately
+    if (albumObj && !fetchedAlbums[id]) {
+      const a = albumObj;
+      setFetchedAlbums((prev) => ({
+        ...prev,
+        [id]: { ...a, artist: a.artistName || a.artist || "", year: a.releaseYear || a.year || null },
+      }));
+    }
+    // Fetch from API to get cover art (lazy-loaded on first view)
     if (!fetchedAlbums[id]) {
       fetch(`${BACKEND_URL}/api/albums/${id}`, { credentials: "include" })
         .then((r) => r.json())
@@ -1677,7 +1685,7 @@ export default function SoundboardDemo() {
                     {matchedAlbums.map((album) => {
                       const rev = reviews.find((r) => r.albumId === album.id);
                       return (
-                        <div key={album.id} onClick={() => openAlbum(album.id)}>
+                        <div key={album.id} onClick={() => openAlbum(album.id, album)}>
                           <div className="sb-cover-wrap">
                             <AlbumCover album={album} size={140} />
                           </div>
@@ -1830,6 +1838,9 @@ export default function SoundboardDemo() {
         {/* ---------------- ALBUM DETAIL ---------------- */}
         {view.name === "album" && (() => {
           const album = fetchedAlbums[view.id] || albumById(view.id);
+          if (!album) return (
+            <div className="ui-sans" style={{ color: MUTE, padding: "40px 0" }}>loading...</div>
+          );
           const existing = reviewFor(album.id);
           const status = listenStatus[album.id];
           const isFav = favorites.includes(album.id);
