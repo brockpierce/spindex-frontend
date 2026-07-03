@@ -582,7 +582,7 @@ export default function SoundboardDemo() {
   }, []);
 
   const [view, setView] = useState({ name: "home" });
-  const [homeTab, setHomeTab] = useState("feed"); // "feed" | "news"
+  const [homeTab, setHomeTab] = useState("feed");
   const [activeInterviewId, setActiveInterviewId] = useState(null);
   const [profile, setProfile] = useState(PROFILE);
   const [showSettings, setShowSettings] = useState(false);
@@ -670,10 +670,26 @@ export default function SoundboardDemo() {
   const [toast, setToast] = useState(null);
   const [fetchedAlbums, setFetchedAlbums] = useState({});
 
+  // Sync real user data into profile state whenever auth resolves.
+  // This replaces the fake j.harlow placeholder with the logged-in user.
+  useEffect(() => {
+    if (authUser) {
+      setProfile((prev) => ({
+        ...prev,
+        username: authUser.username || prev.username,
+        displayName: authUser.displayName || prev.displayName,
+        bio: authUser.bio || prev.bio,
+      }));
+      setDraftDisplayName(authUser.displayName || "");
+      setDraftUsername(authUser.username || "");
+      setDraftBio(authUser.bio || "");
+    }
+  }, [authUser]);
+
   // Debounced album search — fires 300ms after the user stops typing.
   // Uses the real backend API if available, falls back to mock ALBUMS.
   useEffect(() => {
-    if (!query.trim()) {
+    if (!query.trim() || query.trim().length < 2) {
       setLiveAlbums([]);
       return;
     }
@@ -691,7 +707,7 @@ export default function SoundboardDemo() {
         })
         .catch(() => setLiveAlbums([]))
         .finally(() => setAlbumSearchLoading(false));
-    }, 300);
+    }, 400);
     return () => clearTimeout(timer);
   }, [query]);
 
@@ -1038,6 +1054,7 @@ export default function SoundboardDemo() {
       .catch(() => {})
       .finally(() => {
         setAuthUser(null);
+        setProfile(PROFILE);
         setView({ name: "home" });
       });
   }
