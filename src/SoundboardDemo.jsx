@@ -618,6 +618,13 @@ export default function SoundboardDemo() {
   // might want to draft and cancel out of.
   const [accentKey, setAccentKey] = useState("blue");
   const [darkMode, setDarkMode] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => typeof window !== "undefined" && window.innerWidth < 600);
+
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 600);
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, []);
   const theme = useMemo(() => {
     const surfaces = darkMode ? SURFACES.dark : SURFACES.light;
     return {
@@ -1253,10 +1260,11 @@ export default function SoundboardDemo() {
 
   return (
     <ThemeContext.Provider value={theme}>
-    <div style={{ fontFamily: "'JetBrains Mono', monospace", background: BG, minHeight: "100%", color: INK }}>
+    <div style={{ fontFamily: "'JetBrains Mono', monospace", background: BG, minHeight: "100%", color: INK, overflowX: "hidden", maxWidth: "100vw" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap');
         * { box-sizing: border-box; }
+        html, body { overflow-x: hidden; max-width: 100vw; }
         .ui-sans { font-family: 'Inter', system-ui, sans-serif; }
         .sb-btn { font-family: inherit; border: 1.5px solid ${INK}; background: transparent; color: ${INK}; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; letter-spacing: 0.01em; transition: background 0.12s, color 0.12s, border-color 0.12s; }
         .sb-btn:hover { background: ${INK}; color: ${BG}; }
@@ -2057,17 +2065,17 @@ export default function SoundboardDemo() {
           const communityAvg = allRatings.length ? (allRatings.reduce((s, r) => s + r, 0) / allRatings.length) : null;
 
           return (
-            <div>
+            <div style={{ maxWidth: "100%", overflowX: "hidden" }}>
               <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 12.5, marginBottom: 22, cursor: "pointer" }} onClick={() => setView({ name: "browse" })}>
                 <ChevronLeft size={14} /> back
               </div>
-              <div style={{ display: "flex", gap: 26 }}>
-                <AlbumCover album={album} size={160} />
-                <div style={{ flex: 1 }}>
-                  <div className="ui-sans" style={{ fontSize: 24, fontWeight: 600, lineHeight: 1.2 }}>{album.title}</div>
+              <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 16 : 26, alignItems: isMobile ? "flex-start" : "flex-start" }}>
+                <AlbumCover album={album} size={isMobile ? 140 : 160} />
+                <div style={{ flex: 1, width: "100%" }}>
+                  <div className="ui-sans" style={{ fontSize: isMobile ? 20 : 24, fontWeight: 600, lineHeight: 1.2, wordBreak: "break-word" }}>{album.title}</div>
                   <div className="ui-sans" style={{ fontSize: 14, color: MUTE, marginTop: 4 }}>{album.artist} · {album.year}</div>
 
-                  <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 16 }}>
                     <button
                       className="sb-btn"
                       style={status === "want_to_listen" ? { background: INK, color: BG } : {}}
