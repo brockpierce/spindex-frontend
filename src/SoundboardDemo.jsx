@@ -689,13 +689,13 @@ export default function SoundboardDemo() {
   // Debounced album search — fires 300ms after the user stops typing.
   // Uses the real backend API if available, falls back to mock ALBUMS.
   useEffect(() => {
-    if (!query.trim() || query.trim().length < 2) {
+    if (!query.trim() || query.trim().length < 3) {
       setLiveAlbums([]);
       return;
     }
     const timer = setTimeout(() => {
       setAlbumSearchLoading(true);
-      fetch(`${BACKEND_URL}/api/albums?search=${encodeURIComponent(query.trim())}&limit=50`, { credentials: "include" })
+      fetch(`${BACKEND_URL}/api/albums?search=${encodeURIComponent(query.trim())}&limit=30`, { credentials: "include" })
         .then((res) => res.json())
         .then((data) => {
           const albums = (data.albums || []).map((a) => ({
@@ -707,7 +707,7 @@ export default function SoundboardDemo() {
         })
         .catch(() => setLiveAlbums([]))
         .finally(() => setAlbumSearchLoading(false));
-    }, 400);
+    }, 500);
     return () => clearTimeout(timer);
   }, [query]);
 
