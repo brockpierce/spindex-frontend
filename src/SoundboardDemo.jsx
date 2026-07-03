@@ -686,6 +686,39 @@ export default function SoundboardDemo() {
     }
   }, [authUser]);
 
+  // Load all real user data from the backend when logged in.
+  useEffect(() => {
+    if (!authUser) return;
+    // Listen status
+    fetch(`${BACKEND_URL}/api/listen-status/me`, { credentials: "include" })
+      .then((r) => r.json())
+      .then((data) => { if (data.listenStatus) setListenStatus(data.listenStatus); })
+      .catch(() => {});
+    // Reviews
+    fetch(`${BACKEND_URL}/api/reviews/user/${authUser.id}`, { credentials: "include" })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.reviews) {
+          setReviews(data.reviews.map((r) => ({
+            id: r.id,
+            albumId: r.albumId,
+            rating: r.rating,
+            text: r.reviewText || "",
+            favTrack: r.favTrack || "",
+            leastFavTrack: r.leastFavTrack || "",
+            date: r.createdAt ? new Date(r.createdAt).toISOString().slice(0, 10) : "",
+            username: authUser.username,
+          })));
+        }
+      })
+      .catch(() => {});
+    // Favorites
+    fetch(`${BACKEND_URL}/api/favorites/me`, { credentials: "include" })
+      .then((r) => r.json())
+      .then((data) => { if (data.favorites) setFavorites(data.favorites.map((f) => f.albumId)); })
+      .catch(() => {});
+  }, [authUser]);
+
   // Debounced album search — fires 300ms after the user stops typing.
   // Uses the real backend API if available, falls back to mock ALBUMS.
   useEffect(() => {
@@ -759,6 +792,8 @@ export default function SoundboardDemo() {
   }
 
   function saveReview(albumId) {
+    const now = nowTimestamp();
+    // Optimistic update
     setReviews((prev) => {
       const exists = prev.find((r) => r.albumId === albumId);
       if (exists) {
@@ -768,27 +803,61 @@ export default function SoundboardDemo() {
             : r
         );
       }
-      return [
-        ...prev,
-        { id: "r" + Date.now(), albumId, rating: draftRating, text: draftText, favTrack: draftFavTrack, leastFavTrack: draftLeastFavTrack, date: "2026-06-28 · 4:02pm" },
-      ];
+      return [...prev, { id: "r" + Date.now(), albumId, rating: draftRating, text: draftText, favTrack: draftFavTrack, leastFavTrack: draftLeastFavTrack, date: now, username: profile.username }];
     });
     if (draftRating > 0) setListenStatus((prev) => ({ ...prev, [albumId]: "listened" }));
     flash("Review saved");
+    // Persist to backend
+    fetch(`${BACKEND_URL}/api/reviews/${albumId}`, {
+      method: "PUT",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rating: draftRating, reviewText: draftText, favTrack: draftFavTrack, leastFavTrack: draftLeastFavTrack }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.review) {
+          // Update with real ID from server
+          setReviews((prev) => prev.map((r) =>
+            r.albumId === albumId ? { ...r, id: data.review.id } : r
+          ));
+        }
+      })
+      .catch(() => {});
   }
 
   function toggleStatus(albumId, status) {
-    setListenStatus((prev) => ({ ...prev, [albumId]: prev[albumId] === status ? undefined : status }));
+    const current = listenStatus[albumId];
+    const newStatus = current === status ? null : status;
+    // Optimistic update
+    setListenStatus((prev) => ({ ...prev, [albumId]: newStatus || undefined }));
+    // Persist to backend
+    fetch(`${BACKEND_URL}/api/listen-status/${albumId}`, {
+      method: "PUT",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    }).catch(() => {
+      // Revert on failure
+      setListenStatus((prev) => ({ ...prev, [albumId]: current || undefined }));
+    });
   }
 
   function toggleFavorite(albumId) {
-    setFavorites((prev) => {
-      if (prev.includes(albumId)) return prev.filter((id) => id !== albumId);
-      if (prev.length >= 3) {
-        flash("3 favorites max -- remove one first");
-        return prev;
-      }
-      return [...prev, albumId];
+    const isFav = favorites.includes(albumId);
+    if (!isFav && favorites.length >= 3) {
+      flash("3 favorites max -- remove one first");
+      return;
+    }
+    // Optimistic update
+    setFavorites((prev) => isFav ? prev.filter((id) => id !== albumId) : [...prev, albumId]);
+    // Persist to backend
+    fetch(`${BACKEND_URL}/api/favorites/${albumId}`, {
+      method: isFav ? "DELETE" : "POST",
+      credentials: "include",
+    }).catch(() => {
+      // Revert on failure
+      setFavorites((prev) => isFav ? [...prev, albumId] : prev.filter((id) => id !== albumId));
     });
   }
 
@@ -858,16 +927,26 @@ export default function SoundboardDemo() {
   function submitQuickReview(albumId, rating, text, favTrack, leastFavTrack) {
     if (!rating) return;
     const id = "r" + Date.now();
-    const newReview = { id, albumId, rating, text: text.trim(), date: nowTimestamp(), favTrack: favTrack.trim(), leastFavTrack: leastFavTrack.trim() };
+    const newReview = { id, albumId, rating, text: text.trim(), date: nowTimestamp(), favTrack: favTrack.trim(), leastFavTrack: leastFavTrack.trim(), username: profile.username };
     setReviews((prev) => {
-      // Replace any existing review for this album rather than stacking duplicates
       const without = prev.filter((r) => r.albumId !== albumId);
       return [...without, newReview];
     });
-    // Also mark as listened
     setListenStatus((prev) => ({ ...prev, [albumId]: "listened" }));
     setShowQuickReviewModal(false);
     flash("Review posted");
+    // Persist to backend
+    fetch(`${BACKEND_URL}/api/reviews/${albumId}`, {
+      method: "PUT",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rating, reviewText: text.trim(), favTrack: favTrack.trim(), leastFavTrack: leastFavTrack.trim() }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.review) setReviews((prev) => prev.map((r) => r.albumId === albumId ? { ...r, id: data.review.id } : r));
+      })
+      .catch(() => {});
   }
 
   function submitMixShare(mixType, mixId) {
@@ -1003,16 +1082,35 @@ export default function SoundboardDemo() {
   // Home feed: posts from people you follow -- a mix of reviews and
   // question-of-the-day answers. Community reviews from strangers stay on
   // individual album pages instead of cluttering this. Posts with several
-  // hearts get pinned above the normal chronological list, ranked by heart
-  // count -- a single extra heart on an old post shouldn't out-rank
-  // everything recent, so the threshold is 3+.
+  const [realFeedItems, setRealFeedItems] = useState([]);
+
+  // Load real feed from backend when logged in
+  useEffect(() => {
+    if (!authUser) return;
+    fetch(`${BACKEND_URL}/api/feed`, { credentials: "include" })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.feed) {
+          setRealFeedItems(data.feed.map((item) => ({
+            itemType: "review",
+            id: item.id,
+            username: item.username,
+            albumId: item.albumId,
+            rating: item.rating,
+            text: item.text || "",
+            date: item.date ? new Date(item.date).toISOString().slice(0, 10) : "",
+          })));
+        }
+      })
+      .catch(() => {});
+  }, [authUser]);
+
   const HEART_BUMP_THRESHOLD = 3;
   const feed = useMemo(() => {
     const followedUsernames = new Set([...FRIENDS.map((f) => f.username), profile.username]);
     const reviewItems = FRIENDS.flatMap((f) =>
       f.reviews.map((r) => ({ itemType: "review", kind: "following", username: f.username, ...r }))
     );
-    // Your own reviews also show in your feed
     const ownReviewItems = reviews.map((r) => ({ itemType: "review", username: profile.username, ...r }));
     const qotdItems = qotdResponses
       .filter((r) => followedUsernames.has(r.username))
@@ -1020,29 +1118,61 @@ export default function SoundboardDemo() {
     const mixShareItems = mixSharePosts
       .filter((p) => followedUsernames.has(p.username))
       .map((p) => ({ itemType: "sharemix", ...p }));
-    const all = [...reviewItems, ...ownReviewItems, ...qotdItems, ...mixShareItems];
+    // Merge real feed items — deduplicate by albumId+username to avoid doubles
+    const mockIds = new Set(reviewItems.map((r) => `${r.username}-${r.albumId}`));
+    const realOnly = realFeedItems.filter((r) => !mockIds.has(`${r.username}-${r.albumId}`));
+    const all = [...realOnly, ...reviewItems, ...ownReviewItems, ...qotdItems, ...mixShareItems];
     const heartCount = (item) => (reviewReactions[item.id]?.heart || []).length;
     const popular = all.filter((item) => heartCount(item) >= HEART_BUMP_THRESHOLD).sort((a, b) => heartCount(b) - heartCount(a));
     const rest = all.filter((item) => heartCount(item) < HEART_BUMP_THRESHOLD).sort((a, b) => (a.date < b.date ? 1 : -1));
     return [...popular, ...rest];
-  }, [reviewReactions, qotdResponses, mixSharePosts, reviews]);
+  }, [reviewReactions, qotdResponses, mixSharePosts, reviews, realFeedItems]);
 
-  const userSearchResults = useMemo(() => {
-    if (!userSearchQuery.trim()) return [];
-    const q = userSearchQuery.toLowerCase();
-    return ALL_USERS.filter((u) => u.username.toLowerCase().includes(q) || u.displayName.toLowerCase().includes(q));
+  const [liveUserResults, setLiveUserResults] = useState([]);
+
+  useEffect(() => {
+    if (!userSearchQuery.trim() || userSearchQuery.trim().length < 2) {
+      setLiveUserResults([]);
+      return;
+    }
+    const timer = setTimeout(() => {
+      fetch(`${BACKEND_URL}/api/users?search=${encodeURIComponent(userSearchQuery.trim())}`, { credentials: "include" })
+        .then((r) => r.json())
+        .then((data) => setLiveUserResults(data.users || []))
+        .catch(() => setLiveUserResults([]));
+    }, 300);
+    return () => clearTimeout(timer);
   }, [userSearchQuery]);
+
+  const userSearchResults = liveUserResults.length > 0 ? liveUserResults : (
+    userSearchQuery.trim()
+      ? ALL_USERS.filter((u) => u.username.toLowerCase().includes(userSearchQuery.toLowerCase()) || u.displayName.toLowerCase().includes(userSearchQuery.toLowerCase()))
+      : []
+  );
 
   function toggleFollow(username) {
     const wasFollowing = followState[username];
     setFollowState((prev) => ({ ...prev, [username]: !prev[username] }));
     if (!wasFollowing) {
-      // They followed someone — in a real app the *other* user gets notified.
-      // In the demo we simulate receiving that notification for yourself
-      // when someone follows you back (i.e. a user you follow, follows you).
-      // For simplicity we just add a notification here representing the action.
       pushNotification({ type: "follow", fromUsername: username, text: "started following you" });
     }
+    // Persist to backend — look up user by username first
+    fetch(`${BACKEND_URL}/api/users/${username}`, { credentials: "include" })
+      .then((r) => r.json())
+      .then((data) => {
+        if (!data.user) return;
+        const userId = data.user.id;
+        fetch(`${BACKEND_URL}/api/follows/${userId}`, {
+          method: wasFollowing ? "DELETE" : "POST",
+          credentials: "include",
+        }).catch(() => {
+          // Revert on failure
+          setFollowState((prev) => ({ ...prev, [username]: wasFollowing }));
+        });
+      })
+      .catch(() => {
+        setFollowState((prev) => ({ ...prev, [username]: wasFollowing }));
+      });
   }
 
   function openUserProfile(username) {
