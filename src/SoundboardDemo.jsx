@@ -492,7 +492,7 @@ function useTheme() {
 // ---------------------------------------------------------------------------
 
 function albumById(id) {
-  return ALBUMS.find((a) => a.id === id);
+  return ALBUMS.find((a) => a.id === id) || { id, title: "Unknown Album", artist: "", artistName: "", year: null, releaseYear: null };
 }
 function HeadphoneMark({ size = 18, color = "#fff" }) {
   return (
@@ -1600,7 +1600,8 @@ export default function SoundboardDemo() {
                 <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 12 }} className="ui-sans">reviews</div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                   {userReviews.map((r, i) => {
-                    const album = albumById(r.albumId);
+                    const album = fetchedAlbums[r.albumId] || albumById(r.albumId);
+                    if (!album) return null;
                     return (
                       <div key={i} onClick={() => openAlbum(r.albumId)} style={{ display: "flex", gap: 14, cursor: "pointer" }}>
                         <AlbumCover album={album} size={54} />
@@ -2451,7 +2452,8 @@ export default function SoundboardDemo() {
               <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 12 }}>recent reviews</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                 {[...reviews].sort((a, b) => (a.date < b.date ? 1 : -1)).map((r) => {
-                  const album = albumById(r.albumId);
+                  const album = fetchedAlbums[r.albumId] || albumById(r.albumId);
+                  if (!album) return null;
                   return (
                     <div key={r.id} onClick={() => openAlbum(r.albumId)} style={{ display: "flex", gap: 14, cursor: "pointer" }}>
                       <AlbumCover album={album} size={54} />
