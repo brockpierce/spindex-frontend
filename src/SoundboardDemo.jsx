@@ -495,11 +495,6 @@ function albumById(id) {
   return ALBUMS.find((a) => a.id === id);
 }
 
-// In the main component, real album data is resolved via fetchedAlbums state.
-// This module-level version is used by standalone components that don't have
-// access to that state -- it only falls back to mock data, which is fine for
-// the demo's community reviews and mix card rendering.
-
 // Maps a real API album (artistName, releaseYear) to the shape the demo
 // expects (artist, year) so all existing rendering code works unchanged.
 function normalizeAlbum(a) {
