@@ -683,6 +683,10 @@ export default function SoundboardDemo() {
       setDraftDisplayName(authUser.displayName || "");
       setDraftUsername(authUser.username || "");
       setDraftBio(authUser.bio || "");
+      if (authUser.avatarUrl) {
+        setAvatarUrl(authUser.avatarUrl);
+        setDraftAvatarUrl(authUser.avatarUrl);
+      }
     }
   }, [authUser]);
 
@@ -1103,6 +1107,17 @@ export default function SoundboardDemo() {
     setAvatarUrl(draftAvatarUrl);
     setShowSettings(false);
     flash("Profile updated");
+    // Persist to backend
+    fetch(`${BACKEND_URL}/api/auth/profile`, {
+      method: "PUT",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        displayName: draftDisplayName.trim(),
+        bio: draftBio,
+        avatarUrl: draftAvatarUrl || null,
+      }),
+    }).catch(() => {});
   }
 
   const avgRating = reviews.length ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1) : "--";
