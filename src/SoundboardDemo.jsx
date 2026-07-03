@@ -1256,6 +1256,7 @@ export default function SoundboardDemo() {
     <div style={{ fontFamily: "'JetBrains Mono', monospace", background: BG, minHeight: "100%", color: INK }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap');
+        * { box-sizing: border-box; }
         .ui-sans { font-family: 'Inter', system-ui, sans-serif; }
         .sb-btn { font-family: inherit; border: 1.5px solid ${INK}; background: transparent; color: ${INK}; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; letter-spacing: 0.01em; transition: background 0.12s, color 0.12s, border-color 0.12s; }
         .sb-btn:hover { background: ${INK}; color: ${BG}; }
@@ -1263,20 +1264,24 @@ export default function SoundboardDemo() {
         .sb-btn-solid:hover { filter: brightness(0.85); }
         .sb-cover-wrap { cursor: pointer; transition: opacity 0.12s; }
         .sb-cover-wrap:hover { opacity: 0.82; }
-        .sb-input { font-family: inherit; border: 1.5px solid ${LINE}; background: ${BG}; padding: 9px 12px; font-size: 13px; outline: none; color: ${INK}; border-radius: 6px; }
+        .sb-input { font-family: inherit; border: 1.5px solid ${LINE}; background: ${BG}; padding: 9px 12px; font-size: 13px; outline: none; color: ${INK}; border-radius: 6px; width: 100%; }
         .sb-input:focus { border-color: ${BLUE}; }
         .sb-textarea { font-family: 'Inter', sans-serif; border: 1.5px solid ${LINE}; background: ${BG}; padding: 11px 12px; font-size: 13.5px; outline: none; color: ${INK}; width: 100%; border-radius: 6px; resize: vertical; line-height: 1.6; }
         .sb-textarea:focus { border-color: ${BLUE}; }
         .sb-nav-item { cursor: pointer; font-size: 12px; letter-spacing: 0.03em; text-transform: uppercase; font-weight: 500; color: ${MUTE}; padding: 6px 0; border-bottom: 2px solid transparent; }
         .sb-nav-item.active { color: ${INK}; border-bottom-color: ${BLUE}; }
+        @media (max-width: 480px) {
+          .sb-nav-item { font-size: 10px; letter-spacing: 0.01em; }
+          .sb-btn { padding: 7px 10px; font-size: 11px; }
+        }
       `}</style>
 
       {/* TOP NAV */}
-      <div style={{ borderBottom: `1.5px solid ${INK}`, padding: "16px 24px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <div style={{ borderBottom: `1.5px solid ${INK}`, padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", overflowX: "hidden" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 9, cursor: "pointer" }} onClick={() => setView({ name: "home" })}>
           <img src={LOGO_DATA_URI} alt="Spindex" style={{ height: 30, width: "auto" }} />
         </div>
-        <div style={{ display: "flex", gap: 24, alignItems: "center" }}>
+        <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
           <div className={`sb-nav-item ${view.name === "home" ? "active" : ""}`} onClick={() => setView({ name: "home" })}>home</div>
           <div className={`sb-nav-item ${view.name === "browse" || view.name === "tagResults" ? "active" : ""}`} onClick={() => setView({ name: "browse" })}>browse</div>
           <div className={`sb-nav-item ${view.name === "mixes" || view.name === "albumMixDetail" || view.name === "songMixDetail" ? "active" : ""}`} onClick={() => setView({ name: "mixes" })}>mixes</div>
@@ -1307,7 +1312,7 @@ export default function SoundboardDemo() {
         <ShareMixModal albumMixes={albumMixes} songMixes={songMixes} onSubmit={submitMixShare} onClose={() => setShowShareMixModal(false)} />
       )}
 
-      <div style={{ maxWidth: 920, margin: "0 auto", padding: "28px 24px 64px" }}>
+      <div style={{ maxWidth: 920, margin: "0 auto", padding: "28px 16px 64px" }}>
         {/* TOAST */}
         {toast && (
           <div style={{ position: "sticky", top: 8, zIndex: 10, background: INK, color: BG, padding: "8px 14px", borderRadius: 6, fontSize: 12, marginBottom: 16, display: "inline-flex", alignItems: "center", gap: 6 }}>
@@ -2011,8 +2016,8 @@ export default function SoundboardDemo() {
                       <AlbumCover album={displayAlbum} size={150} />
                     </div>
                     <div style={{ marginTop: 9 }}>
-                      <div className="ui-sans" style={{ fontSize: 13.5, fontWeight: 600, lineHeight: 1.3 }}>{album.title}</div>
-                      <div className="ui-sans" style={{ fontSize: 12, color: MUTE, marginTop: 1 }}>{album.artist || album.artistName} · {album.year || album.releaseYear}</div>
+                      <div className="ui-sans" style={{ fontSize: 13.5, fontWeight: 600, lineHeight: 1.3, wordBreak: "break-word", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{album.title}</div>
+                      <div className="ui-sans" style={{ fontSize: 12, color: MUTE, marginTop: 2, wordBreak: "break-word", display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{album.artist || album.artistName} · {album.year || album.releaseYear}</div>
                       <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 6, minHeight: 16 }}>
                         {rev && <span style={{ fontSize: 11, fontWeight: 600, color: BLUE }}>{rev.rating}/10</span>}
                         {!rev && status === "listened" && <span style={{ fontSize: 10, color: MUTE, letterSpacing: "0.02em" }}>LISTENED</span>}
