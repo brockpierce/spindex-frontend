@@ -716,7 +716,23 @@ export default function SoundboardDemo() {
     // Listen status
     apiFetch(`${BACKEND_URL}/api/listen-status/me`)
       .then((r) => r.json())
-      .then((data) => { if (data.listenStatus) setListenStatus(data.listenStatus); })
+      .then((data) => {
+        if (data.listenStatus) {
+          setListenStatus(data.listenStatus);
+          // Prefetch album data for each listened/queued album
+          Object.keys(data.listenStatus).forEach((id) => {
+            apiFetch(`${BACKEND_URL}/api/albums/${id}`)
+              .then((r) => r.json())
+              .then((d) => {
+                if (d.album) {
+                  const a = d.album;
+                  setFetchedAlbums((prev) => ({ ...prev, [id]: { ...a, artist: a.artistName || "", year: a.releaseYear || null } }));
+                }
+              })
+              .catch(() => {});
+          });
+        }
+      })
       .catch(() => {});
     // Reviews
     apiFetch(`${BACKEND_URL}/api/reviews/user/${authUser.id}`)
@@ -2408,13 +2424,33 @@ export default function SoundboardDemo() {
           const matchingIds = Object.entries(listenStatus)
             .filter(([, s]) => s === filter)
             .map(([id]) => id);
-          const matchingAlbums = ALBUMS
-            .filter((a) => matchingIds.includes(a.id))
-            .sort((a, b) => a.year - b.year);
+
+          // Resolve albums -- prefer fetchedAlbums (real data), fall back to
+          // mock ALBUMS, and trigger a fetch for any we don't have yet.
+          const matchingAlbums = matchingIds
+            .map((id) => {
+              const album = fetchedAlbums[id] || albumById(id);
+              if (!fetchedAlbums[id] && album.title === "Unknown Album") {
+                // Trigger fetch in background
+                apiFetch(`${BACKEND_URL}/api/albums/${id}`)
+                  .then((r) => r.json())
+                  .then((d) => {
+                    if (d.album) {
+                      const a = d.album;
+                      setFetchedAlbums((prev) => ({ ...prev, [id]: { ...a, artist: a.artistName || "", year: a.releaseYear || null } }));
+                    }
+                  })
+                  .catch(() => {});
+              }
+              return album;
+            })
+            .filter((a) => a && a.title !== "Unknown Album")
+            .sort((a, b) => (a.year || 0) - (b.year || 0));
 
           // Group by decade for a nicer chronological layout
           const byDecade = matchingAlbums.reduce((acc, album) => {
-            const decade = Math.floor(album.year / 10) * 10 + "s";
+            const year = album.year || album.releaseYear || 0;
+            const decade = year ? Math.floor(year / 10) * 10 + "s" : "unknown";
             if (!acc[decade]) acc[decade] = [];
             acc[decade].push(album);
             return acc;
