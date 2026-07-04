@@ -864,7 +864,6 @@ export default function SoundboardDemo() {
     // Persist to backend
     apiFetch(`${BACKEND_URL}/api/reviews/${albumId}`, {
       method: "PUT",
-      ,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ rating: draftRating, reviewText: draftText, favTrack: draftFavTrack, leastFavTrack: draftLeastFavTrack }),
     })
@@ -888,7 +887,6 @@ export default function SoundboardDemo() {
     // Persist to backend
     apiFetch(`${BACKEND_URL}/api/listen-status/${albumId}`, {
       method: "PUT",
-      ,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),
     }).catch(() => {
@@ -908,7 +906,6 @@ export default function SoundboardDemo() {
     // Persist to backend
     apiFetch(`${BACKEND_URL}/api/favorites/${albumId}`, {
       method: isFav ? "DELETE" : "POST",
-      ,
     }).catch(() => {
       // Revert on failure
       setFavorites((prev) => isFav ? [...prev, albumId] : prev.filter((id) => id !== albumId));
@@ -992,7 +989,6 @@ export default function SoundboardDemo() {
     // Persist to backend
     apiFetch(`${BACKEND_URL}/api/reviews/${albumId}`, {
       method: "PUT",
-      ,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ rating, reviewText: text.trim(), favTrack: favTrack.trim(), leastFavTrack: leastFavTrack.trim() }),
     })
@@ -1130,7 +1126,6 @@ export default function SoundboardDemo() {
     // Persist to backend
     apiFetch(`${BACKEND_URL}/api/auth/profile`, {
       method: "PUT",
-      ,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         displayName: draftDisplayName.trim(),
@@ -1229,7 +1224,6 @@ export default function SoundboardDemo() {
         const userId = data.user.id;
         apiFetch(`${BACKEND_URL}/api/follows/${userId}`, {
           method: wasFollowing ? "DELETE" : "POST",
-          ,
         }).catch(() => {
           // Revert on failure
           setFollowState((prev) => ({ ...prev, [username]: wasFollowing }));
