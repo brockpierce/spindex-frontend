@@ -17,6 +17,19 @@ import { Search, Heart, Plus, X, ChevronLeft, User, ListMusic, Check, Settings, 
 // ---------------------------------------------------------------------------
 const BACKEND_URL = "https://spindex-backend.onrender.com";
 
+// JWT token helpers -- stored in localStorage so it survives page refresh.
+// apiFetch wraps fetch to automatically attach the Authorization header.
+const getToken = () => localStorage.getItem("spindex_token");
+const setToken = (t) => t ? localStorage.setItem("spindex_token", t) : localStorage.removeItem("spindex_token");
+
+function apiFetch(url, options = {}) {
+  const token = getToken();
+  const headers = { ...(options.headers || {}) };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  if (options.body && typeof options.body === "string") headers["Content-Type"] = "application/json";
+  return fetch(url, { ...options, headers });
+}
+
 function nowTimestamp() {
   const d = new Date();
   const date = d.toISOString().slice(0, 10);
@@ -574,7 +587,7 @@ export default function SoundboardDemo() {
   const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
-    fetch(`${BACKEND_URL}/api/auth/me`, { credentials: "include" })
+    apiFetch(`${BACKEND_URL}/api/auth/me`)
       .then((res) => res.json())
       .then((data) => setAuthUser(data.user || null))
       .catch(() => setAuthUser(null))
@@ -701,12 +714,12 @@ export default function SoundboardDemo() {
   useEffect(() => {
     if (!authUser) return;
     // Listen status
-    fetch(`${BACKEND_URL}/api/listen-status/me`, { credentials: "include" })
+    apiFetch(`${BACKEND_URL}/api/listen-status/me`)
       .then((r) => r.json())
       .then((data) => { if (data.listenStatus) setListenStatus(data.listenStatus); })
       .catch(() => {});
     // Reviews
-    fetch(`${BACKEND_URL}/api/reviews/user/${authUser.id}`, { credentials: "include" })
+    apiFetch(`${BACKEND_URL}/api/reviews/user/${authUser.id}`)
       .then((r) => r.json())
       .then((data) => {
         if (data.reviews) {
@@ -723,7 +736,7 @@ export default function SoundboardDemo() {
           setReviews(mapped);
           // Prefetch album data for each review
           mapped.forEach((r) => {
-            fetch(`${BACKEND_URL}/api/albums/${r.albumId}`, { credentials: "include" })
+            apiFetch(`${BACKEND_URL}/api/albums/${r.albumId}`)
               .then((res) => res.json())
               .then((d) => {
                 if (d.album) {
@@ -737,7 +750,7 @@ export default function SoundboardDemo() {
       })
       .catch(() => {});
     // Favorites
-    fetch(`${BACKEND_URL}/api/favorites/me`, { credentials: "include" })
+    apiFetch(`${BACKEND_URL}/api/favorites/me`)
       .then((r) => r.json())
       .then((data) => {
         if (data.favorites) {
@@ -745,7 +758,7 @@ export default function SoundboardDemo() {
           setFavorites(ids);
           // Prefetch album data for each favorite so they show correctly
           ids.forEach((id) => {
-            fetch(`${BACKEND_URL}/api/albums/${id}`, { credentials: "include" })
+            apiFetch(`${BACKEND_URL}/api/albums/${id}`)
               .then((r) => r.json())
               .then((d) => {
                 if (d.album) {
@@ -769,7 +782,7 @@ export default function SoundboardDemo() {
     }
     const timer = setTimeout(() => {
       setAlbumSearchLoading(true);
-      fetch(`${BACKEND_URL}/api/albums?search=${encodeURIComponent(query.trim())}&limit=30`, { credentials: "include" })
+      apiFetch(`${BACKEND_URL}/api/albums?search=${encodeURIComponent(query.trim())}&limit=30`)
         .then((res) => res.json())
         .then((data) => {
           const albums = (data.albums || []).map((a) => ({
@@ -815,7 +828,7 @@ export default function SoundboardDemo() {
     }
     // Fetch from API to get cover art (lazy-loaded on first view)
     if (!fetchedAlbums[id]) {
-      fetch(`${BACKEND_URL}/api/albums/${id}`, { credentials: "include" })
+      apiFetch(`${BACKEND_URL}/api/albums/${id}`)
         .then((r) => r.json())
         .then((data) => {
           if (data.album) {
@@ -849,9 +862,9 @@ export default function SoundboardDemo() {
     if (draftRating > 0) setListenStatus((prev) => ({ ...prev, [albumId]: "listened" }));
     flash("Review saved");
     // Persist to backend
-    fetch(`${BACKEND_URL}/api/reviews/${albumId}`, {
+    apiFetch(`${BACKEND_URL}/api/reviews/${albumId}`, {
       method: "PUT",
-      credentials: "include",
+      ,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ rating: draftRating, reviewText: draftText, favTrack: draftFavTrack, leastFavTrack: draftLeastFavTrack }),
     })
@@ -873,9 +886,9 @@ export default function SoundboardDemo() {
     // Optimistic update
     setListenStatus((prev) => ({ ...prev, [albumId]: newStatus || undefined }));
     // Persist to backend
-    fetch(`${BACKEND_URL}/api/listen-status/${albumId}`, {
+    apiFetch(`${BACKEND_URL}/api/listen-status/${albumId}`, {
       method: "PUT",
-      credentials: "include",
+      ,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),
     }).catch(() => {
@@ -893,9 +906,9 @@ export default function SoundboardDemo() {
     // Optimistic update
     setFavorites((prev) => isFav ? prev.filter((id) => id !== albumId) : [...prev, albumId]);
     // Persist to backend
-    fetch(`${BACKEND_URL}/api/favorites/${albumId}`, {
+    apiFetch(`${BACKEND_URL}/api/favorites/${albumId}`, {
       method: isFav ? "DELETE" : "POST",
-      credentials: "include",
+      ,
     }).catch(() => {
       // Revert on failure
       setFavorites((prev) => isFav ? [...prev, albumId] : prev.filter((id) => id !== albumId));
@@ -977,9 +990,9 @@ export default function SoundboardDemo() {
     setShowQuickReviewModal(false);
     flash("Review posted");
     // Persist to backend
-    fetch(`${BACKEND_URL}/api/reviews/${albumId}`, {
+    apiFetch(`${BACKEND_URL}/api/reviews/${albumId}`, {
       method: "PUT",
-      credentials: "include",
+      ,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ rating, reviewText: text.trim(), favTrack: favTrack.trim(), leastFavTrack: leastFavTrack.trim() }),
     })
@@ -1115,9 +1128,9 @@ export default function SoundboardDemo() {
     setShowSettings(false);
     flash("Profile updated");
     // Persist to backend
-    fetch(`${BACKEND_URL}/api/auth/profile`, {
+    apiFetch(`${BACKEND_URL}/api/auth/profile`, {
       method: "PUT",
-      credentials: "include",
+      ,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         displayName: draftDisplayName.trim(),
@@ -1139,7 +1152,7 @@ export default function SoundboardDemo() {
   // Load real feed from backend when logged in
   useEffect(() => {
     if (!authUser) return;
-    fetch(`${BACKEND_URL}/api/feed`, { credentials: "include" })
+    apiFetch(`${BACKEND_URL}/api/feed`)
       .then((r) => r.json())
       .then((data) => {
         if (data.feed) {
@@ -1188,7 +1201,7 @@ export default function SoundboardDemo() {
       return;
     }
     const timer = setTimeout(() => {
-      fetch(`${BACKEND_URL}/api/users?search=${encodeURIComponent(userSearchQuery.trim())}`, { credentials: "include" })
+      apiFetch(`${BACKEND_URL}/api/users?search=${encodeURIComponent(userSearchQuery.trim())}`)
         .then((r) => r.json())
         .then((data) => setLiveUserResults(data.users || []))
         .catch(() => setLiveUserResults([]));
@@ -1209,14 +1222,14 @@ export default function SoundboardDemo() {
       pushNotification({ type: "follow", fromUsername: username, text: "started following you" });
     }
     // Persist to backend — look up user by username first
-    fetch(`${BACKEND_URL}/api/users/${username}`, { credentials: "include" })
+    apiFetch(`${BACKEND_URL}/api/users/${username}`)
       .then((r) => r.json())
       .then((data) => {
         if (!data.user) return;
         const userId = data.user.id;
-        fetch(`${BACKEND_URL}/api/follows/${userId}`, {
+        apiFetch(`${BACKEND_URL}/api/follows/${userId}`, {
           method: wasFollowing ? "DELETE" : "POST",
-          credentials: "include",
+          ,
         }).catch(() => {
           // Revert on failure
           setFollowState((prev) => ({ ...prev, [username]: wasFollowing }));
@@ -1232,13 +1245,11 @@ export default function SoundboardDemo() {
   }
 
   function logout() {
-    fetch(`${BACKEND_URL}/api/auth/logout`, { method: "POST", credentials: "include" })
-      .catch(() => {})
-      .finally(() => {
-        setAuthUser(null);
-        setProfile(PROFILE);
-        setView({ name: "home" });
-      });
+    apiFetch(`${BACKEND_URL}/api/auth/logout`, { method: "POST" }).catch(() => {});
+    setToken(null);
+    setAuthUser(null);
+    setProfile(PROFILE);
+    setView({ name: "home" });
   }
 
   // Still waiting to hear back from the server about whether someone's
@@ -2622,7 +2633,7 @@ export default function SoundboardDemo() {
                   const album = fetchedAlbums[id] || albumById(id);
                   // Trigger a fetch if we don't have real data for this album yet
                   if (!fetchedAlbums[id] && album.title === "Unknown Album") {
-                    fetch(`${BACKEND_URL}/api/albums/${id}`, { credentials: "include" })
+                    apiFetch(`${BACKEND_URL}/api/albums/${id}`)
                       .then((r) => r.json())
                       .then((data) => {
                         if (data.album) {
@@ -4042,7 +4053,6 @@ function AuthScreen({ backendUrl, onAuthed }) {
       const res = await fetch(`${backendUrl}${endpoint}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify(body),
       });
       const data = await res.json();
@@ -4051,6 +4061,7 @@ function AuthScreen({ backendUrl, onAuthed }) {
         setLoading(false);
         return;
       }
+      if (data.token) setToken(data.token);
       onAuthed(data.user);
     } catch (err) {
       // Most likely cause during local dev: the backend server isn't
