@@ -70,72 +70,13 @@ const ALBUMS = INITIAL_ALBUMS;
 // Initial tag map: { albumId -> string[] }
 const INITIAL_ALBUM_TAGS = Object.fromEntries(INITIAL_ALBUMS.map((a) => [a.id, a.tags]));
 
-const INITIAL_REVIEWS = [
-  { id: "r1", albumId: "a1", rating: 9, text: "The way this unfolds on a second listen is unreal. \"Weird Fish\" alone.", date: "2026-05-12", favTrack: "Weird Fishes/Arpeggi", leastFavTrack: "Faust Arp" },
-  { id: "r2", albumId: "a2", rating: 10, text: "Production is so spacious. Felt like I was hearing each instrument for the first time.", date: "2026-05-02", favTrack: "Pyramids", leastFavTrack: "" },
-  { id: "r3", albumId: "a9", rating: 9, text: "Still holds up. \"Exit Music\" wrecks me every time.", date: "2026-04-20", favTrack: "Exit Music (For a Film)", leastFavTrack: "Fitter Happier" },
-];
+const INITIAL_REVIEWS = [];
 
-// Comments are keyed by review ID. The keys here match stable IDs on
-// INITIAL_REVIEWS (r1, r2, r3) and FRIENDS reviews (e.g. "mdel-a1").
-const INITIAL_REVIEW_COMMENTS = {
-  "mdel-a1": [
-    {
-      id: "c1", username: "j.harlow", text: "The second half of this record is unreal. Glad you feel the same.", date: "2026-06-25",
-      replies: [
-        { id: "c1r1", username: "m.delacroix", text: "@j.harlow Nude into Reckoner is the best two-song stretch on any record.", date: "2026-06-25", replies: [] },
-        { id: "c1r2", username: "sara.spins", text: "@j.harlow @m.delacroix both right honestly", date: "2026-06-26", replies: [] },
-      ],
-    },
-    { id: "c2", username: "sara.spins", text: "Strong take but I think Weird Fishes carries the whole thing.", date: "2026-06-26", replies: [] },
-  ],
-  "kev-a1": [
-    {
-      id: "c3", username: "j.harlow", text: "House of Cards is so good, I can't believe it usually gets skipped over.", date: "2026-06-24",
-      replies: [
-        { id: "c3r1", username: "kev_listens", text: "@j.harlow it's the one everyone forgets to mention", date: "2026-06-24", replies: [] },
-      ],
-    },
-  ],
-  "sara-a4": [
-    { id: "c4", username: "m.delacroix", text: "Agreed on the narrative — it's the most intentional sequencing in rap.", date: "2026-05-16", replies: [] },
-  ],
-  "r1": [
-    {
-      id: "c5", username: "kev_listens", text: "Weird Fishes is the peak. Easy.", date: "2026-05-13",
-      replies: [
-        { id: "c5r1", username: "j.harlow", text: "@kev_listens absolutely no notes", date: "2026-05-13", replies: [] },
-      ],
-    },
-  ],
-};
+const INITIAL_REVIEW_COMMENTS = {};
 
-const INITIAL_NOTIFICATIONS = [
-  { id: "n1", type: "reply", fromUsername: "m.delacroix", text: "replied to your comment on In Rainbows", date: "2026-06-25", read: false, reviewId: "mdel-a1" },
-  { id: "n2", type: "tag", fromUsername: "sara.spins", text: "tagged you in a comment on In Rainbows", date: "2026-06-26", read: false, reviewId: "mdel-a1" },
-  { id: "n3", type: "follow", fromUsername: "vinylvane", text: "started following you", date: "2026-06-20", read: true },
-  { id: "n4", type: "comment", fromUsername: "kev_listens", text: "commented on your review of In Rainbows", date: "2026-05-13", read: true, reviewId: "r1" },
-];
+const INITIAL_NOTIFICATIONS = [];
 
-// Reactions are keyed by review ID. Each entry tracks which usernames
-// picked which reaction, so counts are derivable and we can show the
-// current user's own selection state for toggling.
-const INITIAL_REVIEW_REACTIONS = {
-  "mdel-a1": { heart: ["kev_listens", "sara.spins", "vinylvane", "_vinylhead", "noisefloor"], frown: [] },
-  "kev-a1": { heart: ["m.delacroix"], frown: [] },
-  "sara-a4": { heart: ["m.delacroix", "noisefloor"], frown: [] },
-  "r1": { heart: ["kev_listens", "m.delacroix"], frown: [] },
-  "r2": { heart: ["sara.spins"], frown: [] },
-  "cr-vane-a1": { heart: ["marcoeq"], frown: ["thinwhiteduke"] },
-};
-
-// ---------------------------------------------------------------------------
-// QUESTION OF THE DAY
-// A small rotating bank of prompts. TODAYS_QUESTION is fixed for the demo
-// (in the real app this would rotate daily server-side). Responses are a
-// flat list -- same shape regardless of who posted, merged into the feed
-// alongside reviews.
-// ---------------------------------------------------------------------------
+const INITIAL_REVIEW_REACTIONS = {};
 
 const QOTD_BANK = [
   "what's the best album of the 90s?",
@@ -148,17 +89,11 @@ const QOTD_BANK = [
 
 const TODAYS_QUESTION = QOTD_BANK[0];
 
-const INITIAL_QOTD_RESPONSES = [
-  { id: "qotd1", username: "kev_listens", questionText: TODAYS_QUESTION, albumId: "a9", date: "2026-06-28 · 4:02pm" },
-  { id: "qotd2", username: "m.delacroix", questionText: TODAYS_QUESTION, albumId: "a3", date: "2026-06-27 · 11:38pm" },
-];
+const INITIAL_QOTD_RESPONSES = [];
 
-const INITIAL_LISTEN_STATUS = {
-  a1: "listened", a2: "listened", a3: "want_to_listen", a4: "listened",
-  a5: "want_to_listen", a6: "listened", a7: "want_to_listen", a9: "listened",
-};
+const INITIAL_LISTEN_STATUS = {};
 
-const INITIAL_FAVORITES = ["a1", "a2", "a9"];
+const INITIAL_FAVORITES = [];
 
 // Album mixes group whole albums together around a theme (e.g. "saddest
 // albums ever"). Each album in the mix can optionally have a short note
@@ -203,7 +138,7 @@ const INITIAL_SAVED_SONG_MIXES = [
   },
 ];
 
-const PROFILE = { username: "j.harlow", displayName: "Jess Harlow", bio: "Bass player, vinyl hoarder, perpetually behind on new releases.", followers: 128, following: 84 };
+const PROFILE = { username: "", displayName: "", bio: "", followers: 0, following: 0 };
 
 // ---------------------------------------------------------------------------
 // EDITORIAL / STAFF CONTENT
@@ -423,56 +358,11 @@ const ALL_USERS = [
 // People the user follows, each with their own album reviews.
 // "Listened by" sections on an album page, and the home feed, both pull
 // from here.
-const FRIENDS = [
-  {
-    username: "kev_listens",
-    reviews: [
-      { id: "kev-a1", albumId: "a1", rating: 8, text: "House of Cards is criminally underrated on this one.", date: "2026-06-24" },
-      { id: "kev-a2", albumId: "a2", rating: 9, text: "", date: "2026-06-10" },
-      { id: "kev-a6", albumId: "a6", rating: 7, text: "Tame Impala but make it a little too long.", date: "2026-05-30" },
-      { id: "kev-a9", albumId: "a9", rating: 10, text: "", date: "2026-05-01" },
-    ],
-  },
-  {
-    username: "m.delacroix",
-    reviews: [
-      { id: "mdel-a1", albumId: "a1", rating: 10, text: "Perfect front to back, no skips.", date: "2026-06-25" },
-      { id: "mdel-a3", albumId: "a3", rating: 9, text: "The drama behind this record makes every track hit harder.", date: "2026-06-12" },
-      { id: "mdel-a11", albumId: "a11", rating: 9, text: "", date: "2026-05-20" },
-    ],
-  },
-  {
-    username: "sara.spins",
-    reviews: [
-      { id: "sara-a2", albumId: "a2", rating: 8, text: "", date: "2026-06-21" },
-      { id: "sara-a9", albumId: "a9", rating: 8, text: "Climbing Up the Walls still unsettles me every time.", date: "2026-06-08" },
-      { id: "sara-a4", albumId: "a4", rating: 9, text: "The narrative structure on this is unmatched in rap.", date: "2026-05-15" },
-      { id: "sara-a1", albumId: "a1", rating: 7, text: "", date: "2026-04-28" },
-    ],
-  },
-];
+const FRIENDS = [];
 
-// Reviews from the wider community (not people you follow) -- shown in the
-// "recent reviews" tab on an album page, and in the home feed when they
-// match an album you've logged or queued.
-const COMMUNITY_REVIEWS = [
-  { id: "cr-vane-a1", username: "vinylvane", albumId: "a1", rating: 9, text: "Bodysnatchers hits different live but this is still the definitive version.", date: "2026-06-20" },
-  { id: "cr-vinyl-a1", username: "_vinylhead", albumId: "a1", rating: 7, text: "Great but In Rainbows discourse is exhausting at this point.", date: "2026-06-18" },
-  { id: "cr-marco-a2", username: "marcoeq", albumId: "a2", rating: 10, text: "Pink Matter closes side A perfectly.", date: "2026-06-22" },
-  { id: "cr-noise-a9", username: "noisefloor", albumId: "a9", rating: 8, text: "Paranoid Android remains unmatched in scope.", date: "2026-06-15" },
-  { id: "cr-duke-a3", username: "thinwhiteduke", albumId: "a3", rating: 9, text: "Dreams might be the most perfectly produced song of its decade.", date: "2026-06-23" },
-  { id: "cr-lena-a5", username: "lp_lena", albumId: "a5", rating: 10, text: "Carole King wrote half of this decade's songbook and nobody talks about it.", date: "2026-06-19" },
-  { id: "cr-marco-a7", username: "marcoeq", albumId: "a7", rating: 9, text: "Pyramids on this record set up everything Blonde would become.", date: "2026-06-11" },
-  { id: "cr-noise-a4", username: "noisefloor", albumId: "a4", rating: 9, text: "Sing About Me is the emotional center of the whole record.", date: "2026-06-09" },
-];
+const COMMUNITY_REVIEWS = [];
 
-// Other public album mixes that include a given album -- shown in the
-// "album mixes" tab on an album's page.
-const COMMUNITY_ALBUM_MIXES = [
-  { id: "c1", title: "Albums for a 2am drive", owner: "noisefloor", albumIds: ["a1", "a6", "a11"] },
-  { id: "c2", title: "Headphones-only listening", owner: "marcoeq", albumIds: ["a2", "a7", "a9"] },
-  { id: "c3", title: "Records that reward patience", owner: "vinylvane", albumIds: ["a1", "a3", "a8"] },
-];
+const COMMUNITY_ALBUM_MIXES = [];
 
 // ---------------------------------------------------------------------------
 // THEMING
@@ -651,6 +541,7 @@ export default function SoundboardDemo() {
   }, [accentKey, darkMode]);
   const [query, setQuery] = useState("");
   const [liveAlbums, setLiveAlbums] = useState([]);
+  const [trendingAlbums, setTrendingAlbums] = useState([]);
   const [albumSearchLoading, setAlbumSearchLoading] = useState(false);
   const [albumTags, setAlbumTags] = useState(INITIAL_ALBUM_TAGS);
   const [reviewComments, setReviewComments] = useState(INITIAL_REVIEW_COMMENTS);
@@ -688,7 +579,23 @@ export default function SoundboardDemo() {
   const [newMixTitle, setNewMixTitle] = useState("");
   const [showNewMix, setShowNewMix] = useState(null); // null | "album" | "song"
   const [toast, setToast] = useState(null);
-  const [fetchedAlbums, setFetchedAlbums] = useState({});
+  const [profileStats, setProfileStats] = useState({ followers: 0, following: 0 });
+
+  // Load real follower/following counts when logged in
+  useEffect(() => {
+    if (!authUser) return;
+    apiFetch(`${BACKEND_URL}/api/users/${authUser.username}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.user) {
+          setProfileStats({
+            followers: data.user.followerCount || 0,
+            following: data.user.followingCount || 0,
+          });
+        }
+      })
+      .catch(() => {});
+  }, [authUser]);
 
   // Sync real user data into profile state whenever auth resolves.
   // This replaces the fake j.harlow placeholder with the logged-in user.
@@ -789,6 +696,22 @@ export default function SoundboardDemo() {
       .catch(() => {});
   }, [authUser]);
 
+  // Load trending albums (highest mbRatingCount) on mount for the browse page
+  useEffect(() => {
+    apiFetch(`${BACKEND_URL}/api/albums?limit=20`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.albums) {
+          setTrendingAlbums(data.albums.map((a) => ({
+            ...a,
+            artist: a.artistName || a.artist || "",
+            year: a.releaseYear || a.year || null,
+          })));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   // Debounced album search — fires 300ms after the user stops typing.
   // Uses the real backend API if available, falls back to mock ALBUMS.
   useEffect(() => {
@@ -823,7 +746,9 @@ export default function SoundboardDemo() {
     return reviews.find((r) => r.albumId === albumId);
   }
 
-  const filtered = liveAlbums.length > 0 ? liveAlbums : ALBUMS;
+  const filtered = query.trim().length >= 3
+    ? liveAlbums
+    : trendingAlbums.length > 0 ? trendingAlbums : ALBUMS;
 
 
   function openAlbum(id, albumObj) {
@@ -2648,8 +2573,8 @@ export default function SoundboardDemo() {
             )}
 
             <div style={{ display: "flex", gap: 32, padding: "20px 0", borderBottom: `1px solid ${LINE}` }}>
-              <Stat label="followers" value={profile.followers} onClick={() => flash("Followers list -- coming soon")} />
-              <Stat label="following" value={profile.following} onClick={() => flash("Following list -- coming soon")} />
+              <Stat label="followers" value={profileStats.followers} onClick={() => flash("Followers list -- coming soon")} />
+              <Stat label="following" value={profileStats.following} onClick={() => flash("Following list -- coming soon")} />
               <Stat label="listened" value={listenedCount} onClick={() => setView({ name: "albumList", filter: "listened" })} />
               <Stat label="queued" value={wantCount} onClick={() => setView({ name: "albumList", filter: "want_to_listen" })} />
               <Stat label="reviews" value={reviews.length} />
