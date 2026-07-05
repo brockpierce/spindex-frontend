@@ -385,6 +385,7 @@ const SURFACES = {
 };
 
 const ThemeContext = React.createContext(null);
+const AvatarContext = React.createContext({});
 
 function useTheme() {
   return React.useContext(ThemeContext);
@@ -580,7 +581,9 @@ export default function SoundboardDemo() {
   const [showNewMix, setShowNewMix] = useState(null); // null | "album" | "song"
   const [toast, setToast] = useState(null);
   const [fetchedAlbums, setFetchedAlbums] = useState({});
+  const [userAvatarCache, setUserAvatarCache] = useState({});
   const [profileStats, setProfileStats] = useState({ followers: 0, following: 0 });
+  const [showFollowList, setShowFollowList] = useState(null); // null | "followers" | "following"
 
   // Load real follower/following counts when logged in
   useEffect(() => {
@@ -614,6 +617,8 @@ export default function SoundboardDemo() {
       if (authUser.avatarUrl) {
         setAvatarUrl(authUser.avatarUrl);
         setDraftAvatarUrl(authUser.avatarUrl);
+        // Seed own avatar into the cache
+        setUserAvatarCache((prev) => ({ ...prev, [authUser.username]: authUser.avatarUrl }));
       }
     }
   }, [authUser]);
@@ -977,6 +982,20 @@ export default function SoundboardDemo() {
     });
   }
 
+  function fetchUserAvatar(username) {
+    if (!username || userAvatarCache[username] !== undefined) return;
+    // Mark as pending so we don't fire duplicate requests
+    setUserAvatarCache((prev) => ({ ...prev, [username]: null }));
+    apiFetch(`${BACKEND_URL}/api/users/${username}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.user) {
+          setUserAvatarCache((prev) => ({ ...prev, [username]: data.user.avatarUrl || null }));
+        }
+      })
+      .catch(() => {});
+  }
+
   function pushNotification(notif) {
     setNotifications((prev) => [{ ...notif, id: "n" + Date.now(), date: nowTimestamp(), read: false }, ...prev]);
   }
@@ -1207,6 +1226,7 @@ export default function SoundboardDemo() {
 
   return (
     <ThemeContext.Provider value={theme}>
+    <AvatarContext.Provider value={{ cache: userAvatarCache, fetch: fetchUserAvatar }}>
     <div style={{ fontFamily: "'JetBrains Mono', monospace", background: BG, minHeight: "100%", color: INK, overflowX: "hidden", maxWidth: "100vw" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap');
@@ -1257,6 +1277,15 @@ export default function SoundboardDemo() {
         </div>
       </div>
 
+      {showFollowList && (
+        <FollowListModal
+          kind={showFollowList}
+          userId={authUser?.id}
+          username={profile.username}
+          onClose={() => setShowFollowList(null)}
+          onVisitProfile={(u) => { setShowFollowList(null); openUserProfile(u); }}
+        />
+      )}
       {showQotdModal && (
         <QotdModal question={TODAYS_QUESTION} onSubmit={submitQotdResponse} onClose={() => setShowQotdModal(false)} />
       )}
@@ -2574,8 +2603,8 @@ export default function SoundboardDemo() {
             )}
 
             <div style={{ display: "flex", gap: 32, padding: "20px 0", borderBottom: `1px solid ${LINE}` }}>
-              <Stat label="followers" value={profileStats.followers} onClick={() => flash("Followers list -- coming soon")} />
-              <Stat label="following" value={profileStats.following} onClick={() => flash("Following list -- coming soon")} />
+              <Stat label="followers" value={profileStats.followers} onClick={() => setShowFollowList("followers")} />
+              <Stat label="following" value={profileStats.following} onClick={() => setShowFollowList("following")} />
               <Stat label="listened" value={listenedCount} onClick={() => setView({ name: "albumList", filter: "listened" })} />
               <Stat label="queued" value={wantCount} onClick={() => setView({ name: "albumList", filter: "want_to_listen" })} />
               <Stat label="reviews" value={reviews.length} />
@@ -2696,6 +2725,7 @@ export default function SoundboardDemo() {
         <span className="ui-sans" style={{ fontSize: 11, color: MUTE }}>© {new Date().getFullYear()} Spindex</span>
       </div>
     </div>
+    </AvatarContext.Provider>
     </ThemeContext.Provider>
   );
 }
@@ -3768,21 +3798,32 @@ function SongMixDetail({ mix, isOwn, onBack, onOpenAlbum, onAddTrack, onRemoveTr
 
 function Avatar({ username, size = 30 }) {
   const { BLUE } = useTheme();
-  const initial = username.replace(/^[._]+/, "").charAt(0).toUpperCase();
+  const avatarCtx = React.useContext(AvatarContext);
+  const initial = (username || "?").replace(/^[._]+/, "").charAt(0).toUpperCase();
+
+  // Trigger a fetch if not cached yet
+  React.useEffect(() => {
+    if (username && avatarCtx.fetch) avatarCtx.fetch(username);
+  }, [username]);
+
+  const avatarUrl = username && avatarCtx.cache ? avatarCtx.cache[username] : null;
+
+  if (avatarUrl) {
+    return (
+      <img
+        src={avatarUrl}
+        alt={username}
+        style={{ width: size, height: size, borderRadius: 8, objectFit: "cover", flexShrink: 0 }}
+      />
+    );
+  }
+
   return (
     <div
       style={{
-        width: size,
-        height: size,
-        borderRadius: 8,
-        background: BLUE,
-        color: "#fff",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontSize: size * 0.42,
-        fontWeight: 600,
-        flexShrink: 0,
+        width: size, height: size, borderRadius: 8, background: BLUE, color: "#fff",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        fontSize: size * 0.42, fontWeight: 600, flexShrink: 0,
       }}
       className="ui-sans"
     >
@@ -3886,6 +3927,52 @@ function AlbumCommunitySection({ albumId, albumTab, setAlbumTab, openAlbum, revi
 // TermsScreen is used in two contexts:
 // - `inline=true`: rendered inside the main app (navigated to from footer)
 // - `inline=false/undefined`: full-page, rendered from AuthScreen
+function FollowListModal({ kind, userId, username, onClose, onVisitProfile }) {
+  const { BLUE, INK, LINE, MUTE, BG } = useTheme();
+  const [users, setUsers] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    if (!userId) return;
+    const endpoint = kind === "followers"
+      ? `${BACKEND_URL}/api/follows/${userId}/followers`
+      : `${BACKEND_URL}/api/follows/${userId}/following`;
+    apiFetch(endpoint)
+      .then((r) => r.json())
+      .then((data) => setUsers(data.users || []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [kind, userId]);
+
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: BG, border: `1.5px solid ${INK}`, borderRadius: 10, padding: 24, width: "100%", maxWidth: 380, maxHeight: "70vh", overflowY: "auto" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+          <div className="ui-sans" style={{ fontSize: 15, fontWeight: 600 }}>{kind}</div>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: MUTE, padding: 0 }}><X size={16} /></button>
+        </div>
+        {loading && <div className="ui-sans" style={{ color: MUTE, fontSize: 13 }}>loading...</div>}
+        {!loading && users.length === 0 && (
+          <div className="ui-sans" style={{ color: MUTE, fontSize: 13 }}>
+            {kind === "followers" ? "no followers yet." : "not following anyone yet."}
+          </div>
+        )}
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {users.map((u) => (
+            <div key={u.id} onClick={() => onVisitProfile(u.username)} style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}>
+              <Avatar username={u.username} size={38} />
+              <div className="ui-sans">
+                <div style={{ fontSize: 13.5, fontWeight: 600 }}>{u.displayName || u.username}</div>
+                <div style={{ fontSize: 12, color: MUTE }}>@{u.username}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function TermsScreen({ onBack, inline }) {
   const { BLUE, INK, LINE, MUTE, BG } = useTheme();
   const lastUpdated = "July 1, 2026";
