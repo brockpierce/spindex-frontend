@@ -1202,23 +1202,35 @@ export default function SoundboardDemo() {
     setViewedUser(null);
     setViewedUserReviews([]);
     setView({ name: "userProfile", username });
-    // Fetch real user data then their reviews by ID
     apiFetch(`${BACKEND_URL}/api/users/${username}`)
       .then((r) => r.json())
       .then((data) => {
         if (data.user) {
           setViewedUser(data.user);
-          // Now fetch reviews using the real user ID
           return apiFetch(`${BACKEND_URL}/api/reviews/user/${data.user.id}`);
         }
       })
       .then((r) => r && r.json())
       .then((data) => {
         if (data && data.reviews) {
-          setViewedUserReviews(data.reviews.map((r) => ({
+          const mapped = data.reviews.map((r) => ({
             id: r.id, albumId: r.albumId, rating: r.rating,
             text: r.reviewText || "", date: r.createdAt ? new Date(r.createdAt).toISOString().slice(0, 10) : "",
-          })));
+          }));
+          setViewedUserReviews(mapped);
+          // Prefetch album data for each review so covers show immediately
+          mapped.forEach((r) => {
+            if (!r.albumId) return;
+            apiFetch(`${BACKEND_URL}/api/albums/${r.albumId}`)
+              .then((res) => res.json())
+              .then((d) => {
+                if (d.album) {
+                  const a = d.album;
+                  setFetchedAlbums((prev) => ({ ...prev, [a.id]: { ...a, artist: a.artistName || "", year: a.releaseYear || null } }));
+                }
+              })
+              .catch(() => {});
+          });
         }
       })
       .catch(() => {});
