@@ -1195,8 +1195,33 @@ export default function SoundboardDemo() {
       });
   }
 
+  const [viewedUser, setViewedUser] = useState(null);
+  const [viewedUserReviews, setViewedUserReviews] = useState([]);
+
   function openUserProfile(username) {
+    setViewedUser(null);
+    setViewedUserReviews([]);
     setView({ name: "userProfile", username });
+    // Fetch real user data then their reviews by ID
+    apiFetch(`${BACKEND_URL}/api/users/${username}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.user) {
+          setViewedUser(data.user);
+          // Now fetch reviews using the real user ID
+          return apiFetch(`${BACKEND_URL}/api/reviews/user/${data.user.id}`);
+        }
+      })
+      .then((r) => r && r.json())
+      .then((data) => {
+        if (data && data.reviews) {
+          setViewedUserReviews(data.reviews.map((r) => ({
+            id: r.id, albumId: r.albumId, rating: r.rating,
+            text: r.reviewText || "", date: r.createdAt ? new Date(r.createdAt).toISOString().slice(0, 10) : "",
+          })));
+        }
+      })
+      .catch(() => {});
   }
 
   function logout() {
@@ -1709,12 +1734,16 @@ export default function SoundboardDemo() {
 
         {/* ---------------- USER PROFILE (someone else's) ---------------- */}
         {view.name === "userProfile" && (() => {
-          const user = ALL_USERS.find((u) => u.username === view.username);
-          if (!user) return null;
-          const friendEntry = FRIENDS.find((f) => f.username === user.username);
-          const userReviews = friendEntry
-            ? [...friendEntry.reviews].sort((a, b) => (a.date < b.date ? 1 : -1))
-            : COMMUNITY_REVIEWS.filter((r) => r.username === user.username).sort((a, b) => (a.date < b.date ? 1 : -1));
+          const user = viewedUser;
+          if (!user) return (
+            <div>
+              <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 12.5, marginBottom: 22, cursor: "pointer" }} onClick={() => setView({ name: "home" })}>
+                <ChevronLeft size={14} /> back
+              </div>
+              <div className="ui-sans" style={{ color: MUTE, fontSize: 13 }}>loading...</div>
+            </div>
+          );
+          const userReviews = [...viewedUserReviews].sort((a, b) => (a.date < b.date ? 1 : -1));
           const userAvgRating = userReviews.length ? (userReviews.reduce((s, r) => s + r.rating, 0) / userReviews.length).toFixed(1) : "--";
           return (
             <div>
@@ -1724,8 +1753,9 @@ export default function SoundboardDemo() {
               <div style={{ display: "flex", alignItems: "center", gap: 16, paddingBottom: 22, borderBottom: `1.5px solid ${INK}` }}>
                 <Avatar username={user.username} size={56} />
                 <div className="ui-sans" style={{ flex: 1 }}>
-                  <div style={{ fontSize: 19, fontWeight: 600 }}>{user.displayName}</div>
+                  <div style={{ fontSize: 19, fontWeight: 600 }}>{user.displayName || user.username}</div>
                   <div style={{ fontSize: 12, color: MUTE }}>@{user.username}</div>
+                  {user.bio && <div style={{ fontSize: 13, color: MUTE, marginTop: 4 }}>{user.bio}</div>}
                 </div>
                 <button
                   className="sb-btn"
@@ -1737,27 +1767,10 @@ export default function SoundboardDemo() {
               </div>
 
               <div style={{ display: "flex", gap: 32, padding: "20px 0", borderBottom: `1px solid ${LINE}` }}>
-                <Stat label="followers" value={user.followerCount} onClick={() => flash("Followers list -- coming soon")} />
-                <Stat label="following" value={user.followingCount} onClick={() => flash("Following list -- coming soon")} />
-                <Stat label="listened" value={userReviews.length} />
+                <Stat label="followers" value={user.followerCount || 0} />
+                <Stat label="following" value={user.followingCount || 0} />
                 <Stat label="reviews" value={userReviews.length} />
                 <Stat label="avg rating" value={userAvgRating} />
-              </div>
-
-              <div style={{ marginTop: 26 }}>
-                <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 10 }} className="ui-sans">favorite albums</div>
-                <div style={{ display: "flex", gap: 16 }}>
-                  {user.favoriteAlbumIds.map((id) => {
-                    const album = albumById(id);
-                    return (
-                      <div key={id} onClick={() => openAlbum(id)} className="sb-cover-wrap">
-                        <AlbumCover album={album} size={96} />
-                        <div className="ui-sans" style={{ fontSize: 11.5, fontWeight: 600, marginTop: 6, maxWidth: 96 }}>{album.title}</div>
-                      </div>
-                    );
-                  })}
-                  {user.favoriteAlbumIds.length === 0 && <div className="ui-sans" style={{ color: MUTE, fontSize: 13 }}>no favorites picked yet.</div>}
-                </div>
               </div>
 
               <div style={{ marginTop: 30 }}>
@@ -1767,7 +1780,7 @@ export default function SoundboardDemo() {
                     const album = fetchedAlbums[r.albumId] || albumById(r.albumId);
                     if (!album) return null;
                     return (
-                      <div key={i} onClick={() => openAlbum(r.albumId)} style={{ display: "flex", gap: 14, cursor: "pointer" }}>
+                      <div key={i} onClick={() => openAlbum(r.albumId, album)} style={{ display: "flex", gap: 14, cursor: "pointer" }}>
                         <AlbumCover album={album} size={54} />
                         <div style={{ flex: 1 }} className="ui-sans">
                           <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
@@ -1781,52 +1794,10 @@ export default function SoundboardDemo() {
                     );
                   })}
                   {userReviews.length === 0 && (
-                    <div className="ui-sans" style={{ color: MUTE, fontSize: 13.5 }}>no public activity yet.</div>
+                    <div className="ui-sans" style={{ color: MUTE, fontSize: 13.5 }}>no reviews yet.</div>
                   )}
                 </div>
               </div>
-
-              <div style={{ marginTop: 30 }}>
-                <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 12 }} className="ui-sans">mixes</div>
-                <div style={{ display: "flex", border: `1.5px solid ${LINE}`, borderRadius: 6, overflow: "hidden", width: 220, marginBottom: 18 }}>
-                  <button onClick={() => setUserProfileMixTab("album")} style={{ flex: 1, padding: "7px 0", fontFamily: "inherit", fontSize: 12, fontWeight: 500, cursor: "pointer", border: "none", background: userProfileMixTab === "album" ? INK : "transparent", color: userProfileMixTab === "album" ? BG : INK }}>album mixes</button>
-                  <button onClick={() => setUserProfileMixTab("song")} style={{ flex: 1, padding: "7px 0", fontFamily: "inherit", fontSize: 12, fontWeight: 500, cursor: "pointer", border: "none", borderLeft: `1.5px solid ${LINE}`, background: userProfileMixTab === "song" ? INK : "transparent", color: userProfileMixTab === "song" ? BG : INK }}>song mixes</button>
-                </div>
-                {userProfileMixTab === "album" && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                    {(user.albumMixes || []).map((m) => (
-                      <div key={m.id} onClick={() => setView({ name: "albumMixDetail", id: m.id, mix: m, from: { name: "userProfile", username: user.username } })} style={{ display: "flex", alignItems: "center", gap: 12, border: `1.5px solid ${LINE}`, borderRadius: 8, padding: "12px 14px", cursor: "pointer" }}>
-                        <div style={{ display: "flex" }}>
-                          {m.albums.slice(0, 3).map((a, i) => (
-                            <div key={a.albumId} style={{ marginLeft: i === 0 ? 0 : -16, zIndex: 3 - i, border: `2px solid ${BG}`, borderRadius: 7 }}>
-                              <AlbumCover album={albumById(a.albumId)} size={38} />
-                            </div>
-                          ))}
-                          {m.albums.length === 0 && <ListMusic size={32} color={LINE} strokeWidth={1.4} />}
-                        </div>
-                        <div className="ui-sans" style={{ flex: 1 }}>
-                          <div style={{ fontSize: 13.5, fontWeight: 600 }}>{m.title}</div>
-                          <div style={{ fontSize: 11, color: MUTE, marginTop: 2 }}>{m.albums.length} album{m.albums.length !== 1 ? "s" : ""}</div>
-                        </div>
-                      </div>
-                    ))}
-                    {(user.albumMixes || []).length === 0 && <div className="ui-sans" style={{ color: MUTE, fontSize: 13 }}>no album mixes yet.</div>}
-                  </div>
-                )}
-                {userProfileMixTab === "song" && (
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: "16px 14px" }}>
-                    {(user.songMixes || []).map((m) => (
-                      <div key={m.id} onClick={() => setView({ name: "songMixDetail", id: m.id, mix: m, from: { name: "userProfile", username: user.username } })} className="sb-cover-wrap">
-                        <SongMixCover mix={m} size={130} />
-                        <div className="ui-sans" style={{ fontSize: 12.5, fontWeight: 600, marginTop: 6 }}>{m.title}</div>
-                        <div className="ui-sans" style={{ fontSize: 11, color: MUTE }}>{m.tracks.length} track{m.tracks.length !== 1 ? "s" : ""}</div>
-                      </div>
-                    ))}
-                    {(user.songMixes || []).length === 0 && <div className="ui-sans" style={{ color: MUTE, fontSize: 13, gridColumn: "1/-1" }}>no song mixes yet.</div>}
-                  </div>
-                )}
-              </div>
-
             </div>
           );
         })()}
