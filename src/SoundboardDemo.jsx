@@ -579,6 +579,7 @@ export default function SoundboardDemo() {
   const [newMixTitle, setNewMixTitle] = useState("");
   const [showNewMix, setShowNewMix] = useState(null); // null | "album" | "song"
   const [toast, setToast] = useState(null);
+  const [fetchedAlbums, setFetchedAlbums] = useState({});
   const [profileStats, setProfileStats] = useState({ followers: 0, following: 0 });
 
   // Load real follower/following counts when logged in
