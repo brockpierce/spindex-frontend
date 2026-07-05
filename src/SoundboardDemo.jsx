@@ -1112,7 +1112,7 @@ export default function SoundboardDemo() {
       .then((r) => r.json())
       .then((data) => {
         if (data.feed) {
-          setRealFeedItems(data.feed.map((item) => ({
+          const items = data.feed.map((item) => ({
             itemType: "review",
             id: item.id,
             username: item.username,
@@ -1120,7 +1120,21 @@ export default function SoundboardDemo() {
             rating: item.rating,
             text: item.text || "",
             date: item.date ? new Date(item.date).toISOString().slice(0, 10) : "",
-          })));
+          }));
+          setRealFeedItems(items);
+          // Prefetch album data for all feed items so covers show immediately
+          const uniqueAlbumIds = [...new Set(items.map((i) => i.albumId).filter(Boolean))];
+          uniqueAlbumIds.forEach((id) => {
+            apiFetch(`${BACKEND_URL}/api/albums/${id}`)
+              .then((r) => r.json())
+              .then((d) => {
+                if (d.album) {
+                  const a = d.album;
+                  setFetchedAlbums((prev) => ({ ...prev, [a.id]: { ...a, artist: a.artistName || "", year: a.releaseYear || null } }));
+                }
+              })
+              .catch(() => {});
+          });
         }
       })
       .catch(() => {});
@@ -1474,7 +1488,7 @@ export default function SoundboardDemo() {
                       }
 
                       if (c.itemType === "qotd") {
-                        const album = albumById(c.albumId);
+                        const album = fetchedAlbums[c.albumId] || albumById(c.albumId);
                         return (
                           <div key={i} style={{ border: `1.5px solid ${BLUE}`, borderRadius: 8, padding: "14px 16px" }}>
                             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
@@ -1517,7 +1531,7 @@ export default function SoundboardDemo() {
                           </div>
                         );
                       }
-                      const album = albumById(c.albumId);
+                      const album = fetchedAlbums[c.albumId] || albumById(c.albumId);
                       return (
                         <div key={i} style={{ border: `1.5px solid ${LINE}`, borderRadius: 8, padding: "14px 16px" }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
