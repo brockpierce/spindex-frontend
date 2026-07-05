@@ -697,9 +697,9 @@ export default function SoundboardDemo() {
       .catch(() => {});
   }, [authUser]);
 
-  // Load trending albums (highest mbRatingCount) on mount for the browse page
+  // Load curated trending albums on mount for the browse page
   useEffect(() => {
-    apiFetch(`${BACKEND_URL}/api/albums?limit=20`)
+    apiFetch(`${BACKEND_URL}/api/albums/trending`)
       .then((r) => r.json())
       .then((data) => {
         if (data.albums) {
