@@ -1280,10 +1280,9 @@ export default function SoundboardDemo() {
     <AvatarContext.Provider value={{ cache: userAvatarCache, fetch: fetchUserAvatar }}>
     <div style={{ fontFamily: "Helvetica Neue, Helvetica, Arial, sans-serif", background: BG, minHeight: "100%", color: INK, overflowX: "hidden", maxWidth: "100vw" }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;600;700&display=swap');
         * { box-sizing: border-box; }
         html, body { overflow-x: hidden; max-width: 100vw; }
-        .ui-sans { font-family: 'Figtree', -apple-system, Helvetica, Arial, sans-serif; }
+        .ui-sans { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
         .sb-btn { font-family: inherit; border: 1.5px solid ${INK}; background: transparent; color: ${INK}; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; letter-spacing: 0.01em; transition: background 0.12s, color 0.12s, border-color 0.12s; }
         .sb-btn:hover { background: ${INK}; color: ${BG}; }
         .sb-btn-solid { background: ${BLUE}; color: #fff; border-color: ${BLUE}; }
@@ -1292,7 +1291,7 @@ export default function SoundboardDemo() {
         .sb-cover-wrap:hover { opacity: 0.82; }
         .sb-input { font-family: inherit; border: 1.5px solid ${LINE}; background: ${BG}; padding: 9px 12px; font-size: 13px; outline: none; color: ${INK}; border-radius: 6px; width: 100%; }
         .sb-input:focus { border-color: ${BLUE}; }
-        .sb-textarea { font-family: 'Figtree', -apple-system, Helvetica, Arial, sans-serif; border: 1.5px solid ${LINE}; background: ${BG}; padding: 11px 12px; font-size: 13.5px; outline: none; color: ${INK}; width: 100%; border-radius: 6px; resize: vertical; line-height: 1.6; }
+        .sb-textarea { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; border: 1.5px solid ${LINE}; background: ${BG}; padding: 11px 12px; font-size: 13.5px; outline: none; color: ${INK}; width: 100%; border-radius: 6px; resize: vertical; line-height: 1.6; }
         .sb-textarea:focus { border-color: ${BLUE}; }
         .sb-nav-item { cursor: pointer; font-size: 12px; letter-spacing: 0.03em; text-transform: uppercase; font-weight: 500; color: ${MUTE}; padding: 6px 0; border-bottom: 2px solid transparent; }
         .sb-nav-item.active { color: ${INK}; border-bottom-color: ${BLUE}; }
@@ -2462,10 +2461,10 @@ export default function SoundboardDemo() {
                   <img
                     src={avatarUrl}
                     alt=""
-                    style={{ width: 60, height: 60, borderRadius: 12, objectFit: "cover", flexShrink: 0 }}
+                    style={{ width: 60, height: 60, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }}
                   />
                 ) : (
-                  <div style={{ width: 60, height: 60, borderRadius: 12, background: BLUE, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <div style={{ width: 60, height: 60, borderRadius: "50%", background: BLUE, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                     <User color="#fff" size={26} />
                   </div>
                 )}
@@ -2492,9 +2491,9 @@ export default function SoundboardDemo() {
 
                 <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 18 }}>
                   {draftAvatarUrl ? (
-                    <img src={draftAvatarUrl} alt="" style={{ width: 56, height: 56, borderRadius: 12, objectFit: "cover", flexShrink: 0 }} />
+                    <img src={draftAvatarUrl} alt="" style={{ width: 56, height: 56, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
                   ) : (
-                    <div style={{ width: 56, height: 56, borderRadius: 12, background: BLUE, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <div style={{ width: 56, height: 56, borderRadius: "50%", background: BLUE, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                       <User color="#fff" size={24} />
                     </div>
                   )}
@@ -3812,7 +3811,7 @@ function Avatar({ username, size = 30 }) {
       <img
         src={avatarUrl}
         alt={username}
-        style={{ width: size, height: size, borderRadius: 8, objectFit: "cover", flexShrink: 0 }}
+        style={{ width: size, height: size, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }}
       />
     );
   }
@@ -3820,7 +3819,7 @@ function Avatar({ username, size = 30 }) {
   return (
     <div
       style={{
-        width: size, height: size, borderRadius: 8, background: BLUE, color: "#fff",
+        width: size, height: size, borderRadius: "50%", background: BLUE, color: "#fff",
         display: "flex", alignItems: "center", justifyContent: "center",
         fontSize: size * 0.42, fontWeight: 600, flexShrink: 0,
       }}
@@ -4062,7 +4061,7 @@ function TermsScreen({ onBack, inline }) {
   }
 
   return (
-    <div style={{ fontFamily: "'Figtree', -apple-system, Helvetica, Arial, sans-serif", background: BG, minHeight: "100vh", color: INK, padding: "40px 24px" }}>
+    <div style={{ fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", background: BG, minHeight: "100vh", color: INK, padding: "40px 24px" }}>
       {content}
     </div>
   );
@@ -4119,7 +4118,7 @@ function AuthScreen({ backendUrl, onAuthed }) {
   return (
     <div
       style={{
-        fontFamily: "'Figtree', -apple-system, Helvetica, Arial, sans-serif",
+        fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
         background: theme.BG,
         minHeight: "100vh",
         color: INK,
@@ -4130,8 +4129,7 @@ function AuthScreen({ backendUrl, onAuthed }) {
       }}
     >
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;600;700&display=swap');
-        .ui-sans { font-family: 'Figtree', -apple-system, Helvetica, Arial, sans-serif; }
+        .ui-sans { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
         .sb-btn { font-family: inherit; border: 1.5px solid ${INK}; background: transparent; color: ${INK}; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; letter-spacing: 0.01em; transition: background 0.12s, color 0.12s, border-color 0.12s; }
         .sb-btn:hover { background: ${INK}; color: ${theme.BG}; }
         .sb-btn-solid { background: ${BLUE}; color: #fff; border-color: ${BLUE}; }
