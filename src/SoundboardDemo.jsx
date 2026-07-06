@@ -1808,14 +1808,14 @@ export default function SoundboardDemo() {
                     if (!album) return null;
                     return (
                       <div key={i} onClick={() => openAlbum(r.albumId, album)} style={{ display: "flex", gap: 14, cursor: "pointer" }}>
-                        <AlbumCover album={album} size={54} />
+                        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                          <AlbumCover album={album} size={54} />
+                          <span className="ui-sans" style={{ fontSize: 15, fontWeight: 700, color: BLUE, letterSpacing: "-0.01em" }}>{r.rating}/10</span>
+                        </div>
                         <div style={{ flex: 1 }} className="ui-sans">
-                          <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                            <span style={{ fontSize: 13.5, fontWeight: 600 }}>{album.title}</span>
-                            <span style={{ fontSize: 11, color: MUTE }}>{r.date}</span>
-                          </div>
-                          <span style={{ fontSize: 11.5, fontWeight: 600, color: BLUE }}>{r.rating}/10</span>
-                          {r.text && <div style={{ fontSize: 13, color: INK, marginTop: 4, lineHeight: 1.55 }}>{r.text}</div>}
+                          <div style={{ fontSize: 13.5, fontWeight: 600, lineHeight: 1.3 }}>{album.title}</div>
+                          <div style={{ fontSize: 11.5, color: MUTE, marginTop: 2 }}>{album.artist || album.artistName} · {r.date}</div>
+                          {r.text && <div style={{ fontSize: 13, color: INK, marginTop: 6, lineHeight: 1.6 }}>{r.text}</div>}
                         </div>
                       </div>
                     );
@@ -2649,14 +2649,14 @@ export default function SoundboardDemo() {
                   if (!album) return null;
                   return (
                     <div key={r.id} onClick={() => openAlbum(r.albumId)} style={{ display: "flex", gap: 14, cursor: "pointer", width: "100%", maxWidth: isMobile ? 340 : "100%" }}>
-                      <AlbumCover album={album} size={54} />
+                      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                        <AlbumCover album={album} size={54} />
+                        <span className="ui-sans" style={{ fontSize: 15, fontWeight: 700, color: BLUE, letterSpacing: "-0.01em" }}>{r.rating}/10</span>
+                      </div>
                       <div style={{ flex: 1 }} className="ui-sans">
-                        <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
-                          <span style={{ fontSize: 13.5, fontWeight: 600 }}>{album.title}</span>
-                          <span style={{ fontSize: 11, color: MUTE }}>{r.date}</span>
-                        </div>
-                        <span style={{ fontSize: 11.5, fontWeight: 600, color: BLUE }}>{r.rating}/10</span>
-                        {r.text && <div style={{ fontSize: 13, color: INK, marginTop: 4, lineHeight: 1.55 }}>{r.text}</div>}
+                        <div style={{ fontSize: 13.5, fontWeight: 600, lineHeight: 1.3 }}>{album.title}</div>
+                        <div style={{ fontSize: 11.5, color: MUTE, marginTop: 2 }}>{album.artist || album.artistName} · {r.date}</div>
+                        {r.text && <div style={{ fontSize: 13, color: INK, marginTop: 6, lineHeight: 1.6 }}>{r.text}</div>}
                         {(r.favTrack || r.leastFavTrack) && (
                           <div style={{ fontSize: 11.5, color: MUTE, marginTop: 5, display: "flex", gap: 14, flexWrap: "wrap" }}>
                             {r.favTrack && <span>♡ {r.favTrack}</span>}
