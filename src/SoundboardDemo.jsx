@@ -1278,7 +1278,7 @@ export default function SoundboardDemo() {
   return (
     <ThemeContext.Provider value={theme}>
     <AvatarContext.Provider value={{ cache: userAvatarCache, fetch: fetchUserAvatar }}>
-    <div style={{ fontFamily: "'Figtree', -apple-system, Helvetica, Arial, sans-serif", background: BG, minHeight: "100%", color: INK, overflowX: "hidden", maxWidth: "100vw" }}>
+    <div style={{ fontFamily: "Helvetica Neue, Helvetica, Arial, sans-serif", background: BG, minHeight: "100%", color: INK, overflowX: "hidden", maxWidth: "100vw" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;600;700&display=swap');
         * { box-sizing: border-box; }
