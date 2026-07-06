@@ -1278,12 +1278,12 @@ export default function SoundboardDemo() {
   return (
     <ThemeContext.Provider value={theme}>
     <AvatarContext.Provider value={{ cache: userAvatarCache, fetch: fetchUserAvatar }}>
-    <div style={{ fontFamily: "'JetBrains Mono', monospace", background: BG, minHeight: "100%", color: INK, overflowX: "hidden", maxWidth: "100vw" }}>
+    <div style={{ fontFamily: "'Figtree', -apple-system, Helvetica, Arial, sans-serif", background: BG, minHeight: "100%", color: INK, overflowX: "hidden", maxWidth: "100vw" }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;600;700&display=swap');
         * { box-sizing: border-box; }
         html, body { overflow-x: hidden; max-width: 100vw; }
-        .ui-sans { font-family: 'Inter', system-ui, sans-serif; }
+        .ui-sans { font-family: 'Figtree', -apple-system, Helvetica, Arial, sans-serif; }
         .sb-btn { font-family: inherit; border: 1.5px solid ${INK}; background: transparent; color: ${INK}; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; letter-spacing: 0.01em; transition: background 0.12s, color 0.12s, border-color 0.12s; }
         .sb-btn:hover { background: ${INK}; color: ${BG}; }
         .sb-btn-solid { background: ${BLUE}; color: #fff; border-color: ${BLUE}; }
@@ -1292,7 +1292,7 @@ export default function SoundboardDemo() {
         .sb-cover-wrap:hover { opacity: 0.82; }
         .sb-input { font-family: inherit; border: 1.5px solid ${LINE}; background: ${BG}; padding: 9px 12px; font-size: 13px; outline: none; color: ${INK}; border-radius: 6px; width: 100%; }
         .sb-input:focus { border-color: ${BLUE}; }
-        .sb-textarea { font-family: 'Inter', sans-serif; border: 1.5px solid ${LINE}; background: ${BG}; padding: 11px 12px; font-size: 13.5px; outline: none; color: ${INK}; width: 100%; border-radius: 6px; resize: vertical; line-height: 1.6; }
+        .sb-textarea { font-family: 'Figtree', -apple-system, Helvetica, Arial, sans-serif; border: 1.5px solid ${LINE}; background: ${BG}; padding: 11px 12px; font-size: 13.5px; outline: none; color: ${INK}; width: 100%; border-radius: 6px; resize: vertical; line-height: 1.6; }
         .sb-textarea:focus { border-color: ${BLUE}; }
         .sb-nav-item { cursor: pointer; font-size: 12px; letter-spacing: 0.03em; text-transform: uppercase; font-weight: 500; color: ${MUTE}; padding: 6px 0; border-bottom: 2px solid transparent; }
         .sb-nav-item.active { color: ${INK}; border-bottom-color: ${BLUE}; }
@@ -4062,7 +4062,7 @@ function TermsScreen({ onBack, inline }) {
   }
 
   return (
-    <div style={{ fontFamily: "'JetBrains Mono', monospace", background: BG, minHeight: "100vh", color: INK, padding: "40px 24px" }}>
+    <div style={{ fontFamily: "'Figtree', -apple-system, Helvetica, Arial, sans-serif", background: BG, minHeight: "100vh", color: INK, padding: "40px 24px" }}>
       {content}
     </div>
   );
@@ -4119,7 +4119,7 @@ function AuthScreen({ backendUrl, onAuthed }) {
   return (
     <div
       style={{
-        fontFamily: "'JetBrains Mono', monospace",
+        fontFamily: "'Figtree', -apple-system, Helvetica, Arial, sans-serif",
         background: theme.BG,
         minHeight: "100vh",
         color: INK,
@@ -4130,8 +4130,8 @@ function AuthScreen({ backendUrl, onAuthed }) {
       }}
     >
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap');
-        .ui-sans { font-family: 'Inter', system-ui, sans-serif; }
+        @import url('https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;600;700&display=swap');
+        .ui-sans { font-family: 'Figtree', -apple-system, Helvetica, Arial, sans-serif; }
         .sb-btn { font-family: inherit; border: 1.5px solid ${INK}; background: transparent; color: ${INK}; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; letter-spacing: 0.01em; transition: background 0.12s, color 0.12s, border-color 0.12s; }
         .sb-btn:hover { background: ${INK}; color: ${theme.BG}; }
         .sb-btn-solid { background: ${BLUE}; color: #fff; border-color: ${BLUE}; }
