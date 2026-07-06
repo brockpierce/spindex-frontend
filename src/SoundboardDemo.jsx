@@ -1794,7 +1794,7 @@ export default function SoundboardDemo() {
                 </button>
               </div>
 
-              <div style={{ display: "flex", gap: isMobile ? 16 : 28, padding: "20px 0", borderBottom: `1px solid ${LINE}`, overflowX: "auto" }}>
+              <div style={{ display: "flex", gap: isMobile ? 16 : 40, padding: "20px 0", borderBottom: `1px solid ${LINE}`, overflowX: "auto", justifyContent: "center", alignItems: "flex-start" }}>
                 <Stat label="followers" value={user.followerCount || 0} />
                 <Stat label="following" value={user.followingCount || 0} />
                 <Stat label="reviews" value={userReviews.length} />
@@ -2602,7 +2602,7 @@ export default function SoundboardDemo() {
               </div>
             )}
 
-            <div style={{ display: "flex", gap: isMobile ? 16 : 40, padding: "20px 0", borderBottom: `1px solid ${LINE}`, overflowX: "auto", justifyContent: "center" }}>
+            <div style={{ display: "flex", gap: isMobile ? 16 : 40, padding: "20px 0", borderBottom: `1px solid ${LINE}`, overflowX: "auto", justifyContent: "center", alignItems: "flex-start" }}>
               <Stat label="followers" value={profileStats.followers} onClick={() => setShowFollowList("followers")} />
               <Stat label="following" value={profileStats.following} onClick={() => setShowFollowList("following")} />
               <Stat label="listened" value={listenedCount} onClick={() => setView({ name: "albumList", filter: "listened" })} />
@@ -2732,24 +2732,24 @@ export default function SoundboardDemo() {
 
 function Stat({ label, value, onClick }) {
   const { MUTE, INK } = useTheme();
-  const content = (
-    <>
-      <div style={{ fontSize: 18, fontWeight: 600 }}>{value}</div>
-      <div style={{ fontSize: 10, color: MUTE, textTransform: "uppercase", letterSpacing: "0.04em", marginTop: 2 }}>{label}</div>
-    </>
+  return (
+    <div
+      onClick={onClick}
+      className="ui-sans"
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      style={{
+        flexShrink: 0,
+        textAlign: "left",
+        cursor: onClick ? "pointer" : "default",
+        color: INK,
+        userSelect: "none",
+      }}
+    >
+      <div style={{ fontSize: 18, fontWeight: 600, lineHeight: 1.2 }}>{value}</div>
+      <div style={{ fontSize: 10, color: MUTE, textTransform: "uppercase", letterSpacing: "0.04em", marginTop: 4, lineHeight: 1.2 }}>{label}</div>
+    </div>
   );
-  if (onClick) {
-    return (
-      <button
-        onClick={onClick}
-        className="ui-sans"
-        style={{ background: "transparent", border: "none", padding: 0, textAlign: "left", cursor: "pointer", color: INK, fontFamily: "inherit", flexShrink: 0 }}
-      >
-        {content}
-      </button>
-    );
-  }
-  return <div className="ui-sans" style={{ flexShrink: 0 }}>{content}</div>;
 }
 
 function AddToAlbumMixInline({ album, albumMixes, onAdd }) {
