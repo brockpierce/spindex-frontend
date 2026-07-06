@@ -1405,7 +1405,9 @@ export default function SoundboardDemo() {
               <div style={{ display: "flex", gap: 0, border: `1.5px solid ${INK}`, borderRadius: 6, overflow: "hidden", flexShrink: 0 }}>
                 <button onClick={() => { setHomeTab("everyone"); if (publicFeedItems.length === 0) loadPublicFeed(); }} style={{ padding: "7px 16px", fontFamily: "inherit", fontSize: 12, fontWeight: 500, cursor: "pointer", border: "none", background: homeTab === "everyone" ? INK : "transparent", color: homeTab === "everyone" ? BG : INK }}>everyone</button>
                 <button onClick={() => setHomeTab("feed")} style={{ padding: "7px 16px", fontFamily: "inherit", fontSize: 12, fontWeight: 500, cursor: "pointer", border: "none", borderLeft: `1.5px solid ${INK}`, background: homeTab === "feed" ? INK : "transparent", color: homeTab === "feed" ? BG : INK }}>feed</button>
-                <button onClick={() => setHomeTab("news")} style={{ padding: "7px 16px", fontFamily: "inherit", fontSize: 12, fontWeight: 500, cursor: "pointer", border: "none", borderLeft: `1.5px solid ${INK}`, background: homeTab === "news" ? INK : "transparent", color: homeTab === "news" ? BG : INK }}>news</button>
+                {false && (
+                  <button onClick={() => setHomeTab("news")} style={{ padding: "7px 16px", fontFamily: "inherit", fontSize: 12, fontWeight: 500, cursor: "pointer", border: "none", borderLeft: `1.5px solid ${INK}`, background: homeTab === "news" ? INK : "transparent", color: homeTab === "news" ? BG : INK }}>news</button>
+                )}
               </div>
               {(homeTab === "feed" || homeTab === "everyone") && (
                 <>
@@ -2275,7 +2277,8 @@ export default function SoundboardDemo() {
               )}
             </div>
 
-            {/* YOUR SONG MIXES */}
+            {/* YOUR SONG MIXES — temporarily hidden for beta */}
+            {false && (<>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginTop: 36, marginBottom: 22 }}>
               <div className="ui-sans" style={{ fontSize: 20, fontWeight: 600 }}>your song mixes</div>
               <button className="sb-btn" onClick={() => setShowNewMix(showNewMix === "song" ? null : "song")} style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -2302,6 +2305,7 @@ export default function SoundboardDemo() {
                 </div>
               )}
             </div>
+            </>)}
 
             {/* SAVED ALBUM MIXES */}
             <div className="ui-sans" style={{ fontSize: 20, fontWeight: 600, marginTop: 36, marginBottom: 16 }}>saved album mixes</div>
@@ -2337,7 +2341,8 @@ export default function SoundboardDemo() {
               )}
             </div>
 
-            {/* SAVED SONG MIXES */}
+            {/* SAVED SONG MIXES — temporarily hidden for beta */}
+            {false && (<>
             <div className="ui-sans" style={{ fontSize: 20, fontWeight: 600, marginTop: 36, marginBottom: 16 }}>saved song mixes</div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: "20px 16px" }}>
               {savedSongMixes.map((m) => (
@@ -2363,6 +2368,7 @@ export default function SoundboardDemo() {
                 </div>
               )}
             </div>
+            </>)}
           </div>
         )}
 
@@ -3332,6 +3338,7 @@ function QuickReviewModal({ onSubmit, onClose }) {
 
 function ShareMixModal({ albumMixes, songMixes, onSubmit, onClose }) {
   const { BLUE, INK, LINE, MUTE, BG } = useTheme();
+  // Song mixes temporarily hidden for beta — force album tab.
   const [tab, setTab] = useState("album");
 
   const mixes = tab === "album" ? albumMixes : songMixes;
@@ -3344,10 +3351,13 @@ function ShareMixModal({ albumMixes, songMixes, onSubmit, onClose }) {
           <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: MUTE, padding: 0 }}><X size={16} /></button>
         </div>
 
-        <div style={{ display: "flex", border: `1.5px solid ${INK}`, borderRadius: 6, overflow: "hidden", marginBottom: 16 }}>
-          <button onClick={() => setTab("album")} style={{ flex: 1, padding: "7px 0", fontFamily: "inherit", fontSize: 12, fontWeight: 500, cursor: "pointer", border: "none", background: tab === "album" ? INK : "transparent", color: tab === "album" ? BG : INK }}>album mixes</button>
-          <button onClick={() => setTab("song")} style={{ flex: 1, padding: "7px 0", fontFamily: "inherit", fontSize: 12, fontWeight: 500, cursor: "pointer", border: "none", borderLeft: `1.5px solid ${INK}`, background: tab === "song" ? INK : "transparent", color: tab === "song" ? BG : INK }}>song mixes</button>
-        </div>
+        {/* Album/song tab switcher temporarily hidden for beta */}
+        {false && (
+          <div style={{ display: "flex", border: `1.5px solid ${INK}`, borderRadius: 6, overflow: "hidden", marginBottom: 16 }}>
+            <button onClick={() => setTab("album")} style={{ flex: 1, padding: "7px 0", fontFamily: "inherit", fontSize: 12, fontWeight: 500, cursor: "pointer", border: "none", background: tab === "album" ? INK : "transparent", color: tab === "album" ? BG : INK }}>album mixes</button>
+            <button onClick={() => setTab("song")} style={{ flex: 1, padding: "7px 0", fontFamily: "inherit", fontSize: 12, fontWeight: 500, cursor: "pointer", border: "none", borderLeft: `1.5px solid ${INK}`, background: tab === "song" ? INK : "transparent", color: tab === "song" ? BG : INK }}>song mixes</button>
+          </div>
+        )}
 
         {mixes.length === 0 && (
           <div className="ui-sans" style={{ fontSize: 13, color: MUTE, padding: "12px 0" }}>
