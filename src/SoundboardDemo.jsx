@@ -1796,7 +1796,7 @@ export default function SoundboardDemo() {
                     {followState[user.username] ? "following" : "follow"}
                   </button>
                   {!isMobile && (
-                    <div style={{ display: "flex", gap: 32, alignItems: "flex-start", flexShrink: 0 }}>
+                    <div style={{ display: "flex", gap: 32, alignItems: "flex-start", flexShrink: 0, marginRight: 24 }}>
                       <Stat label="followers" value={user.followerCount || 0} />
                       <Stat label="following" value={user.followingCount || 0} />
                       <Stat label="reviews" value={userReviews.length} />
@@ -2501,7 +2501,7 @@ export default function SoundboardDemo() {
                   <Settings size={14} /> settings
                 </button>
                 {!isMobile && (
-                  <div style={{ display: "flex", gap: 32, alignItems: "flex-start", flexShrink: 0 }}>
+                  <div style={{ display: "flex", gap: 32, alignItems: "flex-start", flexShrink: 0, marginRight: 24 }}>
                     <Stat label="followers" value={profileStats.followers} onClick={() => setShowFollowList("followers")} />
                     <Stat label="following" value={profileStats.following} onClick={() => setShowFollowList("following")} />
                     <Stat label="listened" value={listenedCount} onClick={() => setView({ name: "albumList", filter: "listened" })} />
@@ -2553,8 +2553,17 @@ export default function SoundboardDemo() {
                     <input className="sb-input" style={{ width: "100%" }} value={draftUsername} onChange={(e) => setDraftUsername(e.target.value)} />
                   </div>
                   <div>
-                    <div style={{ fontSize: 11, color: MUTE, marginBottom: 5 }}>bio</div>
-                    <textarea className="sb-textarea" rows={3} value={draftBio} onChange={(e) => setDraftBio(e.target.value)} />
+                    <div style={{ fontSize: 11, color: MUTE, marginBottom: 5, display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                      <span>bio</span>
+                      <span style={{ fontSize: 10 }}>{draftBio.length}/30</span>
+                    </div>
+                    <textarea
+                      className="sb-textarea"
+                      rows={3}
+                      maxLength={30}
+                      value={draftBio}
+                      onChange={(e) => setDraftBio(e.target.value.slice(0, 30))}
+                    />
                   </div>
                 </div>
                 <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
