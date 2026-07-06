@@ -2043,13 +2043,13 @@ export default function SoundboardDemo() {
               <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 12.5, marginBottom: 22, cursor: "pointer" }} onClick={() => setView({ name: "browse" })}>
                 <ChevronLeft size={14} /> back
               </div>
-              <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 16 : 26, alignItems: isMobile ? "flex-start" : "flex-start" }}>
+              <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 16 : 26, alignItems: isMobile ? "center" : "flex-start" }}>
                 <AlbumCover album={album} size={isMobile ? 140 : 160} />
-                <div style={{ flex: 1, width: "100%" }}>
+                <div style={{ flex: 1, width: "100%", textAlign: isMobile ? "center" : "left" }}>
                   <div className="ui-sans" style={{ fontSize: isMobile ? 20 : 24, fontWeight: 600, lineHeight: 1.2, wordBreak: "break-word" }}>{album.title}</div>
                   <div className="ui-sans" style={{ fontSize: 14, color: MUTE, marginTop: 4 }}>{album.artist} · {album.year}</div>
 
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 16 }}>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 16, justifyContent: isMobile ? "center" : "flex-start" }}>
                     <button
                       className="sb-btn"
                       style={status === "want_to_listen" ? { background: INK, color: BG } : {}}
