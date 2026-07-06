@@ -17,6 +17,11 @@ import { Search, Heart, Plus, X, ChevronLeft, User, ListMusic, Check, Settings, 
 // ---------------------------------------------------------------------------
 const BACKEND_URL = "https://spindex-backend.onrender.com";
 
+// Only this account can edit album-level tags. Non-admin users can view and
+// click tags to filter but not add or remove them. Temporary curation gate
+// until we build a proper moderation flow.
+const ADMIN_USERNAME = "brockpierce";
+
 // JWT token helpers -- stored in localStorage so it survives page refresh.
 // apiFetch wraps fetch to automatically attach the Authorization header.
 const getToken = () => localStorage.getItem("spindex_token");
@@ -2219,7 +2224,7 @@ export default function SoundboardDemo() {
 
                   <MixTagEditor
                     tags={albumTags[album.id] || []}
-                    isOwn={true}
+                    isOwn={profile.username === ADMIN_USERNAME}
                     onUpdateTags={(tags) => updateAlbumTags(album.id, tags)}
                     onTagClick={(tag) => setView({ name: "tagResults", tag })}
                   />
