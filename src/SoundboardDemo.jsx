@@ -1549,7 +1549,7 @@ export default function SoundboardDemo() {
                                 <span style={{ fontSize: 14, fontWeight: 700 }}>{album.title}</span>
                                 <span style={{ fontSize: 13, color: MUTE, marginLeft: 6 }}>{album.artist || album.artistName}</span>
                               </div>
-                              {c.text && <div style={{ fontSize: 13.5, color: INK, marginTop: 10, lineHeight: 1.55, textAlign: "left" }}>{c.text}</div>}
+                              {c.text && <div style={{ fontSize: 13.5, color: INK, marginTop: 3, lineHeight: 1.5, textAlign: "left" }}>{c.text}</div>}
                             </div>
                           </div>
                           {c.id && (
@@ -1817,7 +1817,7 @@ export default function SoundboardDemo() {
                             <span style={{ fontSize: 13, color: MUTE, marginLeft: 6 }}>{album.artist || album.artistName}</span>
                           </div>
                           <div style={{ fontSize: 11, color: MUTE, marginTop: 4, textAlign: "left" }}>{r.date}</div>
-                          {r.text && <div style={{ fontSize: 13.5, color: INK, marginTop: 10, lineHeight: 1.55, textAlign: "left" }}>{r.text}</div>}
+                          {r.text && <div style={{ fontSize: 13.5, color: INK, marginTop: 3, lineHeight: 1.5, textAlign: "left" }}>{r.text}</div>}
                         </div>
                       </div>
                     );
@@ -2659,7 +2659,7 @@ export default function SoundboardDemo() {
                           <span style={{ fontSize: 13, color: MUTE, marginLeft: 6 }}>{album.artist || album.artistName}</span>
                         </div>
                         <div style={{ fontSize: 11, color: MUTE, marginTop: 4, textAlign: "left" }}>{r.date}</div>
-                        {r.text && <div style={{ fontSize: 13.5, color: INK, marginTop: 10, lineHeight: 1.55, textAlign: "left" }}>{r.text}</div>}
+                        {r.text && <div style={{ fontSize: 13.5, color: INK, marginTop: 3, lineHeight: 1.5, textAlign: "left" }}>{r.text}</div>}
                         {(r.favTrack || r.leastFavTrack) && (
                           <div style={{ fontSize: 11.5, color: MUTE, marginTop: 8, display: "flex", gap: 14, flexWrap: "wrap", textAlign: "left" }}>
                             {r.favTrack && <span>♡ {r.favTrack}</span>}
