@@ -1813,9 +1813,7 @@ export default function SoundboardDemo() {
                           <span className="ui-sans" style={{ fontSize: 15, fontWeight: 700, color: BLUE, letterSpacing: "-0.01em" }}>{r.rating}/10</span>
                         </div>
                         <div style={{ flex: 1 }} className="ui-sans">
-                          <div style={{ fontSize: 13.5, fontWeight: 600, lineHeight: 1.3 }}>
-                            {album.title} <span style={{ fontSize: 12, fontWeight: 400, color: MUTE }}>by {album.artist || album.artistName}</span>
-                          </div>
+                          <div style={{ fontSize: 13.5, fontWeight: 600, lineHeight: 1.3 }}>{album.title}</div>
                           <div style={{ fontSize: 11, color: MUTE, marginTop: 2 }}>{r.date}</div>
                           {r.text && <div style={{ fontSize: 13, color: INK, marginTop: 6, lineHeight: 1.6 }}>{r.text}</div>}
                         </div>
@@ -2656,9 +2654,7 @@ export default function SoundboardDemo() {
                         <span className="ui-sans" style={{ fontSize: 15, fontWeight: 700, color: BLUE, letterSpacing: "-0.01em" }}>{r.rating}/10</span>
                       </div>
                       <div style={{ flex: 1 }} className="ui-sans">
-                        <div style={{ fontSize: 13.5, fontWeight: 600, lineHeight: 1.3 }}>
-                          {album.title} <span style={{ fontSize: 12, fontWeight: 400, color: MUTE }}>by {album.artist || album.artistName}</span>
-                        </div>
+                        <div style={{ fontSize: 13.5, fontWeight: 600, lineHeight: 1.3 }}>{album.title}</div>
                         <div style={{ fontSize: 11, color: MUTE, marginTop: 2 }}>{r.date}</div>
                         {r.text && <div style={{ fontSize: 13, color: INK, marginTop: 6, lineHeight: 1.6 }}>{r.text}</div>}
                         {(r.favTrack || r.leastFavTrack) && (
