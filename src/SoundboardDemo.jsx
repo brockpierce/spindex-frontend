@@ -1784,11 +1784,11 @@ export default function SoundboardDemo() {
                   <div className="ui-sans" style={{ textAlign: "left" }}>
                     <div style={{ fontSize: isMobile ? 24 : 30, fontWeight: 700, lineHeight: 1.15, letterSpacing: "-0.01em", textAlign: "left" }}>{user.displayName || user.username}</div>
                     <div style={{ fontSize: isMobile ? 14 : 16, color: MUTE, marginTop: 3, textAlign: "left" }}>@{user.username}</div>
-                    {user.bio && <div style={{ fontSize: isMobile ? 14 : 15, color: MUTE, marginTop: 10, maxWidth: 480, lineHeight: 1.5, textAlign: "left" }}>{user.bio}</div>}
+                    {user.bio && <div style={{ fontSize: isMobile ? 14 : 15, color: MUTE, marginTop: 10, maxWidth: 480, lineHeight: 1.5, textAlign: "left" }}>{!isMobile && user.bio.length > 30 ? user.bio.slice(0, 30) + "…" : user.bio}</div>}
                   </div>
                 </div>
                 {!isMobile && (
-                  <div style={{ display: "flex", gap: 32, alignItems: "flex-start", flexShrink: 0 }}>
+                  <div style={{ display: "flex", gap: 32, alignItems: "flex-start", flexShrink: 0, alignSelf: "flex-end" }}>
                     <Stat label="followers" value={user.followerCount || 0} />
                     <Stat label="following" value={user.followingCount || 0} />
                     <Stat label="reviews" value={userReviews.length} />
@@ -2485,11 +2485,11 @@ export default function SoundboardDemo() {
                 <div className="ui-sans" style={{ textAlign: "left" }}>
                   <div style={{ fontSize: isMobile ? 24 : 30, fontWeight: 700, lineHeight: 1.15, letterSpacing: "-0.01em", textAlign: "left" }}>{profile.displayName}</div>
                   <div style={{ fontSize: isMobile ? 14 : 16, color: MUTE, marginTop: 3, textAlign: "left" }}>@{profile.username}</div>
-                  {profile.bio && <div style={{ fontSize: isMobile ? 14 : 15, color: MUTE, marginTop: 10, maxWidth: 480, lineHeight: 1.5, textAlign: "left" }}>{profile.bio}</div>}
+                  {profile.bio && <div style={{ fontSize: isMobile ? 14 : 15, color: MUTE, marginTop: 10, maxWidth: 480, lineHeight: 1.5, textAlign: "left" }}>{!isMobile && profile.bio.length > 30 ? profile.bio.slice(0, 30) + "…" : profile.bio}</div>}
                 </div>
               </div>
               {!isMobile && (
-                <div style={{ display: "flex", gap: 32, alignItems: "flex-start", flexShrink: 0 }}>
+                <div style={{ display: "flex", gap: 32, alignItems: "flex-start", flexShrink: 0, alignSelf: "flex-end" }}>
                   <Stat label="followers" value={profileStats.followers} onClick={() => setShowFollowList("followers")} />
                   <Stat label="following" value={profileStats.following} onClick={() => setShowFollowList("following")} />
                   <Stat label="listened" value={listenedCount} onClick={() => setView({ name: "albumList", filter: "listened" })} />
