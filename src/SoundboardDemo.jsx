@@ -1779,9 +1779,9 @@ export default function SoundboardDemo() {
                 <ChevronLeft size={14} /> back
               </div>
               <div style={{ display: "flex", alignItems: isMobile ? "center" : "stretch", justifyContent: "space-between", gap: isMobile ? 18 : 24, paddingBottom: 22, borderBottom: `1.5px solid ${INK}` }}>
-                <div style={{ display: "flex", alignItems: "center", gap: isMobile ? 18 : 24 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: isMobile ? 18 : 24, flex: 1, minWidth: 0 }}>
                   <Avatar username={user.username} size={isMobile ? 88 : 120} />
-                  <div className="ui-sans" style={{ textAlign: "left" }}>
+                  <div className="ui-sans" style={{ textAlign: "left", minWidth: 0 }}>
                     <div style={{ fontSize: isMobile ? 24 : 30, fontWeight: 700, lineHeight: 1.15, letterSpacing: "-0.01em", textAlign: "left" }}>{user.displayName || user.username}</div>
                     <div style={{ fontSize: isMobile ? 14 : 16, color: MUTE, marginTop: 3, textAlign: "left" }}>@{user.username}</div>
                     {user.bio && <div style={{ fontSize: isMobile ? 14 : 15, color: MUTE, marginTop: 10, maxWidth: 480, lineHeight: 1.5, textAlign: "left" }}>{!isMobile && user.bio.length > 30 ? user.bio.slice(0, 30) + "…" : user.bio}</div>}
@@ -1848,8 +1848,13 @@ export default function SoundboardDemo() {
         {/* ---------------- TAG RESULTS ---------------- */}
         {view.name === "tagResults" && (() => {
           const tag = view.tag;
-          // Albums tagged with this tag
-          const matchedAlbums = ALBUMS.filter((a) => (albumTags[a.id] || []).includes(tag));
+          // Find all album IDs tagged with this tag, then resolve each to an
+          // album object. Prefer the fetchedAlbums cache (real DB albums) and
+          // fall back to the mock ALBUMS array so both work.
+          const matchedAlbums = Object.keys(albumTags)
+            .filter((id) => (albumTags[id] || []).includes(tag))
+            .map((id) => fetchedAlbums[id] || ALBUMS.find((a) => a.id === id))
+            .filter(Boolean);
           // Mixes tagged with this tag (own + saved + all users')
           const allAlbumMixes = [
             ...albumMixes,
@@ -2472,7 +2477,7 @@ export default function SoundboardDemo() {
         {view.name === "profile" && (
           <div>
             <div style={{ display: "flex", gap: isMobile ? 18 : 24, alignItems: isMobile ? "center" : "stretch", justifyContent: "space-between", paddingBottom: 22, borderBottom: `1.5px solid ${INK}` }}>
-              <div style={{ display: "flex", gap: isMobile ? 18 : 24, alignItems: "center" }}>
+              <div style={{ display: "flex", gap: isMobile ? 18 : 24, alignItems: "center", flex: 1, minWidth: 0 }}>
                 {avatarUrl ? (
                   <img
                     src={avatarUrl}
@@ -2484,7 +2489,7 @@ export default function SoundboardDemo() {
                     <User color="#fff" size={isMobile ? 36 : 48} />
                   </div>
                 )}
-                <div className="ui-sans" style={{ textAlign: "left" }}>
+                <div className="ui-sans" style={{ textAlign: "left", minWidth: 0 }}>
                   <div style={{ fontSize: isMobile ? 24 : 30, fontWeight: 700, lineHeight: 1.15, letterSpacing: "-0.01em", textAlign: "left" }}>{profile.displayName}</div>
                   <div style={{ fontSize: isMobile ? 14 : 16, color: MUTE, marginTop: 3, textAlign: "left" }}>@{profile.username}</div>
                   {profile.bio && <div style={{ fontSize: isMobile ? 14 : 15, color: MUTE, marginTop: 10, maxWidth: 480, lineHeight: 1.5, textAlign: "left" }}>{!isMobile && profile.bio.length > 30 ? profile.bio.slice(0, 30) + "…" : profile.bio}</div>}
