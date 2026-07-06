@@ -98,45 +98,13 @@ const INITIAL_FAVORITES = [];
 // Album mixes group whole albums together around a theme (e.g. "saddest
 // albums ever"). Each album in the mix can optionally have a short note
 // explaining why it's included -- `note` is always optional.
-const INITIAL_ALBUM_MIXES = [
-  { id: "l1", title: "Rainy day spins", description: "For when the weather matches the mood.", tags: ["slowcore", "indie", "folk"], albums: [{ albumId: "a1", note: "" }, { albumId: "a11", note: "Blue is basically the genre." }, { albumId: "a12", note: "" }] },
-  { id: "l2", title: "Albums that changed how I hear production", description: "", tags: ["production", "alternative", "r-and-b"], albums: [{ albumId: "a2", note: "Pink Matter still blows my mind." }, { albumId: "a9", note: "" }, { albumId: "a7", note: "" }] },
-];
+const INITIAL_ALBUM_MIXES = [];
 
-const INITIAL_SAVED_ALBUM_MIXES = [
-  { id: "s1", title: "Essential 70s singer-songwriter", description: "The records that started it all.", tags: ["singer-songwriter", "folk", "70s"], albums: [{ albumId: "a3", note: "" }, { albumId: "a5", note: "" }, { albumId: "a11", note: "" }], owner: "m.delacroix" },
-  { id: "s2", title: "Late night production masterclass", description: "", tags: ["production", "r-and-b", "soul"], albums: [{ albumId: "a2", note: "" }, { albumId: "a7", note: "" }, { albumId: "a6", note: "" }], owner: "kev_listens" },
-];
+const INITIAL_SAVED_ALBUM_MIXES = [];
 
-const INITIAL_SONG_MIXES = [
-  {
-    id: "sm1",
-    title: "Sunday morning, slow coffee",
-    description: "Nothing past 80 bpm.",
-    tags: ["slowcore", "folk", "ambient"],
-    coverImageUrl: null,
-    tracks: [
-      { id: "t1", trackTitle: "Pyramids", albumId: "a2" },
-      { id: "t2", trackTitle: "Big Yellow Taxi", albumId: "a11" },
-      { id: "t3", trackTitle: "Weird Fishes/Arpeggi", albumId: "a1" },
-    ],
-  },
-];
+const INITIAL_SONG_MIXES = [];
 
-const INITIAL_SAVED_SONG_MIXES = [
-  {
-    id: "ssm1",
-    title: "Late night drive",
-    description: "",
-    tags: ["indie", "alternative"],
-    coverImageUrl: null,
-    owner: "noisefloor",
-    tracks: [
-      { id: "t4", trackTitle: "Let's Spend the Night Together", albumId: "a6" },
-      { id: "t5", trackTitle: "Sweetest Devotion", albumId: "a7" },
-    ],
-  },
-];
+const INITIAL_SAVED_SONG_MIXES = [];
 
 const PROFILE = { username: "", displayName: "", bio: "", followers: 0, following: 0 };
 
@@ -1187,13 +1155,35 @@ export default function SoundboardDemo() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authUser]);
 
-  // Delete one of the current user's reviews. Optimistic update, then persist.
+  // Delete one of the current user's reviews. Double-confirm, optimistic
+  // update, then persist.
   function deleteReview(albumId) {
-    if (typeof window !== "undefined" && !window.confirm("Delete this review?")) return;
+    if (typeof window === "undefined") return;
+    if (!window.confirm("Delete this review?")) return;
+    if (!window.confirm("Are you sure? This can't be undone.")) return;
     setReviews((prev) => prev.filter((r) => r.albumId !== albumId));
     setRealFeedItems((prev) => prev.filter((r) => !(r.username === profile.username && r.albumId === albumId)));
     setPublicFeedItems((prev) => prev.filter((r) => !(r.username === profile.username && r.albumId === albumId)));
     apiFetch(`${BACKEND_URL}/api/reviews/${albumId}`, { method: "DELETE" }).catch(() => {});
+  }
+
+  // Delete an album mix. Double-confirm and navigate back to the mixes list
+  // so we're not stuck viewing a deleted mix.
+  function deleteAlbumMix(mixId) {
+    if (typeof window === "undefined") return;
+    if (!window.confirm("Delete this mix?")) return;
+    if (!window.confirm("Are you sure? This can't be undone.")) return;
+    setAlbumMixes((prev) => prev.filter((m) => m.id !== mixId));
+    setView({ name: "mixes" });
+  }
+
+  // Delete a song mix. Same pattern.
+  function deleteSongMix(mixId) {
+    if (typeof window === "undefined") return;
+    if (!window.confirm("Delete this mix?")) return;
+    if (!window.confirm("Are you sure? This can't be undone.")) return;
+    setSongMixes((prev) => prev.filter((m) => m.id !== mixId));
+    setView({ name: "mixes" });
   }
 
   const HEART_BUMP_THRESHOLD = 3;
@@ -2389,7 +2379,19 @@ export default function SoundboardDemo() {
               <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 12.5, marginBottom: 22, cursor: "pointer" }} onClick={() => setView(backDest)}>
                 <ChevronLeft size={14} /> back
               </div>
-              <div className="ui-sans" style={{ fontSize: 22, fontWeight: 600 }}>{mix.title}</div>
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 14 }}>
+                <div className="ui-sans" style={{ fontSize: 22, fontWeight: 600 }}>{mix.title}</div>
+                {isOwn && (
+                  <button
+                    className="sb-btn"
+                    onClick={() => deleteAlbumMix(mix.id)}
+                    title="Delete mix"
+                    style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 6 }}
+                  >
+                    <X size={13} /> delete mix
+                  </button>
+                )}
+              </div>
               {!isOwn && <div className="ui-sans" style={{ fontSize: 12, color: MUTE, marginTop: 3 }}>by @{mix.owner}</div>}
               {mix.description && <div className="ui-sans" style={{ fontSize: 13.5, color: MUTE, marginTop: 4 }}>{mix.description}</div>}
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: "26px 16px", marginTop: 24 }}>
@@ -2462,6 +2464,7 @@ export default function SoundboardDemo() {
               onUpdateInfo={(title, description) => updateSongMixInfo(mix.id, title, description)}
               onUpdateTags={(tags) => updateSongMixTags(mix.id, tags)}
               onTagClick={(tag) => setView({ name: "tagResults", tag })}
+              onDelete={() => deleteSongMix(mix.id)}
             />
           );
         })()}
@@ -3748,7 +3751,7 @@ function MixTagEditor({ tags, isOwn, onUpdateTags, onTagClick }) {
   );
 }
 
-function SongMixDetail({ mix, isOwn, onBack, onOpenAlbum, onAddTrack, onRemoveTrack, onSetCover, onUpdateInfo, onUpdateTags, onTagClick }) {
+function SongMixDetail({ mix, isOwn, onBack, onOpenAlbum, onAddTrack, onRemoveTrack, onSetCover, onUpdateInfo, onUpdateTags, onTagClick, onDelete }) {
   const { BLUE, INK, LINE, MUTE, BG } = useTheme();
   const [adding, setAdding] = useState(false);
   const [pickedAlbum, setPickedAlbum] = useState(null);
@@ -3801,8 +3804,20 @@ function SongMixDetail({ mix, isOwn, onBack, onOpenAlbum, onAddTrack, onRemoveTr
 
   return (
     <div>
-      <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 12.5, marginBottom: 22, cursor: "pointer" }} onClick={onBack}>
-        <ChevronLeft size={14} /> back
+      <div className="ui-sans" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 22 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 12.5, cursor: "pointer" }} onClick={onBack}>
+          <ChevronLeft size={14} /> back
+        </div>
+        {isOwn && onDelete && (
+          <button
+            className="sb-btn"
+            onClick={onDelete}
+            title="Delete mix"
+            style={{ display: "flex", alignItems: "center", gap: 6 }}
+          >
+            <X size={13} /> delete mix
+          </button>
+        )}
       </div>
 
       <div style={{ display: "flex", gap: 22, alignItems: "flex-end" }}>
