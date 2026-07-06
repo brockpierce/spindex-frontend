@@ -2070,18 +2070,18 @@ export default function SoundboardDemo() {
                     </button>
                   </div>
 
-                  <div style={{ marginTop: 22, paddingTop: 18, borderTop: `1px solid ${LINE}`, width: "100%" }}>
+                  <div style={{ marginTop: 22, paddingTop: 18, borderTop: `1px solid ${LINE}`, width: "100%", textAlign: isMobile ? "center" : "left" }}>
                     <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 9 }}>your rating</div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12, justifyContent: isMobile ? "center" : "flex-start" }}>
                       <RatingBlocks value={draftRating} onChange={setDraftRating} size={isMobile ? 13 : 16} />
                       <span style={{ fontSize: 13, fontWeight: 600, color: draftRating ? BLUE : LINE }}>{draftRating || "--"}/10</span>
                     </div>
                   </div>
 
-                  <div style={{ marginTop: 14 }}>
+                  <div style={{ marginTop: 14, textAlign: isMobile ? "center" : "left" }}>
                     <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 9 }}>community average</div>
                     {communityAvg ? (
-                      <div className="ui-sans" style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                      <div className="ui-sans" style={{ display: "flex", alignItems: "baseline", gap: 8, justifyContent: isMobile ? "center" : "flex-start" }}>
                         <span style={{ fontSize: 18, fontWeight: 600 }}>{communityAvg.toFixed(1)}</span>
                         <span style={{ fontSize: 12, color: MUTE }}>/10 · {allRatings.length} rating{allRatings.length !== 1 ? "s" : ""}</span>
                       </div>
@@ -2090,7 +2090,7 @@ export default function SoundboardDemo() {
                     )}
                   </div>
 
-                  <div style={{ marginTop: 18 }}>
+                  <div style={{ marginTop: 18, textAlign: isMobile ? "center" : "left" }}>
                     <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 9 }}>your review</div>
                     <textarea
                       className="sb-textarea"
@@ -2609,8 +2609,8 @@ export default function SoundboardDemo() {
             </div>
 
             <div style={{ marginTop: 26 }}>
-              <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 10 }}>favorite albums</div>
-              <div style={{ display: "flex", gap: 16 }}>
+              <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 10, textAlign: isMobile ? "center" : "left" }}>favorite albums</div>
+              <div style={{ display: "flex", gap: 16, justifyContent: isMobile ? "center" : "flex-start" }}>
                 {favorites.map((id) => {
                   const album = fetchedAlbums[id] || albumById(id);
                   // Trigger a fetch if we don't have real data for this album yet
@@ -2642,23 +2642,23 @@ export default function SoundboardDemo() {
             </div>
 
             <div style={{ marginTop: 30 }}>
-              <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 12 }}>recent reviews</div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 12, textAlign: isMobile ? "center" : "left" }}>recent reviews</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 16, alignItems: isMobile ? "center" : "flex-start" }}>
                 {[...reviews].sort((a, b) => (a.date < b.date ? 1 : -1)).map((r) => {
                   const album = fetchedAlbums[r.albumId] || albumById(r.albumId);
                   if (!album) return null;
                   return (
-                    <div key={r.id} onClick={() => openAlbum(r.albumId)} style={{ display: "flex", gap: 14, cursor: "pointer" }}>
+                    <div key={r.id} onClick={() => openAlbum(r.albumId)} style={{ display: "flex", gap: 14, cursor: "pointer", width: "100%", maxWidth: isMobile ? 340 : "100%" }}>
                       <AlbumCover album={album} size={54} />
                       <div style={{ flex: 1 }} className="ui-sans">
-                        <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                        <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
                           <span style={{ fontSize: 13.5, fontWeight: 600 }}>{album.title}</span>
                           <span style={{ fontSize: 11, color: MUTE }}>{r.date}</span>
                         </div>
                         <span style={{ fontSize: 11.5, fontWeight: 600, color: BLUE }}>{r.rating}/10</span>
                         {r.text && <div style={{ fontSize: 13, color: INK, marginTop: 4, lineHeight: 1.55 }}>{r.text}</div>}
                         {(r.favTrack || r.leastFavTrack) && (
-                          <div style={{ fontSize: 11.5, color: MUTE, marginTop: 5, display: "flex", gap: 14 }}>
+                          <div style={{ fontSize: 11.5, color: MUTE, marginTop: 5, display: "flex", gap: 14, flexWrap: "wrap" }}>
                             {r.favTrack && <span>♡ {r.favTrack}</span>}
                             {r.leastFavTrack && <span>✕ {r.leastFavTrack}</span>}
                           </div>
