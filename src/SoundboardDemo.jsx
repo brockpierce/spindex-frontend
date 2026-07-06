@@ -1793,7 +1793,7 @@ export default function SoundboardDemo() {
                 </button>
               </div>
 
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "16px 28px", padding: "20px 0", borderBottom: `1px solid ${LINE}` }}>
+              <div style={{ display: "flex", gap: isMobile ? 16 : 28, padding: "20px 0", borderBottom: `1px solid ${LINE}`, overflowX: "auto" }}>
                 <Stat label="followers" value={user.followerCount || 0} />
                 <Stat label="following" value={user.followingCount || 0} />
                 <Stat label="reviews" value={userReviews.length} />
@@ -2600,11 +2600,10 @@ export default function SoundboardDemo() {
               </div>
             )}
 
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "16px 28px", padding: "20px 0", borderBottom: `1px solid ${LINE}` }}>
+            <div style={{ display: "flex", gap: isMobile ? 16 : 28, padding: "20px 0", borderBottom: `1px solid ${LINE}`, overflowX: "auto" }}>
               <Stat label="followers" value={profileStats.followers} onClick={() => setShowFollowList("followers")} />
               <Stat label="following" value={profileStats.following} onClick={() => setShowFollowList("following")} />
               <Stat label="listened" value={listenedCount} onClick={() => setView({ name: "albumList", filter: "listened" })} />
-              <Stat label="queued" value={wantCount} onClick={() => setView({ name: "albumList", filter: "want_to_listen" })} />
               <Stat label="reviews" value={reviews.length} />
               <Stat label="avg rating" value={avgRating} />
             </div>
@@ -2732,8 +2731,8 @@ function Stat({ label, value, onClick }) {
   const { MUTE, INK } = useTheme();
   const content = (
     <>
-      <div style={{ fontSize: 20, fontWeight: 600 }}>{value}</div>
-      <div style={{ fontSize: 10.5, color: MUTE, textTransform: "uppercase", letterSpacing: "0.05em", marginTop: 2 }}>{label}</div>
+      <div style={{ fontSize: 18, fontWeight: 600 }}>{value}</div>
+      <div style={{ fontSize: 10, color: MUTE, textTransform: "uppercase", letterSpacing: "0.04em", marginTop: 2 }}>{label}</div>
     </>
   );
   if (onClick) {
@@ -2741,13 +2740,13 @@ function Stat({ label, value, onClick }) {
       <button
         onClick={onClick}
         className="ui-sans"
-        style={{ background: "transparent", border: "none", padding: 0, textAlign: "left", cursor: "pointer", color: INK, fontFamily: "inherit" }}
+        style={{ background: "transparent", border: "none", padding: 0, textAlign: "left", cursor: "pointer", color: INK, fontFamily: "inherit", flexShrink: 0 }}
       >
         {content}
       </button>
     );
   }
-  return <div className="ui-sans">{content}</div>;
+  return <div className="ui-sans" style={{ flexShrink: 0 }}>{content}</div>;
 }
 
 function AddToAlbumMixInline({ album, albumMixes, onAdd }) {
