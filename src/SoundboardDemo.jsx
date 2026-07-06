@@ -486,7 +486,7 @@ export default function SoundboardDemo() {
   }, []);
 
   const [view, setView] = useState({ name: "home" });
-  const [homeTab, setHomeTab] = useState("feed");
+  const [homeTab, setHomeTab] = useState("everyone");
   const [activeInterviewId, setActiveInterviewId] = useState(null);
   const [profile, setProfile] = useState(PROFILE);
   const [showSettings, setShowSettings] = useState(false);
@@ -1180,6 +1180,13 @@ export default function SoundboardDemo() {
       .finally(() => setPublicFeedLoading(false));
   };
 
+  // Since 'everyone' is the default tab, kick off the public feed load
+  // as soon as we're logged in so the home screen is populated on arrival.
+  useEffect(() => {
+    if (authUser) loadPublicFeed();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authUser]);
+
   // Delete one of the current user's reviews. Optimistic update, then persist.
   function deleteReview(albumId) {
     if (typeof window !== "undefined" && !window.confirm("Delete this review?")) return;
@@ -1406,8 +1413,8 @@ export default function SoundboardDemo() {
             {/* Tab toggle + people search */}
             <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 22 }}>
               <div style={{ display: "flex", gap: 0, border: `1.5px solid ${INK}`, borderRadius: 6, overflow: "hidden", flexShrink: 0 }}>
-                <button onClick={() => setHomeTab("feed")} style={{ padding: "7px 16px", fontFamily: "inherit", fontSize: 12, fontWeight: 500, cursor: "pointer", border: "none", background: homeTab === "feed" ? INK : "transparent", color: homeTab === "feed" ? BG : INK }}>feed</button>
-                <button onClick={() => { setHomeTab("everyone"); if (publicFeedItems.length === 0) loadPublicFeed(); }} style={{ padding: "7px 16px", fontFamily: "inherit", fontSize: 12, fontWeight: 500, cursor: "pointer", border: "none", borderLeft: `1.5px solid ${INK}`, background: homeTab === "everyone" ? INK : "transparent", color: homeTab === "everyone" ? BG : INK }}>everyone</button>
+                <button onClick={() => { setHomeTab("everyone"); if (publicFeedItems.length === 0) loadPublicFeed(); }} style={{ padding: "7px 16px", fontFamily: "inherit", fontSize: 12, fontWeight: 500, cursor: "pointer", border: "none", background: homeTab === "everyone" ? INK : "transparent", color: homeTab === "everyone" ? BG : INK }}>everyone</button>
+                <button onClick={() => setHomeTab("feed")} style={{ padding: "7px 16px", fontFamily: "inherit", fontSize: 12, fontWeight: 500, cursor: "pointer", border: "none", borderLeft: `1.5px solid ${INK}`, background: homeTab === "feed" ? INK : "transparent", color: homeTab === "feed" ? BG : INK }}>feed</button>
                 <button onClick={() => setHomeTab("news")} style={{ padding: "7px 16px", fontFamily: "inherit", fontSize: 12, fontWeight: 500, cursor: "pointer", border: "none", borderLeft: `1.5px solid ${INK}`, background: homeTab === "news" ? INK : "transparent", color: homeTab === "news" ? BG : INK }}>news</button>
               </div>
               {(homeTab === "feed" || homeTab === "everyone") && (
