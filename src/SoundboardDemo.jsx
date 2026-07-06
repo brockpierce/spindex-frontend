@@ -1778,7 +1778,7 @@ export default function SoundboardDemo() {
               <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 12.5, marginBottom: 22, cursor: "pointer" }} onClick={() => setView({ name: "home" })}>
                 <ChevronLeft size={14} /> back
               </div>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: isMobile ? 18 : 24, paddingBottom: 22, borderBottom: `1.5px solid ${INK}` }}>
+              <div style={{ display: "flex", alignItems: isMobile ? "center" : "stretch", justifyContent: "space-between", gap: isMobile ? 18 : 24, paddingBottom: 22, borderBottom: `1.5px solid ${INK}` }}>
                 <div style={{ display: "flex", alignItems: "center", gap: isMobile ? 18 : 24 }}>
                   <Avatar username={user.username} size={isMobile ? 88 : 120} />
                   <div className="ui-sans" style={{ textAlign: "left" }}>
@@ -1787,21 +1787,23 @@ export default function SoundboardDemo() {
                     {user.bio && <div style={{ fontSize: isMobile ? 14 : 15, color: MUTE, marginTop: 10, maxWidth: 480, lineHeight: 1.5, textAlign: "left" }}>{!isMobile && user.bio.length > 30 ? user.bio.slice(0, 30) + "…" : user.bio}</div>}
                   </div>
                 </div>
-                {!isMobile && (
-                  <div style={{ display: "flex", gap: 32, alignItems: "flex-start", flexShrink: 0, alignSelf: "flex-end" }}>
-                    <Stat label="followers" value={user.followerCount || 0} />
-                    <Stat label="following" value={user.followingCount || 0} />
-                    <Stat label="reviews" value={userReviews.length} />
-                    <Stat label="avg rating" value={userAvgRating} />
-                  </div>
-                )}
-                <button
-                  className="sb-btn"
-                  style={followState[user.username] ? { background: INK, color: BG, flexShrink: 0 } : { flexShrink: 0 }}
-                  onClick={() => toggleFollow(user.username)}
-                >
-                  {followState[user.username] ? "following" : "follow"}
-                </button>
+                <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", alignItems: "flex-end", flexShrink: 0, gap: 16 }}>
+                  <button
+                    className="sb-btn"
+                    style={followState[user.username] ? { background: INK, color: BG, flexShrink: 0 } : { flexShrink: 0 }}
+                    onClick={() => toggleFollow(user.username)}
+                  >
+                    {followState[user.username] ? "following" : "follow"}
+                  </button>
+                  {!isMobile && (
+                    <div style={{ display: "flex", gap: 32, alignItems: "flex-start", flexShrink: 0 }}>
+                      <Stat label="followers" value={user.followerCount || 0} />
+                      <Stat label="following" value={user.followingCount || 0} />
+                      <Stat label="reviews" value={userReviews.length} />
+                      <Stat label="avg rating" value={userAvgRating} />
+                    </div>
+                  )}
+                </div>
               </div>
 
               {isMobile && (
@@ -2469,7 +2471,7 @@ export default function SoundboardDemo() {
         {/* ---------------- PROFILE ---------------- */}
         {view.name === "profile" && (
           <div>
-            <div style={{ display: "flex", gap: isMobile ? 18 : 24, alignItems: "center", justifyContent: "space-between", paddingBottom: 22, borderBottom: `1.5px solid ${INK}` }}>
+            <div style={{ display: "flex", gap: isMobile ? 18 : 24, alignItems: isMobile ? "center" : "stretch", justifyContent: "space-between", paddingBottom: 22, borderBottom: `1.5px solid ${INK}` }}>
               <div style={{ display: "flex", gap: isMobile ? 18 : 24, alignItems: "center" }}>
                 {avatarUrl ? (
                   <img
@@ -2488,24 +2490,26 @@ export default function SoundboardDemo() {
                   {profile.bio && <div style={{ fontSize: isMobile ? 14 : 15, color: MUTE, marginTop: 10, maxWidth: 480, lineHeight: 1.5, textAlign: "left" }}>{!isMobile && profile.bio.length > 30 ? profile.bio.slice(0, 30) + "…" : profile.bio}</div>}
                 </div>
               </div>
-              {!isMobile && (
-                <div style={{ display: "flex", gap: 32, alignItems: "flex-start", flexShrink: 0, alignSelf: "flex-end" }}>
-                  <Stat label="followers" value={profileStats.followers} onClick={() => setShowFollowList("followers")} />
-                  <Stat label="following" value={profileStats.following} onClick={() => setShowFollowList("following")} />
-                  <Stat label="listened" value={listenedCount} onClick={() => setView({ name: "albumList", filter: "listened" })} />
-                  <Stat label="reviews" value={reviews.length} />
-                  <Stat label="avg rating" value={avgRating} />
-                </div>
-              )}
-              <button
-                onClick={openSettings}
-                className="sb-btn"
-                style={{ display: "flex", alignItems: "center", gap: 6, alignSelf: "flex-start", flexShrink: 0 }}
-                title="Edit profile"
-                aria-label="Edit profile"
-              >
-                <Settings size={14} /> settings
-              </button>
+              <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", alignItems: "flex-end", flexShrink: 0, gap: 16 }}>
+                <button
+                  onClick={openSettings}
+                  className="sb-btn"
+                  style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}
+                  title="Edit profile"
+                  aria-label="Edit profile"
+                >
+                  <Settings size={14} /> settings
+                </button>
+                {!isMobile && (
+                  <div style={{ display: "flex", gap: 32, alignItems: "flex-start", flexShrink: 0 }}>
+                    <Stat label="followers" value={profileStats.followers} onClick={() => setShowFollowList("followers")} />
+                    <Stat label="following" value={profileStats.following} onClick={() => setShowFollowList("following")} />
+                    <Stat label="listened" value={listenedCount} onClick={() => setView({ name: "albumList", filter: "listened" })} />
+                    <Stat label="reviews" value={reviews.length} />
+                    <Stat label="avg rating" value={avgRating} />
+                  </div>
+                )}
+              </div>
             </div>
 
             {showSettings && (
