@@ -2457,23 +2457,23 @@ export default function SoundboardDemo() {
         {/* ---------------- PROFILE ---------------- */}
         {view.name === "profile" && (
           <div>
-            <div style={{ display: "flex", gap: 18, alignItems: "center", justifyContent: "space-between", paddingBottom: 22, borderBottom: `1.5px solid ${INK}` }}>
-              <div style={{ display: "flex", gap: 18, alignItems: "center" }}>
+            <div style={{ display: "flex", gap: isMobile ? 18 : 24, alignItems: "center", justifyContent: "space-between", paddingBottom: 22, borderBottom: `1.5px solid ${INK}` }}>
+              <div style={{ display: "flex", gap: isMobile ? 18 : 24, alignItems: "center" }}>
                 {avatarUrl ? (
                   <img
                     src={avatarUrl}
                     alt=""
-                    style={{ width: 60, height: 60, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }}
+                    style={{ width: isMobile ? 88 : 120, height: isMobile ? 88 : 120, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }}
                   />
                 ) : (
-                  <div style={{ width: 60, height: 60, borderRadius: "50%", background: BLUE, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    <User color="#fff" size={26} />
+                  <div style={{ width: isMobile ? 88 : 120, height: isMobile ? 88 : 120, borderRadius: "50%", background: BLUE, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <User color="#fff" size={isMobile ? 36 : 48} />
                   </div>
                 )}
                 <div className="ui-sans">
-                  <div style={{ fontSize: 19, fontWeight: 600 }}>{profile.displayName}</div>
-                  <div style={{ fontSize: 12, color: MUTE }}>@{profile.username}</div>
-                  <div style={{ fontSize: 13, color: MUTE, marginTop: 4, maxWidth: 420 }}>{profile.bio}</div>
+                  <div style={{ fontSize: isMobile ? 24 : 30, fontWeight: 700, lineHeight: 1.15, letterSpacing: "-0.01em" }}>{profile.displayName}</div>
+                  <div style={{ fontSize: isMobile ? 14 : 16, color: MUTE, marginTop: 3 }}>@{profile.username}</div>
+                  {profile.bio && <div style={{ fontSize: isMobile ? 14 : 15, color: MUTE, marginTop: 10, maxWidth: 480, lineHeight: 1.5 }}>{profile.bio}</div>}
                 </div>
               </div>
               <button
@@ -2602,7 +2602,7 @@ export default function SoundboardDemo() {
               </div>
             )}
 
-            <div style={{ display: "flex", gap: isMobile ? 16 : 28, padding: "20px 0", borderBottom: `1px solid ${LINE}`, overflowX: "auto" }}>
+            <div style={{ display: "flex", gap: isMobile ? 16 : 40, padding: "20px 0", borderBottom: `1px solid ${LINE}`, overflowX: "auto", justifyContent: "center" }}>
               <Stat label="followers" value={profileStats.followers} onClick={() => setShowFollowList("followers")} />
               <Stat label="following" value={profileStats.following} onClick={() => setShowFollowList("following")} />
               <Stat label="listened" value={listenedCount} onClick={() => setView({ name: "albumList", filter: "listened" })} />
@@ -2611,8 +2611,8 @@ export default function SoundboardDemo() {
             </div>
 
             <div style={{ marginTop: 26 }}>
-              <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 10, textAlign: isMobile ? "center" : "left" }}>top 3</div>
-              <div style={{ display: "flex", gap: 16, justifyContent: isMobile ? "center" : "flex-start" }}>
+              <div style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14, textAlign: "center", fontWeight: 600 }}>top 3 albums</div>
+              <div style={{ display: "flex", gap: 20, justifyContent: "center" }}>
                 {favorites.map((id) => {
                   const album = fetchedAlbums[id] || albumById(id);
                   // Trigger a fetch if we don't have real data for this album yet
@@ -2644,7 +2644,7 @@ export default function SoundboardDemo() {
             </div>
 
             <div style={{ marginTop: 30 }}>
-              <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 12, textAlign: isMobile ? "center" : "left" }}>recent reviews</div>
+              <div style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14, textAlign: isMobile ? "center" : "left", fontWeight: 600 }}>recent reviews</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 16, alignItems: isMobile ? "center" : "flex-start" }}>
                 {[...reviews].sort((a, b) => (a.date < b.date ? 1 : -1)).map((r) => {
                   const album = fetchedAlbums[r.albumId] || albumById(r.albumId);
