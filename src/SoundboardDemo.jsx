@@ -1814,7 +1814,8 @@ export default function SoundboardDemo() {
                         </div>
                         <div style={{ flex: 1 }} className="ui-sans">
                           <div style={{ fontSize: 13.5, fontWeight: 600, lineHeight: 1.3 }}>{album.title}</div>
-                          <div style={{ fontSize: 11, color: MUTE, marginTop: 2 }}>{r.date}</div>
+                          <div style={{ fontSize: 11.5, color: MUTE, marginTop: 1 }}>{album.artist || album.artistName}</div>
+                          <div style={{ fontSize: 11, color: MUTE, marginTop: 1 }}>{r.date}</div>
                           {r.text && <div style={{ fontSize: 13, color: INK, marginTop: 6, lineHeight: 1.6 }}>{r.text}</div>}
                         </div>
                       </div>
@@ -2655,7 +2656,8 @@ export default function SoundboardDemo() {
                       </div>
                       <div style={{ flex: 1 }} className="ui-sans">
                         <div style={{ fontSize: 13.5, fontWeight: 600, lineHeight: 1.3 }}>{album.title}</div>
-                        <div style={{ fontSize: 11, color: MUTE, marginTop: 2 }}>{r.date}</div>
+                        <div style={{ fontSize: 11.5, color: MUTE, marginTop: 1 }}>{album.artist || album.artistName}</div>
+                        <div style={{ fontSize: 11, color: MUTE, marginTop: 1 }}>{r.date}</div>
                         {r.text && <div style={{ fontSize: 13, color: INK, marginTop: 6, lineHeight: 1.6 }}>{r.text}</div>}
                         {(r.favTrack || r.leastFavTrack) && (
                           <div style={{ fontSize: 11.5, color: MUTE, marginTop: 5, display: "flex", gap: 14, flexWrap: "wrap" }}>
