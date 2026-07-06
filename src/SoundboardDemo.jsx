@@ -1540,18 +1540,16 @@ export default function SoundboardDemo() {
                             <span className="ui-sans" style={{ fontSize: 13, fontWeight: 600, cursor: "pointer" }} onClick={() => openUserProfile(c.username)}>@{c.username}</span>
                             <span className="ui-sans" style={{ fontSize: 11, color: MUTE, marginLeft: "auto" }}>{c.date}</span>
                           </div>
-                          <div onClick={() => openAlbum(c.albumId)} style={{ cursor: "pointer" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                              <AlbumCover album={album} size={56} />
-                              <div className="ui-sans">
-                                <div style={{ fontSize: 16, fontWeight: 700, color: BLUE, letterSpacing: "-0.01em", lineHeight: 1.2 }}>{c.rating}/10</div>
-                                <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginTop: 2 }}>
-                                  <span style={{ fontSize: 13, fontWeight: 600 }}>{album.title}</span>
-                                  <span style={{ fontSize: 12, color: MUTE }}>{album.artist || album.artistName}</span>
-                                </div>
+                          <div onClick={() => openAlbum(c.albumId)} style={{ display: "flex", gap: 14, cursor: "pointer" }}>
+                            <AlbumCover album={album} size={72} />
+                            <div className="ui-sans" style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: 20, fontWeight: 700, color: BLUE, letterSpacing: "-0.01em", lineHeight: 1.1 }}>{c.rating}/10</div>
+                              <div style={{ marginTop: 3 }}>
+                                <span style={{ fontSize: 14, fontWeight: 700 }}>{album.title}</span>
+                                <span style={{ fontSize: 13, color: MUTE, marginLeft: 6 }}>{album.artist || album.artistName}</span>
                               </div>
+                              {c.text && <div style={{ fontSize: 13, color: INK, marginTop: 8, lineHeight: 1.6 }}>{c.text}</div>}
                             </div>
-                            {c.text && <div className="ui-sans" style={{ fontSize: 13, color: INK, marginTop: 10, lineHeight: 1.6 }}>{c.text}</div>}
                           </div>
                           {c.id && (
                             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -1809,19 +1807,17 @@ export default function SoundboardDemo() {
                     const album = fetchedAlbums[r.albumId] || albumById(r.albumId);
                     if (!album) return null;
                     return (
-                      <div key={i} onClick={() => openAlbum(r.albumId, album)} style={{ cursor: "pointer" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                          <AlbumCover album={album} size={56} />
-                          <div className="ui-sans">
-                            <div style={{ fontSize: 16, fontWeight: 700, color: BLUE, letterSpacing: "-0.01em", lineHeight: 1.2 }}>{r.rating}/10</div>
-                            <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginTop: 2 }}>
-                              <span style={{ fontSize: 13, fontWeight: 600 }}>{album.title}</span>
-                              <span style={{ fontSize: 12, color: MUTE }}>{album.artist || album.artistName}</span>
-                            </div>
-                            <div style={{ fontSize: 11, color: MUTE, marginTop: 3 }}>{r.date}</div>
+                      <div key={i} onClick={() => openAlbum(r.albumId, album)} style={{ display: "flex", gap: 14, cursor: "pointer" }}>
+                        <AlbumCover album={album} size={72} />
+                        <div className="ui-sans" style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 20, fontWeight: 700, color: BLUE, letterSpacing: "-0.01em", lineHeight: 1.1 }}>{r.rating}/10</div>
+                          <div style={{ marginTop: 3 }}>
+                            <span style={{ fontSize: 14, fontWeight: 700 }}>{album.title}</span>
+                            <span style={{ fontSize: 13, color: MUTE, marginLeft: 6 }}>{album.artist || album.artistName}</span>
                           </div>
+                          <div style={{ fontSize: 11, color: MUTE, marginTop: 3 }}>{r.date}</div>
+                          {r.text && <div style={{ fontSize: 13, color: INK, marginTop: 8, lineHeight: 1.6 }}>{r.text}</div>}
                         </div>
-                        {r.text && <div className="ui-sans" style={{ fontSize: 13, color: INK, marginTop: 10, lineHeight: 1.6 }}>{r.text}</div>}
                       </div>
                     );
                   })}
@@ -2653,25 +2649,23 @@ export default function SoundboardDemo() {
                   const album = fetchedAlbums[r.albumId] || albumById(r.albumId);
                   if (!album) return null;
                   return (
-                    <div key={r.id} onClick={() => openAlbum(r.albumId)} style={{ cursor: "pointer", width: "100%", maxWidth: isMobile ? 340 : "100%" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                        <AlbumCover album={album} size={56} />
-                        <div className="ui-sans">
-                          <div style={{ fontSize: 16, fontWeight: 700, color: BLUE, letterSpacing: "-0.01em", lineHeight: 1.2 }}>{r.rating}/10</div>
-                          <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginTop: 2 }}>
-                            <span style={{ fontSize: 13, fontWeight: 600 }}>{album.title}</span>
-                            <span style={{ fontSize: 12, color: MUTE }}>{album.artist || album.artistName}</span>
+                    <div key={r.id} onClick={() => openAlbum(r.albumId)} style={{ display: "flex", gap: 14, cursor: "pointer", width: "100%", maxWidth: isMobile ? 340 : "100%" }}>
+                      <AlbumCover album={album} size={72} />
+                      <div className="ui-sans" style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 20, fontWeight: 700, color: BLUE, letterSpacing: "-0.01em", lineHeight: 1.1 }}>{r.rating}/10</div>
+                        <div style={{ marginTop: 3 }}>
+                          <span style={{ fontSize: 14, fontWeight: 700 }}>{album.title}</span>
+                          <span style={{ fontSize: 13, color: MUTE, marginLeft: 6 }}>{album.artist || album.artistName}</span>
+                        </div>
+                        <div style={{ fontSize: 11, color: MUTE, marginTop: 3 }}>{r.date}</div>
+                        {r.text && <div style={{ fontSize: 13, color: INK, marginTop: 8, lineHeight: 1.6 }}>{r.text}</div>}
+                        {(r.favTrack || r.leastFavTrack) && (
+                          <div style={{ fontSize: 11.5, color: MUTE, marginTop: 8, display: "flex", gap: 14, flexWrap: "wrap" }}>
+                            {r.favTrack && <span>♡ {r.favTrack}</span>}
+                            {r.leastFavTrack && <span>✕ {r.leastFavTrack}</span>}
                           </div>
-                          <div style={{ fontSize: 11, color: MUTE, marginTop: 3 }}>{r.date}</div>
-                        </div>
+                        )}
                       </div>
-                      {r.text && <div className="ui-sans" style={{ fontSize: 13, color: INK, marginTop: 10, lineHeight: 1.6 }}>{r.text}</div>}
-                      {(r.favTrack || r.leastFavTrack) && (
-                        <div className="ui-sans" style={{ fontSize: 11.5, color: MUTE, marginTop: 8, display: "flex", gap: 14, flexWrap: "wrap" }}>
-                          {r.favTrack && <span>♡ {r.favTrack}</span>}
-                          {r.leastFavTrack && <span>✕ {r.leastFavTrack}</span>}
-                        </div>
-                      )}
                     </div>
                   );
                 })}
