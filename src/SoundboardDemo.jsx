@@ -1443,7 +1443,7 @@ export default function SoundboardDemo() {
                       )}
                     </div>
                   </div>
-                  <div className="ui-sans" style={{ fontSize: 13, color: MUTE, marginBottom: 24 }}>
+                  <div className="ui-sans" style={{ fontSize: 13, color: MUTE, marginBottom: 24, textAlign: "left" }}>
                     posts from people you follow.
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
@@ -1480,7 +1480,9 @@ export default function SoundboardDemo() {
                               </div>
                             </div>
                             {c.id && (
-                              <ReactionBar reactions={reviewReactions[c.id]} onReact={(kind) => toggleReaction(c.id, kind)} currentUsername={profile.username} />
+                              <div style={{ marginTop: 12, paddingTop: 10, borderTop: `1px solid ${LINE}` }}>
+                                <ReactionBar reactions={reviewReactions[c.id]} onReact={(kind) => toggleReaction(c.id, kind)} currentUsername={profile.username} />
+                              </div>
                             )}
                             {c.id && <ReviewComments reviewId={c.id} comments={reviewComments[c.id] || []} onAdd={addComment} onReply={addReply} currentUsername={profile.username} reviewOwnerUsername={c.username} />}
                           </div>
@@ -1509,7 +1511,7 @@ export default function SoundboardDemo() {
                               </div>
                             </div>
                             {c.id && (
-                              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12, paddingTop: 10, borderTop: `1px solid ${LINE}` }}>
                                 <ReactionBar
                                   reactions={reviewReactions[c.id]}
                                   onReact={(kind) => toggleReaction(c.id, kind)}
@@ -1543,7 +1545,7 @@ export default function SoundboardDemo() {
                             <AlbumCover album={album} size={88} />
                             <div className="ui-sans" style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
                               <div style={{ fontSize: 20, fontWeight: 700, color: BLUE, letterSpacing: "-0.01em", lineHeight: 1.1, textAlign: "left" }}>{c.rating}/10</div>
-                              <div style={{ marginTop: 4, textAlign: "left" }}>
+                              <div style={{ marginTop: 1, textAlign: "left" }}>
                                 <span style={{ fontSize: 14, fontWeight: 700 }}>{album.title}</span>
                                 <span style={{ fontSize: 13, color: MUTE, marginLeft: 6 }}>{album.artist || album.artistName}</span>
                               </div>
@@ -1551,7 +1553,7 @@ export default function SoundboardDemo() {
                             </div>
                           </div>
                           {c.id && (
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12, paddingTop: 10, borderTop: `1px solid ${LINE}` }}>
                               <ReactionBar
                                 reactions={reviewReactions[c.id]}
                                 onReact={(kind) => toggleReaction(c.id, kind)}
@@ -1810,7 +1812,7 @@ export default function SoundboardDemo() {
                         <AlbumCover album={album} size={88} />
                         <div className="ui-sans" style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
                           <div style={{ fontSize: 20, fontWeight: 700, color: BLUE, letterSpacing: "-0.01em", lineHeight: 1.1, textAlign: "left" }}>{r.rating}/10</div>
-                          <div style={{ marginTop: 4, textAlign: "left" }}>
+                          <div style={{ marginTop: 1, textAlign: "left" }}>
                             <span style={{ fontSize: 14, fontWeight: 700 }}>{album.title}</span>
                             <span style={{ fontSize: 13, color: MUTE, marginLeft: 6 }}>{album.artist || album.artistName}</span>
                           </div>
@@ -2652,7 +2654,7 @@ export default function SoundboardDemo() {
                       <AlbumCover album={album} size={88} />
                       <div className="ui-sans" style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
                         <div style={{ fontSize: 20, fontWeight: 700, color: BLUE, letterSpacing: "-0.01em", lineHeight: 1.1, textAlign: "left" }}>{r.rating}/10</div>
-                        <div style={{ marginTop: 4, textAlign: "left" }}>
+                        <div style={{ marginTop: 1, textAlign: "left" }}>
                           <span style={{ fontSize: 14, fontWeight: 700 }}>{album.title}</span>
                           <span style={{ fontSize: 13, color: MUTE, marginLeft: 6 }}>{album.artist || album.artistName}</span>
                         </div>
@@ -3492,7 +3494,7 @@ function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUserna
   const total = countAllComments(comments);
 
   return (
-    <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${LINE}` }}>
+    <div style={{ marginTop: 10 }}>
       <button
         className="ui-sans"
         onClick={() => setOpen((o) => !o)}
@@ -3897,7 +3899,7 @@ function AlbumCommunitySection({ albumId, albumTab, setAlbumTab, openAlbum, revi
                 </div>
               </div>
               {r.id && onReact && (
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12, paddingTop: 10, borderTop: `1px solid ${LINE}` }}>
                   <ReactionBar
                     reactions={reviewReactions[r.id]}
                     onReact={(kind) => onReact(r.id, kind)}
