@@ -2609,7 +2609,7 @@ export default function SoundboardDemo() {
             </div>
 
             <div style={{ marginTop: 26 }}>
-              <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 10, textAlign: isMobile ? "center" : "left" }}>favorite albums</div>
+              <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 10, textAlign: isMobile ? "center" : "left" }}>top 3</div>
               <div style={{ display: "flex", gap: 16, justifyContent: isMobile ? "center" : "flex-start" }}>
                 {favorites.map((id) => {
                   const album = fetchedAlbums[id] || albumById(id);
