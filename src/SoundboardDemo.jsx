@@ -1778,12 +1778,12 @@ export default function SoundboardDemo() {
               <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 12.5, marginBottom: 22, cursor: "pointer" }} onClick={() => setView({ name: "home" })}>
                 <ChevronLeft size={14} /> back
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 16, paddingBottom: 22, borderBottom: `1.5px solid ${INK}` }}>
-                <Avatar username={user.username} size={56} />
-                <div className="ui-sans" style={{ flex: 1 }}>
-                  <div style={{ fontSize: 19, fontWeight: 600 }}>{user.displayName || user.username}</div>
-                  <div style={{ fontSize: 12, color: MUTE }}>@{user.username}</div>
-                  {user.bio && <div style={{ fontSize: 13, color: MUTE, marginTop: 4 }}>{user.bio}</div>}
+              <div style={{ display: "flex", alignItems: "center", gap: isMobile ? 18 : 24, paddingBottom: 22, borderBottom: `1.5px solid ${INK}` }}>
+                <Avatar username={user.username} size={isMobile ? 88 : 120} />
+                <div className="ui-sans" style={{ flex: 1, textAlign: "left" }}>
+                  <div style={{ fontSize: isMobile ? 24 : 30, fontWeight: 700, lineHeight: 1.15, letterSpacing: "-0.01em", textAlign: "left" }}>{user.displayName || user.username}</div>
+                  <div style={{ fontSize: isMobile ? 14 : 16, color: MUTE, marginTop: 3, textAlign: "left" }}>@{user.username}</div>
+                  {user.bio && <div style={{ fontSize: isMobile ? 14 : 15, color: MUTE, marginTop: 10, maxWidth: 480, lineHeight: 1.5, textAlign: "left" }}>{user.bio}</div>}
                 </div>
                 <button
                   className="sb-btn"
@@ -2470,10 +2470,10 @@ export default function SoundboardDemo() {
                     <User color="#fff" size={isMobile ? 36 : 48} />
                   </div>
                 )}
-                <div className="ui-sans">
-                  <div style={{ fontSize: isMobile ? 24 : 30, fontWeight: 700, lineHeight: 1.15, letterSpacing: "-0.01em" }}>{profile.displayName}</div>
-                  <div style={{ fontSize: isMobile ? 14 : 16, color: MUTE, marginTop: 3 }}>@{profile.username}</div>
-                  {profile.bio && <div style={{ fontSize: isMobile ? 14 : 15, color: MUTE, marginTop: 10, maxWidth: 480, lineHeight: 1.5 }}>{profile.bio}</div>}
+                <div className="ui-sans" style={{ textAlign: "left" }}>
+                  <div style={{ fontSize: isMobile ? 24 : 30, fontWeight: 700, lineHeight: 1.15, letterSpacing: "-0.01em", textAlign: "left" }}>{profile.displayName}</div>
+                  <div style={{ fontSize: isMobile ? 14 : 16, color: MUTE, marginTop: 3, textAlign: "left" }}>@{profile.username}</div>
+                  {profile.bio && <div style={{ fontSize: isMobile ? 14 : 15, color: MUTE, marginTop: 10, maxWidth: 480, lineHeight: 1.5, textAlign: "left" }}>{profile.bio}</div>}
                 </div>
               </div>
               <button
