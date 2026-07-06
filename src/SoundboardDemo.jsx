@@ -1104,6 +1104,8 @@ export default function SoundboardDemo() {
   // question-of-the-day answers. Community reviews from strangers stay on
   // individual album pages instead of cluttering this. Posts with several
   const [realFeedItems, setRealFeedItems] = useState([]);
+  const [publicFeedItems, setPublicFeedItems] = useState([]);
+  const [publicFeedLoading, setPublicFeedLoading] = useState(false);
 
   // Load real feed from backend when logged in
   useEffect(() => {
@@ -1139,6 +1141,53 @@ export default function SoundboardDemo() {
       })
       .catch(() => {});
   }, [authUser]);
+
+  // Public feed — recent reviews from anyone on the app. Requires backend
+  // endpoint GET /api/feed/public that returns the same shape as /api/feed.
+  // (If the endpoint doesn't exist yet, this just leaves the tab empty.)
+  const loadPublicFeed = () => {
+    if (!authUser) return;
+    setPublicFeedLoading(true);
+    apiFetch(`${BACKEND_URL}/api/feed/public`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.feed) {
+          const items = data.feed.map((item) => ({
+            itemType: "review",
+            id: item.id,
+            username: item.username,
+            albumId: item.albumId,
+            rating: item.rating,
+            text: item.text || "",
+            date: item.date ? new Date(item.date).toISOString().slice(0, 10) : "",
+          }));
+          setPublicFeedItems(items);
+          const uniqueAlbumIds = [...new Set(items.map((i) => i.albumId).filter(Boolean))];
+          uniqueAlbumIds.forEach((id) => {
+            apiFetch(`${BACKEND_URL}/api/albums/${id}`)
+              .then((r) => r.json())
+              .then((d) => {
+                if (d.album) {
+                  const a = d.album;
+                  setFetchedAlbums((prev) => ({ ...prev, [a.id]: { ...a, artist: a.artistName || "", year: a.releaseYear || null } }));
+                }
+              })
+              .catch(() => {});
+          });
+        }
+      })
+      .catch(() => {})
+      .finally(() => setPublicFeedLoading(false));
+  };
+
+  // Delete one of the current user's reviews. Optimistic update, then persist.
+  function deleteReview(albumId) {
+    if (typeof window !== "undefined" && !window.confirm("Delete this review?")) return;
+    setReviews((prev) => prev.filter((r) => r.albumId !== albumId));
+    setRealFeedItems((prev) => prev.filter((r) => !(r.username === profile.username && r.albumId === albumId)));
+    setPublicFeedItems((prev) => prev.filter((r) => !(r.username === profile.username && r.albumId === albumId)));
+    apiFetch(`${BACKEND_URL}/api/reviews/${albumId}`, { method: "DELETE" }).catch(() => {});
+  }
 
   const HEART_BUMP_THRESHOLD = 3;
   const feed = useMemo(() => {
@@ -1358,9 +1407,10 @@ export default function SoundboardDemo() {
             <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 22 }}>
               <div style={{ display: "flex", gap: 0, border: `1.5px solid ${INK}`, borderRadius: 6, overflow: "hidden", flexShrink: 0 }}>
                 <button onClick={() => setHomeTab("feed")} style={{ padding: "7px 16px", fontFamily: "inherit", fontSize: 12, fontWeight: 500, cursor: "pointer", border: "none", background: homeTab === "feed" ? INK : "transparent", color: homeTab === "feed" ? BG : INK }}>feed</button>
+                <button onClick={() => { setHomeTab("everyone"); if (publicFeedItems.length === 0) loadPublicFeed(); }} style={{ padding: "7px 16px", fontFamily: "inherit", fontSize: 12, fontWeight: 500, cursor: "pointer", border: "none", borderLeft: `1.5px solid ${INK}`, background: homeTab === "everyone" ? INK : "transparent", color: homeTab === "everyone" ? BG : INK }}>everyone</button>
                 <button onClick={() => setHomeTab("news")} style={{ padding: "7px 16px", fontFamily: "inherit", fontSize: 12, fontWeight: 500, cursor: "pointer", border: "none", borderLeft: `1.5px solid ${INK}`, background: homeTab === "news" ? INK : "transparent", color: homeTab === "news" ? BG : INK }}>news</button>
               </div>
-              {homeTab === "feed" && (
+              {(homeTab === "feed" || homeTab === "everyone") && (
                 <>
                   <Search size={15} color={MUTE} style={{ flexShrink: 0 }} />
                   <input
@@ -1374,8 +1424,13 @@ export default function SoundboardDemo() {
               )}
             </div>
 
-            {/* ---- FEED TAB ---- */}
-            {homeTab === "feed" && (
+            {/* ---- FEED / EVERYONE TAB ---- */}
+            {(homeTab === "feed" || homeTab === "everyone") && (() => {
+              const isEveryone = homeTab === "everyone";
+              const displayItems = isEveryone ? publicFeedItems : feed;
+              const headerText = isEveryone ? "everyone" : "your feed";
+              const subheaderText = isEveryone ? "recent posts from anyone on spindex." : "posts from people you follow.";
+              return (
               userSearchQuery.trim() ? (
                 <div>
                   <div className="ui-sans" style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14 }}>
@@ -1404,7 +1459,7 @@ export default function SoundboardDemo() {
               ) : (
                 <>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 4 }}>
-                    <div className="ui-sans" style={{ fontSize: 20, fontWeight: 600 }}>your feed</div>
+                    <div className="ui-sans" style={{ fontSize: 20, fontWeight: 600 }}>{headerText}</div>
                     <div style={{ position: "relative" }}>
                       <button
                         onClick={() => setShowPlusMenu((p) => !p)}
@@ -1440,10 +1495,16 @@ export default function SoundboardDemo() {
                     </div>
                   </div>
                   <div className="ui-sans" style={{ fontSize: 13, color: MUTE, marginBottom: 24, textAlign: "left" }}>
-                    posts from people you follow.
+                    {subheaderText}
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-                    {feed.map((c, i) => {
+                    {isEveryone && publicFeedLoading && (
+                      <div className="ui-sans" style={{ fontSize: 13, color: MUTE, textAlign: "center", padding: "20px 0" }}>loading recent posts...</div>
+                    )}
+                    {isEveryone && !publicFeedLoading && displayItems.length === 0 && (
+                      <div className="ui-sans" style={{ fontSize: 13, color: MUTE, textAlign: "center", padding: "20px 0" }}>no posts yet. (backend needs to expose /api/feed/public for this tab.)</div>
+                    )}
+                    {displayItems.map((c, i) => {
                       if (c.itemType === "sharemix") {
                         const allMixes = [...albumMixes, ...savedAlbumMixes, ...songMixes, ...savedSongMixes, ...ALL_USERS.flatMap((u) => [...(u.albumMixes || []), ...(u.songMixes || [])])];
                         const mix = allMixes.find((m) => m.id === c.mixId);
@@ -1536,6 +1597,16 @@ export default function SoundboardDemo() {
                             <Avatar username={c.username} size={26} />
                             <span className="ui-sans" style={{ fontSize: 13, fontWeight: 600, cursor: "pointer" }} onClick={() => openUserProfile(c.username)}>@{c.username}</span>
                             <span className="ui-sans" style={{ fontSize: 11, color: MUTE, marginLeft: "auto" }}>{c.date}</span>
+                            {c.username === profile.username && (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); deleteReview(c.albumId); }}
+                                title="Delete review"
+                                aria-label="Delete review"
+                                style={{ background: "transparent", border: "none", padding: 2, cursor: "pointer", color: MUTE, display: "flex", alignItems: "center" }}
+                              >
+                                <X size={14} />
+                              </button>
+                            )}
                           </div>
                           <div onClick={() => openAlbum(c.albumId)} style={{ display: "flex", gap: 14, cursor: "pointer" }}>
                             <AlbumCover album={album} size={88} />
@@ -1571,7 +1642,7 @@ export default function SoundboardDemo() {
                         </div>
                       );
                     })}
-                    {feed.length === 0 && (
+                    {!isEveryone && displayItems.length === 0 && (
                       <div className="ui-sans" style={{ color: MUTE, fontSize: 13.5, padding: "20px 0" }}>
                         nothing here yet -- follow people, queue albums, or write a review and this fills in.
                       </div>
@@ -1579,7 +1650,8 @@ export default function SoundboardDemo() {
                   </div>
                 </>
               )
-            )}
+              );
+            })()}
 
             {/* ---- NEWS TAB ---- */}
             {homeTab === "news" && (() => {
@@ -2688,7 +2760,17 @@ export default function SoundboardDemo() {
                   if (!album) return null;
                   return (
                     <div key={r.id} onClick={() => openAlbum(r.albumId)} style={{ display: "flex", gap: 14, cursor: "pointer", width: "100%", maxWidth: isMobile ? 340 : "100%", position: "relative" }}>
-                      <div className="ui-sans" style={{ position: "absolute", top: 0, right: 0, fontSize: 11, color: MUTE }}>{r.date}</div>
+                      <div className="ui-sans" style={{ position: "absolute", top: 0, right: 0, display: "flex", alignItems: "center", gap: 8 }}>
+                        <span style={{ fontSize: 11, color: MUTE }}>{r.date}</span>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); deleteReview(r.albumId); }}
+                          title="Delete review"
+                          aria-label="Delete review"
+                          style={{ background: "transparent", border: "none", padding: 2, cursor: "pointer", color: MUTE, display: "flex", alignItems: "center" }}
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
                       <AlbumCover album={album} size={88} />
                       <div className="ui-sans" style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
                         <div style={{ fontSize: 20, fontWeight: 700, color: BLUE, letterSpacing: "-0.01em", lineHeight: 1.1, textAlign: "left" }}>{r.rating}/10</div>
@@ -2857,14 +2939,11 @@ function SongMixCover({ mix, size = 92 }) {
 // MusicBrainz search, same pattern as everywhere else in this file) so
 // the chosen album supplies cover art + artist name for the track.
 function AlbumSearchPicker({ onPick, onCancel, placeholder = "search for the album this track is from..." }) {
-  const { LINE, MUTE, INK } = useTheme();
+  const { LINE, MUTE, INK, BG } = useTheme();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // Debounced real search against the backend FTS index. Mirrors the
-  // browse-page search: 3-char minimum, 500ms debounce, normalize
-  // artistName/releaseYear -> artist/year for display.
   useEffect(() => {
     const q = query.trim();
     if (q.length < 3) {
@@ -2886,7 +2965,7 @@ function AlbumSearchPicker({ onPick, onCancel, placeholder = "search for the alb
         })
         .catch(() => setResults([]))
         .finally(() => setLoading(false));
-    }, 500);
+    }, 250);
     return () => clearTimeout(timer);
   }, [query]);
 
@@ -2900,31 +2979,31 @@ function AlbumSearchPicker({ onPick, onCancel, placeholder = "search for the alb
         onChange={(e) => setQuery(e.target.value)}
         autoFocus
       />
-      <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 4, maxHeight: 220, overflowY: "auto" }}>
+      <div style={{ marginTop: 10, display: "flex", flexDirection: "column", maxHeight: 320, overflowY: "auto" }}>
         {query.trim().length < 3 && (
-          <div className="ui-sans" style={{ fontSize: 12.5, color: MUTE, padding: "6px 8px" }}>type at least 3 characters to search...</div>
+          <div className="ui-sans" style={{ fontSize: 12.5, color: MUTE, padding: "8px 4px" }}>type at least 3 characters to search...</div>
         )}
         {query.trim().length >= 3 && loading && (
-          <div className="ui-sans" style={{ fontSize: 12.5, color: MUTE, padding: "6px 8px" }}>searching...</div>
+          <div className="ui-sans" style={{ fontSize: 12.5, color: MUTE, padding: "8px 4px" }}>searching...</div>
         )}
         {query.trim().length >= 3 && !loading && results.map((album) => (
           <div
             key={album.id}
             onClick={() => onPick(album)}
             className="ui-sans"
-            style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 8px", borderRadius: 6, cursor: "pointer" }}
+            style={{ display: "flex", alignItems: "center", gap: 12, padding: "6px 8px", borderRadius: 6, cursor: "pointer", textAlign: "left" }}
             onMouseEnter={(e) => (e.currentTarget.style.background = LINE)}
             onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
           >
-            <AlbumCover album={album} size={32} />
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 600 }}>{album.title}</div>
-              <div style={{ fontSize: 11, color: MUTE }}>{album.artist}</div>
+            <AlbumCover album={album} size={44} />
+            <div style={{ minWidth: 0, textAlign: "left" }}>
+              <div style={{ fontSize: 13.5, fontWeight: 600, lineHeight: 1.2, textAlign: "left" }}>{album.title}</div>
+              <div style={{ fontSize: 12, color: MUTE, lineHeight: 1.2, marginTop: 1, textAlign: "left" }}>{album.artist}{album.year ? ` · ${album.year}` : ""}</div>
             </div>
           </div>
         ))}
         {query.trim().length >= 3 && !loading && results.length === 0 && (
-          <div className="ui-sans" style={{ fontSize: 12.5, color: MUTE, padding: "6px 8px" }}>no albums match "{query}"</div>
+          <div className="ui-sans" style={{ fontSize: 12.5, color: MUTE, padding: "8px 4px" }}>no albums match "{query}"</div>
         )}
       </div>
       <button className="sb-btn" onClick={onCancel} style={{ marginTop: 10, fontSize: 11 }}>cancel</button>
