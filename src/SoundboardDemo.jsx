@@ -488,7 +488,7 @@ export default function SoundboardDemo() {
   // Accent + dark mode apply immediately on click rather than needing a
   // "save" -- these are visual preferences, not profile data someone
   // might want to draft and cancel out of.
-  const [accentKey, setAccentKey] = useState("blue");
+  const [accentKey, setAccentKey] = useState("skyblue");
   const [darkMode, setDarkMode] = useState(false);
   const [isMobile, setIsMobile] = useState(() => typeof window !== "undefined" && window.innerWidth < 600);
 
@@ -2657,27 +2657,33 @@ export default function SoundboardDemo() {
                 <div style={{ borderTop: `1px solid ${LINE}`, marginTop: 20, paddingTop: 18 }}>
                   <div style={{ fontSize: 13.5, fontWeight: 600, marginBottom: 14 }}>theme</div>
 
-                  <div style={{ fontSize: 11, color: MUTE, marginBottom: 8 }}>accent color</div>
-                  <div style={{ display: "flex", gap: 10, marginBottom: 18 }}>
-                    {Object.entries(ACCENTS).map(([key, a]) => (
-                      <button
-                        key={key}
-                        onClick={() => setAccentKey(key)}
-                        title={a.name}
-                        aria-label={`Use ${a.name} accent`}
-                        style={{
-                          width: 30,
-                          height: 30,
-                          borderRadius: 8,
-                          background: a.value,
-                          border: accentKey === key ? `2px solid ${INK}` : `2px solid transparent`,
-                          padding: 0,
-                          cursor: "pointer",
-                          boxShadow: accentKey === key ? `0 0 0 2px ${BG}` : "none",
-                        }}
-                      />
-                    ))}
-                  </div>
+                  {/* Accent color picker temporarily hidden — keeping code in place
+                      so we can re-enable later without rebuilding it. */}
+                  {false && (
+                    <>
+                      <div style={{ fontSize: 11, color: MUTE, marginBottom: 8 }}>accent color</div>
+                      <div style={{ display: "flex", gap: 10, marginBottom: 18 }}>
+                        {Object.entries(ACCENTS).map(([key, a]) => (
+                          <button
+                            key={key}
+                            onClick={() => setAccentKey(key)}
+                            title={a.name}
+                            aria-label={`Use ${a.name} accent`}
+                            style={{
+                              width: 30,
+                              height: 30,
+                              borderRadius: 8,
+                              background: a.value,
+                              border: accentKey === key ? `2px solid ${INK}` : `2px solid transparent`,
+                              padding: 0,
+                              cursor: "pointer",
+                              boxShadow: accentKey === key ? `0 0 0 2px ${BG}` : "none",
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </>
+                  )}
 
                   <div style={{ fontSize: 11, color: MUTE, marginBottom: 8 }}>appearance</div>
                   <div style={{ display: "flex", border: `1.5px solid ${INK}`, borderRadius: 6, overflow: "hidden", width: 200 }}>
