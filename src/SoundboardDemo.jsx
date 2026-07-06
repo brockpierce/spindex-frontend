@@ -583,7 +583,7 @@ export default function SoundboardDemo() {
   const [fetchedAlbums, setFetchedAlbums] = useState({});
   const [userAvatarCache, setUserAvatarCache] = useState({});
   const [profileStats, setProfileStats] = useState({ followers: 0, following: 0 });
-  const [showFollowList, setShowFollowList] = useState(null); // null | "followers" | "following"
+  const [showFollowList, setShowFollowList] = useState(null); // null | { kind: "followers" | "following", userId, username }
 
   // Load real follower/following counts when logged in
   useEffect(() => {
@@ -1179,11 +1179,7 @@ export default function SoundboardDemo() {
     return () => clearTimeout(timer);
   }, [userSearchQuery]);
 
-  const userSearchResults = liveUserResults.length > 0 ? liveUserResults : (
-    userSearchQuery.trim()
-      ? ALL_USERS.filter((u) => u.username.toLowerCase().includes(userSearchQuery.toLowerCase()) || u.displayName.toLowerCase().includes(userSearchQuery.toLowerCase()))
-      : []
-  );
+  const userSearchResults = liveUserResults;
 
   function toggleFollow(username) {
     const wasFollowing = followState[username];
@@ -1330,9 +1326,9 @@ export default function SoundboardDemo() {
 
       {showFollowList && (
         <FollowListModal
-          kind={showFollowList}
-          userId={authUser?.id}
-          username={profile.username}
+          kind={showFollowList.kind}
+          userId={showFollowList.userId}
+          username={showFollowList.username}
           onClose={() => setShowFollowList(null)}
           onVisitProfile={(u) => { setShowFollowList(null); openUserProfile(u); }}
         />
@@ -1797,8 +1793,8 @@ export default function SoundboardDemo() {
                   </button>
                   {!isMobile && (
                     <div style={{ display: "flex", gap: 32, alignItems: "flex-start", flexShrink: 0, marginRight: 24 }}>
-                      <Stat label="followers" value={user.followerCount || 0} />
-                      <Stat label="following" value={user.followingCount || 0} />
+                      <Stat label="followers" value={user.followerCount || 0} onClick={() => setShowFollowList({ kind: "followers", userId: user.id, username: user.username })} />
+                      <Stat label="following" value={user.followingCount || 0} onClick={() => setShowFollowList({ kind: "following", userId: user.id, username: user.username })} />
                       <Stat label="reviews" value={userReviews.length} />
                       <Stat label="avg rating" value={userAvgRating} />
                     </div>
@@ -1808,8 +1804,8 @@ export default function SoundboardDemo() {
 
               {isMobile && (
                 <div style={{ display: "flex", gap: 16, padding: "20px 0", borderBottom: `1px solid ${LINE}`, overflowX: "auto", justifyContent: "center", alignItems: "flex-start" }}>
-                  <Stat label="followers" value={user.followerCount || 0} />
-                  <Stat label="following" value={user.followingCount || 0} />
+                  <Stat label="followers" value={user.followerCount || 0} onClick={() => setShowFollowList({ kind: "followers", userId: user.id, username: user.username })} />
+                  <Stat label="following" value={user.followingCount || 0} onClick={() => setShowFollowList({ kind: "following", userId: user.id, username: user.username })} />
                   <Stat label="reviews" value={userReviews.length} />
                   <Stat label="avg rating" value={userAvgRating} />
                 </div>
@@ -1822,7 +1818,8 @@ export default function SoundboardDemo() {
                     const album = fetchedAlbums[r.albumId] || albumById(r.albumId);
                     if (!album) return null;
                     return (
-                      <div key={i} onClick={() => openAlbum(r.albumId, album)} style={{ display: "flex", gap: 14, cursor: "pointer" }}>
+                      <div key={i} onClick={() => openAlbum(r.albumId, album)} style={{ display: "flex", gap: 14, cursor: "pointer", position: "relative" }}>
+                        <div className="ui-sans" style={{ position: "absolute", top: 0, right: 0, fontSize: 11, color: MUTE }}>{r.date}</div>
                         <AlbumCover album={album} size={88} />
                         <div className="ui-sans" style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
                           <div style={{ fontSize: 20, fontWeight: 700, color: BLUE, letterSpacing: "-0.01em", lineHeight: 1.1, textAlign: "left" }}>{r.rating}/10</div>
@@ -1830,8 +1827,7 @@ export default function SoundboardDemo() {
                             <span style={{ fontSize: 14, fontWeight: 700 }}>{album.title}</span>
                             <span style={{ fontSize: 13, color: MUTE, marginLeft: 6 }}>{album.artist || album.artistName}</span>
                           </div>
-                          <div style={{ fontSize: 11, color: MUTE, marginTop: 4, textAlign: "left" }}>{r.date}</div>
-                          {r.text && <div style={{ fontSize: 13.5, color: INK, marginTop: 3, lineHeight: 1.5, textAlign: "left" }}>{r.text}</div>}
+                          {r.text && <div style={{ fontSize: 13.5, color: INK, marginTop: 6, lineHeight: 1.5, textAlign: "left" }}>{r.text}</div>}
                         </div>
                       </div>
                     );
@@ -2507,8 +2503,8 @@ export default function SoundboardDemo() {
                 </button>
                 {!isMobile && (
                   <div style={{ display: "flex", gap: 32, alignItems: "flex-start", flexShrink: 0, marginRight: 24 }}>
-                    <Stat label="followers" value={profileStats.followers} onClick={() => setShowFollowList("followers")} />
-                    <Stat label="following" value={profileStats.following} onClick={() => setShowFollowList("following")} />
+                    <Stat label="followers" value={profileStats.followers} onClick={() => setShowFollowList({ kind: "followers", userId: authUser?.id, username: profile.username })} />
+                    <Stat label="following" value={profileStats.following} onClick={() => setShowFollowList({ kind: "following", userId: authUser?.id, username: profile.username })} />
                     <Stat label="listened" value={listenedCount} onClick={() => setView({ name: "albumList", filter: "listened" })} />
                     <Stat label="reviews" value={reviews.length} />
                     <Stat label="avg rating" value={avgRating} />
@@ -2643,8 +2639,8 @@ export default function SoundboardDemo() {
 
             {isMobile && (
               <div style={{ display: "flex", gap: 16, padding: "20px 0", borderBottom: `1px solid ${LINE}`, overflowX: "auto", justifyContent: "center", alignItems: "flex-start" }}>
-                <Stat label="followers" value={profileStats.followers} onClick={() => setShowFollowList("followers")} />
-                <Stat label="following" value={profileStats.following} onClick={() => setShowFollowList("following")} />
+                <Stat label="followers" value={profileStats.followers} onClick={() => setShowFollowList({ kind: "followers", userId: authUser?.id, username: profile.username })} />
+                <Stat label="following" value={profileStats.following} onClick={() => setShowFollowList({ kind: "following", userId: authUser?.id, username: profile.username })} />
                 <Stat label="listened" value={listenedCount} onClick={() => setView({ name: "albumList", filter: "listened" })} />
                 <Stat label="reviews" value={reviews.length} />
                 <Stat label="avg rating" value={avgRating} />
@@ -2691,7 +2687,8 @@ export default function SoundboardDemo() {
                   const album = fetchedAlbums[r.albumId] || albumById(r.albumId);
                   if (!album) return null;
                   return (
-                    <div key={r.id} onClick={() => openAlbum(r.albumId)} style={{ display: "flex", gap: 14, cursor: "pointer", width: "100%", maxWidth: isMobile ? 340 : "100%" }}>
+                    <div key={r.id} onClick={() => openAlbum(r.albumId)} style={{ display: "flex", gap: 14, cursor: "pointer", width: "100%", maxWidth: isMobile ? 340 : "100%", position: "relative" }}>
+                      <div className="ui-sans" style={{ position: "absolute", top: 0, right: 0, fontSize: 11, color: MUTE }}>{r.date}</div>
                       <AlbumCover album={album} size={88} />
                       <div className="ui-sans" style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
                         <div style={{ fontSize: 20, fontWeight: 700, color: BLUE, letterSpacing: "-0.01em", lineHeight: 1.1, textAlign: "left" }}>{r.rating}/10</div>
@@ -2699,8 +2696,7 @@ export default function SoundboardDemo() {
                           <span style={{ fontSize: 14, fontWeight: 700 }}>{album.title}</span>
                           <span style={{ fontSize: 13, color: MUTE, marginLeft: 6 }}>{album.artist || album.artistName}</span>
                         </div>
-                        <div style={{ fontSize: 11, color: MUTE, marginTop: 4, textAlign: "left" }}>{r.date}</div>
-                        {r.text && <div style={{ fontSize: 13.5, color: INK, marginTop: 3, lineHeight: 1.5, textAlign: "left" }}>{r.text}</div>}
+                        {r.text && <div style={{ fontSize: 13.5, color: INK, marginTop: 6, lineHeight: 1.5, textAlign: "left" }}>{r.text}</div>}
                         {(r.favTrack || r.leastFavTrack) && (
                           <div style={{ fontSize: 11.5, color: MUTE, marginTop: 8, display: "flex", gap: 14, flexWrap: "wrap", textAlign: "left" }}>
                             {r.favTrack && <span>♡ {r.favTrack}</span>}
