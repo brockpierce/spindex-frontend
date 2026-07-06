@@ -2822,10 +2822,35 @@ function SongMixCover({ mix, size = 92 }) {
 function AlbumSearchPicker({ onPick, onCancel, placeholder = "search for the album this track is from..." }) {
   const { LINE, MUTE, INK } = useTheme();
   const [query, setQuery] = useState("");
-  const results = useMemo(() => {
-    if (!query.trim()) return ALBUMS.slice(0, 6);
-    const q = query.toLowerCase();
-    return ALBUMS.filter((a) => a.title.toLowerCase().includes(q) || a.artist.toLowerCase().includes(q));
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  // Debounced real search against the backend FTS index. Mirrors the
+  // browse-page search: 3-char minimum, 500ms debounce, normalize
+  // artistName/releaseYear -> artist/year for display.
+  useEffect(() => {
+    const q = query.trim();
+    if (q.length < 3) {
+      setResults([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    const timer = setTimeout(() => {
+      apiFetch(`${BACKEND_URL}/api/albums?search=${encodeURIComponent(q)}&limit=30`)
+        .then((res) => res.json())
+        .then((data) => {
+          const albums = (data.albums || []).map((a) => ({
+            ...a,
+            artist: a.artistName || a.artist || "",
+            year: a.releaseYear || a.year || null,
+          }));
+          setResults(albums);
+        })
+        .catch(() => setResults([]))
+        .finally(() => setLoading(false));
+    }, 500);
+    return () => clearTimeout(timer);
   }, [query]);
 
   return (
@@ -2839,7 +2864,13 @@ function AlbumSearchPicker({ onPick, onCancel, placeholder = "search for the alb
         autoFocus
       />
       <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 4, maxHeight: 220, overflowY: "auto" }}>
-        {results.map((album) => (
+        {query.trim().length < 3 && (
+          <div className="ui-sans" style={{ fontSize: 12.5, color: MUTE, padding: "6px 8px" }}>type at least 3 characters to search...</div>
+        )}
+        {query.trim().length >= 3 && loading && (
+          <div className="ui-sans" style={{ fontSize: 12.5, color: MUTE, padding: "6px 8px" }}>searching...</div>
+        )}
+        {query.trim().length >= 3 && !loading && results.map((album) => (
           <div
             key={album.id}
             onClick={() => onPick(album)}
@@ -2855,7 +2886,9 @@ function AlbumSearchPicker({ onPick, onCancel, placeholder = "search for the alb
             </div>
           </div>
         ))}
-        {results.length === 0 && <div className="ui-sans" style={{ fontSize: 12.5, color: MUTE, padding: "6px 8px" }}>no albums match "{query}"</div>}
+        {query.trim().length >= 3 && !loading && results.length === 0 && (
+          <div className="ui-sans" style={{ fontSize: 12.5, color: MUTE, padding: "6px 8px" }}>no albums match "{query}"</div>
+        )}
       </div>
       <button className="sb-btn" onClick={onCancel} style={{ marginTop: 10, fontSize: 11 }}>cancel</button>
     </div>
