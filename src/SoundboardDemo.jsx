@@ -1299,6 +1299,7 @@ export default function SoundboardDemo() {
         @media (max-width: 480px) {
           .sb-nav-item { font-size: 10px; letter-spacing: 0.01em; }
           .sb-btn { padding: 7px 10px; font-size: 11px; }
+          .sb-rating-row { flex-wrap: wrap; }
         }
       `}</style>
 
@@ -1792,7 +1793,7 @@ export default function SoundboardDemo() {
                 </button>
               </div>
 
-              <div style={{ display: "flex", gap: 32, padding: "20px 0", borderBottom: `1px solid ${LINE}` }}>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "16px 28px", padding: "20px 0", borderBottom: `1px solid ${LINE}` }}>
                 <Stat label="followers" value={user.followerCount || 0} />
                 <Stat label="following" value={user.followingCount || 0} />
                 <Stat label="reviews" value={userReviews.length} />
@@ -2069,10 +2070,10 @@ export default function SoundboardDemo() {
                     </button>
                   </div>
 
-                  <div style={{ marginTop: 22, paddingTop: 18, borderTop: `1px solid ${LINE}` }}>
+                  <div style={{ marginTop: 22, paddingTop: 18, borderTop: `1px solid ${LINE}`, width: "100%" }}>
                     <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 9 }}>your rating</div>
                     <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                      <RatingBlocks value={draftRating} onChange={setDraftRating} size={16} />
+                      <RatingBlocks value={draftRating} onChange={setDraftRating} size={isMobile ? 13 : 16} />
                       <span style={{ fontSize: 13, fontWeight: 600, color: draftRating ? BLUE : LINE }}>{draftRating || "--"}/10</span>
                     </div>
                   </div>
@@ -2599,7 +2600,7 @@ export default function SoundboardDemo() {
               </div>
             )}
 
-            <div style={{ display: "flex", gap: 32, padding: "20px 0", borderBottom: `1px solid ${LINE}` }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "16px 28px", padding: "20px 0", borderBottom: `1px solid ${LINE}` }}>
               <Stat label="followers" value={profileStats.followers} onClick={() => setShowFollowList("followers")} />
               <Stat label="following" value={profileStats.following} onClick={() => setShowFollowList("following")} />
               <Stat label="listened" value={listenedCount} onClick={() => setView({ name: "albumList", filter: "listened" })} />
