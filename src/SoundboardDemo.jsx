@@ -3047,8 +3047,8 @@ export default function SoundboardDemo() {
                         {r.text && <div style={{ fontSize: 13.5, color: INK, marginTop: 6, lineHeight: 1.5, textAlign: "left" }}>{r.text}</div>}
                         {(r.favTrack || r.leastFavTrack) && (
                           <div style={{ fontSize: 11.5, color: MUTE, marginTop: 8, display: "flex", gap: 14, flexWrap: "wrap", textAlign: "left" }}>
-                            {r.favTrack && <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><svg width="12" height="11" viewBox="0 0 12 11" fill="none"><path d="M6 10.67l-.58-.53C3.16 8.14 2 7.11 2 5.8 2 4.57 2.97 3.6 4.2 3.6c.7 0 1.36.32 1.8.84.44-.52 1.1-.84 1.8-.84C9.03 3.6 10 4.57 10 5.8c0 1.31-1.16 2.34-3.42 4.34L6 10.67z" stroke={MUTE} strokeWidth="0.8" fill="none" /></svg> {r.favTrack}</span>}
-                            {r.leastFavTrack && <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><svg width="12" height="11" viewBox="0 0 12 11" fill="none"><path d="M5 10.5l-.5-.45C2.6 8.3 1.5 7.4 1.5 6.2 1.5 5.1 2.3 4.2 3.4 4.2c.6 0 1.2.3 1.6.7l.5.6-.3 1.4.7 1.6-.5 1.3z" stroke={MUTE} strokeWidth="0.8" fill="none" /><path d="M7 10.5l.5-.45C9.4 8.3 10.5 7.4 10.5 6.2c0-1.1-.8-2-1.9-2-.6 0-1.2.3-1.6.7l-.5.6.3 1.4-.7 1.6.5 1.3z" stroke={MUTE} strokeWidth="0.8" fill="none" /></svg> {r.leastFavTrack}</span>}
+                            {r.favTrack && <span>♡ {r.favTrack}</span>}
+                            {r.leastFavTrack && <span>✕ {r.leastFavTrack}</span>}
                           </div>
                         )}
                       </div>
