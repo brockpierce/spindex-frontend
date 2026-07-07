@@ -4404,7 +4404,7 @@ function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUserna
   }
 
   return (
-    <div className="sb-comment-bubble" style={{ background: "#fafbfc", borderTop: "1px solid #eceef0", marginTop: 8, marginLeft: -16, marginRight: -16, marginBottom: -14, padding: "0 16px"}}>
+    <div className="sb-comment-bubble" style={{ background: "#fafbfc", borderTop: "1px solid #eceef0", marginTop: 8, marginLeft: -16, marginRight: -16, marginBottom: -14, padding: "0 16px", borderRadius: "0 0 8px 8px"}}>
       <button
         className="ui-sans"
         onClick={handleToggle}
