@@ -4272,7 +4272,7 @@ function CommentInput({ placeholder, onSubmit, currentUsername, initialValue = "
         <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 8, background: "#ffffff", border: "1px solid #e3e6ea", borderRadius: 22, padding: "4px 6px 4px 18px" }}>
           <input
             style={{ flex: 1, border: "none", outline: "none", background: "none", fontSize: 16, color: "#1a1a1a", padding: "9px 0", fontFamily: "inherit" }}
-            placeholder={placeholder || "Add a comment..."}
+            placeholder={placeholder || "Write a comment..."}
             value={text}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
@@ -4304,50 +4304,66 @@ function CommentInput({ placeholder, onSubmit, currentUsername, initialValue = "
 function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername, reviewReactions = {}, onReact }) {
   const { BLUE, INK, LINE, MUTE } = useTheme();
   const [replying, setReplying] = useState(false);
+  const avatarSize = depth > 0 ? 30 : 38;
+  const fontSize = depth > 0 ? 15 : 16;
+
+  function relativeTime(date) {
+    if (!date) return "";
+    const diff = Date.now() - new Date(date).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 60) return mins + "m";
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return hrs + "h";
+    const days = Math.floor(hrs / 24);
+    if (days < 30) return days + "d";
+    const mos = Math.floor(days / 30);
+    if (mos < 12) return mos + "mo";
+    return Math.floor(mos / 12) + "y";
+  }
+
+  const youHearted = ((reviewReactions[comment.id] || {}).heart || []).includes(currentUsername);
 
   return (
-    <div style={{ marginLeft: depth > 0 ? 48 : 0, marginBottom: 6 }}>
-      <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
-        <Avatar username={comment.username} size={32} />
+    <div style={{ marginLeft: depth > 0 ? 50 : 0 }}>
+      <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+        <Avatar username={comment.username} size={avatarSize} />
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div className="sb-comment-bubble" style={{ background: "#ffffff", border: "1px solid #ebedf0", borderRadius: "4px 14px 14px 14px", padding: "7px 12px", textAlign: "left" }}>
-            <div style={{ fontWeight: 700, fontSize: 13, color: "#1a1a1a", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", textAlign: "left" }}>
-              {comment.username === currentUsername ? "you" : `@${(comment.username || "").toLowerCase()}`}
-            </div>
-            <div style={{ fontSize: 13.5, lineHeight: 1.4, color: "#2a2a2a", marginTop: 2, fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", textAlign: "left" }}>
-              <CommentText text={comment.text} />
-            </div>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "2px 2px 4px", flexWrap: "nowrap" }}>
+          <p style={{ margin: 0, fontSize, lineHeight: 1.45, color: "#2a2a2a", fontFamily: "inherit" }}>
+            <span style={{ fontWeight: 700 }}>{comment.username === currentUsername ? "you" : "@" + (comment.username || "").toLowerCase()}</span>
+            {"  "}
+            <CommentText text={comment.text} />
+          </p>
+          <div style={{ display: "flex", alignItems: "center", gap: 16, marginTop: 6, fontSize: 13, color: "#9aa0a6", fontWeight: 600 }}>
+            {comment.date && <span>{relativeTime(comment.date)}</span>}
             <button
               onClick={() => setReplying((r) => !r)}
-              style={{ border: "none", background: "none", padding: 0, cursor: "pointer", fontSize: 11.5, fontWeight: 600, color: replying ? "#1a1a1a" : "#9aa0a6", fontFamily: "inherit", flexShrink: 0 }}
-              onMouseEnter={(e) => e.currentTarget.style.color = "#1a1a1a"}
-              onMouseLeave={(e) => e.currentTarget.style.color = replying ? "#1a1a1a" : "#9aa0a6"}
+              style={{ border: "none", background: "none", padding: 0, cursor: "pointer", font: "inherit", color: replying ? "#1a1a1a" : "#9aa0a6", fontSize: 13, fontWeight: 600 }}
             >
               {replying ? "cancel" : "Reply"}
             </button>
-            {comment.id && onReact && (
-              <ReactionBar
-                reactions={reviewReactions[comment.id] || { heart: [], frown: [] }}
-                onReact={(kind) => onReact(comment.id, kind)}
-                currentUsername={currentUsername}
-                inline={true}
-              />
-            )}
           </div>
         </div>
+        {comment.id && onReact && (
+          <button
+            onClick={() => onReact(comment.id, "heart")}
+            style={{ border: "none", background: "none", padding: 0, cursor: "pointer", color: youHearted ? "#ff3b6b" : "#c9ced4", fontSize, marginTop: 2, flexShrink: 0 }}
+          >
+            {youHearted ? "\u2665" : "\u2661"}
+          </button>
+        )}
       </div>
 
       {(comment.replies || []).map((reply) => (
-        <CommentNode key={reply.id} comment={reply} depth={depth + 1} reviewId={reviewId} onReply={onReply} currentUsername={currentUsername} reviewReactions={reviewReactions} onReact={onReact} />
+        <div key={reply.id} style={{ marginTop: 16 }}>
+          <CommentNode comment={reply} depth={depth + 1} reviewId={reviewId} onReply={onReply} currentUsername={currentUsername} reviewReactions={reviewReactions} onReact={onReact} />
+        </div>
       ))}
 
       {replying && (
-        <div style={{ marginTop: 4, marginLeft: 40 }}>
+        <div style={{ marginTop: 10, marginLeft: 50 }}>
           <CommentInput
-            placeholder={`reply to @${comment.username}...`}
-            initialValue={`@${comment.username} `}
+            placeholder={"reply to @" + comment.username + "..."}
+            initialValue={"@" + comment.username + " "}
             currentUsername={currentUsername}
             onSubmit={(text) => { onReply(reviewId, comment.id, comment.username, text); setReplying(false); }}
           />
@@ -4379,7 +4395,7 @@ function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUserna
         const ids = [];
         for (const c of cs) {
           if (c.id) ids.push(c.id);
-          if (c.replies?.length) ids.push(...collectIds(c.replies));
+          if (c.replies && c.replies.length) ids.push(...collectIds(c.replies));
         }
         return ids;
       }
@@ -4388,46 +4404,39 @@ function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUserna
   }
 
   return (
-    <div className="sb-comment-bubble" style={{ borderTop: "1px solid #eceef0", padding: "14px 0 16px", marginTop: 8, textAlign: "left" }}>
-      {/* Collapse toggle — only show if there are comments */}
-      {total > 0 && (
-        <button
-          className="ui-sans"
-          onClick={handleToggle}
-          style={{ background: "none", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600, color: "#6b7280", padding: 0, display: "flex", alignItems: "center", gap: 6, marginBottom: open ? 12 : 0 }}
-          onMouseEnter={(e) => e.currentTarget.style.color = "#1a1a1a"}
-          onMouseLeave={(e) => e.currentTarget.style.color = "#6b7280"}
-        >
-          {`${total} comment${total !== 1 ? "s" : ""}`}
-          <span style={{ fontSize: 11 }}>{open ? "▲" : "▼"}</span>
-        </button>
-      )}
+    <div className="sb-comment-bubble" style={{ background: "#fafbfc", borderTop: "1px solid #eceef0" }}>
+      <button
+        className="ui-sans"
+        onClick={handleToggle}
+        style={{ display: "flex", alignItems: "center", gap: 8, border: "none", background: "none", padding: "18px 0 0", cursor: "pointer", fontSize: 15, fontWeight: 600, color: "#6b7280", letterSpacing: "0.01em", fontFamily: "inherit" }}
+        onMouseEnter={(e) => e.currentTarget.style.color = "#1a1a1a"}
+        onMouseLeave={(e) => e.currentTarget.style.color = "#6b7280"}
+      >
+        {total > 0 ? total + " comment" + (total !== 1 ? "s" : "") : "add a comment"}
+        {total > 0 && (
+          <span style={{ fontSize: 11, display: "inline-block", transition: "transform 0.2s", transform: open ? "rotate(180deg)" : "rotate(0deg)" }}>&#9660;</span>
+        )}
+      </button>
 
-      {open && (
-        <div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            {comments.map((c) => (
-              <CommentNode key={c.id} comment={c} depth={0} reviewId={reviewId} onReply={onReply} currentUsername={currentUsername} reviewReactions={reviewReactions} onReact={onReact} />
-            ))}
-          </div>
-          <div style={{ marginTop: 12 }}>
+      {(open || total === 0) && (
+        <>
+          {comments.length > 0 && (
+            <div style={{ maxHeight: 360, overflowY: "auto", padding: "20px 0 6px", display: "flex", flexDirection: "column", gap: 22 }}>
+              {comments.map((c) => (
+                <CommentNode key={c.id} comment={c} depth={0} reviewId={reviewId} onReply={onReply} currentUsername={currentUsername} reviewReactions={reviewReactions} onReact={onReact} />
+              ))}
+            </div>
+          )}
+          <div style={{ borderTop: comments.length > 0 ? "1px solid #eceef0" : "none", marginTop: comments.length > 0 ? 14 : 12, paddingBottom: 22 }}>
             <CommentInput
-              placeholder="Add a comment..."
+              placeholder="Write a comment..."
               currentUsername={currentUsername}
               onSubmit={(text) => onAdd(reviewId, text, reviewOwnerUsername)}
             />
           </div>
-        </div>
+        </>
       )}
-
-      {/* Always show composer when no comments yet */}
-      {total === 0 && (
-        <CommentInput
-          placeholder="Add a comment..."
-          currentUsername={currentUsername}
-          onSubmit={(text) => onAdd(reviewId, text, reviewOwnerUsername)}
-        />
-      )}
+      {!open && total > 0 && <div style={{ height: 18 }} />}
     </div>
   );
 }
@@ -5292,4 +5301,3 @@ function AuthScreen({ backendUrl, onAuthed }) {
     </div>
   );
 }
-// Tue Jul  7 15:44:40 PDT 2026
