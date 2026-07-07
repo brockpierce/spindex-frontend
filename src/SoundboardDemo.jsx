@@ -3573,9 +3573,8 @@ function AlbumSearchPicker({ onPick, onCancel, placeholder = "search for the alb
 // Question-of-the-day popup: shows today's prompt, lets the person search
 // and pick an album that answers it, confirms the pick, then posts.
 // Draws a shareable image card onto an offscreen canvas and resolves a PNG
-// blob. Mirrors the album-cover placeholder style used everywhere else in
-// the app (solid blue square + headphone mark) since there's no real cover
-// art in this demo -- the real app would draw the actual artwork here.
+// blob. Uses the real album cover art when available, falls back to the
+// headphone placeholder.
 function generateShareCardBlob({ kind, album, username, rating, reviewText, questionText, accentColor }) {
   return new Promise((resolve) => {
     const W = 1080, H = 1350; // 4:5, the safe aspect ratio for both feed and Stories crops
@@ -3584,59 +3583,86 @@ function generateShareCardBlob({ kind, album, username, rating, reviewText, ques
     canvas.height = H;
     const ctx = canvas.getContext("2d");
 
-    // Background
-    ctx.fillStyle = "#FFFFFF";
-    ctx.fillRect(0, 0, W, H);
-
-    // Album cover placeholder block
     const coverSize = 640;
     const coverX = (W - coverSize) / 2;
     const coverY = 180;
     const radius = 36;
-    ctx.fillStyle = accentColor;
-    roundRect(ctx, coverX, coverY, coverSize, coverSize, radius);
-    ctx.fill();
 
-    // Headphone mark, drawn directly since SVG can't be reused on canvas
-    ctx.strokeStyle = "#FFFFFF";
-    ctx.lineWidth = 26;
-    ctx.lineCap = "round";
-    ctx.beginPath();
-    const cx = coverX + coverSize / 2, cy = coverY + coverSize / 2;
-    ctx.arc(cx, cy - 30, 130, Math.PI, 0, false);
-    ctx.stroke();
-    ctx.fillStyle = "#FFFFFF";
-    roundRect(ctx, cx - 160, cy + 40, 60, 110, 28); ctx.fill();
-    roundRect(ctx, cx + 100, cy + 40, 60, 110, 28); ctx.fill();
+    function drawCard() {
+      // Background
+      ctx.fillStyle = "#FFFFFF";
+      ctx.fillRect(0, 0, W, H);
 
-    // Album title / artist
-    ctx.fillStyle = "#0A0A0A";
-    ctx.textAlign = "center";
-    ctx.font = "700 52px Arial, sans-serif";
-    wrapText(ctx, album.title, W / 2, coverY + coverSize + 90, 880, 58);
-    ctx.font = "400 36px Arial, sans-serif";
-    ctx.fillStyle = "#7A7A7A";
-    ctx.fillText(album.artist + (album.year ? ` · ${album.year}` : ""), W / 2, coverY + coverSize + 150);
+      // Album cover block (real image or placeholder)
+      if (album._img) {
+        // Clip to rounded rect then draw image
+        ctx.save();
+        roundRect(ctx, coverX, coverY, coverSize, coverSize, radius);
+        ctx.clip();
+        ctx.drawImage(album._img, coverX, coverY, coverSize, coverSize);
+        ctx.restore();
+      } else {
+        // Placeholder: solid accent square + headphone mark
+        ctx.fillStyle = accentColor;
+        roundRect(ctx, coverX, coverY, coverSize, coverSize, radius);
+        ctx.fill();
+        ctx.strokeStyle = "#FFFFFF";
+        ctx.lineWidth = 26;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        const cx = coverX + coverSize / 2, cy = coverY + coverSize / 2;
+        ctx.arc(cx, cy - 30, 130, Math.PI, 0, false);
+        ctx.stroke();
+        ctx.fillStyle = "#FFFFFF";
+        roundRect(ctx, cx - 160, cy + 40, 60, 110, 28); ctx.fill();
+        roundRect(ctx, cx + 100, cy + 40, 60, 110, 28); ctx.fill();
+      }
 
-    // Rating or question label
-    ctx.font = "700 44px Arial, sans-serif";
-    ctx.fillStyle = accentColor;
-    if (kind === "qotd") {
-      ctx.font = "700 32px Arial, sans-serif";
-      wrapText(ctx, `"${questionText}"`, W / 2, coverY + coverSize + 220, 800, 42);
-    } else {
-      ctx.fillText(`${rating}/10`, W / 2, coverY + coverSize + 225);
+      // Album title / artist
+      ctx.fillStyle = "#0A0A0A";
+      ctx.textAlign = "center";
+      ctx.font = "700 52px Arial, sans-serif";
+      wrapText(ctx, album.title || "Unknown Album", W / 2, coverY + coverSize + 90, 880, 58);
+      ctx.font = "400 36px Arial, sans-serif";
+      ctx.fillStyle = "#7A7A7A";
+      ctx.fillText((album.artist || album.artistName || "") + (album.year || album.releaseYear ? ` · ${album.year || album.releaseYear}` : ""), W / 2, coverY + coverSize + 155);
+
+      // Rating or question label — big and prominent
+      if (kind === "qotd") {
+        ctx.font = "700 32px Arial, sans-serif";
+        ctx.fillStyle = accentColor;
+        wrapText(ctx, `"${questionText}"`, W / 2, coverY + coverSize + 230, 800, 42);
+      } else {
+        ctx.font = "700 96px Arial, sans-serif";
+        ctx.fillStyle = accentColor;
+        ctx.fillText(`${rating}/10`, W / 2, coverY + coverSize + 270);
+      }
+
+      // Username + wordmark footer
+      ctx.font = "600 34px Arial, sans-serif";
+      ctx.fillStyle = "#0A0A0A";
+      ctx.fillText(`@${(username || "").toLowerCase()}`, W / 2, H - 110);
+      ctx.font = "700 38px Arial, sans-serif";
+      ctx.fillStyle = accentColor;
+      ctx.fillText("spindex", W / 2, H - 55);
+
+      canvas.toBlob((blob) => resolve(blob), "image/png");
     }
 
-    // Username + wordmark footer
-    ctx.font = "600 34px Arial, sans-serif";
-    ctx.fillStyle = "#0A0A0A";
-    ctx.fillText(`@${username}`, W / 2, H - 110);
-    ctx.font = "700 38px Arial, sans-serif";
-    ctx.fillStyle = accentColor;
-    ctx.fillText("spindex", W / 2, H - 55);
+    // Load real cover art if available, then draw
+    const coverUrl = album && album.coverArtUrl && album.coverArtUrl !== "none"
+      ? album.coverArtUrl : null;
 
-    canvas.toBlob((blob) => resolve(blob), "image/png");
+    if (coverUrl) {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => { album._img = img; drawCard(); };
+      img.onerror = () => { album._img = null; drawCard(); };
+      img.src = coverUrl;
+    } else {
+      album._img = null;
+      drawCard();
+    }
   });
 }
 
