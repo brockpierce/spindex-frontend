@@ -4054,21 +4054,24 @@ function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername, r
               <CommentText text={comment.text} />
             </div>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "4px 4px 8px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 14, margin: "3px 4px 6px", flexWrap: "nowrap" }}>
             <button
               onClick={() => setReplying((r) => !r)}
-              style={{ border: "none", background: "none", padding: 0, cursor: "pointer", fontSize: 12, fontWeight: 600, color: replying ? "#1a1a1a" : "#9aa0a6", fontFamily: "inherit" }}
+              style={{ border: "none", background: "none", padding: 0, cursor: "pointer", fontSize: 12, fontWeight: 600, color: replying ? "#1a1a1a" : "#9aa0a6", fontFamily: "inherit", flexShrink: 0 }}
               onMouseEnter={(e) => e.currentTarget.style.color = "#1a1a1a"}
               onMouseLeave={(e) => e.currentTarget.style.color = replying ? "#1a1a1a" : "#9aa0a6"}
             >
               {replying ? "cancel" : "Reply"}
             </button>
             {comment.id && onReact && (
-              <ReactionBar
-                reactions={reviewReactions[comment.id] || { heart: [], frown: [] }}
-                onReact={(kind) => onReact(comment.id, kind)}
-                currentUsername={currentUsername}
-              />
+              <div style={{ display: "flex", alignItems: "center" }}>
+                <ReactionBar
+                  reactions={reviewReactions[comment.id] || { heart: [], frown: [] }}
+                  onReact={(kind) => onReact(comment.id, kind)}
+                  currentUsername={currentUsername}
+                  inline={true}
+                />
+              </div>
             )}
           </div>
         </div>
@@ -4204,7 +4207,7 @@ function NowPlayingBars() {
   );
 }
 
-function ReactionBar({ reactions = { heart: [], frown: [] }, onReact, currentUsername }) {
+function ReactionBar({ reactions = { heart: [], frown: [] }, onReact, currentUsername, inline = false }) {
   const { BLUE, MUTE } = useTheme();
   const heartCount = (reactions.heart || []).length;
   const frownCount = (reactions.frown || []).length;
@@ -4212,7 +4215,7 @@ function ReactionBar({ reactions = { heart: [], frown: [] }, onReact, currentUse
   const youFrowned = (reactions.frown || []).includes(currentUsername);
 
   return (
-    <div style={{ display: "flex", gap: 14, alignItems: "center", marginTop: 8 }}>
+    <div style={{ display: "flex", gap: 14, alignItems: "center", marginTop: inline ? 0 : 8 }}>
       <button
         onClick={() => onReact("heart")}
         className="ui-sans"
