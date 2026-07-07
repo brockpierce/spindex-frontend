@@ -1729,7 +1729,7 @@ export default function SoundboardDemo() {
       <div style={{ maxWidth: 920, margin: "0 auto", padding: "28px 16px 64px" }}>
         {/* TOAST */}
         {toast && (
-          <div style={{ position: "sticky", top: 8, zIndex: 10, background: INK, color: BG, padding: "8px 14px", borderRadius: 6, fontSize: 12, marginBottom: 16, display: "inline-flex", alignItems: "center", gap: 6 }}>
+          <div style={{ position: "sticky", top: 8, zIndex: 10, background: INK, color: BG, padding: "8px 14px", borderRadius: 6, fontSize: 12, marginBottom: 16, display: "inline-flex", alignItems: "center", gap: 2 }}>
             <Check size={13} /> {toast}
           </div>
         )}
@@ -2621,7 +2621,7 @@ export default function SoundboardDemo() {
             {/* YOUR ALBUM MIXES */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 22 }}>
               <div className="ui-sans" style={{ fontSize: 20, fontWeight: 600 }}>your album mixes</div>
-              <button className="sb-btn" onClick={() => setShowNewMix(showNewMix === "album" ? null : "album")} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <button className="sb-btn" onClick={() => setShowNewMix(showNewMix === "album" ? null : "album")} style={{ display: "flex", alignItems: "center", gap: 2 }}>
                 <Plus size={13} /> new album mix
               </button>
             </div>
@@ -2664,7 +2664,7 @@ export default function SoundboardDemo() {
             {false && (<>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginTop: 36, marginBottom: 22 }}>
               <div className="ui-sans" style={{ fontSize: 20, fontWeight: 600 }}>your song mixes</div>
-              <button className="sb-btn" onClick={() => setShowNewMix(showNewMix === "song" ? null : "song")} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <button className="sb-btn" onClick={() => setShowNewMix(showNewMix === "song" ? null : "song")} style={{ display: "flex", alignItems: "center", gap: 2 }}>
                 <Plus size={13} /> new song mix
               </button>
             </div>
@@ -3397,11 +3397,11 @@ function AddToAlbumMixInline({ album, albumMixes, onAdd }) {
   const [open, setOpen] = useState(false);
   return (
     <div style={{ marginTop: 18, paddingTop: 14, borderTop: `1px solid ${LINE}` }}>
-      <button className="sb-btn" onClick={() => setOpen((o) => !o)} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+      <button className="sb-btn" onClick={() => setOpen((o) => !o)} style={{ display: "flex", alignItems: "center", gap: 2 }}>
         <ListMusic size={13} /> add to album mix
       </button>
       {open && (
-        <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 6 }}>
+        <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 2 }}>
           {albumMixes.map((m) => {
             const already = m.albums.some((a) => a.albumId === album.id);
             return (
@@ -4029,12 +4029,12 @@ function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername })
   const [replying, setReplying] = useState(false);
 
   return (
-    <div style={{ marginLeft: depth > 0 ? 50 : 0, marginBottom: 14 }}>
+    <div style={{ marginLeft: depth > 0 ? 50 : 0, marginBottom: 4 }}>
       <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
         <Avatar username={comment.username} size={38} />
         <div style={{ flex: 1, minWidth: 0 }}>
           {/* Chat bubble — squared top-left corner points at avatar */}
-          <div className="sb-comment-bubble" style={{ background: "#ffffff", border: "1px solid #ebedf0", borderRadius: "4px 16px 16px 16px", padding: "12px 16px" }}>
+          <div className="sb-comment-bubble" style={{ background: "#ffffff", border: "1px solid #ebedf0", borderRadius: "4px 16px 16px 16px", padding: "8px 14px" }}>
             <div style={{ fontWeight: 700, fontSize: 14, color: "#1a1a1a", fontFamily: "inherit" }}>
               {comment.username === currentUsername ? "you" : `@${(comment.username || "").toLowerCase()}`}
             </div>
@@ -4104,7 +4104,7 @@ function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUserna
 
       {(open || total === 0) && (
         <div style={{ marginTop: 20 }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
             {comments.map((c) => (
               <CommentNode key={c.id} comment={c} depth={0} reviewId={reviewId} onReply={onReply} currentUsername={currentUsername} />
             ))}
@@ -4469,7 +4469,7 @@ function SongMixDetail({ mix, isOwn, onBack, onOpenAlbum, onAddTrack, onRemoveTr
       {isOwn && (
         <div style={{ marginTop: 18 }}>
           {!adding ? (
-            <button className="sb-btn" onClick={startAdd} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <button className="sb-btn" onClick={startAdd} style={{ display: "flex", alignItems: "center", gap: 2 }}>
               <Plus size={13} /> add track
             </button>
           ) : !pickedAlbum ? (
