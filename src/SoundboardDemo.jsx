@@ -1965,7 +1965,7 @@ export default function SoundboardDemo() {
                                 </button>
                               )}
                             </div>
-                            <div className="ui-sans" style={{ fontSize: 14, color: INK, lineHeight: 1.6, marginBottom: 10 }}>{c.text}</div>
+                            <div className="ui-sans" style={{ fontSize: 14, color: INK, lineHeight: 1.6, marginBottom: 10, textAlign: "left" }}>{c.text}</div>
                             {c.id && (
                               <>
                                 <ReactionBar
@@ -4306,36 +4306,34 @@ function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername, r
   const [replying, setReplying] = useState(false);
 
   return (
-    <div style={{ marginLeft: depth > 0 ? 50 : 0, marginBottom: 4 }}>
-      <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-        <Avatar username={comment.username} size={38} />
+    <div style={{ marginLeft: depth > 0 ? 48 : 0, marginBottom: 6 }}>
+      <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+        <Avatar username={comment.username} size={32} />
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div className="sb-comment-bubble" style={{ background: "#ffffff", border: "1px solid #ebedf0", borderRadius: "4px 16px 16px 16px", padding: "8px 14px", textAlign: "left" }}>
-            <div style={{ fontWeight: 700, fontSize: 14, color: "#1a1a1a", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", textAlign: "left" }}>
+          <div className="sb-comment-bubble" style={{ background: "#ffffff", border: "1px solid #ebedf0", borderRadius: "4px 14px 14px 14px", padding: "7px 12px", textAlign: "left" }}>
+            <div style={{ fontWeight: 700, fontSize: 13, color: "#1a1a1a", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", textAlign: "left" }}>
               {comment.username === currentUsername ? "you" : `@${(comment.username || "").toLowerCase()}`}
             </div>
-            <div style={{ fontSize: 14, lineHeight: 1.4, color: "#2a2a2a", marginTop: 2, fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", textAlign: "left" }}>
+            <div style={{ fontSize: 13.5, lineHeight: 1.4, color: "#2a2a2a", marginTop: 2, fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", textAlign: "left" }}>
               <CommentText text={comment.text} />
             </div>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 14, margin: "3px 4px 6px", flexWrap: "nowrap" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "2px 2px 4px", flexWrap: "nowrap" }}>
             <button
               onClick={() => setReplying((r) => !r)}
-              style={{ border: "none", background: "none", padding: 0, cursor: "pointer", fontSize: 12, fontWeight: 600, color: replying ? "#1a1a1a" : "#9aa0a6", fontFamily: "inherit", flexShrink: 0 }}
+              style={{ border: "none", background: "none", padding: 0, cursor: "pointer", fontSize: 11.5, fontWeight: 600, color: replying ? "#1a1a1a" : "#9aa0a6", fontFamily: "inherit", flexShrink: 0 }}
               onMouseEnter={(e) => e.currentTarget.style.color = "#1a1a1a"}
               onMouseLeave={(e) => e.currentTarget.style.color = replying ? "#1a1a1a" : "#9aa0a6"}
             >
               {replying ? "cancel" : "Reply"}
             </button>
             {comment.id && onReact && (
-              <div style={{ display: "flex", alignItems: "center" }}>
-                <ReactionBar
-                  reactions={reviewReactions[comment.id] || { heart: [], frown: [] }}
-                  onReact={(kind) => onReact(comment.id, kind)}
-                  currentUsername={currentUsername}
-                  inline={true}
-                />
-              </div>
+              <ReactionBar
+                reactions={reviewReactions[comment.id] || { heart: [], frown: [] }}
+                onReact={(kind) => onReact(comment.id, kind)}
+                currentUsername={currentUsername}
+                inline={true}
+              />
             )}
           </div>
         </div>
@@ -4346,7 +4344,7 @@ function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername, r
       ))}
 
       {replying && (
-        <div style={{ marginTop: 6, marginLeft: 48 }}>
+        <div style={{ marginTop: 4, marginLeft: 40 }}>
           <CommentInput
             placeholder={`reply to @${comment.username}...`}
             initialValue={`@${comment.username} `}
@@ -4376,7 +4374,6 @@ function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUserna
   function handleToggle() {
     const next = !open;
     setOpen(next);
-    // When expanding, fetch reactions for all visible comment/reply IDs
     if (next && onLoadReactions && comments.length > 0) {
       function collectIds(cs) {
         const ids = [];
@@ -4391,28 +4388,29 @@ function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUserna
   }
 
   return (
-    <div className="sb-comment-bubble" style={{ background: "#fafbfc", borderTop: "1px solid #eceef0", padding: "22px 0 28px", marginTop: 10, textAlign: "left" }}>
-      {/* Collapse header */}
-      <button
-        className="ui-sans"
-        onClick={handleToggle}
-        style={{ background: "none", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600, color: "#6b7280", letterSpacing: "0.01em", padding: 0, display: "flex", alignItems: "center", gap: 6 }}
-        onMouseEnter={(e) => e.currentTarget.style.color = "#1a1a1a"}
-        onMouseLeave={(e) => e.currentTarget.style.color = "#6b7280"}
-      >
-        {total > 0 ? `${total} comment${total !== 1 ? "s" : ""}` : "add a comment"}
-        {total > 0 && <span style={{ fontSize: 11 }}>{open ? "▲" : "▼"}</span>}
-      </button>
+    <div className="sb-comment-bubble" style={{ borderTop: "1px solid #eceef0", padding: "14px 0 16px", marginTop: 8, textAlign: "left" }}>
+      {/* Collapse toggle — only show if there are comments */}
+      {total > 0 && (
+        <button
+          className="ui-sans"
+          onClick={handleToggle}
+          style={{ background: "none", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600, color: "#6b7280", padding: 0, display: "flex", alignItems: "center", gap: 6, marginBottom: open ? 12 : 0 }}
+          onMouseEnter={(e) => e.currentTarget.style.color = "#1a1a1a"}
+          onMouseLeave={(e) => e.currentTarget.style.color = "#6b7280"}
+        >
+          {`${total} comment${total !== 1 ? "s" : ""}`}
+          <span style={{ fontSize: 11 }}>{open ? "▲" : "▼"}</span>
+        </button>
+      )}
 
-      {(open || total === 0) && (
-        <div style={{ marginTop: 20 }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      {open && (
+        <div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
             {comments.map((c) => (
               <CommentNode key={c.id} comment={c} depth={0} reviewId={reviewId} onReply={onReply} currentUsername={currentUsername} reviewReactions={reviewReactions} onReact={onReact} />
             ))}
           </div>
-          {/* Composer */}
-          <div style={{ marginTop: comments.length > 0 ? 22 : 0 }}>
+          <div style={{ marginTop: 12 }}>
             <CommentInput
               placeholder="Write a comment..."
               currentUsername={currentUsername}
@@ -4420,6 +4418,15 @@ function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUserna
             />
           </div>
         </div>
+      )}
+
+      {/* Always show composer when no comments yet */}
+      {total === 0 && (
+        <CommentInput
+          placeholder="Write a comment..."
+          currentUsername={currentUsername}
+          onSubmit={(text) => onAdd(reviewId, text, reviewOwnerUsername)}
+        />
       )}
     </div>
   );
