@@ -4412,7 +4412,7 @@ function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUserna
         onMouseEnter={(e) => e.currentTarget.style.color = "#1a1a1a"}
         onMouseLeave={(e) => e.currentTarget.style.color = "#6b7280"}
       >
-        {total > 0 ? total + " comment" + (total !== 1 ? "s" : "") : "add a comment"}
+        {total + " comment" + (total !== 1 ? "s" : "")}
         {total > 0 && (
           <span style={{ fontSize: 11, display: "inline-block", transition: "transform 0.2s", transform: open ? "rotate(180deg)" : "rotate(0deg)" }}>&#9660;</span>
         )}
