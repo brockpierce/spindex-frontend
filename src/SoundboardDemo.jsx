@@ -2459,7 +2459,7 @@ export default function SoundboardDemo() {
               {mix.description && <div className="ui-sans" style={{ fontSize: 13.5, color: MUTE, marginTop: 4 }}>{mix.description}</div>}
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: "26px 16px", marginTop: 24 }}>
                 {mix.albums.map((a) => {
-                  const album = albumById(a.albumId);
+                  const album = fetchedAlbums[a.albumId] || albumById(a.albumId);
                   return (
                     <div key={a.albumId} style={{ position: "relative" }}>
                       <div className="sb-cover-wrap" onClick={() => openAlbum(a.albumId)}>
@@ -4108,7 +4108,33 @@ function ListenedByFriends({ albumId }) {
 function AlbumCommunitySection({ albumId, albumTab, setAlbumTab, openAlbum, reviewComments = {}, onAddComment, onAddReply, currentUsername, reviewReactions = {}, onReact }) {
   const { BLUE, INK, LINE, MUTE } = useTheme();
   const mixes = COMMUNITY_ALBUM_MIXES.filter((l) => l.albumIds.includes(albumId));
-  const reviews = COMMUNITY_REVIEWS.filter((r) => r.albumId === albumId).sort((a, b) => (a.date < b.date ? 1 : -1));
+
+  // Reviews are loaded from the backend for the current album.
+  const [reviews, setReviews] = React.useState([]);
+  const [reviewsLoading, setReviewsLoading] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!albumId) return;
+    setReviewsLoading(true);
+    apiFetch(`${BACKEND_URL}/api/reviews/album/${albumId}`)
+      .then((r) => r.json())
+      .then((data) => {
+        const mapped = (data.reviews || []).map((r) => ({
+          id: r.id,
+          albumId: r.albumId,
+          rating: r.rating,
+          text: r.reviewText || "",
+          username: r.username || r.user?.username || "unknown",
+          date: r.createdAt ? new Date(r.createdAt).toISOString().slice(0, 10) : "",
+        }));
+        // Newest first
+        mapped.sort((a, b) => (a.date < b.date ? 1 : -1));
+        setReviews(mapped);
+      })
+      .catch(() => setReviews([]))
+      .finally(() => setReviewsLoading(false));
+  }, [albumId]);
+
   return (
     <div style={{ marginTop: 28, paddingTop: 20, borderTop: `1px solid ${LINE}` }}>
       <div style={{ display: "flex", gap: 20, marginBottom: 16 }}>
@@ -4132,7 +4158,8 @@ function AlbumCommunitySection({ albumId, albumTab, setAlbumTab, openAlbum, revi
 
       {albumTab === "reviews" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          {reviews.length === 0 && <div className="ui-sans" style={{ fontSize: 13, color: MUTE }}>no community reviews yet.</div>}
+          {reviewsLoading && <div className="ui-sans" style={{ fontSize: 13, color: MUTE }}>loading reviews...</div>}
+          {!reviewsLoading && reviews.length === 0 && <div className="ui-sans" style={{ fontSize: 13, color: MUTE }}>no reviews yet -- be the first.</div>}
           {reviews.map((r, i) => (
             <div key={i} style={{ border: `1.5px solid ${LINE}`, borderRadius: 8, padding: "12px 14px", marginBottom: 6 }}>
               <div style={{ display: "flex", gap: 10 }}>
