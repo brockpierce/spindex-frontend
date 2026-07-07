@@ -1644,6 +1644,8 @@ export default function SoundboardDemo() {
         .sb-cover-wrap:hover { opacity: 0.82; }
         .sb-input { font-family: inherit; border: 1.5px solid ${LINE}; background: ${BG}; padding: 9px 12px; font-size: 13px; outline: none; color: ${INK}; border-radius: 6px; width: 100%; }
         .sb-input:focus { border-color: ${BLUE}; }
+        .sb-comment-bubble { text-align: left !important; }
+        .sb-comment-bubble * { text-align: left !important; }
         .sb-textarea { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; border: 1.5px solid ${LINE}; background: ${BG}; padding: 11px 12px; font-size: 13.5px; outline: none; color: ${INK}; width: 100%; border-radius: 6px; resize: vertical; line-height: 1.6; }
         .sb-textarea:focus { border-color: ${BLUE}; }
         .sb-nav-item { cursor: pointer; font-size: 12px; letter-spacing: 0.03em; text-transform: uppercase; font-weight: 500; color: ${MUTE}; padding: 6px 0; border-bottom: 2px solid transparent; }
@@ -4032,7 +4034,7 @@ function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername })
         <Avatar username={comment.username} size={38} />
         <div style={{ flex: 1, minWidth: 0 }}>
           {/* Chat bubble — squared top-left corner points at avatar */}
-          <div style={{ background: "#ffffff", border: "1px solid #ebedf0", borderRadius: "4px 16px 16px 16px", padding: "12px 16px" }}>
+          <div className="sb-comment-bubble" style={{ background: "#ffffff", border: "1px solid #ebedf0", borderRadius: "4px 16px 16px 16px", padding: "12px 16px" }}>
             <div style={{ fontWeight: 700, fontSize: 15, color: "#1a1a1a", fontFamily: "inherit" }}>
               {comment.username === currentUsername ? "you" : `@${(comment.username || "").toLowerCase()}`}
             </div>
@@ -4087,7 +4089,7 @@ function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUserna
   const total = countAllComments(comments);
 
   return (
-    <div style={{ background: "#fafbfc", borderTop: "1px solid #eceef0", padding: "22px 0 28px", marginTop: 10 }}>
+    <div className="sb-comment-bubble" style={{ background: "#fafbfc", borderTop: "1px solid #eceef0", padding: "22px 0 28px", marginTop: 10 }}>
       {/* Collapse header */}
       <button
         className="ui-sans"
