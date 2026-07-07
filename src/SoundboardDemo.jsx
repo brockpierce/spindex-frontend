@@ -4213,40 +4213,6 @@ function ReactionBar({ reactions = { heart: [], frown: [] }, onReact, currentUse
   );
 }
 
-function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUsername, reviewOwnerUsername }) {
-  const { BLUE, INK, LINE, MUTE } = useTheme();
-  const [open, setOpen] = useState(false);
-  const total = countAllComments(comments);
-
-  return (
-    <div style={{ marginTop: 10 }}>
-      <button
-        className="ui-sans"
-        onClick={() => setOpen((o) => !o)}
-        style={{ background: "none", border: "none", cursor: "pointer", fontSize: 11.5, color: MUTE, padding: 0, display: "flex", alignItems: "center", gap: 5 }}
-      >
-        {total > 0 ? `${total} comment${total !== 1 ? "s" : ""}` : "add a comment"}
-        {total > 0 && <span style={{ fontSize: 10 }}>{open ? "▲" : "▼"}</span>}
-      </button>
-
-      {(open || total === 0) && (
-        <div style={{ marginTop: 10 }}>
-          {comments.map((c) => (
-            <CommentNode key={c.id} comment={c} depth={0} reviewId={reviewId} onReply={onReply} currentUsername={currentUsername} />
-          ))}
-          <div style={{ marginTop: total > 0 ? 8 : 0 }}>
-            <CommentInput
-              placeholder="write a comment..."
-              currentUsername={currentUsername}
-              onSubmit={(text) => onAdd(reviewId, text, reviewOwnerUsername)}
-            />
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
 function MixTagEditor({ tags, isOwn, onUpdateTags, onTagClick }) {
   const { BLUE, INK, LINE, MUTE, BG } = useTheme();
   const [input, setInput] = useState("");
