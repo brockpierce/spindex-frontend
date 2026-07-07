@@ -675,6 +675,19 @@ export default function SoundboardDemo() {
         }
       })
       .catch(() => {});
+    // Load real follow state from backend — who am I following?
+    if (authUser) {
+      apiFetch(`${BACKEND_URL}/api/follows/${authUser.id}/following`)
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.users) {
+            const map = {};
+            data.users.forEach((u) => { map[u.username] = true; });
+            setFollowState((prev) => ({ ...prev, ...map }));
+          }
+        })
+        .catch(() => {});
+    }
   }, [authUser]);
 
   // Load curated trending albums on mount for the browse page
@@ -1275,9 +1288,6 @@ export default function SoundboardDemo() {
   function toggleFollow(username) {
     const wasFollowing = followState[username];
     setFollowState((prev) => ({ ...prev, [username]: !prev[username] }));
-    if (!wasFollowing) {
-      pushNotification({ type: "follow", fromUsername: username, text: "started following you" });
-    }
     // Persist to backend — look up user by username first
     apiFetch(`${BACKEND_URL}/api/users/${username}`)
       .then((r) => r.json())
@@ -1298,6 +1308,7 @@ export default function SoundboardDemo() {
 
   const [viewedUser, setViewedUser] = useState(null);
   const [viewedUserReviews, setViewedUserReviews] = useState([]);
+  const [viewedUserFavorites, setViewedUserFavorites] = useState([]);
   const [tagResultAlbums, setTagResultAlbums] = useState([]);
   const [tagResultLoading, setTagResultLoading] = useState(false);
   const [showAllOwnReviews, setShowAllOwnReviews] = useState(false);
@@ -1306,6 +1317,7 @@ export default function SoundboardDemo() {
   function openUserProfile(username) {
     setViewedUser(null);
     setViewedUserReviews([]);
+    setViewedUserFavorites([]);
     setShowAllUserReviews(false);
     setView({ name: "userProfile", username });
     apiFetch(`${BACKEND_URL}/api/users/${username}`)
@@ -1313,30 +1325,52 @@ export default function SoundboardDemo() {
       .then((data) => {
         if (data.user) {
           setViewedUser(data.user);
-          return apiFetch(`${BACKEND_URL}/api/reviews/user/${data.user.id}`);
-        }
-      })
-      .then((r) => r && r.json())
-      .then((data) => {
-        if (data && data.reviews) {
-          const mapped = data.reviews.map((r) => ({
-            id: r.id, albumId: r.albumId, rating: r.rating,
-            text: r.reviewText || "", date: r.createdAt ? new Date(r.createdAt).toISOString().slice(0, 10) : "",
-          }));
-          setViewedUserReviews(mapped);
-          // Prefetch album data for each review so covers show immediately
-          mapped.forEach((r) => {
-            if (!r.albumId) return;
-            apiFetch(`${BACKEND_URL}/api/albums/${r.albumId}`)
-              .then((res) => res.json())
-              .then((d) => {
-                if (d.album) {
-                  const a = d.album;
-                  setFetchedAlbums((prev) => ({ ...prev, [a.id]: { ...a, artist: a.artistName || "", year: a.releaseYear || null } }));
-                }
-              })
-              .catch(() => {});
-          });
+          // Load their reviews
+          apiFetch(`${BACKEND_URL}/api/reviews/user/${data.user.id}`)
+            .then((r) => r.json())
+            .then((revData) => {
+              if (revData && revData.reviews) {
+                const mapped = revData.reviews.map((r) => ({
+                  id: r.id, albumId: r.albumId, rating: r.rating,
+                  text: r.reviewText || "", date: r.createdAt ? new Date(r.createdAt).toISOString().slice(0, 10) : "",
+                }));
+                setViewedUserReviews(mapped);
+                mapped.forEach((r) => {
+                  if (!r.albumId) return;
+                  apiFetch(`${BACKEND_URL}/api/albums/${r.albumId}`)
+                    .then((res) => res.json())
+                    .then((d) => {
+                      if (d.album) {
+                        const a = d.album;
+                        setFetchedAlbums((prev) => ({ ...prev, [a.id]: { ...a, artist: a.artistName || "", year: a.releaseYear || null } }));
+                      }
+                    })
+                    .catch(() => {});
+                });
+              }
+            })
+            .catch(() => {});
+          // Load their favorites
+          apiFetch(`${BACKEND_URL}/api/favorites/user/${data.user.id}`)
+            .then((r) => r.json())
+            .then((favData) => {
+              if (favData && favData.favorites) {
+                const ids = favData.favorites.map((f) => f.albumId);
+                setViewedUserFavorites(ids);
+                ids.forEach((id) => {
+                  apiFetch(`${BACKEND_URL}/api/albums/${id}`)
+                    .then((r) => r.json())
+                    .then((d) => {
+                      if (d.album) {
+                        const a = d.album;
+                        setFetchedAlbums((prev) => ({ ...prev, [a.id]: { ...a, artist: a.artistName || "", year: a.releaseYear || null } }));
+                      }
+                    })
+                    .catch(() => {});
+                });
+              }
+            })
+            .catch(() => {});
         }
       })
       .catch(() => {});
@@ -1954,6 +1988,24 @@ export default function SoundboardDemo() {
                   <Stat label="following" value={user.followingCount || 0} onClick={() => setShowFollowList({ kind: "following", userId: user.id, username: user.username })} />
                   <Stat label="reviews" value={userReviews.length} />
                   <Stat label="avg rating" value={userAvgRating} />
+                </div>
+              )}
+
+              {/* TOP 3 ALBUMS — viewed user's favorites */}
+              {viewedUserFavorites.length > 0 && (
+                <div style={{ marginTop: 26 }}>
+                  <div style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14, textAlign: "center", fontWeight: 600 }}>top 3 albums</div>
+                  <div style={{ display: "flex", gap: 20, justifyContent: "center" }}>
+                    {viewedUserFavorites.map((fid) => {
+                      const fAlbum = fetchedAlbums[fid] || albumById(fid);
+                      return (
+                        <div key={fid} onClick={() => openAlbum(fid)} className="sb-cover-wrap" style={{ textAlign: "center", maxWidth: 120 }}>
+                          <AlbumCover album={fAlbum} size={100} />
+                          <div className="ui-sans" style={{ fontSize: 12, fontWeight: 600, marginTop: 6 }}>{fAlbum.title}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
 
