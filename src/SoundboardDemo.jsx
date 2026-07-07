@@ -4408,7 +4408,7 @@ function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUserna
       <button
         className="ui-sans"
         onClick={handleToggle}
-        style={{ display: "flex", alignItems: "center", gap: 8, border: "none", background: "none", padding: "18px 16px 0", cursor: "pointer", fontSize: 15, fontWeight: 400, color: "#6b7280", letterSpacing: "0.01em", fontFamily: "inherit" }}
+        style={{ display: "flex", alignItems: "center", gap: 8, border: "none", background: "none", padding: "18px 16px 0", cursor: "pointer", fontSize: 13, fontWeight: 400, color: "#6b7280", letterSpacing: "0.01em", fontFamily: "inherit" }}
         onMouseEnter={(e) => e.currentTarget.style.color = "#1a1a1a"}
         onMouseLeave={(e) => e.currentTarget.style.color = "#6b7280"}
       >
@@ -4512,7 +4512,7 @@ function ReactionBar({ reactions = { heart: [], frown: [] }, onReact, currentUse
   const youFrowned = (reactions.frown || []).includes(currentUsername);
 
   return (
-    <div style={{ display: "flex", gap: 14, alignItems: "center", marginTop: inline ? 0 : 8 }}>
+    <div style={{ display: "flex", gap: 20, alignItems: "center", marginTop: inline ? 0 : 10 }}>
       <button
         onClick={() => onReact("heart")}
         className="ui-sans"
