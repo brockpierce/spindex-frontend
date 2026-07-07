@@ -72,8 +72,10 @@ const INITIAL_ALBUMS = [
 // needs to be mutable, not the whole album array.
 const ALBUMS = INITIAL_ALBUMS;
 
-// Initial tag map: { albumId -> string[] }
-const INITIAL_ALBUM_TAGS = Object.fromEntries(INITIAL_ALBUMS.map((a) => [a.id, a.tags]));
+// Initial tag map: { albumId -> string[] }. Starts empty — mock albums
+// are still in the ALBUMS array as a fallback for lookups by ID, but we
+// don't want their tags leaking into real users' tag search results.
+const INITIAL_ALBUM_TAGS = {};
 
 const INITIAL_REVIEWS = [];
 
