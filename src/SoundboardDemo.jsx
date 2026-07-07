@@ -4436,7 +4436,7 @@ function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUserna
           </div>
         </>
       )}
-      {!open && total > 0 && <div style={{ height: 18 }} />}
+      {!open && <div style={{ height: 22 }} />}
     </div>
   );
 }
