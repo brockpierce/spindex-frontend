@@ -4271,7 +4271,7 @@ function CommentInput({ placeholder, onSubmit, currentUsername, initialValue = "
         <Avatar username={currentUsername} size={38} />
         <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 8, background: "#ffffff", border: "1px solid #e3e6ea", borderRadius: 22, padding: "4px 6px 4px 18px" }}>
           <input
-            style={{ flex: 1, border: "none", outline: "none", background: "none", fontSize: 16, color: "#1a1a1a", padding: "9px 0", fontFamily: "inherit" }}
+            style={{ flex: 1, border: "none", outline: "none", background: "none", fontSize: 14, color: "#1a1a1a", padding: "7px 0", fontFamily: "inherit" }}
             placeholder={placeholder || "Write a comment..."}
             value={text}
             onChange={handleChange}
