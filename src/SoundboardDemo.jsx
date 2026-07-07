@@ -4424,7 +4424,7 @@ function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUserna
       <button
         className="ui-sans"
         onClick={handleToggle}
-        style={{ display: "flex", alignItems: "center", gap: 8, border: "none", background: "none", padding: "14px 0 0", cursor: "pointer", fontSize: 13, fontWeight: 400, color: "#6b7280", letterSpacing: "0.01em", fontFamily: "inherit", marginLeft: -16 }}
+        style={{ display: "flex", alignItems: "center", gap: 8, border: "none", background: "none", padding: "14px 0 0", cursor: "pointer", fontSize: 13, fontWeight: 400, color: "#6b7280", letterSpacing: "0.01em", fontFamily: "inherit" }}
         onMouseEnter={(e) => e.currentTarget.style.color = "#1a1a1a"}
         onMouseLeave={(e) => e.currentTarget.style.color = "#6b7280"}
       >
