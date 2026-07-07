@@ -4140,7 +4140,7 @@ function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUserna
       <button
         className="ui-sans"
         onClick={() => setOpen((o) => !o)}
-        style={{ background: "none", border: "none", cursor: "pointer", fontSize: 15, fontWeight: 600, color: "#6b7280", letterSpacing: "0.01em", padding: 0, display: "flex", alignItems: "center", gap: 8 }}
+        style={{ background: "none", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600, color: "#6b7280", letterSpacing: "0.01em", padding: 0, display: "flex", alignItems: "center", gap: 6 }}
         onMouseEnter={(e) => e.currentTarget.style.color = "#1a1a1a"}
         onMouseLeave={(e) => e.currentTarget.style.color = "#6b7280"}
       >
@@ -4752,9 +4752,9 @@ function FollowListModal({ kind, userId, username, onClose, onVisitProfile }) {
               <div style={{ width: 42, height: 42, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <Avatar username={u.username} size={42} />
               </div>
-              <div style={{ minWidth: 0, flex: 1 }}>
-                <div className="ui-sans" style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.3, color: INK, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{u.displayName || u.username}</div>
-                <div className="ui-sans" style={{ fontSize: 12.5, color: MUTE, lineHeight: 1.3, marginTop: 1 }}>@{(u.username || "").toLowerCase()}</div>
+              <div style={{ minWidth: 0, flex: 1, textAlign: "left" }}>
+                <div className="ui-sans" style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.3, color: INK, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textAlign: "left" }}>{u.displayName || u.username}</div>
+                <div className="ui-sans" style={{ fontSize: 12.5, color: MUTE, lineHeight: 1.3, marginTop: 1, textAlign: "left" }}>@{(u.username || "").toLowerCase()}</div>
               </div>
             </div>
           ))}
