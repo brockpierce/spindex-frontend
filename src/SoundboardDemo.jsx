@@ -997,6 +997,45 @@ export default function SoundboardDemo() {
       };
       return { ...prev, [reviewId]: next };
     });
+    // Persist to backend
+    apiFetch(`${BACKEND_URL}/api/interactions/reactions/${reviewId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ kind }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.heart || data.frown) {
+          setReviewReactions((prev) => ({ ...prev, [reviewId]: { heart: data.heart || [], frown: data.frown || [] } }));
+        }
+      })
+      .catch(() => {});
+  }
+
+  // Load reactions + comments from backend for a set of review IDs.
+  // Called when feed items load, when album community reviews load, etc.
+  function loadInteractions(reviewIds) {
+    reviewIds.forEach((rid) => {
+      if (!rid) return;
+      // Reactions
+      apiFetch(`${BACKEND_URL}/api/interactions/reactions/${rid}`)
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.heart || data.frown) {
+            setReviewReactions((prev) => ({ ...prev, [rid]: { heart: data.heart || [], frown: data.frown || [] } }));
+          }
+        })
+        .catch(() => {});
+      // Comments
+      apiFetch(`${BACKEND_URL}/api/interactions/comments/${rid}`)
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.comments) {
+            setReviewComments((prev) => ({ ...prev, [rid]: data.comments }));
+          }
+        })
+        .catch(() => {});
+    });
   }
 
   function fetchUserAvatar(username) {
@@ -1023,19 +1062,26 @@ export default function SoundboardDemo() {
 
   function addComment(reviewId, text, reviewOwnerUsername) {
     if (!text.trim()) return;
-    const comment = { id: "cmt" + Date.now(), username: profile.username, text: text.trim(), date: nowTimestamp(), replies: [] };
+    const tempId = "cmt" + Date.now();
+    const comment = { id: tempId, username: profile.username, text: text.trim(), date: nowTimestamp(), replies: [] };
     setReviewComments((prev) => ({ ...prev, [reviewId]: [...(prev[reviewId] || []), comment] }));
-    // Notify review owner
-    if (reviewOwnerUsername && reviewOwnerUsername !== profile.username) {
-      pushNotification({ type: "comment", fromUsername: profile.username, text: `commented on a review`, reviewId });
-    }
-    // Notify anyone @tagged in the text
-    const tags = [...text.matchAll(/@([\w.]+)/g)].map((m) => m[1]);
-    tags.forEach((tag) => {
-      if (tag !== profile.username) {
-        pushNotification({ type: "tag", fromUsername: profile.username, text: `tagged you in a comment`, reviewId });
-      }
-    });
+    // Persist to backend
+    apiFetch(`${BACKEND_URL}/api/interactions/comments/${reviewId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: text.trim() }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.comment) {
+          // Replace temp ID with real one
+          setReviewComments((prev) => ({
+            ...prev,
+            [reviewId]: (prev[reviewId] || []).map((c) => c.id === tempId ? { ...c, id: data.comment.id } : c),
+          }));
+        }
+      })
+      .catch(() => {});
   }
 
   // Recursively inserts a reply under the target comment anywhere in the tree
@@ -1049,22 +1095,33 @@ export default function SoundboardDemo() {
 
   function addReply(reviewId, parentCommentId, parentUsername, text) {
     if (!text.trim()) return;
-    const reply = { id: "rep" + Date.now(), username: profile.username, text: text.trim(), date: nowTimestamp(), replies: [] };
+    const tempId = "rep" + Date.now();
+    const reply = { id: tempId, username: profile.username, text: text.trim(), date: nowTimestamp(), replies: [] };
     setReviewComments((prev) => ({
       ...prev,
       [reviewId]: insertReply(prev[reviewId] || [], parentCommentId, reply),
     }));
-    // Notify parent comment author
-    if (parentUsername && parentUsername !== profile.username) {
-      pushNotification({ type: "reply", fromUsername: profile.username, text: `replied to your comment`, reviewId });
-    }
-    // Notify anyone @tagged
-    const tags = [...text.matchAll(/@([\w.]+)/g)].map((m) => m[1]);
-    tags.forEach((tag) => {
-      if (tag !== profile.username) {
-        pushNotification({ type: "tag", fromUsername: profile.username, text: `tagged you in a reply`, reviewId });
-      }
-    });
+    // Persist to backend
+    apiFetch(`${BACKEND_URL}/api/interactions/comments/${reviewId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: text.trim(), parentId: parentCommentId }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.comment) {
+          // Replace temp ID with real one (deep in the tree)
+          setReviewComments((prev) => {
+            const updateId = (comments) => comments.map((c) => {
+              if (c.id === tempId) return { ...c, id: data.comment.id };
+              if (c.replies?.length) return { ...c, replies: updateId(c.replies) };
+              return c;
+            });
+            return { ...prev, [reviewId]: updateId(prev[reviewId] || []) };
+          });
+        }
+      })
+      .catch(() => {});
   }
 
   function updateAlbumTags(albumId, tags) {
@@ -1150,6 +1207,8 @@ export default function SoundboardDemo() {
             date: item.date ? new Date(item.date).toISOString().slice(0, 10) : "",
           }));
           setRealFeedItems(items);
+          // Load reactions + comments for each feed item
+          loadInteractions(items.map((i) => i.id).filter(Boolean));
           // Prefetch album data for all feed items so covers show immediately
           const uniqueAlbumIds = [...new Set(items.map((i) => i.albumId).filter(Boolean))];
           uniqueAlbumIds.forEach((id) => {
@@ -1188,6 +1247,8 @@ export default function SoundboardDemo() {
             date: item.date ? new Date(item.date).toISOString().slice(0, 10) : "",
           }));
           setPublicFeedItems(items);
+          // Load reactions + comments for each public feed item
+          loadInteractions(items.map((i) => i.id).filter(Boolean));
           const uniqueAlbumIds = [...new Set(items.map((i) => i.albumId).filter(Boolean))];
           uniqueAlbumIds.forEach((id) => {
             apiFetch(`${BACKEND_URL}/api/albums/${id}`)
