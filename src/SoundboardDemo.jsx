@@ -20,7 +20,7 @@ const BACKEND_URL = "https://spindex-backend.onrender.com";
 // Only this account can edit album-level tags. Non-admin users can view and
 // click tags to filter but not add or remove them. Temporary curation gate
 // until we build a proper moderation flow.
-const ADMIN_USERNAME = "brock";
+const ADMIN_USERNAME = "brockpierce";
 
 // JWT token helpers -- stored in localStorage so it survives page refresh.
 // apiFetch wraps fetch to automatically attach the Authorization header.
@@ -2758,7 +2758,7 @@ export default function SoundboardDemo() {
               </div>
 
               <ListenedByFriends albumId={album.id} />
-              <AlbumCommunitySection albumId={album.id} albumTab={albumTab} setAlbumTab={setAlbumTab} openAlbum={openAlbum} reviewComments={reviewComments} onAddComment={addComment} onAddReply={addReply} currentUsername={profile.username} reviewReactions={reviewReactions} onReact={toggleReaction} onLoadReactions={loadInteractions} />
+              <AlbumCommunitySection albumId={album.id} albumTab={albumTab} setAlbumTab={setAlbumTab} openAlbum={openAlbum} reviewComments={reviewComments} onAddComment={addComment} onAddReply={addReply} currentUsername={profile.username} reviewReactions={reviewReactions} onReact={toggleReaction} />
             </div>
           );
         })()}
@@ -4955,7 +4955,6 @@ function AlbumCommunitySection({ albumId, albumTab, setAlbumTab, openAlbum, revi
                   reviewOwnerUsername={r.username}
                   reviewReactions={reviewReactions}
                   onReact={onReact}
-                  onLoadReactions={loadInteractions}
                 />
               )}
             </div>
