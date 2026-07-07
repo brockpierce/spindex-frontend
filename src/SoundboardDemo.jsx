@@ -1904,7 +1904,7 @@ export default function SoundboardDemo() {
                                 <ReactionBar reactions={reviewReactions[c.id]} onReact={(kind) => toggleReaction(c.id, kind)} currentUsername={profile.username} />
                               </div>
                             )}
-                            {c.id && <ReviewComments reviewId={c.id} comments={reviewComments[c.id] || []} onAdd={addComment} onReply={addReply} currentUsername={profile.username} reviewOwnerUsername={c.username} reviewReactions={reviewReactions} onReact={toggleReaction} />}
+                            {c.id && <ReviewComments reviewId={c.id} comments={reviewComments[c.id] || []} onAdd={addComment} onReply={addReply} currentUsername={profile.username} reviewOwnerUsername={c.username} reviewReactions={reviewReactions} onReact={toggleReaction} onLoadReactions={loadInteractions} />}
                           </div>
                         );
                       }
@@ -1925,7 +1925,27 @@ export default function SoundboardDemo() {
                                 </button>
                               )}
                             </div>
-                            <div className="ui-sans" style={{ fontSize: 14, color: INK, lineHeight: 1.6 }}>{c.text}</div>
+                            <div className="ui-sans" style={{ fontSize: 14, color: INK, lineHeight: 1.6, marginBottom: 10 }}>{c.text}</div>
+                            {c.id && (
+                              <>
+                                <ReactionBar
+                                  reactions={reviewReactions[c.id] || { heart: [], frown: [] }}
+                                  onReact={(kind) => toggleReaction(c.id, kind)}
+                                  currentUsername={profile.username}
+                                />
+                                <ReviewComments
+                                  reviewId={c.id}
+                                  comments={reviewComments[c.id] || []}
+                                  onAdd={addComment}
+                                  onReply={addReply}
+                                  currentUsername={profile.username}
+                                  reviewOwnerUsername={c.username}
+                                  reviewReactions={reviewReactions}
+                                  onReact={toggleReaction}
+                                  onLoadReactions={loadInteractions}
+                                />
+                              </>
+                            )}
                           </div>
                         );
                       }
@@ -2648,7 +2668,7 @@ export default function SoundboardDemo() {
               </div>
 
               <ListenedByFriends albumId={album.id} />
-              <AlbumCommunitySection albumId={album.id} albumTab={albumTab} setAlbumTab={setAlbumTab} openAlbum={openAlbum} reviewComments={reviewComments} onAddComment={addComment} onAddReply={addReply} currentUsername={profile.username} reviewReactions={reviewReactions} onReact={toggleReaction} />
+              <AlbumCommunitySection albumId={album.id} albumTab={albumTab} setAlbumTab={setAlbumTab} openAlbum={openAlbum} reviewComments={reviewComments} onAddComment={addComment} onAddReply={addReply} currentUsername={profile.username} reviewReactions={reviewReactions} onReact={toggleReaction} onLoadReactions={loadInteractions} />
             </div>
           );
         })()}
@@ -4155,17 +4175,34 @@ function countAllComments(comments) {
   return comments.reduce((s, c) => s + 1 + countReplies(c), 0);
 }
 
-function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUsername, reviewOwnerUsername, reviewReactions = {}, onReact }) {
+function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUsername, reviewOwnerUsername, reviewReactions = {}, onReact, onLoadReactions }) {
   const { BLUE, INK, LINE, MUTE, BG } = useTheme();
   const [open, setOpen] = useState(false);
   const total = countAllComments(comments);
+
+  function handleToggle() {
+    const next = !open;
+    setOpen(next);
+    // When expanding, fetch reactions for all visible comment/reply IDs
+    if (next && onLoadReactions && comments.length > 0) {
+      function collectIds(cs) {
+        const ids = [];
+        for (const c of cs) {
+          if (c.id) ids.push(c.id);
+          if (c.replies?.length) ids.push(...collectIds(c.replies));
+        }
+        return ids;
+      }
+      onLoadReactions(collectIds(comments));
+    }
+  }
 
   return (
     <div className="sb-comment-bubble" style={{ background: "#fafbfc", borderTop: "1px solid #eceef0", padding: "22px 0 28px", marginTop: 10, textAlign: "left" }}>
       {/* Collapse header */}
       <button
         className="ui-sans"
-        onClick={() => setOpen((o) => !o)}
+        onClick={handleToggle}
         style={{ background: "none", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600, color: "#6b7280", letterSpacing: "0.01em", padding: 0, display: "flex", alignItems: "center", gap: 6 }}
         onMouseEnter={(e) => e.currentTarget.style.color = "#1a1a1a"}
         onMouseLeave={(e) => e.currentTarget.style.color = "#6b7280"}
@@ -4725,6 +4762,7 @@ function AlbumCommunitySection({ albumId, albumTab, setAlbumTab, openAlbum, revi
                   reviewOwnerUsername={r.username}
                   reviewReactions={reviewReactions}
                   onReact={onReact}
+                  onLoadReactions={loadInteractions}
                 />
               )}
             </div>
