@@ -789,6 +789,33 @@ export default function SoundboardDemo() {
     const interval = setInterval(poll, 30000);
     return () => clearInterval(interval);
   }, [authUser]);
+
+  function openArtist(artistName) {
+    if (!artistName) return;
+    setView({ name: "artist", artistName });
+  }
+
+  useEffect(() => {
+    if (view.name !== "artist" || !view.artistName) return;
+    setArtistLoading(true);
+    setArtistAlbums([]);
+    setArtistAliases([]);
+    apiFetch(`${BACKEND_URL}/api/albums/by-artist/${encodeURIComponent(view.artistName)}`)
+      .then((r) => r.json())
+      .then((data) => {
+        const albums = (data.albums || []).map((a) => ({
+          ...a, artist: a.artistName || "", year: a.releaseYear || null,
+        }));
+        setArtistAlbums(albums);
+        setArtistAliases(data.aliases || []);
+        albums.forEach((a) => {
+          setFetchedAlbums((prev) => prev[a.id] ? prev : { ...prev, [a.id]: a });
+        });
+      })
+      .catch(() => setArtistAlbums([]))
+      .finally(() => setArtistLoading(false));
+  }, [view.name, view.artistName]);
+
   useEffect(() => {
     apiFetch(`${BACKEND_URL}/api/albums/trending`)
       .then((r) => r.json())
@@ -1534,6 +1561,9 @@ export default function SoundboardDemo() {
   const [viewedUser, setViewedUser] = useState(null);
   const [viewedUserReviews, setViewedUserReviews] = useState([]);
   const [viewedUserFavorites, setViewedUserFavorites] = useState([]);
+  const [artistAlbums, setArtistAlbums] = useState([]);
+  const [artistAliases, setArtistAliases] = useState([]);
+  const [artistLoading, setArtistLoading] = useState(false);
   const [tagResultAlbums, setTagResultAlbums] = useState([]);
   const [tagResultLoading, setTagResultLoading] = useState(false);
   const [showAllOwnReviews, setShowAllOwnReviews] = useState(false);
@@ -1689,7 +1719,7 @@ export default function SoundboardDemo() {
         </div>
         <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
           <div className={`sb-nav-item ${view.name === "home" ? "active" : ""}`} onClick={() => setView({ name: "home" })}>home</div>
-          <div className={`sb-nav-item ${view.name === "browse" || view.name === "tagResults" ? "active" : ""}`} onClick={() => setView({ name: "browse" })}>browse</div>
+          <div className={`sb-nav-item ${view.name === "browse" || view.name === "tagResults" || view.name === "artist" ? "active" : ""}`} onClick={() => setView({ name: "browse" })}>browse</div>
           <div className={`sb-nav-item ${view.name === "mixes" || view.name === "albumMixDetail" || view.name === "songMixDetail" ? "active" : ""}`} onClick={() => setView({ name: "mixes" })}>mixes</div>
           <div className={`sb-nav-item ${view.name === "profile" ? "active" : ""}`} onClick={() => setView({ name: "profile" })}>profile</div>
           <div
@@ -2020,7 +2050,7 @@ export default function SoundboardDemo() {
                               <div style={{ fontSize: 20, fontWeight: 700, color: BLUE, letterSpacing: "-0.01em", lineHeight: 1.1, textAlign: "left" }}>{c.rating}/10</div>
                               <div style={{ marginTop: 1, textAlign: "left" }}>
                                 <span style={{ fontSize: 14, fontWeight: 700 }}>{album.title}</span>
-                                <span style={{ fontSize: 13, color: MUTE, marginLeft: 6 }}>{album.artist || album.artistName}</span>
+                                <span style={{ fontSize: 13, color: MUTE, marginLeft: 6, cursor: "pointer", textDecoration: "underline" }} onClick={(e) => { e.stopPropagation(); openArtist(album.artist || album.artistName); }}>{album.artist || album.artistName}</span>
                               </div>
                               {c.text && <div style={{ fontSize: 13.5, color: INK, marginTop: 3, lineHeight: 1.5, textAlign: "left" }}>{c.text}</div>}
                             </div>
@@ -2333,7 +2363,7 @@ export default function SoundboardDemo() {
                           <div style={{ fontSize: 20, fontWeight: 700, color: BLUE, letterSpacing: "-0.01em", lineHeight: 1.1, textAlign: "left" }}>{r.rating}/10</div>
                           <div style={{ marginTop: 1, textAlign: "left" }}>
                             <span style={{ fontSize: 14, fontWeight: 700 }}>{album.title}</span>
-                            <span style={{ fontSize: 13, color: MUTE, marginLeft: 6 }}>{album.artist || album.artistName}</span>
+                            <span style={{ fontSize: 13, color: MUTE, marginLeft: 6, cursor: "pointer", textDecoration: "underline" }} onClick={(e) => { e.stopPropagation(); openArtist(album.artist || album.artistName); }}>{album.artist || album.artistName}</span>
                           </div>
                           {r.text && <div style={{ fontSize: 13.5, color: INK, marginTop: 6, lineHeight: 1.5, textAlign: "left" }}>{r.text}</div>}
                         </div>
@@ -2357,6 +2387,43 @@ export default function SoundboardDemo() {
             </div>
           );
         })()}
+
+        {/* ---------------- ARTIST PAGE ---------------- */}
+        {view.name === "artist" && (
+          <div>
+            <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 12.5, marginBottom: 22, cursor: "pointer" }} onClick={() => setView({ name: "browse" })}>
+              <ChevronLeft size={14} /> browse
+            </div>
+            <div style={{ marginBottom: 28 }}>
+              <div className="ui-sans" style={{ fontSize: 28, fontWeight: 700, letterSpacing: "-0.01em", lineHeight: 1.2 }}>{view.artistName}</div>
+              {artistAliases.length > 0 && (
+                <div className="ui-sans" style={{ fontSize: 13, color: MUTE, marginTop: 4 }}>
+                  also known as {artistAliases.join(", ")}
+                </div>
+              )}
+              {!artistLoading && (
+                <div className="ui-sans" style={{ fontSize: 13, color: MUTE, marginTop: 6 }}>
+                  {artistAlbums.length} release{artistAlbums.length !== 1 ? "s" : ""}
+                </div>
+              )}
+            </div>
+            {artistLoading && <div className="ui-sans" style={{ color: MUTE, fontSize: 13 }}>loading...</div>}
+            {!artistLoading && artistAlbums.length === 0 && (
+              <div className="ui-sans" style={{ color: MUTE, fontSize: 13 }}>no albums found</div>
+            )}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: "20px 14px" }}>
+              {artistAlbums.map((album) => (
+                <div key={album.id} onClick={() => openAlbum(album.id, album)} className="sb-cover-wrap">
+                  <AlbumCover album={fetchedAlbums[album.id] || album} size={140} listened={listenStatus[album.id] === "listened"} />
+                  <div style={{ marginTop: 8 }}>
+                    <div className="ui-sans" style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.3 }}>{album.title}</div>
+                    {album.year && <div className="ui-sans" style={{ fontSize: 11.5, color: MUTE, marginTop: 2 }}>{album.year}</div>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* ---------------- TAG RESULTS ---------------- */}
         {view.name === "tagResults" && (() => {
@@ -2535,7 +2602,10 @@ export default function SoundboardDemo() {
                     </div>
                     <div style={{ marginTop: 9 }}>
                       <div className="ui-sans" style={{ fontSize: 13.5, fontWeight: 600, lineHeight: 1.3, wordBreak: "break-word", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{album.title}</div>
-                      <div className="ui-sans" style={{ fontSize: 12, color: MUTE, marginTop: 2, wordBreak: "break-word", display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{album.artist || album.artistName} · {album.year || album.releaseYear}</div>
+                      <div className="ui-sans" style={{ fontSize: 12, color: MUTE, marginTop: 2 }}>
+                        <span style={{ cursor: "pointer", textDecoration: "underline" }} onClick={(e) => { e.stopPropagation(); openArtist(album.artist || album.artistName); }}>{album.artist || album.artistName}</span>
+                        {(album.year || album.releaseYear) ? ` · ${album.year || album.releaseYear}` : ""}
+                      </div>
                     </div>
                   </div>
                 );
@@ -2588,7 +2658,10 @@ export default function SoundboardDemo() {
                 <AlbumCover album={album} size={isMobile ? 140 : 160} listened={status === "listened"} />
                 <div style={{ flex: 1, width: "100%", textAlign: isMobile ? "center" : "left" }}>
                   <div className="ui-sans" style={{ fontSize: isMobile ? 20 : 24, fontWeight: 600, lineHeight: 1.2, wordBreak: "break-word" }}>{album.title}</div>
-                  <div className="ui-sans" style={{ fontSize: 14, color: MUTE, marginTop: 4 }}>{album.artist} · {album.year}</div>
+                  <div className="ui-sans" style={{ fontSize: 14, color: MUTE, marginTop: 4 }}>
+                    <span style={{ cursor: "pointer", textDecoration: "underline" }} onClick={() => openArtist(album.artist || album.artistName)}>{album.artist || album.artistName}</span>
+                    {album.year ? ` · ${album.year}` : ""}
+                  </div>
 
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 16, justifyContent: isMobile ? "center" : "flex-start" }}>
                     <button
@@ -3318,7 +3391,7 @@ export default function SoundboardDemo() {
                         <div style={{ fontSize: 20, fontWeight: 700, color: BLUE, letterSpacing: "-0.01em", lineHeight: 1.1, textAlign: "left" }}>{r.rating}/10</div>
                         <div style={{ marginTop: 1, textAlign: "left" }}>
                           <span style={{ fontSize: 14, fontWeight: 700 }}>{album.title}</span>
-                          <span style={{ fontSize: 13, color: MUTE, marginLeft: 6 }}>{album.artist || album.artistName}</span>
+                          <span style={{ fontSize: 13, color: MUTE, marginLeft: 6, cursor: "pointer", textDecoration: "underline" }} onClick={(e) => { e.stopPropagation(); openArtist(album.artist || album.artistName); }}>{album.artist || album.artistName}</span>
                         </div>
                         {r.text && <div style={{ fontSize: 13.5, color: INK, marginTop: 6, lineHeight: 1.5, textAlign: "left" }}>{r.text}</div>}
                         {(r.favTrack || r.leastFavTrack) && (
