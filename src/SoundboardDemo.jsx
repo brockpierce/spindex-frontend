@@ -2244,13 +2244,14 @@ export default function SoundboardDemo() {
               {viewedUserFavorites.length > 0 && (
                 <div style={{ marginTop: 26 }}>
                   <div style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14, textAlign: "center", fontWeight: 600 }}>top 3 albums</div>
-                  <div style={{ display: "flex", gap: 20, justifyContent: "center" }}>
+                  <div style={{ display: "flex", gap: isMobile ? 20 : 28, justifyContent: "center" }}>
                     {viewedUserFavorites.map((fid) => {
                       const fAlbum = fetchedAlbums[fid] || albumById(fid);
+                      const favSize = isMobile ? 96 : 180;
                       return (
-                        <div key={fid} onClick={() => openAlbum(fid)} className="sb-cover-wrap" style={{ textAlign: "center", maxWidth: 120 }}>
-                          <AlbumCover album={fAlbum} size={100} />
-                          <div className="ui-sans" style={{ fontSize: 12, fontWeight: 600, marginTop: 6 }}>{fAlbum.title}</div>
+                        <div key={fid} onClick={() => openAlbum(fid)} className="sb-cover-wrap" style={{ textAlign: "center", maxWidth: favSize }}>
+                          <AlbumCover album={fAlbum} size={favSize} />
+                          <div className="ui-sans" style={{ fontSize: isMobile ? 11.5 : 13, fontWeight: 600, marginTop: 8 }}>{fAlbum.title}</div>
                         </div>
                       );
                     })}
@@ -3953,7 +3954,7 @@ function CommentText({ text }) {
 function CommentInput({ placeholder, onSubmit, currentUsername, initialValue = "" }) {
   const { BLUE, INK, LINE, MUTE, BG } = useTheme();
   const [text, setText] = useState(initialValue);
-  const [mentionQuery, setMentionQuery] = useState(null); // null | string
+  const [mentionQuery, setMentionQuery] = useState(null);
   const [mentionStart, setMentionStart] = useState(0);
 
   const mentionResults = useMemo(() => {
@@ -3967,67 +3968,51 @@ function CommentInput({ placeholder, onSubmit, currentUsername, initialValue = "
   function handleChange(e) {
     const val = e.target.value;
     setText(val);
-    // Detect @ pattern at cursor
     const cursor = e.target.selectionStart;
     const before = val.slice(0, cursor);
     const match = before.match(/@([\w.]*)$/);
-    if (match) {
-      setMentionQuery(match[1]);
-      setMentionStart(cursor - match[0].length);
-    } else {
-      setMentionQuery(null);
-    }
+    if (match) { setMentionQuery(match[1]); setMentionStart(cursor - match[0].length); }
+    else setMentionQuery(null);
   }
 
   function insertMention(username) {
     const after = text.slice(mentionStart + (mentionQuery !== null ? mentionQuery.length + 1 : 0));
-    const newText = text.slice(0, mentionStart) + `@${username} ` + after;
-    setText(newText);
+    setText(text.slice(0, mentionStart) + `@${username} ` + after);
     setMentionQuery(null);
   }
 
   function handleKeyDown(e) {
-    if (e.key === "Enter" && !e.shiftKey && text.trim()) {
-      e.preventDefault();
-      onSubmit(text.trim());
-      setText("");
-      setMentionQuery(null);
-    }
+    if (e.key === "Enter" && !e.shiftKey && text.trim()) { e.preventDefault(); onSubmit(text.trim()); setText(""); setMentionQuery(null); }
     if (e.key === "Escape") setMentionQuery(null);
   }
 
   return (
     <div style={{ position: "relative" }}>
-      <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-        <Avatar username={currentUsername} size={28} />
-        <input
-          className="sb-input ui-sans"
-          style={{ flex: 1, fontSize: 13.5, padding: "7px 12px" }}
-          placeholder={placeholder}
-          value={text}
-          onChange={handleChange}
-          onKeyDown={handleKeyDown}
-        />
-        {text.trim() && (
-          <button className="sb-btn sb-btn-solid" onClick={() => { onSubmit(text.trim()); setText(""); setMentionQuery(null); }} style={{ padding: "7px 12px", fontSize: 12 }}>post</button>
-        )}
+      <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+        <Avatar username={currentUsername} size={38} />
+        <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 8, background: "#ffffff", border: "1px solid #e3e6ea", borderRadius: 22, padding: "4px 6px 4px 18px" }}>
+          <input
+            style={{ flex: 1, border: "none", outline: "none", background: "none", fontSize: 16, color: "#1a1a1a", padding: "9px 0", fontFamily: "inherit" }}
+            placeholder={placeholder || "Write a comment..."}
+            value={text}
+            onChange={handleChange}
+            onKeyDown={handleKeyDown}
+          />
+          <button
+            onClick={() => { if (text.trim()) { onSubmit(text.trim()); setText(""); setMentionQuery(null); } }}
+            disabled={!text.trim()}
+            style={{ border: "none", background: text.trim() ? BLUE : "#c2c7cc", color: "#fff", fontWeight: 600, fontSize: 14, padding: "9px 18px", borderRadius: 18, cursor: text.trim() ? "pointer" : "default", transition: "background 0.12s", fontFamily: "inherit" }}
+          >
+            Post
+          </button>
+        </div>
       </div>
       {mentionQuery !== null && mentionResults.length > 0 && (
-        <div style={{ position: "absolute", top: "100%", left: 30, zIndex: 20, background: BG, border: `1.5px solid ${LINE}`, borderRadius: 8, marginTop: 4, minWidth: 180, boxShadow: "0 4px 12px rgba(0,0,0,0.12)" }}>
+        <div style={{ position: "absolute", top: "100%", left: 50, zIndex: 20, background: BG, border: `1.5px solid ${LINE}`, borderRadius: 8, marginTop: 4, minWidth: 180, boxShadow: "0 4px 12px rgba(0,0,0,0.12)" }}>
           {mentionResults.map((u) => (
-            <div
-              key={u.username}
-              onClick={() => insertMention(u.username)}
-              className="ui-sans"
-              style={{ padding: "8px 12px", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}
-              onMouseEnter={(e) => e.currentTarget.style.background = LINE}
-              onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
-            >
+            <div key={u.username} onClick={() => insertMention(u.username)} className="ui-sans" style={{ padding: "8px 12px", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, fontSize: 13 }} onMouseEnter={(e) => e.currentTarget.style.background = LINE} onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>
               <Avatar username={u.username} size={20} />
-              <div>
-                <div style={{ fontWeight: 600 }}>{u.displayName}</div>
-                <div style={{ fontSize: 11, color: MUTE }}>@{(u.username || "").toLowerCase()}</div>
-              </div>
+              <div><div style={{ fontWeight: 600 }}>{u.displayName}</div><div style={{ fontSize: 11, color: MUTE }}>@{(u.username || "").toLowerCase()}</div></div>
             </div>
           ))}
         </div>
@@ -4042,23 +4027,30 @@ function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername })
   const [replying, setReplying] = useState(false);
 
   return (
-    <div style={{ marginLeft: depth > 0 ? 24 : 0, borderLeft: depth > 0 ? `2px solid ${LINE}` : "none", paddingLeft: depth > 0 ? 12 : 0, marginBottom: 10 }}>
-      <div style={{ display: "flex", gap: 10 }}>
-        <Avatar username={comment.username} size={28} />
+    <div style={{ marginLeft: depth > 0 ? 50 : 0, marginBottom: 14 }}>
+      <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+        <Avatar username={comment.username} size={38} />
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div className="ui-sans" style={{ fontSize: 13.5, fontWeight: 600 }}>
-            {comment.username === currentUsername ? "you" : `@${(comment.username || "").toLowerCase()}`}
+          {/* Chat bubble — squared top-left corner points at avatar */}
+          <div style={{ background: "#ffffff", border: "1px solid #ebedf0", borderRadius: "4px 16px 16px 16px", padding: "12px 16px" }}>
+            <div style={{ fontWeight: 700, fontSize: 15, color: "#1a1a1a", fontFamily: "inherit" }}>
+              {comment.username === currentUsername ? "you" : `@${(comment.username || "").toLowerCase()}`}
+            </div>
+            <div style={{ fontSize: 16, lineHeight: 1.45, color: "#2a2a2a", marginTop: 4, fontFamily: "inherit" }}>
+              <CommentText text={comment.text} />
+            </div>
           </div>
-          <div className="ui-sans" style={{ fontSize: 14, color: INK, marginTop: 3, lineHeight: 1.55 }}>
-            <CommentText text={comment.text} />
+          {/* Action row below bubble */}
+          <div style={{ display: "flex", alignItems: "center", gap: 16, margin: "7px 4px 0" }}>
+            <button
+              onClick={() => setReplying((r) => !r)}
+              style={{ border: "none", background: "none", padding: 0, cursor: "pointer", fontSize: 13, fontWeight: 600, color: replying ? "#1a1a1a" : "#9aa0a6", fontFamily: "inherit" }}
+              onMouseEnter={(e) => e.currentTarget.style.color = "#1a1a1a"}
+              onMouseLeave={(e) => e.currentTarget.style.color = replying ? "#1a1a1a" : "#9aa0a6"}
+            >
+              {replying ? "cancel" : "Reply"}
+            </button>
           </div>
-          <button
-            onClick={() => setReplying((r) => !r)}
-            className="ui-sans"
-            style={{ background: "none", border: "none", cursor: "pointer", fontSize: 12, color: MUTE, padding: "4px 0", marginTop: 2 }}
-          >
-            {replying ? "cancel" : "reply"}
-          </button>
         </div>
       </div>
 
@@ -4067,15 +4059,12 @@ function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername })
       ))}
 
       {replying && (
-        <div style={{ marginLeft: 38, marginBottom: 8 }}>
+        <div style={{ marginTop: 10, marginLeft: 50 }}>
           <CommentInput
             placeholder={`reply to @${comment.username}...`}
             initialValue={`@${comment.username} `}
             currentUsername={currentUsername}
-            onSubmit={(text) => {
-              onReply(reviewId, comment.id, comment.username, text);
-              setReplying(false);
-            }}
+            onSubmit={(text) => { onReply(reviewId, comment.id, comment.username, text); setReplying(false); }}
           />
         </div>
       )}
@@ -4092,12 +4081,45 @@ function countAllComments(comments) {
   return comments.reduce((s, c) => s + 1 + countReplies(c), 0);
 }
 
-// Heart / frown reaction buttons shown on a review, with live counts.
-// Clicking the active reaction removes it; clicking the other one switches.
-// Animated three-bar "now playing" indicator. Each bar bounces at a
-// different speed so they feel organic rather than in lockstep.
-// Shows the currently-in-rotation album on a profile. Owners get an
-// inline "change" button that opens a small album search picker.
+function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUsername, reviewOwnerUsername }) {
+  const { BLUE, INK, LINE, MUTE, BG } = useTheme();
+  const [open, setOpen] = useState(false);
+  const total = countAllComments(comments);
+
+  return (
+    <div style={{ background: "#fafbfc", borderTop: "1px solid #eceef0", padding: "22px 0 28px", marginTop: 10 }}>
+      {/* Collapse header */}
+      <button
+        className="ui-sans"
+        onClick={() => setOpen((o) => !o)}
+        style={{ background: "none", border: "none", cursor: "pointer", fontSize: 15, fontWeight: 600, color: "#6b7280", letterSpacing: "0.01em", padding: 0, display: "flex", alignItems: "center", gap: 8 }}
+        onMouseEnter={(e) => e.currentTarget.style.color = "#1a1a1a"}
+        onMouseLeave={(e) => e.currentTarget.style.color = "#6b7280"}
+      >
+        {total > 0 ? `${total} comment${total !== 1 ? "s" : ""}` : "add a comment"}
+        {total > 0 && <span style={{ fontSize: 11 }}>{open ? "▲" : "▼"}</span>}
+      </button>
+
+      {(open || total === 0) && (
+        <div style={{ marginTop: 20 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            {comments.map((c) => (
+              <CommentNode key={c.id} comment={c} depth={0} reviewId={reviewId} onReply={onReply} currentUsername={currentUsername} />
+            ))}
+          </div>
+          {/* Composer */}
+          <div style={{ marginTop: comments.length > 0 ? 22 : 0 }}>
+            <CommentInput
+              placeholder="Write a comment..."
+              currentUsername={currentUsername}
+              onSubmit={(text) => onAdd(reviewId, text, reviewOwnerUsername)}
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 function InRotationSection({ albumId, isOwn, onOpenAlbum, onChangeAlbum }) {
   const { BLUE, INK, LINE, MUTE } = useTheme();
   const [picking, setPicking] = useState(false);
