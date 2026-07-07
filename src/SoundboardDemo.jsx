@@ -1650,7 +1650,7 @@ export default function SoundboardDemo() {
                           <Avatar username={u.username} size={32} />
                           <div className="ui-sans">
                             <div style={{ fontSize: 13.5, fontWeight: 600 }}>{u.displayName}</div>
-                            <div style={{ fontSize: 11.5, color: MUTE }}>@{u.username}</div>
+                            <div style={{ fontSize: 11.5, color: MUTE }}>@{(u.username || "").toLowerCase()}</div>
                           </div>
                         </div>
                         <button className="sb-btn" style={followState[u.username] ? { background: INK, color: BG } : {}} onClick={() => toggleFollow(u.username)}>
@@ -1720,7 +1720,7 @@ export default function SoundboardDemo() {
                           <div key={i} style={{ border: `1.5px solid ${LINE}`, borderRadius: 8, padding: "14px 16px" }}>
                             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
                               <Avatar username={c.username} size={26} />
-                              <span className="ui-sans" style={{ fontSize: 13, fontWeight: 600, cursor: "pointer" }} onClick={() => openUserProfile(c.username)}>@{c.username}</span>
+                              <span className="ui-sans" style={{ fontSize: 13, fontWeight: 600, cursor: "pointer" }} onClick={() => openUserProfile(c.username)}>@{(c.username || "").toLowerCase()}</span>
                               <span className="ui-sans" style={{ fontSize: 11, color: MUTE, marginLeft: "auto" }}>{c.date}</span>
                             </div>
                             <div className="ui-sans" style={{ fontSize: 11, color: MUTE, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 8 }}>shared a mix</div>
@@ -1759,7 +1759,7 @@ export default function SoundboardDemo() {
                           <div key={i} style={{ border: `1.5px solid ${BLUE}`, borderRadius: 8, padding: "14px 16px" }}>
                             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
                               <Avatar username={c.username} size={26} />
-                              <span className="ui-sans" style={{ fontSize: 13, fontWeight: 600, cursor: "pointer" }} onClick={() => openUserProfile(c.username)}>@{c.username}</span>
+                              <span className="ui-sans" style={{ fontSize: 13, fontWeight: 600, cursor: "pointer" }} onClick={() => openUserProfile(c.username)}>@{(c.username || "").toLowerCase()}</span>
                               <span className="ui-sans" style={{ fontSize: 11, color: MUTE, marginLeft: "auto" }}>{c.date}</span>
                             </div>
                             <div className="ui-sans" style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.04em", color: BLUE, marginBottom: 8, display: "flex", alignItems: "center", gap: 5 }}>
@@ -1802,7 +1802,7 @@ export default function SoundboardDemo() {
                         <div key={i} style={{ border: `1.5px solid ${LINE}`, borderRadius: 8, padding: "14px 16px" }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
                             <Avatar username={c.username} size={26} />
-                            <span className="ui-sans" style={{ fontSize: 13, fontWeight: 600, cursor: "pointer" }} onClick={() => openUserProfile(c.username)}>@{c.username}</span>
+                            <span className="ui-sans" style={{ fontSize: 13, fontWeight: 600, cursor: "pointer" }} onClick={() => openUserProfile(c.username)}>@{(c.username || "").toLowerCase()}</span>
                             <span className="ui-sans" style={{ fontSize: 11, color: MUTE, marginLeft: "auto" }}>{c.date}</span>
                             {c.username === profile.username && (
                               <button
@@ -2058,7 +2058,7 @@ export default function SoundboardDemo() {
                   <Avatar username={user.username} size={isMobile ? 88 : 120} />
                   <div className="ui-sans" style={{ textAlign: "left", minWidth: 0 }}>
                     <div style={{ fontSize: isMobile ? 24 : 30, fontWeight: 700, lineHeight: 1.15, letterSpacing: "-0.01em", textAlign: "left" }}>{user.displayName || user.username}</div>
-                    <div style={{ fontSize: isMobile ? 14 : 16, color: MUTE, marginTop: 3, textAlign: "left" }}>@{user.username}</div>
+                    <div style={{ fontSize: isMobile ? 14 : 16, color: MUTE, marginTop: 3, textAlign: "left" }}>@{(user.username || "").toLowerCase()}</div>
                     {user.bio && <div style={{ fontSize: isMobile ? 14 : 15, color: MUTE, marginTop: 10, maxWidth: 480, lineHeight: 1.5, textAlign: "left" }}>{!isMobile && user.bio.length > 30 ? user.bio.slice(0, 30) + "…" : user.bio}</div>}
                   </div>
                 </div>
@@ -2325,12 +2325,6 @@ export default function SoundboardDemo() {
                     <div style={{ marginTop: 9 }}>
                       <div className="ui-sans" style={{ fontSize: 13.5, fontWeight: 600, lineHeight: 1.3, wordBreak: "break-word", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{album.title}</div>
                       <div className="ui-sans" style={{ fontSize: 12, color: MUTE, marginTop: 2, wordBreak: "break-word", display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{album.artist || album.artistName} · {album.year || album.releaseYear}</div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 6, minHeight: 16 }}>
-                        {rev && <span style={{ fontSize: 11, fontWeight: 600, color: BLUE }}>{rev.rating}/10</span>}
-                        {!rev && status === "listened" && <span style={{ fontSize: 10, color: MUTE, letterSpacing: "0.02em" }}>LISTENED</span>}
-                        {!rev && status === "want_to_listen" && <span style={{ fontSize: 10, color: MUTE, letterSpacing: "0.02em" }}>QUEUED</span>}
-                        {favorites.includes(album.id) && <Heart size={11} fill={BLUE} color={BLUE} />}
-                      </div>
                     </div>
                   </div>
                 );
@@ -2814,7 +2808,7 @@ export default function SoundboardDemo() {
                 )}
                 <div className="ui-sans" style={{ textAlign: "left", minWidth: 0 }}>
                   <div style={{ fontSize: isMobile ? 24 : 30, fontWeight: 700, lineHeight: 1.15, letterSpacing: "-0.01em", textAlign: "left" }}>{profile.displayName}</div>
-                  <div style={{ fontSize: isMobile ? 14 : 16, color: MUTE, marginTop: 3, textAlign: "left" }}>@{profile.username}</div>
+                  <div style={{ fontSize: isMobile ? 14 : 16, color: MUTE, marginTop: 3, textAlign: "left" }}>@{(profile.username || "").toLowerCase()}</div>
                   {profile.bio && <div style={{ fontSize: isMobile ? 14 : 15, color: MUTE, marginTop: 10, maxWidth: 480, lineHeight: 1.5, textAlign: "left" }}>{!isMobile && profile.bio.length > 30 ? profile.bio.slice(0, 30) + "…" : profile.bio}</div>}
                 </div>
               </div>
@@ -3791,7 +3785,7 @@ function CommentInput({ placeholder, onSubmit, currentUsername, initialValue = "
               <Avatar username={u.username} size={20} />
               <div>
                 <div style={{ fontWeight: 600 }}>{u.displayName}</div>
-                <div style={{ fontSize: 11, color: MUTE }}>@{u.username}</div>
+                <div style={{ fontSize: 11, color: MUTE }}>@{(u.username || "").toLowerCase()}</div>
               </div>
             </div>
           ))}
@@ -4331,7 +4325,7 @@ function ListenedByFriends({ albumId }) {
           {entries.map((e) => (
             <div key={e.username} style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <Avatar username={e.username} />
-              <span className="ui-sans" style={{ fontSize: 13.5, fontWeight: 500, flex: 1 }}>@{e.username}</span>
+              <span className="ui-sans" style={{ fontSize: 13.5, fontWeight: 500, flex: 1 }}>@{(e.username || "").toLowerCase()}</span>
               <span style={{ fontSize: 12.5, fontWeight: 600, color: BLUE }}>{e.rating}/10</span>
             </div>
           ))}
@@ -4405,7 +4399,7 @@ function AlbumCommunitySection({ albumId, albumTab, setAlbumTab, openAlbum, revi
                 </div>
                 <div style={{ flex: 1 }} className="ui-sans">
                   <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                    <span style={{ fontSize: 13, fontWeight: 600 }}>@{r.username}</span>
+                    <span style={{ fontSize: 13, fontWeight: 600 }}>@{(r.username || "").toLowerCase()}</span>
                     <span style={{ fontSize: 11, color: MUTE }}>{r.date}</span>
                   </div>
                   <div style={{ fontSize: 13, color: INK, marginTop: 4, lineHeight: 1.6 }}>{r.text}</div>
@@ -4475,10 +4469,12 @@ function FollowListModal({ kind, userId, username, onClose, onVisitProfile }) {
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {users.map((u) => (
             <div key={u.id} onClick={() => onVisitProfile(u.username)} style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}>
-              <Avatar username={u.username} size={38} />
-              <div className="ui-sans">
+              <div style={{ width: 38, height: 38, flexShrink: 0 }}>
+                <Avatar username={u.username} size={38} />
+              </div>
+              <div className="ui-sans" style={{ minWidth: 0 }}>
                 <div style={{ fontSize: 13.5, fontWeight: 600 }}>{u.displayName || u.username}</div>
-                <div style={{ fontSize: 12, color: MUTE }}>@{u.username}</div>
+                <div style={{ fontSize: 12, color: MUTE }}>@{(u.username || "").toLowerCase()}</div>
               </div>
             </div>
           ))}
