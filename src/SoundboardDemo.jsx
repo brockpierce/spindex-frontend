@@ -1374,6 +1374,7 @@ export default function SoundboardDemo() {
   const [tagResultLoading, setTagResultLoading] = useState(false);
   const [showAllOwnReviews, setShowAllOwnReviews] = useState(false);
   const [showAllUserReviews, setShowAllUserReviews] = useState(false);
+  const [showFavPicker, setShowFavPicker] = useState(false);
 
   function openUserProfile(username) {
     setViewedUser(null);
@@ -2351,10 +2352,6 @@ export default function SoundboardDemo() {
                     >
                       {status === "listened" ? "✓ listened" : "mark listened"}
                     </button>
-                    <button className="sb-btn" onClick={() => toggleFavorite(album.id)} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                      <Heart size={13} fill={isFav ? BLUE : "none"} color={isFav ? BLUE : INK} />
-                      {isFav ? "favorited" : "favorite"}
-                    </button>
                   </div>
 
                   <div style={{ marginTop: 22, paddingTop: 18, borderTop: `1px solid ${LINE}`, width: "100%", textAlign: isMobile ? "center" : "left" }}>
@@ -2951,7 +2948,6 @@ export default function SoundboardDemo() {
               <div style={{ display: "flex", gap: 20, justifyContent: "center" }}>
                 {favorites.map((id) => {
                   const album = fetchedAlbums[id] || albumById(id);
-                  // Trigger a fetch if we don't have real data for this album yet
                   if (!fetchedAlbums[id] && album.title === "Unknown Album") {
                     apiFetch(`${BACKEND_URL}/api/albums/${id}`)
                       .then((r) => r.json())
@@ -2964,19 +2960,49 @@ export default function SoundboardDemo() {
                       .catch(() => {});
                   }
                   return (
-                    <div key={id} onClick={() => openAlbum(id)} className="sb-cover-wrap">
-                      <AlbumCover album={album} size={96} />
+                    <div key={id} style={{ textAlign: "center", maxWidth: 96, position: "relative" }}>
+                      <div onClick={() => openAlbum(id)} className="sb-cover-wrap">
+                        <AlbumCover album={album} size={96} />
+                      </div>
                       <div className="ui-sans" style={{ fontSize: 11.5, fontWeight: 600, marginTop: 6, maxWidth: 96 }}>{album.title !== "Unknown Album" ? album.title : "..."}</div>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); toggleFavorite(id); }}
+                        className="ui-sans"
+                        style={{ background: "none", border: "none", cursor: "pointer", color: MUTE, fontSize: 10, marginTop: 4, padding: 0 }}
+                      >
+                        remove
+                      </button>
                     </div>
                   );
                 })}
-                {favorites.length === 0 && <div className="ui-sans" style={{ color: MUTE, fontSize: 13 }}>no favorites picked yet.</div>}
                 {[...Array(Math.max(0, 3 - favorites.length))].map((_, i) => (
-                  <div key={i} style={{ width: 96, height: 96, border: `1.5px dashed ${LINE}`, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", color: LINE }}>
+                  <div
+                    key={i}
+                    onClick={() => setShowFavPicker(true)}
+                    style={{ width: 96, height: 96, border: `1.5px dashed ${LINE}`, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", color: MUTE, cursor: "pointer" }}
+                    title="Add a favorite album"
+                  >
                     <Plus size={18} />
                   </div>
                 ))}
               </div>
+              {showFavPicker && favorites.length < 3 && (
+                <div style={{ marginTop: 16, maxWidth: 400, margin: "16px auto 0" }}>
+                  <AlbumSearchPicker
+                    onPick={(album) => {
+                      if (favorites.includes(album.id)) {
+                        flash("Already in your top 3");
+                        return;
+                      }
+                      toggleFavorite(album.id);
+                      setFetchedAlbums((prev) => ({ ...prev, [album.id]: { ...album, artist: album.artistName || album.artist || "", year: album.releaseYear || album.year || null } }));
+                      setShowFavPicker(false);
+                    }}
+                    onCancel={() => setShowFavPicker(false)}
+                    placeholder="search for an album to add to top 3..."
+                  />
+                </div>
+              )}
             </div>
 
             <div style={{ marginTop: 30 }}>
@@ -3035,11 +3061,15 @@ export default function SoundboardDemo() {
 
             <div style={{ marginTop: 30 }}>
               <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 12 }}>mixes</div>
-              <div style={{ display: "flex", border: `1.5px solid ${LINE}`, borderRadius: 6, overflow: "hidden", width: 220, marginBottom: 18 }}>
-                <button onClick={() => setOwnProfileMixTab("album")} style={{ flex: 1, padding: "7px 0", fontFamily: "inherit", fontSize: 12, fontWeight: 500, cursor: "pointer", border: "none", background: ownProfileMixTab === "album" ? INK : "transparent", color: ownProfileMixTab === "album" ? BG : INK }}>album mixes</button>
-                <button onClick={() => setOwnProfileMixTab("song")} style={{ flex: 1, padding: "7px 0", fontFamily: "inherit", fontSize: 12, fontWeight: 500, cursor: "pointer", border: "none", borderLeft: `1.5px solid ${LINE}`, background: ownProfileMixTab === "song" ? INK : "transparent", color: ownProfileMixTab === "song" ? BG : INK }}>song mixes</button>
-              </div>
-              {ownProfileMixTab === "album" && (
+              {/* Song mix tab toggle temporarily hidden */}
+              {false && (
+                <div style={{ display: "flex", border: `1.5px solid ${LINE}`, borderRadius: 6, overflow: "hidden", width: 220, marginBottom: 18 }}>
+                  <button onClick={() => setOwnProfileMixTab("album")} style={{ flex: 1, padding: "7px 0", fontFamily: "inherit", fontSize: 12, fontWeight: 500, cursor: "pointer", border: "none", background: ownProfileMixTab === "album" ? INK : "transparent", color: ownProfileMixTab === "album" ? BG : INK }}>album mixes</button>
+                  <button onClick={() => setOwnProfileMixTab("song")} style={{ flex: 1, padding: "7px 0", fontFamily: "inherit", fontSize: 12, fontWeight: 500, cursor: "pointer", border: "none", borderLeft: `1.5px solid ${LINE}`, background: ownProfileMixTab === "song" ? INK : "transparent", color: ownProfileMixTab === "song" ? BG : INK }}>song mixes</button>
+                </div>
+              )}
+              {/* Always show album mixes since song mixes are hidden */}
+              {true && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                   {albumMixes.map((m) => (
                     <div key={m.id} onClick={() => setView({ name: "albumMixDetail", id: m.id })} style={{ display: "flex", alignItems: "center", gap: 12, border: `1.5px solid ${LINE}`, borderRadius: 8, padding: "12px 14px", cursor: "pointer" }}>
@@ -3060,7 +3090,8 @@ export default function SoundboardDemo() {
                   {albumMixes.length === 0 && <div className="ui-sans" style={{ color: MUTE, fontSize: 13 }}>no album mixes yet.</div>}
                 </div>
               )}
-              {ownProfileMixTab === "song" && (
+              {/* Song mixes on profile — temporarily hidden */}
+              {false && ownProfileMixTab === "song" && (
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: "16px 14px" }}>
                   {songMixes.map((m) => (
                     <div key={m.id} onClick={() => setView({ name: "songMixDetail", id: m.id })} className="sb-cover-wrap">
