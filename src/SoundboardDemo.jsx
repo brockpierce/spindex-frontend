@@ -1953,7 +1953,7 @@ export default function SoundboardDemo() {
                               </div>
                             </div>
                             {c.id && (
-                              <div style={{ marginTop: 12, paddingTop: 10, borderTop: `1px solid ${LINE}` }}>
+                              <div style={{ marginTop: 12, paddingTop: 10, paddingBottom: 10, borderTop: `1px solid ${LINE}` }}>
                                 <ReactionBar reactions={reviewReactions[c.id]} onReact={(kind) => toggleReaction(c.id, kind)} currentUsername={profile.username} />
                               </div>
                             )}
@@ -2025,7 +2025,7 @@ export default function SoundboardDemo() {
                               </div>
                             </div>
                             {c.id && (
-                              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12, paddingTop: 10, borderTop: `1px solid ${LINE}` }}>
+                              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12, paddingTop: 10, paddingBottom: 10, borderTop: `1px solid ${LINE}` }}>
                                 <ReactionBar
                                   reactions={reviewReactions[c.id]}
                                   onReact={(kind) => toggleReaction(c.id, kind)}
@@ -2079,7 +2079,7 @@ export default function SoundboardDemo() {
                             </div>
                           </div>
                           {c.id && (
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12, paddingTop: 10, borderTop: `1px solid ${LINE}` }}>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12, paddingTop: 10, paddingBottom: 10, borderTop: `1px solid ${LINE}` }}>
                               <ReactionBar
                                 reactions={reviewReactions[c.id]}
                                 onReact={(kind) => toggleReaction(c.id, kind)}
@@ -4968,7 +4968,7 @@ function AlbumCommunitySection({ albumId, albumTab, setAlbumTab, openAlbum, revi
                 </div>
               </div>
               {r.id && onReact && (
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12, paddingTop: 10, borderTop: `1px solid ${LINE}` }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12, paddingTop: 10, paddingBottom: 10, borderTop: `1px solid ${LINE}` }}>
                   <ReactionBar
                     reactions={reviewReactions[r.id]}
                     onReact={(kind) => onReact(r.id, kind)}
