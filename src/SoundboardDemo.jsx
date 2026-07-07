@@ -915,16 +915,26 @@ export default function SoundboardDemo() {
     const current = listenStatus[albumId];
     const newStatus = current === status ? null : status;
     // Optimistic update
-    setListenStatus((prev) => ({ ...prev, [albumId]: newStatus || undefined }));
-    // Persist to backend
-    apiFetch(`${BACKEND_URL}/api/listen-status/${albumId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status }),
-    }).catch(() => {
-      // Revert on failure
-      setListenStatus((prev) => ({ ...prev, [albumId]: current || undefined }));
+    setListenStatus((prev) => {
+      const next = { ...prev };
+      if (newStatus) next[albumId] = newStatus;
+      else delete next[albumId];
+      return next;
     });
+    // Persist to backend — DELETE to clear, PUT to set
+    if (!newStatus) {
+      apiFetch(`${BACKEND_URL}/api/listen-status/${albumId}`, { method: "DELETE" }).catch(() => {
+        setListenStatus((prev) => ({ ...prev, [albumId]: current || undefined }));
+      });
+    } else {
+      apiFetch(`${BACKEND_URL}/api/listen-status/${albumId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      }).catch(() => {
+        setListenStatus((prev) => ({ ...prev, [albumId]: current || undefined }));
+      });
+    }
   }
 
   function toggleFavorite(albumId) {
@@ -1261,6 +1271,7 @@ export default function SoundboardDemo() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         displayName: draftDisplayName.trim(),
+        username: draftUsername.trim(),
         bio: draftBio,
         avatarUrl: draftAvatarUrl || null,
       }),
