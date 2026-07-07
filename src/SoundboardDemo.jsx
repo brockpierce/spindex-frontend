@@ -1879,7 +1879,7 @@ export default function SoundboardDemo() {
                                 <ReactionBar reactions={reviewReactions[c.id]} onReact={(kind) => toggleReaction(c.id, kind)} currentUsername={profile.username} />
                               </div>
                             )}
-                            {c.id && <ReviewComments reviewId={c.id} comments={reviewComments[c.id] || []} onAdd={addComment} onReply={addReply} currentUsername={profile.username} reviewOwnerUsername={c.username} />}
+                            {c.id && <ReviewComments reviewId={c.id} comments={reviewComments[c.id] || []} onAdd={addComment} onReply={addReply} currentUsername={profile.username} reviewOwnerUsername={c.username} reviewReactions={reviewReactions} onReact={toggleReaction} />}
                           </div>
                         );
                       }
@@ -1944,6 +1944,8 @@ export default function SoundboardDemo() {
                                 onReply={addReply}
                                 currentUsername={profile.username}
                                 reviewOwnerUsername={c.username}
+                                reviewReactions={reviewReactions}
+                                onReact={toggleReaction}
                               />
                             )}
                           </div>
@@ -1996,6 +1998,8 @@ export default function SoundboardDemo() {
                               onReply={addReply}
                               currentUsername={profile.username}
                               reviewOwnerUsername={c.username}
+                              reviewReactions={reviewReactions}
+                              onReact={toggleReaction}
                             />
                           )}
                         </div>
@@ -4033,7 +4037,7 @@ function CommentInput({ placeholder, onSubmit, currentUsername, initialValue = "
 }
 
 // Renders a single comment node with its nested replies, recursively
-function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername }) {
+function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername, reviewReactions = {}, onReact }) {
   const { BLUE, INK, LINE, MUTE } = useTheme();
   const [replying, setReplying] = useState(false);
 
@@ -4059,12 +4063,19 @@ function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername })
             >
               {replying ? "cancel" : "Reply"}
             </button>
+            {comment.id && onReact && (
+              <ReactionBar
+                reactions={reviewReactions[comment.id] || { heart: [], frown: [] }}
+                onReact={(kind) => onReact(comment.id, kind)}
+                currentUsername={currentUsername}
+              />
+            )}
           </div>
         </div>
       </div>
 
       {(comment.replies || []).map((reply) => (
-        <CommentNode key={reply.id} comment={reply} depth={depth + 1} reviewId={reviewId} onReply={onReply} currentUsername={currentUsername} />
+        <CommentNode key={reply.id} comment={reply} depth={depth + 1} reviewId={reviewId} onReply={onReply} currentUsername={currentUsername} reviewReactions={reviewReactions} onReact={onReact} />
       ))}
 
       {replying && (
@@ -4090,7 +4101,7 @@ function countAllComments(comments) {
   return comments.reduce((s, c) => s + 1 + countReplies(c), 0);
 }
 
-function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUsername, reviewOwnerUsername }) {
+function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUsername, reviewOwnerUsername, reviewReactions = {}, onReact }) {
   const { BLUE, INK, LINE, MUTE, BG } = useTheme();
   const [open, setOpen] = useState(false);
   const total = countAllComments(comments);
@@ -4113,7 +4124,7 @@ function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUserna
         <div style={{ marginTop: 20 }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             {comments.map((c) => (
-              <CommentNode key={c.id} comment={c} depth={0} reviewId={reviewId} onReply={onReply} currentUsername={currentUsername} />
+              <CommentNode key={c.id} comment={c} depth={0} reviewId={reviewId} onReply={onReply} currentUsername={currentUsername} reviewReactions={reviewReactions} onReact={onReact} />
             ))}
           </div>
           {/* Composer */}
@@ -4658,6 +4669,8 @@ function AlbumCommunitySection({ albumId, albumTab, setAlbumTab, openAlbum, revi
                   onReply={onAddReply}
                   currentUsername={currentUsername}
                   reviewOwnerUsername={r.username}
+                  reviewReactions={reviewReactions}
+                  onReact={onReact}
                 />
               )}
             </div>
