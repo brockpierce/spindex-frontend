@@ -1940,7 +1940,7 @@ export default function SoundboardDemo() {
                               </div>
                             </div>
                             {c.id && (
-                              <div style={{ marginTop: 12, paddingTop: 10, paddingBottom: 10, borderTop: `1px solid ${LINE}` }}>
+                              <div style={{ marginTop: 12, paddingTop: 10, borderTop: `1px solid ${LINE}` }}>
                                 <ReactionBar reactions={reviewReactions[c.id]} onReact={(kind) => toggleReaction(c.id, kind)} currentUsername={profile.username} />
                               </div>
                             )}
@@ -2012,7 +2012,7 @@ export default function SoundboardDemo() {
                               </div>
                             </div>
                             {c.id && (
-                              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12, paddingTop: 10, paddingBottom: 10, borderTop: `1px solid ${LINE}` }}>
+                              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12, paddingTop: 10, borderTop: `1px solid ${LINE}` }}>
                                 <ReactionBar
                                   reactions={reviewReactions[c.id]}
                                   onReact={(kind) => toggleReaction(c.id, kind)}
@@ -2066,7 +2066,7 @@ export default function SoundboardDemo() {
                             </div>
                           </div>
                           {c.id && (
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12, paddingTop: 10, paddingBottom: 10, borderTop: `1px solid ${LINE}` }}>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12, paddingTop: 10, borderTop: `1px solid ${LINE}` }}>
                               <ReactionBar
                                 reactions={reviewReactions[c.id]}
                                 onReact={(kind) => toggleReaction(c.id, kind)}
@@ -4271,7 +4271,7 @@ function CommentInput({ placeholder, onSubmit, currentUsername, initialValue = "
         <Avatar username={currentUsername} size={38} />
         <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 8, background: "#ffffff", border: "1px solid #e3e6ea", borderRadius: 22, padding: "4px 6px 4px 18px" }}>
           <input
-            style={{ flex: 1, border: "none", outline: "none", background: "none", fontSize: 14, color: "#1a1a1a", padding: "7px 0", fontFamily: "inherit" }}
+            style={{ flex: 1, border: "none", outline: "none", background: "none", fontSize: 16, color: "#1a1a1a", padding: "9px 0", fontFamily: "inherit" }}
             placeholder={placeholder || "Write a comment..."}
             value={text}
             onChange={handleChange}
@@ -4304,8 +4304,8 @@ function CommentInput({ placeholder, onSubmit, currentUsername, initialValue = "
 function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername, reviewReactions = {}, onReact }) {
   const { BLUE, INK, LINE, MUTE } = useTheme();
   const [replying, setReplying] = useState(false);
-  const avatarSize = depth > 0 ? 26 : 32;
-  const fontSize = depth > 0 ? 13 : 14;
+  const avatarSize = 32;
+  const fontSize = 14;
 
   function relativeTime(date) {
     if (!date) return "";
@@ -4333,7 +4333,7 @@ function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername, r
             {"  "}
             <CommentText text={comment.text} />
           </p>
-          <div style={{ display: "flex", alignItems: "center", gap: 16, marginTop: 6, fontSize: 13, color: "#9aa0a6", fontWeight: 600 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 14, marginTop: 6, fontSize: 13, color: "#9aa0a6", fontWeight: 600 }}>
             {comment.date && <span>{relativeTime(comment.date)}</span>}
             <button
               onClick={() => setReplying((r) => !r)}
@@ -4341,16 +4341,19 @@ function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername, r
             >
               {replying ? "cancel" : "Reply"}
             </button>
+            {comment.id && onReact && (
+              <button
+                onClick={() => onReact(comment.id, "heart")}
+                style={{ border: "none", background: "none", padding: 0, cursor: "pointer", display: "flex", alignItems: "center", gap: 4, color: youHearted ? "#E0537A" : "#c9ced4", fontSize: 13 }}
+              >
+                <Heart size={13} fill={youHearted ? "#E0537A" : "none"} strokeWidth={1.8} />
+                {((reviewReactions[comment.id] || {}).heart || []).length > 0 && (
+                  <span style={{ fontSize: 12 }}>{((reviewReactions[comment.id] || {}).heart || []).length}</span>
+                )}
+              </button>
+            )}
           </div>
         </div>
-        {comment.id && onReact && (
-          <button
-            onClick={() => onReact(comment.id, "heart")}
-            style={{ border: "none", background: "none", padding: 0, cursor: "pointer", color: youHearted ? "#ff3b6b" : "#c9ced4", fontSize, marginTop: 2, flexShrink: 0 }}
-          >
-            {youHearted ? "\u2665" : "\u2661"}
-          </button>
-        )}
       </div>
 
       {(comment.replies || []).map((reply) => (
@@ -4404,15 +4407,15 @@ function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUserna
   }
 
   return (
-    <div className="sb-comment-bubble" style={{ background: "#fafbfc", borderTop: "1px solid #eceef0", marginTop: 8, marginLeft: -16, marginRight: -16, marginBottom: -14, padding: "0 16px", borderRadius: "0 0 8px 8px"}}>
+    <div className="sb-comment-bubble" style={{ background: "#fafbfc", borderTop: "1px solid #eceef0", margin: "0 -16px" }}>
       <button
         className="ui-sans"
         onClick={handleToggle}
-        style={{ display: "flex", alignItems: "center", gap: 8, border: "none", background: "none", padding: "18px 16px 0", cursor: "pointer", fontSize: 13, fontWeight: 400, color: "#6b7280", letterSpacing: "0.01em", fontFamily: "inherit" }}
+        style={{ display: "flex", alignItems: "center", gap: 8, border: "none", background: "none", padding: "14px 0 0", cursor: "pointer", fontSize: 13, fontWeight: 400, color: "#6b7280", letterSpacing: "0.01em", fontFamily: "inherit" }}
         onMouseEnter={(e) => e.currentTarget.style.color = "#1a1a1a"}
         onMouseLeave={(e) => e.currentTarget.style.color = "#6b7280"}
       >
-        {total + " comment" + (total !== 1 ? "s" : "")}
+        {total > 0 ? total + " comment" + (total !== 1 ? "s" : "") : "add a comment"}
         {total > 0 && (
           <span style={{ fontSize: 11, display: "inline-block", transition: "transform 0.2s", transform: open ? "rotate(180deg)" : "rotate(0deg)" }}>&#9660;</span>
         )}
@@ -4436,7 +4439,7 @@ function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUserna
           </div>
         </>
       )}
-      {!open && <div style={{ height: 22 }} />}
+      {!open && total > 0 && <div style={{ height: 18 }} />}
     </div>
   );
 }
@@ -4952,7 +4955,7 @@ function AlbumCommunitySection({ albumId, albumTab, setAlbumTab, openAlbum, revi
                 </div>
               </div>
               {r.id && onReact && (
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12, paddingTop: 10, paddingBottom: 10, borderTop: `1px solid ${LINE}` }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12, paddingTop: 10, borderTop: `1px solid ${LINE}` }}>
                   <ReactionBar
                     reactions={reviewReactions[r.id]}
                     onReact={(kind) => onReact(r.id, kind)}
