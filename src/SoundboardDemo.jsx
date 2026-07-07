@@ -2945,7 +2945,7 @@ export default function SoundboardDemo() {
 
             <div style={{ marginTop: 26 }}>
               <div style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14, textAlign: "center", fontWeight: 600 }}>top 3 albums</div>
-              <div style={{ display: "flex", gap: 20, justifyContent: "center" }}>
+              <div style={{ display: "flex", gap: isMobile ? 20 : 28, justifyContent: "center" }}>
                 {favorites.map((id) => {
                   const album = fetchedAlbums[id] || albumById(id);
                   if (!fetchedAlbums[id] && album.title === "Unknown Album") {
@@ -2959,32 +2959,42 @@ export default function SoundboardDemo() {
                       })
                       .catch(() => {});
                   }
+                  const favSize = isMobile ? 96 : 180;
                   return (
-                    <div key={id} style={{ textAlign: "center", maxWidth: 96, position: "relative" }}>
+                    <div key={id} style={{ textAlign: "center", maxWidth: favSize, position: "relative" }}>
                       <div onClick={() => openAlbum(id)} className="sb-cover-wrap">
-                        <AlbumCover album={album} size={96} />
+                        <AlbumCover album={album} size={favSize} />
                       </div>
-                      <div className="ui-sans" style={{ fontSize: 11.5, fontWeight: 600, marginTop: 6, maxWidth: 96 }}>{album.title !== "Unknown Album" ? album.title : "..."}</div>
-                      <button
+                      <div
                         onClick={(e) => { e.stopPropagation(); toggleFavorite(id); }}
-                        className="ui-sans"
-                        style={{ background: "none", border: "none", cursor: "pointer", color: MUTE, fontSize: 10, marginTop: 4, padding: 0 }}
+                        title="Remove favorite"
+                        style={{
+                          position: "absolute", top: -6, right: -6,
+                          width: 22, height: 22, borderRadius: "50%",
+                          background: "rgba(120,120,120,0.65)",
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          cursor: "pointer", zIndex: 2,
+                        }}
                       >
-                        remove
-                      </button>
+                        <X size={12} color="#fff" />
+                      </div>
+                      <div className="ui-sans" style={{ fontSize: isMobile ? 11.5 : 13, fontWeight: 600, marginTop: 8, maxWidth: favSize }}>{album.title !== "Unknown Album" ? album.title : "..."}</div>
                     </div>
                   );
                 })}
-                {[...Array(Math.max(0, 3 - favorites.length))].map((_, i) => (
-                  <div
-                    key={i}
-                    onClick={() => setShowFavPicker(true)}
-                    style={{ width: 96, height: 96, border: `1.5px dashed ${LINE}`, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", color: MUTE, cursor: "pointer" }}
-                    title="Add a favorite album"
-                  >
-                    <Plus size={18} />
-                  </div>
-                ))}
+                {[...Array(Math.max(0, 3 - favorites.length))].map((_, i) => {
+                  const favSize = isMobile ? 96 : 180;
+                  return (
+                    <div
+                      key={i}
+                      onClick={() => setShowFavPicker(true)}
+                      style={{ width: favSize, height: favSize, border: `1.5px dashed ${LINE}`, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", color: MUTE, cursor: "pointer" }}
+                      title="Add a favorite album"
+                    >
+                      <Plus size={isMobile ? 18 : 24} />
+                    </div>
+                  );
+                })}
               </div>
               {showFavPicker && favorites.length < 3 && (
                 <div style={{ marginTop: 16, maxWidth: 400, margin: "16px auto 0" }}>
@@ -3037,8 +3047,8 @@ export default function SoundboardDemo() {
                         {r.text && <div style={{ fontSize: 13.5, color: INK, marginTop: 6, lineHeight: 1.5, textAlign: "left" }}>{r.text}</div>}
                         {(r.favTrack || r.leastFavTrack) && (
                           <div style={{ fontSize: 11.5, color: MUTE, marginTop: 8, display: "flex", gap: 14, flexWrap: "wrap", textAlign: "left" }}>
-                            {r.favTrack && <span>♡ {r.favTrack}</span>}
-                            {r.leastFavTrack && <span>✕ {r.leastFavTrack}</span>}
+                            {r.favTrack && <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><svg width="12" height="11" viewBox="0 0 24 22" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill={MUTE} /></svg> {r.favTrack}</span>}
+                            {r.leastFavTrack && <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09L12 7.5" fill={MUTE} /><path d="M12 21.35l1.45-1.32C18.6 15.36 22 12.28 22 8.5 22 5.42 19.58 3 16.5 3c-1.74 0-3.41.81-4.5 2.09L12 7.5" fill={MUTE} /><line x1="10" y1="8" x2="14" y2="16" stroke={BG} strokeWidth="2.5" strokeLinecap="round" /></svg> {r.leastFavTrack}</span>}
                           </div>
                         )}
                       </div>
@@ -3060,7 +3070,7 @@ export default function SoundboardDemo() {
             </div>
 
             <div style={{ marginTop: 30 }}>
-              <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 12 }}>mixes</div>
+              <div style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14, textAlign: isMobile ? "center" : "left", fontWeight: 600 }}>mixes</div>
               {/* Song mix tab toggle temporarily hidden */}
               {false && (
                 <div style={{ display: "flex", border: `1.5px solid ${LINE}`, borderRadius: 6, overflow: "hidden", width: 220, marginBottom: 18 }}>
