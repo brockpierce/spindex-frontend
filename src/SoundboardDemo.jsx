@@ -4404,11 +4404,11 @@ function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUserna
   }
 
   return (
-    <div className="sb-comment-bubble" style={{ background: "#fafbfc", borderTop: "1px solid #eceef0" }}>
+    <div className="sb-comment-bubble" style={{ background: "#fafbfc", borderTop: "1px solid #eceef0", margin: "0 -16px" }}>
       <button
         className="ui-sans"
         onClick={handleToggle}
-        style={{ display: "flex", alignItems: "center", gap: 8, border: "none", background: "none", padding: "18px 0 0", cursor: "pointer", fontSize: 15, fontWeight: 600, color: "#6b7280", letterSpacing: "0.01em", fontFamily: "inherit" }}
+        style={{ display: "flex", alignItems: "center", gap: 8, border: "none", background: "none", padding: "18px 16px 0", cursor: "pointer", fontSize: 15, fontWeight: 400, color: "#6b7280", letterSpacing: "0.01em", fontFamily: "inherit" }}
         onMouseEnter={(e) => e.currentTarget.style.color = "#1a1a1a"}
         onMouseLeave={(e) => e.currentTarget.style.color = "#6b7280"}
       >
@@ -4421,13 +4421,13 @@ function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUserna
       {(open || total === 0) && (
         <>
           {comments.length > 0 && (
-            <div style={{ maxHeight: 360, overflowY: "auto", padding: "20px 0 6px", display: "flex", flexDirection: "column", gap: 22 }}>
+            <div style={{ maxHeight: 360, overflowY: "auto", padding: "20px 16px 6px", display: "flex", flexDirection: "column", gap: 22 }}>
               {comments.map((c) => (
                 <CommentNode key={c.id} comment={c} depth={0} reviewId={reviewId} onReply={onReply} currentUsername={currentUsername} reviewReactions={reviewReactions} onReact={onReact} />
               ))}
             </div>
           )}
-          <div style={{ borderTop: comments.length > 0 ? "1px solid #eceef0" : "none", marginTop: comments.length > 0 ? 14 : 12, paddingBottom: 22 }}>
+          <div style={{ borderTop: comments.length > 0 ? "1px solid #eceef0" : "none", marginTop: comments.length > 0 ? 14 : 12, paddingBottom: 22, paddingLeft: 16, paddingRight: 16 }}>
             <CommentInput
               placeholder="Write a comment..."
               currentUsername={currentUsername}
