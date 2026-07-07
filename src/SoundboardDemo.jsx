@@ -4272,7 +4272,7 @@ function CommentInput({ placeholder, onSubmit, currentUsername, initialValue = "
         <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 8, background: "#ffffff", border: "1px solid #e3e6ea", borderRadius: 22, padding: "4px 6px 4px 18px" }}>
           <input
             style={{ flex: 1, border: "none", outline: "none", background: "none", fontSize: 16, color: "#1a1a1a", padding: "9px 0", fontFamily: "inherit" }}
-            placeholder={placeholder || "Write a comment..."}
+            placeholder={placeholder || "Add a comment..."}
             value={text}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
@@ -4412,7 +4412,7 @@ function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUserna
           </div>
           <div style={{ marginTop: 12 }}>
             <CommentInput
-              placeholder="Write a comment..."
+              placeholder="Add a comment..."
               currentUsername={currentUsername}
               onSubmit={(text) => onAdd(reviewId, text, reviewOwnerUsername)}
             />
@@ -4423,7 +4423,7 @@ function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUserna
       {/* Always show composer when no comments yet */}
       {total === 0 && (
         <CommentInput
-          placeholder="Write a comment..."
+          placeholder="Add a comment..."
           currentUsername={currentUsername}
           onSubmit={(text) => onAdd(reviewId, text, reviewOwnerUsername)}
         />
