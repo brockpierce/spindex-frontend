@@ -4035,15 +4035,15 @@ function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername })
         <div style={{ flex: 1, minWidth: 0 }}>
           {/* Chat bubble — squared top-left corner points at avatar */}
           <div className="sb-comment-bubble" style={{ background: "#ffffff", border: "1px solid #ebedf0", borderRadius: "4px 16px 16px 16px", padding: "12px 16px" }}>
-            <div style={{ fontWeight: 700, fontSize: 15, color: "#1a1a1a", fontFamily: "inherit" }}>
+            <div style={{ fontWeight: 700, fontSize: 14, color: "#1a1a1a", fontFamily: "inherit" }}>
               {comment.username === currentUsername ? "you" : `@${(comment.username || "").toLowerCase()}`}
             </div>
-            <div style={{ fontSize: 16, lineHeight: 1.45, color: "#2a2a2a", marginTop: 4, fontFamily: "inherit" }}>
+            <div style={{ fontSize: 14, lineHeight: 1.4, color: "#2a2a2a", marginTop: 2, fontFamily: "inherit" }}>
               <CommentText text={comment.text} />
             </div>
           </div>
           {/* Action row below bubble */}
-          <div style={{ display: "flex", alignItems: "center", gap: 16, margin: "7px 4px 0" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 16, margin: "4px 4px 8px" }}>
             <button
               onClick={() => setReplying((r) => !r)}
               style={{ border: "none", background: "none", padding: 0, cursor: "pointer", fontSize: 13, fontWeight: 600, color: replying ? "#1a1a1a" : "#9aa0a6", fontFamily: "inherit" }}
