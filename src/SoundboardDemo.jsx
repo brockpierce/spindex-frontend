@@ -2102,19 +2102,24 @@ export default function SoundboardDemo() {
             </div>
             {!query.trim() && (
               <>
-                <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 12 }}>browse by tag</div>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 28 }}>
-                  {["rap", "slowcore", "folk", "indie", "r-and-b", "alternative", "production", "singer-songwriter", "ambient", "70s", "80s", "90s", "2000s", "2010s", "hip-hop", "soul", "rock", "jazz", "concept-album", "art-rock", "psychedelic", "electronic"].map((tag) => (
-                    <button
-                      key={tag}
-                      className="ui-sans"
-                      onClick={() => setView({ name: "tagResults", tag })}
-                      style={{ background: "transparent", border: `1.5px solid ${BLUE}`, borderRadius: 20, padding: "5px 12px", fontSize: 12.5, color: BLUE, cursor: "pointer", fontFamily: "inherit" }}
-                    >
-                      #{tag}
-                    </button>
-                  ))}
-                </div>
+                {/* browse by tag — temporarily hidden */}
+                {false && (
+                  <>
+                    <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 12 }}>browse by tag</div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 28 }}>
+                      {["rap", "slowcore", "folk", "indie", "r-and-b", "alternative", "production", "singer-songwriter", "ambient", "70s", "80s", "90s", "2000s", "2010s", "hip-hop", "soul", "rock", "jazz", "concept-album", "art-rock", "psychedelic", "electronic"].map((tag) => (
+                        <button
+                          key={tag}
+                          className="ui-sans"
+                          onClick={() => setView({ name: "tagResults", tag })}
+                          style={{ background: "transparent", border: `1.5px solid ${BLUE}`, borderRadius: 20, padding: "5px 12px", fontSize: 12.5, color: BLUE, cursor: "pointer", fontFamily: "inherit" }}
+                        >
+                          #{tag}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
                 <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14 }}>
                   trending albums
                 </div>
@@ -2266,12 +2271,15 @@ export default function SoundboardDemo() {
 
                   <AddToAlbumMixInline album={album} albumMixes={albumMixes} onAdd={addToAlbumMix} />
 
-                  <MixTagEditor
-                    tags={albumTags[album.id] || []}
-                    isOwn={profile.username === ADMIN_USERNAME}
-                    onUpdateTags={(tags) => updateAlbumTags(album.id, tags)}
-                    onTagClick={(tag) => setView({ name: "tagResults", tag })}
-                  />
+                  {/* Album tags — temporarily hidden */}
+                  {false && (
+                    <MixTagEditor
+                      tags={albumTags[album.id] || []}
+                      isOwn={profile.username === ADMIN_USERNAME}
+                      onUpdateTags={(tags) => updateAlbumTags(album.id, tags)}
+                      onTagClick={(tag) => setView({ name: "tagResults", tag })}
+                    />
+                  )}
                 </div>
               </div>
 
@@ -2489,12 +2497,15 @@ export default function SoundboardDemo() {
                   empty for now -- open any album from browse and use "add to album mix" to fill this in.
                 </div>
               )}
-              <MixTagEditor
-                tags={mix.tags || []}
-                isOwn={isOwn}
-                onUpdateTags={isOwn ? (tags) => updateAlbumMixTags(mix.id, tags) : null}
-                onTagClick={(tag) => setView({ name: "tagResults", tag })}
-              />
+              {/* Album mix tags — temporarily hidden */}
+              {false && (
+                <MixTagEditor
+                  tags={mix.tags || []}
+                  isOwn={isOwn}
+                  onUpdateTags={isOwn ? (tags) => updateAlbumMixTags(mix.id, tags) : null}
+                  onTagClick={(tag) => setView({ name: "tagResults", tag })}
+                />
+              )}
             </div>
           );
         })()}
@@ -3987,12 +3998,15 @@ function SongMixDetail({ mix, isOwn, onBack, onOpenAlbum, onAddTrack, onRemoveTr
         )}
       </div>
 
-      <MixTagEditor
-        tags={mix.tags || []}
-        isOwn={isOwn}
-        onUpdateTags={onUpdateTags}
-        onTagClick={onTagClick}
-      />
+      {/* Song mix tags — temporarily hidden */}
+      {false && (
+        <MixTagEditor
+          tags={mix.tags || []}
+          isOwn={isOwn}
+          onUpdateTags={onUpdateTags}
+          onTagClick={onTagClick}
+        />
+      )}
 
       {isOwn && (
         <div style={{ marginTop: 18 }}>
