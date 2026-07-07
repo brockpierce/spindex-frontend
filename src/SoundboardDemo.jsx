@@ -778,7 +778,8 @@ export default function SoundboardDemo() {
 
   function saveReview(albumId) {
     const now = nowTimestamp();
-    // Optimistic update
+    const todayIso = new Date().toISOString().slice(0, 10);
+    // Optimistic update to personal reviews
     setReviews((prev) => {
       const exists = prev.find((r) => r.albumId === albumId);
       if (exists) {
@@ -790,6 +791,19 @@ export default function SoundboardDemo() {
       }
       return [...prev, { id: "r" + Date.now(), albumId, rating: draftRating, text: draftText, favTrack: draftFavTrack, leastFavTrack: draftLeastFavTrack, date: now, username: profile.username }];
     });
+    // Optimistic update to feed caches so the review shows in the "everyone" tab
+    // immediately without needing a page refresh. Dedup by (username, albumId).
+    const feedItem = {
+      itemType: "review",
+      id: "r" + Date.now(),
+      username: profile.username,
+      albumId,
+      rating: draftRating,
+      text: draftText,
+      date: todayIso,
+    };
+    setPublicFeedItems((prev) => [feedItem, ...prev.filter((r) => !(r.username === profile.username && r.albumId === albumId))]);
+    setRealFeedItems((prev) => [feedItem, ...prev.filter((r) => !(r.username === profile.username && r.albumId === albumId))]);
     if (draftRating > 0) setListenStatus((prev) => ({ ...prev, [albumId]: "listened" }));
     flash("Review saved");
     // Persist to backend
@@ -801,9 +815,15 @@ export default function SoundboardDemo() {
       .then((r) => r.json())
       .then((data) => {
         if (data.review) {
-          // Update with real ID from server
+          // Update with real ID from server in both reviews state and feed caches
           setReviews((prev) => prev.map((r) =>
             r.albumId === albumId ? { ...r, id: data.review.id } : r
+          ));
+          setPublicFeedItems((prev) => prev.map((r) =>
+            r.username === profile.username && r.albumId === albumId ? { ...r, id: data.review.id } : r
+          ));
+          setRealFeedItems((prev) => prev.map((r) =>
+            r.username === profile.username && r.albumId === albumId ? { ...r, id: data.review.id } : r
           ));
         }
       })
