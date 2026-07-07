@@ -1644,9 +1644,9 @@ export default function SoundboardDemo() {
         .sb-cover-wrap:hover { opacity: 0.82; }
         .sb-input { font-family: inherit; border: 1.5px solid ${LINE}; background: ${BG}; padding: 9px 12px; font-size: 13px; outline: none; color: ${INK}; border-radius: 6px; width: 100%; }
         .sb-input:focus { border-color: ${BLUE}; }
+        .sb-textarea { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; border: 1.5px solid ${LINE}; background: ${BG}; padding: 11px 12px; font-size: 13.5px; outline: none; color: ${INK}; width: 100%; border-radius: 6px; resize: vertical; line-height: 1.6; }
         .sb-comment-bubble { text-align: left !important; }
         .sb-comment-bubble * { text-align: left !important; }
-        .sb-textarea { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; border: 1.5px solid ${LINE}; background: ${BG}; padding: 11px 12px; font-size: 13.5px; outline: none; color: ${INK}; width: 100%; border-radius: 6px; resize: vertical; line-height: 1.6; }
         .sb-textarea:focus { border-color: ${BLUE}; }
         .sb-nav-item { cursor: pointer; font-size: 12px; letter-spacing: 0.03em; text-transform: uppercase; font-weight: 500; color: ${MUTE}; padding: 6px 0; border-bottom: 2px solid transparent; }
         .sb-nav-item.active { color: ${INK}; border-bottom-color: ${BLUE}; }
@@ -1729,7 +1729,7 @@ export default function SoundboardDemo() {
       <div style={{ maxWidth: 920, margin: "0 auto", padding: "28px 16px 64px" }}>
         {/* TOAST */}
         {toast && (
-          <div style={{ position: "sticky", top: 8, zIndex: 10, background: INK, color: BG, padding: "8px 14px", borderRadius: 6, fontSize: 12, marginBottom: 16, display: "inline-flex", alignItems: "center", gap: 2 }}>
+          <div style={{ position: "sticky", top: 8, zIndex: 10, background: INK, color: BG, padding: "8px 14px", borderRadius: 6, fontSize: 12, marginBottom: 16, display: "inline-flex", alignItems: "center", gap: 6 }}>
             <Check size={13} /> {toast}
           </div>
         )}
@@ -2157,21 +2157,30 @@ export default function SoundboardDemo() {
           <div>
             <div className="ui-sans" style={{ fontSize: 20, fontWeight: 600, marginBottom: 4 }}>notifications</div>
             <div className="ui-sans" style={{ fontSize: 13, color: MUTE, marginBottom: 22 }}>
-              comments, replies, tags, and new followers.
+              comments, replies, and new followers
             </div>
             {notifications.length === 0 && (
-              <div className="ui-sans" style={{ color: MUTE, fontSize: 13.5 }}>nothing yet.</div>
+              <div className="ui-sans" style={{ color: MUTE, fontSize: 13.5 }}>nothing yet</div>
             )}
             <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
               {notifications.map((n) => {
-                const icon = n.type === "follow" ? "👤" : n.type === "reaction" ? "❤️" : n.type === "reply" ? "↩" : "💬";
+                // Thin outlined SVG icons matching the app's reaction/rating aesthetic
+                const icon = n.type === "follow" ? (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                ) : n.type === "reaction" ? (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                ) : n.type === "reply" ? (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
+                ) : (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                );
                 return (
                   <div
                     key={n.id}
-                    style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", borderRadius: 8, background: n.read ? "transparent" : darkMode ? "#1a1f2e" : "#EEF3FF", cursor: "pointer" }}
+                    style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", borderRadius: 8, background: n.read ? "transparent" : darkMode ? "#1a1f2e" : "#EEF3FF", cursor: "pointer" }}
                     onClick={() => n.fromUsername && openUserProfile(n.fromUsername)}
                   >
-                    <div style={{ width: 32, height: 32, borderRadius: 8, background: BLUE, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0 }}>
+                    <div style={{ width: 34, height: 34, borderRadius: "50%", border: `1.5px solid ${LINE}`, background: BG, display: "flex", alignItems: "center", justifyContent: "center", color: MUTE, flexShrink: 0 }}>
                       {icon}
                     </div>
                     <div style={{ flex: 1 }} className="ui-sans">
@@ -2621,7 +2630,7 @@ export default function SoundboardDemo() {
             {/* YOUR ALBUM MIXES */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 22 }}>
               <div className="ui-sans" style={{ fontSize: 20, fontWeight: 600 }}>your album mixes</div>
-              <button className="sb-btn" onClick={() => setShowNewMix(showNewMix === "album" ? null : "album")} style={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <button className="sb-btn" onClick={() => setShowNewMix(showNewMix === "album" ? null : "album")} style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <Plus size={13} /> new album mix
               </button>
             </div>
@@ -2664,7 +2673,7 @@ export default function SoundboardDemo() {
             {false && (<>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginTop: 36, marginBottom: 22 }}>
               <div className="ui-sans" style={{ fontSize: 20, fontWeight: 600 }}>your song mixes</div>
-              <button className="sb-btn" onClick={() => setShowNewMix(showNewMix === "song" ? null : "song")} style={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <button className="sb-btn" onClick={() => setShowNewMix(showNewMix === "song" ? null : "song")} style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <Plus size={13} /> new song mix
               </button>
             </div>
@@ -3397,11 +3406,11 @@ function AddToAlbumMixInline({ album, albumMixes, onAdd }) {
   const [open, setOpen] = useState(false);
   return (
     <div style={{ marginTop: 18, paddingTop: 14, borderTop: `1px solid ${LINE}` }}>
-      <button className="sb-btn" onClick={() => setOpen((o) => !o)} style={{ display: "flex", alignItems: "center", gap: 2 }}>
+      <button className="sb-btn" onClick={() => setOpen((o) => !o)} style={{ display: "flex", alignItems: "center", gap: 6 }}>
         <ListMusic size={13} /> add to album mix
       </button>
       {open && (
-        <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 2 }}>
+        <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 6 }}>
           {albumMixes.map((m) => {
             const already = m.albums.some((a) => a.albumId === album.id);
             return (
@@ -4030,23 +4039,21 @@ function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername })
 
   return (
     <div style={{ marginLeft: depth > 0 ? 50 : 0, marginBottom: 4 }}>
-      <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+      <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
         <Avatar username={comment.username} size={38} />
         <div style={{ flex: 1, minWidth: 0 }}>
-          {/* Chat bubble — squared top-left corner points at avatar */}
-          <div className="sb-comment-bubble" style={{ background: "#ffffff", border: "1px solid #ebedf0", borderRadius: "4px 16px 16px 16px", padding: "8px 14px" }}>
-            <div style={{ fontWeight: 700, fontSize: 14, color: "#1a1a1a", fontFamily: "inherit" }}>
+          <div className="sb-comment-bubble" style={{ background: "#ffffff", border: "1px solid #ebedf0", borderRadius: "4px 16px 16px 16px", padding: "8px 14px", textAlign: "left" }}>
+            <div style={{ fontWeight: 700, fontSize: 14, color: "#1a1a1a", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", textAlign: "left" }}>
               {comment.username === currentUsername ? "you" : `@${(comment.username || "").toLowerCase()}`}
             </div>
-            <div style={{ fontSize: 14, lineHeight: 1.4, color: "#2a2a2a", marginTop: 2, fontFamily: "inherit" }}>
+            <div style={{ fontSize: 14, lineHeight: 1.4, color: "#2a2a2a", marginTop: 2, fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", textAlign: "left" }}>
               <CommentText text={comment.text} />
             </div>
           </div>
-          {/* Action row below bubble */}
-          <div style={{ display: "flex", alignItems: "center", gap: 16, margin: "4px 4px 8px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "4px 4px 8px" }}>
             <button
               onClick={() => setReplying((r) => !r)}
-              style={{ border: "none", background: "none", padding: 0, cursor: "pointer", fontSize: 13, fontWeight: 600, color: replying ? "#1a1a1a" : "#9aa0a6", fontFamily: "inherit" }}
+              style={{ border: "none", background: "none", padding: 0, cursor: "pointer", fontSize: 12, fontWeight: 600, color: replying ? "#1a1a1a" : "#9aa0a6", fontFamily: "inherit" }}
               onMouseEnter={(e) => e.currentTarget.style.color = "#1a1a1a"}
               onMouseLeave={(e) => e.currentTarget.style.color = replying ? "#1a1a1a" : "#9aa0a6"}
             >
@@ -4061,7 +4068,7 @@ function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername })
       ))}
 
       {replying && (
-        <div style={{ marginTop: 10, marginLeft: 50 }}>
+        <div style={{ marginTop: 6, marginLeft: 48 }}>
           <CommentInput
             placeholder={`reply to @${comment.username}...`}
             initialValue={`@${comment.username} `}
@@ -4089,7 +4096,7 @@ function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUserna
   const total = countAllComments(comments);
 
   return (
-    <div className="sb-comment-bubble" style={{ background: "#fafbfc", borderTop: "1px solid #eceef0", padding: "22px 0 28px", marginTop: 10 }}>
+    <div className="sb-comment-bubble" style={{ background: "#fafbfc", borderTop: "1px solid #eceef0", padding: "22px 0 28px", marginTop: 10, textAlign: "left" }}>
       {/* Collapse header */}
       <button
         className="ui-sans"
@@ -4104,7 +4111,7 @@ function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUserna
 
       {(open || total === 0) && (
         <div style={{ marginTop: 20 }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             {comments.map((c) => (
               <CommentNode key={c.id} comment={c} depth={0} reviewId={reviewId} onReply={onReply} currentUsername={currentUsername} />
             ))}
@@ -4469,7 +4476,7 @@ function SongMixDetail({ mix, isOwn, onBack, onOpenAlbum, onAddTrack, onRemoveTr
       {isOwn && (
         <div style={{ marginTop: 18 }}>
           {!adding ? (
-            <button className="sb-btn" onClick={startAdd} style={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <button className="sb-btn" onClick={startAdd} style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <Plus size={13} /> add track
             </button>
           ) : !pickedAlbum ? (
@@ -4691,18 +4698,21 @@ function FollowListModal({ kind, userId, username, onClose, onVisitProfile }) {
         {loading && <div className="ui-sans" style={{ color: MUTE, fontSize: 13 }}>loading...</div>}
         {!loading && users.length === 0 && (
           <div className="ui-sans" style={{ color: MUTE, fontSize: 13 }}>
-            {kind === "followers" ? "no followers yet." : "not following anyone yet."}
+            {kind === "followers" ? "no followers yet" : "not following anyone yet"}
           </div>
         )}
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
           {users.map((u) => (
-            <div key={u.id} onClick={() => onVisitProfile(u.username)} style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}>
-              <div style={{ width: 38, height: 38, flexShrink: 0 }}>
-                <Avatar username={u.username} size={38} />
+            <div key={u.id} onClick={() => onVisitProfile(u.username)} style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer", padding: "8px 4px", borderRadius: 8 }}
+              onMouseEnter={(e) => e.currentTarget.style.background = LINE}
+              onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+            >
+              <div style={{ width: 40, height: 40, flexShrink: 0 }}>
+                <Avatar username={u.username} size={40} />
               </div>
               <div className="ui-sans" style={{ minWidth: 0 }}>
-                <div style={{ fontSize: 13.5, fontWeight: 600 }}>{u.displayName || u.username}</div>
-                <div style={{ fontSize: 12, color: MUTE }}>@{(u.username || "").toLowerCase()}</div>
+                <div style={{ fontSize: 14, fontWeight: 700, lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{u.displayName || u.username}</div>
+                <div style={{ fontSize: 12, color: MUTE, marginTop: 1, lineHeight: 1.2 }}>@{(u.username || "").toLowerCase()}</div>
               </div>
             </div>
           ))}
