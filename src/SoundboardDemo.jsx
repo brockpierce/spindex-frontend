@@ -724,6 +724,15 @@ export default function SoundboardDemo() {
           }
         })
         .catch(() => {});
+      // Load album mixes from backend
+      apiFetch(`${BACKEND_URL}/api/mixes`)
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.mixes) {
+            setAlbumMixes(data.mixes);
+          }
+        })
+        .catch(() => {});
     }
   }, [authUser]);
 
@@ -915,11 +924,24 @@ export default function SoundboardDemo() {
 
   function createAlbumMix() {
     if (!newMixTitle.trim()) return;
-    const id = "am" + Date.now();
-    setAlbumMixes((prev) => [...prev, { id, title: newMixTitle.trim(), description: "", albums: [] }]);
+    const tempId = "am" + Date.now();
+    setAlbumMixes((prev) => [...prev, { id: tempId, title: newMixTitle.trim(), description: "", albums: [] }]);
     setNewMixTitle("");
     setShowNewMix(null);
-    setView({ name: "albumMixDetail", id });
+    setView({ name: "albumMixDetail", id: tempId });
+    apiFetch(`${BACKEND_URL}/api/mixes`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: newMixTitle.trim() }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.mix) {
+          setAlbumMixes((prev) => prev.map((m) => m.id === tempId ? { ...m, id: data.mix.id } : m));
+          setView((v) => v.name === "albumMixDetail" && v.id === tempId ? { ...v, id: data.mix.id } : v);
+        }
+      })
+      .catch(() => {});
   }
 
   function addToAlbumMix(mixId, albumId) {
@@ -931,10 +953,16 @@ export default function SoundboardDemo() {
       )
     );
     flash("Added to album mix");
+    apiFetch(`${BACKEND_URL}/api/mixes/${mixId}/albums`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ albumId }),
+    }).catch(() => {});
   }
 
   function removeFromAlbumMix(mixId, albumId) {
     setAlbumMixes((prev) => prev.map((m) => (m.id === mixId ? { ...m, albums: m.albums.filter((a) => a.albumId !== albumId) } : m)));
+    apiFetch(`${BACKEND_URL}/api/mixes/${mixId}/albums/${albumId}`, { method: "DELETE" }).catch(() => {});
   }
 
   function updateAlbumMixNote(mixId, albumId, note) {
@@ -1331,6 +1359,7 @@ export default function SoundboardDemo() {
     if (!window.confirm("Are you sure? This can't be undone.")) return;
     setAlbumMixes((prev) => prev.filter((m) => m.id !== mixId));
     setView({ name: "mixes" });
+    apiFetch(`${BACKEND_URL}/api/mixes/${mixId}`, { method: "DELETE" }).catch(() => {});
   }
 
   // Delete a song mix. Same pattern.
