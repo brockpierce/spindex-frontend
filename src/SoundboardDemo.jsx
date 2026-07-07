@@ -3759,6 +3759,9 @@ function generateShareCardBlob({ kind, album, username, rating, reviewText, ques
         ctx.font = "700 96px Arial, sans-serif";
         ctx.fillStyle = accentColor;
         ctx.fillText(`${rating}/10`, W / 2, coverY + coverSize + 270);
+        ctx.font = "400 32px Arial, sans-serif";
+        ctx.fillStyle = "#7A7A7A";
+        ctx.fillText(`review by @${(username || "").toLowerCase()}`, W / 2, coverY + coverSize + 330);
       }
 
       // Username + wordmark footer
