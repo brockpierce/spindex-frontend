@@ -20,7 +20,7 @@ const BACKEND_URL = "https://spindex-backend.onrender.com";
 // Only this account can edit album-level tags. Non-admin users can view and
 // click tags to filter but not add or remove them. Temporary curation gate
 // until we build a proper moderation flow.
-const ADMIN_USERNAME = "brock";
+const ADMIN_USERNAME = "brockpierce";
 
 // JWT token helpers -- stored in localStorage so it survives page refresh.
 // apiFetch wraps fetch to automatically attach the Authorization header.
@@ -2602,10 +2602,7 @@ export default function SoundboardDemo() {
                     </div>
                     <div style={{ marginTop: 9 }}>
                       <div className="ui-sans" style={{ fontSize: 13.5, fontWeight: 600, lineHeight: 1.3, wordBreak: "break-word", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{album.title}</div>
-                      <div className="ui-sans" style={{ fontSize: 12, color: MUTE, marginTop: 2 }}>
-                        <span style={{ cursor: "pointer", textDecoration: "underline" }} onClick={(e) => { e.stopPropagation(); openArtist(album.artist || album.artistName); }}>{album.artist || album.artistName}</span>
-                        {(album.year || album.releaseYear) ? ` · ${album.year || album.releaseYear}` : ""}
-                      </div>
+                      <div className="ui-sans" style={{ fontSize: 12, color: MUTE, marginTop: 2, wordBreak: "break-word", display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{album.artist || album.artistName}{(album.year || album.releaseYear) ? ` · ${album.year || album.releaseYear}` : ""}</div>
                     </div>
                   </div>
                 );
@@ -2621,9 +2618,8 @@ export default function SoundboardDemo() {
             {profile.username === ADMIN_USERNAME && !query.trim() && (
               <AdminAlbumForm
                 onAdded={(album) => {
-                  setTrendingAlbums((prev) => [album, ...prev]);
                   setFetchedAlbums((prev) => ({ ...prev, [album.id]: album }));
-                  flash("Album added to database");
+                  flash("Album added — searchable now");
                 }}
               />
             )}
