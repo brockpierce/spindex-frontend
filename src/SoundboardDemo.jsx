@@ -765,6 +765,15 @@ export default function SoundboardDemo() {
         })
         .catch(() => {});
     }
+    // Fetch persisted tags for this album (public, no auth needed)
+    apiFetch(`${BACKEND_URL}/api/albums/${id}/tags`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data.tags)) {
+          setAlbumTags((prev) => ({ ...prev, [id]: data.tags }));
+        }
+      })
+      .catch(() => {});
   }
 
   function saveReview(albumId) {
@@ -1026,7 +1035,16 @@ export default function SoundboardDemo() {
   }
 
   function updateAlbumTags(albumId, tags) {
+    // Optimistic update: reflect in UI immediately
     setAlbumTags((prev) => ({ ...prev, [albumId]: tags }));
+    // Persist to backend (admin-only endpoint; non-admin users' updateAlbumTags
+    // shouldn't be reachable due to the isOwn=false gate in the tag editor,
+    // but if it is, backend rejects with 403 and we just don't overwrite state).
+    apiFetch(`${BACKEND_URL}/api/albums/${albumId}/tags`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tags }),
+    }).catch(() => {});
   }
 
   function updateAlbumMixTags(mixId, tags) {
@@ -1260,6 +1278,8 @@ export default function SoundboardDemo() {
 
   const [viewedUser, setViewedUser] = useState(null);
   const [viewedUserReviews, setViewedUserReviews] = useState([]);
+  const [tagResultAlbums, setTagResultAlbums] = useState([]);
+  const [tagResultLoading, setTagResultLoading] = useState(false);
 
   function openUserProfile(username) {
     setViewedUser(null);
@@ -1306,6 +1326,31 @@ export default function SoundboardDemo() {
     setProfile(PROFILE);
     setView({ name: "home" });
   }
+
+  // Load albums for the tag results view whenever a tag is opened.
+  // Backend-driven so tags persist across users and sessions.
+  useEffect(() => {
+    if (view.name !== "tagResults" || !view.tag) return;
+    setTagResultLoading(true);
+    setTagResultAlbums([]);
+    apiFetch(`${BACKEND_URL}/api/tags/${encodeURIComponent(view.tag)}/albums`)
+      .then((r) => r.json())
+      .then((data) => {
+        const albums = (data.albums || []).map((a) => ({
+          ...a,
+          artist: a.artistName || a.artist || "",
+          year: a.releaseYear || a.year || null,
+        }));
+        setTagResultAlbums(albums);
+        // Prefetch into fetchedAlbums so cover art shows immediately when
+        // clicking through to an album detail page.
+        albums.forEach((a) => {
+          setFetchedAlbums((prev) => prev[a.id] ? prev : { ...prev, [a.id]: a });
+        });
+      })
+      .catch(() => setTagResultAlbums([]))
+      .finally(() => setTagResultLoading(false));
+  }, [view.name, view.tag]);
 
   // Still waiting to hear back from the server about whether someone's
   // already logged in -- show nothing rather than flashing the auth
@@ -1922,13 +1967,10 @@ export default function SoundboardDemo() {
         {/* ---------------- TAG RESULTS ---------------- */}
         {view.name === "tagResults" && (() => {
           const tag = view.tag;
-          // Find all album IDs tagged with this tag, then resolve each to an
-          // album object. Prefer the fetchedAlbums cache (real DB albums) and
-          // fall back to the mock ALBUMS array so both work.
-          const matchedAlbums = Object.keys(albumTags)
-            .filter((id) => (albumTags[id] || []).includes(tag))
-            .map((id) => fetchedAlbums[id] || ALBUMS.find((a) => a.id === id))
-            .filter(Boolean);
+          // Albums come from the backend now — populated by the useEffect
+          // above when this view opens. Falls back to empty list if the
+          // backend endpoint isn't reachable.
+          const matchedAlbums = tagResultAlbums;
           // Mixes tagged with this tag (own + saved + all users')
           const allAlbumMixes = [
             ...albumMixes,
