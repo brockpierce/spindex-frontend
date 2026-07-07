@@ -2546,6 +2546,17 @@ export default function SoundboardDemo() {
                 No albums match "{query}". <span style={{ textDecoration: "underline", cursor: "pointer", color: BLUE }} onClick={() => setQuery("")}>Clear search</span>
               </div>
             )}
+
+            {/* Admin-only: manually add album to database */}
+            {profile.username === ADMIN_USERNAME && !query.trim() && (
+              <AdminAlbumForm
+                onAdded={(album) => {
+                  setTrendingAlbums((prev) => [album, ...prev]);
+                  setFetchedAlbums((prev) => ({ ...prev, [album.id]: album }));
+                  flash("Album added to database");
+                }}
+              />
+            )}
           </div>
         )}
 
@@ -3831,6 +3842,109 @@ function QotdModal({ question, onSubmit, onClose }) {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function AdminAlbumForm({ onAdded }) {
+  const { BLUE, INK, LINE, MUTE, BG } = useTheme();
+  const [open, setOpen] = useState(false);
+  const [title, setTitle] = useState("");
+  const [artistName, setArtistName] = useState("");
+  const [year, setYear] = useState("");
+  const [coverFile, setCoverFile] = useState(null);
+  const [coverPreview, setCoverPreview] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  function handleCoverChange(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    setCoverFile(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => setCoverPreview(ev.target.result);
+    reader.readAsDataURL(file);
+  }
+
+  async function handleSubmit() {
+    if (!title.trim() || !artistName.trim()) { setError("Title and artist are required"); return; }
+    setSaving(true);
+    setError("");
+    try {
+      // 1. Create the album
+      const res = await apiFetch(`${BACKEND_URL}/api/albums`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: title.trim(),
+          artistName: artistName.trim(),
+          releaseYear: year ? parseInt(year, 10) : null,
+          releaseType: "Album",
+        }),
+      });
+      const data = await res.json();
+      if (!data.album) { setError(data.error || "Failed to create album"); setSaving(false); return; }
+      const album = { ...data.album, artist: data.album.artistName, year: data.album.releaseYear };
+
+      // 2. Upload cover if provided
+      if (coverFile && data.album.id) {
+        // Upload cover as base64 via a simple PUT endpoint
+        const reader = new FileReader();
+        reader.onload = async (ev) => {
+          try {
+            await apiFetch(`${BACKEND_URL}/api/albums/${data.album.id}/cover`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ coverDataUrl: ev.target.result }),
+            });
+            album.coverArtUrl = ev.target.result;
+          } catch (e) {}
+          onAdded(album);
+          setTitle(""); setArtistName(""); setYear(""); setCoverFile(null); setCoverPreview(null); setOpen(false);
+          setSaving(false);
+        };
+        reader.readAsDataURL(coverFile);
+      } else {
+        onAdded(album);
+        setTitle(""); setArtistName(""); setYear(""); setCoverFile(null); setCoverPreview(null); setOpen(false);
+        setSaving(false);
+      }
+    } catch (e) {
+      setError("Something went wrong"); setSaving(false);
+    }
+  }
+
+  return (
+    <div style={{ marginTop: 40, paddingTop: 28, borderTop: `1px solid ${LINE}` }}>
+      <div className="ui-sans" style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 12 }}>admin — add album to database</div>
+      {!open ? (
+        <button className="sb-btn" onClick={() => setOpen(true)} style={{ fontSize: 12 }}>+ add album manually</button>
+      ) : (
+        <div style={{ maxWidth: 420 }}>
+          {/* Cover upload */}
+          <div style={{ marginBottom: 16, display: "flex", gap: 16, alignItems: "flex-start" }}>
+            <label style={{ cursor: "pointer" }}>
+              <div style={{ width: 80, height: 80, borderRadius: 10, border: `1.5px dashed ${LINE}`, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", background: coverPreview ? "transparent" : "#f5f5f5" }}>
+                {coverPreview
+                  ? <img src={coverPreview} alt="cover" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  : <span style={{ fontSize: 22, color: MUTE }}>+</span>
+                }
+              </div>
+              <input type="file" accept="image/*" onChange={handleCoverChange} style={{ display: "none" }} />
+            </label>
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8 }}>
+              <input className="sb-input ui-sans" placeholder="Album title *" value={title} onChange={(e) => setTitle(e.target.value)} style={{ width: "100%" }} />
+              <input className="sb-input ui-sans" placeholder="Artist name *" value={artistName} onChange={(e) => setArtistName(e.target.value)} style={{ width: "100%" }} />
+              <input className="sb-input ui-sans" placeholder="Year (optional)" value={year} onChange={(e) => setYear(e.target.value)} style={{ width: "100%" }} type="number" min="1900" max="2099" />
+            </div>
+          </div>
+          {error && <div className="ui-sans" style={{ fontSize: 12, color: "red", marginBottom: 8 }}>{error}</div>}
+          <div style={{ display: "flex", gap: 8 }}>
+            <button className="sb-btn sb-btn-solid" onClick={handleSubmit} disabled={saving}>{saving ? "saving..." : "add album"}</button>
+            <button className="sb-btn" onClick={() => { setOpen(false); setError(""); }}>cancel</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
