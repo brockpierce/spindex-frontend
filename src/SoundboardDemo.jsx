@@ -1180,6 +1180,19 @@ export default function SoundboardDemo() {
       .catch(() => {});
   }
 
+  // Load only reactions for comment/reply IDs — lightweight, no nested comment fetching
+  function loadCommentReactions(commentIds) {
+    commentIds.forEach((cid) => {
+      if (!cid) return;
+      apiFetch(`${BACKEND_URL}/api/interactions/reactions/${cid}`)
+        .then((r) => r.json())
+        .then((rd) => {
+          setReviewReactions((prev) => ({ ...prev, [cid]: { heart: rd.heart || [], frown: rd.frown || [] } }));
+        })
+        .catch(() => {});
+    });
+  }
+
   // Load reactions + comments from backend for a set of review IDs.
   // Called when feed items load, when album community reviews load, etc.
   function loadInteractions(reviewIds) {
@@ -1944,7 +1957,7 @@ export default function SoundboardDemo() {
                                 <ReactionBar reactions={reviewReactions[c.id]} onReact={(kind) => toggleReaction(c.id, kind)} currentUsername={profile.username} />
                               </div>
                             )}
-                            {c.id && <ReviewComments reviewId={c.id} comments={reviewComments[c.id] || []} onAdd={addComment} onReply={addReply} currentUsername={profile.username} reviewOwnerUsername={c.username} reviewReactions={reviewReactions} onReact={toggleReaction} onLoadReactions={loadInteractions} />}
+                            {c.id && <ReviewComments reviewId={c.id} comments={reviewComments[c.id] || []} onAdd={addComment} onReply={addReply} currentUsername={profile.username} reviewOwnerUsername={c.username} reviewReactions={reviewReactions} onReact={toggleReaction} onLoadReactions={loadCommentReactions} />}
                           </div>
                         );
                       }
@@ -1982,7 +1995,7 @@ export default function SoundboardDemo() {
                                   reviewOwnerUsername={c.username}
                                   reviewReactions={reviewReactions}
                                   onReact={toggleReaction}
-                                  onLoadReactions={loadInteractions}
+                                  onLoadReactions={loadCommentReactions}
                                 />
                               </>
                             )}
@@ -4411,11 +4424,11 @@ function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUserna
       <button
         className="ui-sans"
         onClick={handleToggle}
-        style={{ display: "flex", alignItems: "center", gap: 8, border: "none", background: "none", padding: "14px 0 0", cursor: "pointer", fontSize: 13, fontWeight: 400, color: "#6b7280", letterSpacing: "0.01em", fontFamily: "inherit" }}
+        style={{ display: "flex", alignItems: "center", gap: 8, border: "none", background: "none", padding: "14px 0 0", cursor: "pointer", fontSize: 13, fontWeight: 400, color: "#6b7280", letterSpacing: "0.01em", fontFamily: "inherit", marginLeft: -16 }}
         onMouseEnter={(e) => e.currentTarget.style.color = "#1a1a1a"}
         onMouseLeave={(e) => e.currentTarget.style.color = "#6b7280"}
       >
-        {total > 0 ? total + " comment" + (total !== 1 ? "s" : "") : "add a comment"}
+        {total > 0 ? total + " comment" + (total !== 1 ? "s" : "") : ""}
         {total > 0 && (
           <span style={{ fontSize: 11, display: "inline-block", transition: "transform 0.2s", transform: open ? "rotate(180deg)" : "rotate(0deg)" }}>&#9660;</span>
         )}
