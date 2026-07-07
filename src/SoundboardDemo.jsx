@@ -565,6 +565,7 @@ export default function SoundboardDemo() {
   const [showPlusMenu, setShowPlusMenu] = useState(false);
   const [showQotdModal, setShowQotdModal] = useState(false);
   const [showQuickReviewModal, setShowQuickReviewModal] = useState(false);
+  const [showTextPostModal, setShowTextPostModal] = useState(false);
   const [showShareMixModal, setShowShareMixModal] = useState(false);
   const [mixSharePosts, setMixSharePosts] = useState([
     { id: "msp1", username: "m.delacroix", mixType: "album", mixId: "u-mm1", date: "2026-06-27 · 11:38pm" },
@@ -1385,6 +1386,15 @@ export default function SoundboardDemo() {
     apiFetch(`${BACKEND_URL}/api/reviews/${albumId}`, { method: "DELETE" }).catch(() => {});
   }
 
+  function deleteTextPost(postId) {
+    if (typeof window === "undefined") return;
+    if (!window.confirm("Delete this post?")) return;
+    if (!window.confirm("Are you sure? This can't be undone.")) return;
+    setPublicFeedItems((prev) => prev.filter((r) => r.id !== postId));
+    setRealFeedItems((prev) => prev.filter((r) => r.id !== postId));
+    apiFetch(`${BACKEND_URL}/api/posts/${postId}`, { method: "DELETE" }).catch(() => {});
+  }
+
   // Delete an album mix. Double-confirm and navigate back to the mixes list
   // so we're not stuck viewing a deleted mix.
   function deleteAlbumMix(mixId) {
@@ -1657,6 +1667,30 @@ export default function SoundboardDemo() {
       {showQuickReviewModal && (
         <QuickReviewModal onSubmit={submitQuickReview} onClose={() => setShowQuickReviewModal(false)} />
       )}
+      {showTextPostModal && (
+        <TextPostModal onSubmit={(text) => {
+          const todayIso = new Date().toISOString().slice(0, 10);
+          const tempId = "tp" + Date.now();
+          const feedItem = { itemType: "textpost", id: tempId, username: profile.username, text, date: todayIso };
+          setPublicFeedItems((prev) => [feedItem, ...prev]);
+          setRealFeedItems((prev) => [feedItem, ...prev]);
+          apiFetch(`${BACKEND_URL}/api/posts`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text }),
+          })
+            .then((r) => r.json())
+            .then((data) => {
+              if (data.post) {
+                setPublicFeedItems((prev) => prev.map((r) => r.id === tempId ? { ...r, id: data.post.id } : r));
+                setRealFeedItems((prev) => prev.map((r) => r.id === tempId ? { ...r, id: data.post.id } : r));
+              }
+            })
+            .catch(() => {});
+          setShowTextPostModal(false);
+          flash("Posted");
+        }} onClose={() => setShowTextPostModal(false)} />
+      )}
       {showShareMixModal && (
         <ShareMixModal albumMixes={albumMixes} songMixes={songMixes} onSubmit={submitMixShare} onClose={() => setShowShareMixModal(false)} />
       )}
@@ -1750,6 +1784,7 @@ export default function SoundboardDemo() {
                             {[
                               /* QOTD temporarily hidden */
                               // { label: "QOTD", desc: "answer today's question", action: () => { setShowPlusMenu(false); setShowQotdModal(true); } },
+                              { label: "Post a thought", desc: "share what's on your mind", action: () => { setShowPlusMenu(false); setShowTextPostModal(true); } },
                               { label: "Post a review", desc: "review an album", action: () => { setShowPlusMenu(false); setShowQuickReviewModal(true); } },
                               { label: "Share a mix", desc: "post one of your mixes", action: () => { setShowPlusMenu(false); setShowShareMixModal(true); } },
                             ].map((opt) => (
@@ -1814,6 +1849,27 @@ export default function SoundboardDemo() {
                               </div>
                             )}
                             {c.id && <ReviewComments reviewId={c.id} comments={reviewComments[c.id] || []} onAdd={addComment} onReply={addReply} currentUsername={profile.username} reviewOwnerUsername={c.username} />}
+                          </div>
+                        );
+                      }
+
+                      if (c.itemType === "textpost") {
+                        return (
+                          <div key={i} style={{ border: `1.5px solid ${LINE}`, borderRadius: 8, padding: "14px 16px" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                              <Avatar username={c.username} size={26} />
+                              <span className="ui-sans" style={{ fontSize: 13, fontWeight: 600, cursor: "pointer" }} onClick={() => openUserProfile(c.username)}>@{(c.username || "").toLowerCase()}</span>
+                              <span className="ui-sans" style={{ fontSize: 11, color: MUTE, marginLeft: "auto" }}>{c.date}</span>
+                              {c.username === profile.username && (
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); deleteTextPost(c.id); }}
+                                  style={{ background: "transparent", border: "none", padding: 2, cursor: "pointer", color: MUTE, display: "flex", alignItems: "center" }}
+                                >
+                                  <X size={14} />
+                                </button>
+                              )}
+                            </div>
+                            <div className="ui-sans" style={{ fontSize: 14, color: INK, lineHeight: 1.6 }}>{c.text}</div>
                           </div>
                         );
                       }
@@ -3658,6 +3714,41 @@ function QotdModal({ question, onSubmit, onClose }) {
             </div>
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function TextPostModal({ onSubmit, onClose }) {
+  const { BLUE, INK, LINE, MUTE, BG } = useTheme();
+  const [text, setText] = useState("");
+
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: BG, border: `1.5px solid ${INK}`, borderRadius: 10, padding: 24, width: "100%", maxWidth: 440 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+          <div className="ui-sans" style={{ fontSize: 15, fontWeight: 600 }}>post a thought</div>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: MUTE, padding: 0 }}><X size={16} /></button>
+        </div>
+        <textarea
+          className="sb-textarea ui-sans"
+          rows={4}
+          placeholder="what's on your mind?"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          autoFocus
+          style={{ width: "100%", marginBottom: 14 }}
+        />
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+          <button className="sb-btn" onClick={onClose}>cancel</button>
+          <button
+            className="sb-btn sb-btn-solid"
+            onClick={() => { if (text.trim()) onSubmit(text.trim()); }}
+            disabled={!text.trim()}
+          >
+            post
+          </button>
+        </div>
       </div>
     </div>
   );
