@@ -1300,10 +1300,13 @@ export default function SoundboardDemo() {
   const [viewedUserReviews, setViewedUserReviews] = useState([]);
   const [tagResultAlbums, setTagResultAlbums] = useState([]);
   const [tagResultLoading, setTagResultLoading] = useState(false);
+  const [showAllOwnReviews, setShowAllOwnReviews] = useState(false);
+  const [showAllUserReviews, setShowAllUserReviews] = useState(false);
 
   function openUserProfile(username) {
     setViewedUser(null);
     setViewedUserReviews([]);
+    setShowAllUserReviews(false);
     setView({ name: "userProfile", username });
     apiFetch(`${BACKEND_URL}/api/users/${username}`)
       .then((r) => r.json())
@@ -1957,7 +1960,7 @@ export default function SoundboardDemo() {
               <div style={{ marginTop: 30 }}>
                 <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 12 }} className="ui-sans">reviews</div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                  {userReviews.map((r, i) => {
+                  {(showAllUserReviews ? userReviews : userReviews.slice(0, 3)).map((r, i) => {
                     const album = fetchedAlbums[r.albumId] || albumById(r.albumId);
                     if (!album) return null;
                     return (
@@ -1977,6 +1980,15 @@ export default function SoundboardDemo() {
                   })}
                   {userReviews.length === 0 && (
                     <div className="ui-sans" style={{ color: MUTE, fontSize: 13.5 }}>no reviews yet.</div>
+                  )}
+                  {userReviews.length > 3 && (
+                    <button
+                      className="sb-btn"
+                      onClick={() => setShowAllUserReviews((v) => !v)}
+                      style={{ marginTop: 4, alignSelf: "flex-start" }}
+                    >
+                      {showAllUserReviews ? "show fewer" : `see all reviews (${userReviews.length})`}
+                    </button>
                   )}
                 </div>
               </div>
@@ -2857,7 +2869,10 @@ export default function SoundboardDemo() {
             <div style={{ marginTop: 30 }}>
               <div style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14, textAlign: isMobile ? "center" : "left", fontWeight: 600 }}>recent reviews</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 16, alignItems: isMobile ? "center" : "flex-start" }}>
-                {[...reviews].sort((a, b) => (a.date < b.date ? 1 : -1)).map((r) => {
+                {(() => {
+                  const sorted = [...reviews].sort((a, b) => (a.date < b.date ? 1 : -1));
+                  const visible = showAllOwnReviews ? sorted : sorted.slice(0, 3);
+                  return visible.map((r) => {
                   const album = fetchedAlbums[r.albumId] || albumById(r.albumId);
                   if (!album) return null;
                   return (
@@ -2890,8 +2905,18 @@ export default function SoundboardDemo() {
                       </div>
                     </div>
                   );
-                })}
+                });
+                })()}
                 {reviews.length === 0 && <div className="ui-sans" style={{ color: MUTE, fontSize: 13 }}>no reviews yet -- rate something from browse.</div>}
+                {reviews.length > 3 && (
+                  <button
+                    className="sb-btn"
+                    onClick={() => setShowAllOwnReviews((v) => !v)}
+                    style={{ marginTop: 4, alignSelf: isMobile ? "center" : "flex-start" }}
+                  >
+                    {showAllOwnReviews ? "show fewer" : `see all reviews (${reviews.length})`}
+                  </button>
+                )}
               </div>
             </div>
 
