@@ -808,8 +808,18 @@ export default function SoundboardDemo() {
         }));
         setArtistAlbums(albums);
         setArtistAliases(data.aliases || []);
+        // Fetch each album to trigger lazy cover art loading
         albums.forEach((a) => {
-          setFetchedAlbums((prev) => prev[a.id] ? prev : { ...prev, [a.id]: a });
+          if (fetchedAlbums[a.id]?.coverArtUrl) return; // already have cover
+          apiFetch(`${BACKEND_URL}/api/albums/${a.id}`)
+            .then((r) => r.json())
+            .then((d) => {
+              if (d.album) {
+                const al = d.album;
+                setFetchedAlbums((prev) => ({ ...prev, [al.id]: { ...al, artist: al.artistName || "", year: al.releaseYear || null } }));
+              }
+            })
+            .catch(() => {});
         });
       })
       .catch(() => setArtistAlbums([]))
