@@ -733,6 +733,28 @@ export default function SoundboardDemo() {
           }
         })
         .catch(() => {});
+      // Load real notifications from backend
+      apiFetch(`${BACKEND_URL}/api/notifications`)
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.notifications) {
+            const mapped = data.notifications.map((n) => ({
+              id: n.id,
+              type: n.type,
+              fromUsername: n.actorUsername,
+              text: n.type === "follow" ? "started following you"
+                : n.type === "comment" ? "commented on your review"
+                : n.type === "reply" ? "replied to your comment"
+                : n.type === "reaction" ? "reacted to your review"
+                : "",
+              reviewId: n.referenceId,
+              date: n.createdAt ? new Date(n.createdAt).toISOString().slice(0, 10) : "",
+              read: n.read,
+            }));
+            setNotifications(mapped);
+          }
+        })
+        .catch(() => {});
     }
   }, [authUser]);
 
@@ -1123,6 +1145,7 @@ export default function SoundboardDemo() {
 
   function markAllRead() {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    apiFetch(`${BACKEND_URL}/api/notifications/read`, { method: "PUT" }).catch(() => {});
   }
 
   function addComment(reviewId, text, reviewOwnerUsername) {
