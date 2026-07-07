@@ -890,10 +890,12 @@ export default function SoundboardDemo() {
   function saveReview(albumId) {
     const now = nowTimestamp();
     const todayIso = new Date().toISOString().slice(0, 10);
-    // Optimistic update to personal reviews
+    // Optimistic update to personal reviews — preserve original date if updating
+    let originalDate = todayIso;
     setReviews((prev) => {
       const exists = prev.find((r) => r.albumId === albumId);
       if (exists) {
+        originalDate = exists.date || todayIso;
         return prev.map((r) =>
           r.albumId === albumId
             ? { ...r, rating: draftRating, text: draftText, favTrack: draftFavTrack, leastFavTrack: draftLeastFavTrack }
@@ -902,8 +904,8 @@ export default function SoundboardDemo() {
       }
       return [...prev, { id: "r" + Date.now(), albumId, rating: draftRating, text: draftText, favTrack: draftFavTrack, leastFavTrack: draftLeastFavTrack, date: now, username: profile.username }];
     });
-    // Optimistic update to feed caches so the review shows in the "everyone" tab
-    // immediately without needing a page refresh. Dedup by (username, albumId).
+    // Optimistic update to feed caches — use original date so existing reviews
+    // don't jump to the top. Sort after injecting so order is consistent.
     const feedItem = {
       itemType: "review",
       id: "r" + Date.now(),
@@ -911,10 +913,11 @@ export default function SoundboardDemo() {
       albumId,
       rating: draftRating,
       text: draftText,
-      date: todayIso,
+      date: originalDate,
     };
-    setPublicFeedItems((prev) => [feedItem, ...prev.filter((r) => !(r.username === profile.username && r.albumId === albumId))]);
-    setRealFeedItems((prev) => [feedItem, ...prev.filter((r) => !(r.username === profile.username && r.albumId === albumId))]);
+    const sortByDate = (items) => [...items].sort((a, b) => (a.date < b.date ? 1 : -1));
+    setPublicFeedItems((prev) => sortByDate([feedItem, ...prev.filter((r) => !(r.username === profile.username && r.albumId === albumId))]));
+    setRealFeedItems((prev) => sortByDate([feedItem, ...prev.filter((r) => !(r.username === profile.username && r.albumId === albumId))]));
     if (draftRating > 0) setListenStatus((prev) => ({ ...prev, [albumId]: "listened" }));
     flash("Review saved");
     // Persist to backend
@@ -926,15 +929,16 @@ export default function SoundboardDemo() {
       .then((r) => r.json())
       .then((data) => {
         if (data.review) {
-          // Update with real ID from server in both reviews state and feed caches
+          // Update with real ID + real date from server
+          const realDate = data.review.createdAt ? new Date(data.review.createdAt).toISOString().slice(0, 10) : originalDate;
           setReviews((prev) => prev.map((r) =>
-            r.albumId === albumId ? { ...r, id: data.review.id } : r
+            r.albumId === albumId ? { ...r, id: data.review.id, date: realDate } : r
           ));
           setPublicFeedItems((prev) => prev.map((r) =>
-            r.username === profile.username && r.albumId === albumId ? { ...r, id: data.review.id } : r
+            r.username === profile.username && r.albumId === albumId ? { ...r, id: data.review.id, date: realDate } : r
           ));
           setRealFeedItems((prev) => prev.map((r) =>
-            r.username === profile.username && r.albumId === albumId ? { ...r, id: data.review.id } : r
+            r.username === profile.username && r.albumId === albumId ? { ...r, id: data.review.id, date: realDate } : r
           ));
         }
       })
