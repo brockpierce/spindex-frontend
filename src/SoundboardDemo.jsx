@@ -4304,8 +4304,8 @@ function CommentInput({ placeholder, onSubmit, currentUsername, initialValue = "
 function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername, reviewReactions = {}, onReact }) {
   const { BLUE, INK, LINE, MUTE } = useTheme();
   const [replying, setReplying] = useState(false);
-  const avatarSize = depth > 0 ? 30 : 38;
-  const fontSize = depth > 0 ? 15 : 16;
+  const avatarSize = depth > 0 ? 26 : 32;
+  const fontSize = depth > 0 ? 13 : 14;
 
   function relativeTime(date) {
     if (!date) return "";
