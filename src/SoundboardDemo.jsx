@@ -1352,7 +1352,7 @@ export default function SoundboardDemo() {
       .then((data) => {
         if (data.feed) {
           const items = data.feed.map((item) => ({
-            itemType: "review",
+            itemType: item.itemType || "review",
             id: item.id,
             username: item.username,
             albumId: item.albumId,
@@ -1392,7 +1392,7 @@ export default function SoundboardDemo() {
       .then((data) => {
         if (data.feed) {
           const items = data.feed.map((item) => ({
-            itemType: "review",
+            itemType: item.itemType || "review",
             id: item.id,
             username: item.username,
             albumId: item.albumId,
