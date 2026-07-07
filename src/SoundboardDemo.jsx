@@ -408,25 +408,61 @@ function RatingBlocks({ value, onChange, size = 14 }) {
   );
 }
 
-function AlbumCover({ album, size = 92 }) {
+function AlbumCover({ album, size = 92, listened = false }) {
   const { BLUE } = useTheme();
   const coverUrl = album?.coverArtUrl && album.coverArtUrl !== "none" ? album.coverArtUrl : null;
+  const radius = Math.max(8, size * 0.14);
+  const offset = Math.round(size * 0.06);
+  const pill = listened ? (
+    <span
+      aria-hidden="true"
+      style={{
+        position: "absolute",
+        top: offset,
+        left: offset,
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 4,
+        padding: "4px 10px 4px 8px",
+        background: BLUE,
+        color: "#fff",
+        fontSize: 10.5,
+        fontWeight: 700,
+        letterSpacing: "0.03em",
+        borderRadius: 999,
+        boxShadow: `0 2px 6px ${BLUE}80`,
+        lineHeight: 1,
+        zIndex: 2,
+        fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
+      }}
+    >
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3.6" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M4 12.5l5 5L20 6" />
+      </svg>
+      Listened
+    </span>
+  ) : null;
+
   if (coverUrl) {
     return (
-      <img
-        src={coverUrl}
-        alt={album.title}
-        style={{ width: size, height: size, borderRadius: Math.max(8, size * 0.14), objectFit: "cover", flexShrink: 0 }}
-      />
+      <div style={{ position: "relative", width: size, height: size, flexShrink: 0 }}>
+        <img
+          src={coverUrl}
+          alt={album.title}
+          style={{ width: size, height: size, borderRadius: radius, objectFit: "cover", display: "block" }}
+        />
+        {pill}
+      </div>
     );
   }
   return (
     <div
       style={{
+        position: "relative",
         width: size,
         height: size,
         background: BLUE,
-        borderRadius: Math.max(8, size * 0.14),
+        borderRadius: radius,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -434,6 +470,7 @@ function AlbumCover({ album, size = 92 }) {
       }}
     >
       <HeadphoneMark size={size * 0.4} color="#fff" />
+      {pill}
     </div>
   );
 }
@@ -2283,7 +2320,7 @@ export default function SoundboardDemo() {
                 return (
                   <div key={album.id} onClick={() => openAlbum(album.id, album)}>
                     <div className="sb-cover-wrap">
-                      <AlbumCover album={displayAlbum} size={150} />
+                      <AlbumCover album={displayAlbum} size={150} listened={listenStatus[album.id] === "listened"} />
                     </div>
                     <div style={{ marginTop: 9 }}>
                       <div className="ui-sans" style={{ fontSize: 13.5, fontWeight: 600, lineHeight: 1.3, wordBreak: "break-word", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{album.title}</div>
@@ -2332,7 +2369,7 @@ export default function SoundboardDemo() {
                 <ChevronLeft size={14} /> back
               </div>
               <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 16 : 26, alignItems: isMobile ? "center" : "flex-start" }}>
-                <AlbumCover album={album} size={isMobile ? 140 : 160} />
+                <AlbumCover album={album} size={isMobile ? 140 : 160} listened={status === "listened"} />
                 <div style={{ flex: 1, width: "100%", textAlign: isMobile ? "center" : "left" }}>
                   <div className="ui-sans" style={{ fontSize: isMobile ? 20 : 24, fontWeight: 600, lineHeight: 1.2, wordBreak: "break-word" }}>{album.title}</div>
                   <div className="ui-sans" style={{ fontSize: 14, color: MUTE, marginTop: 4 }}>{album.artist} · {album.year}</div>
