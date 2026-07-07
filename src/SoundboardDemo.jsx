@@ -4420,11 +4420,11 @@ function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUserna
   }
 
   return (
-    <div className="sb-comment-bubble" style={{ background: "#fafbfc", borderTop: "1px solid #eceef0", marginTop: 10, marginLeft: -16, marginRight: -16, marginBottom: -14 }}>
+    <div className="sb-comment-bubble" style={{ background: "#fafbfc", borderTop: "1px solid #eceef0", marginTop: 10, marginLeft: -16, marginRight: -16, marginBottom: -16, borderRadius: "0 0 8px 8px", padding: "0 16px" }}>
       <button
         className="ui-sans"
         onClick={handleToggle}
-        style={{ display: "flex", alignItems: "center", gap: 8, border: "none", background: "none", padding: "14px 0 0", cursor: "pointer", fontSize: 13, fontWeight: 400, color: "#6b7280", letterSpacing: "0.01em", fontFamily: "inherit" }}
+        style={{ display: "flex", alignItems: "center", gap: 8, border: "none", background: "none", padding: "14px 0 0 0", cursor: "pointer", fontSize: 13, fontWeight: 400, color: "#6b7280", letterSpacing: "0.01em", fontFamily: "inherit" }}
         onMouseEnter={(e) => e.currentTarget.style.color = "#1a1a1a"}
         onMouseLeave={(e) => e.currentTarget.style.color = "#6b7280"}
       >
