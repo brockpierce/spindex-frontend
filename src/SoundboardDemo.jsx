@@ -870,14 +870,14 @@ export default function SoundboardDemo() {
     : trendingAlbums.length > 0 ? trendingAlbums : ALBUMS;
 
 
-  function openAlbum(id, albumObj) {
+  function openAlbum(id, albumObj, from) {
     const existing = reviewFor(id);
     setDraftRating(existing ? existing.rating : 0);
     setDraftText(existing ? existing.text : "");
     setDraftFavTrack(existing ? existing.favTrack || "" : "");
     setDraftLeastFavTrack(existing ? existing.leastFavTrack || "" : "");
     setAlbumTab("reviews");
-    setView({ name: "album", id });
+    setView({ name: "album", id, from: from || null });
     // If we already have the album object (e.g. from search results), cache it immediately
     if (albumObj && !fetchedAlbums[id]) {
       const a = albumObj;
@@ -2050,7 +2050,7 @@ export default function SoundboardDemo() {
                               <div style={{ fontSize: 20, fontWeight: 700, color: BLUE, letterSpacing: "-0.01em", lineHeight: 1.1, textAlign: "left" }}>{c.rating}/10</div>
                               <div style={{ marginTop: 1, textAlign: "left" }}>
                                 <span style={{ fontSize: 14, fontWeight: 700 }}>{album.title}</span>
-                                <span style={{ fontSize: 13, color: MUTE, marginLeft: 6, cursor: "pointer", textDecoration: "underline" }} onClick={(e) => { e.stopPropagation(); openArtist(album.artist || album.artistName); }}>{album.artist || album.artistName}</span>
+                                <span style={{ fontSize: 13, color: MUTE, marginLeft: 6, cursor: "pointer" }} onClick={(e) => { e.stopPropagation(); openArtist(album.artist || album.artistName); }}>{album.artist || album.artistName}</span>
                               </div>
                               {c.text && <div style={{ fontSize: 13.5, color: INK, marginTop: 3, lineHeight: 1.5, textAlign: "left" }}>{c.text}</div>}
                             </div>
@@ -2363,7 +2363,7 @@ export default function SoundboardDemo() {
                           <div style={{ fontSize: 20, fontWeight: 700, color: BLUE, letterSpacing: "-0.01em", lineHeight: 1.1, textAlign: "left" }}>{r.rating}/10</div>
                           <div style={{ marginTop: 1, textAlign: "left" }}>
                             <span style={{ fontSize: 14, fontWeight: 700 }}>{album.title}</span>
-                            <span style={{ fontSize: 13, color: MUTE, marginLeft: 6, cursor: "pointer", textDecoration: "underline" }} onClick={(e) => { e.stopPropagation(); openArtist(album.artist || album.artistName); }}>{album.artist || album.artistName}</span>
+                            <span style={{ fontSize: 13, color: MUTE, marginLeft: 6, cursor: "pointer" }} onClick={(e) => { e.stopPropagation(); openArtist(album.artist || album.artistName); }}>{album.artist || album.artistName}</span>
                           </div>
                           {r.text && <div style={{ fontSize: 13.5, color: INK, marginTop: 6, lineHeight: 1.5, textAlign: "left" }}>{r.text}</div>}
                         </div>
@@ -2413,7 +2413,7 @@ export default function SoundboardDemo() {
             )}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: "20px 14px" }}>
               {artistAlbums.map((album) => (
-                <div key={album.id} onClick={() => openAlbum(album.id, album)} className="sb-cover-wrap">
+                <div key={album.id} onClick={() => openAlbum(album.id, album, { name: "artist", artistName: view.artistName })} className="sb-cover-wrap">
                   <AlbumCover album={fetchedAlbums[album.id] || album} size={140} listened={listenStatus[album.id] === "listened"} />
                   <div style={{ marginTop: 8 }}>
                     <div className="ui-sans" style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.3 }}>{album.title}</div>
@@ -2647,7 +2647,7 @@ export default function SoundboardDemo() {
 
           return (
             <div style={{ maxWidth: "100%", overflowX: "hidden" }}>
-              <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 12.5, marginBottom: 22, cursor: "pointer" }} onClick={() => setView({ name: "browse" })}>
+              <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 12.5, marginBottom: 22, cursor: "pointer" }} onClick={() => setView(view.from || { name: "browse" })}>
                 <ChevronLeft size={14} /> back
               </div>
               <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 16 : 26, alignItems: isMobile ? "center" : "flex-start" }}>
@@ -3387,7 +3387,7 @@ export default function SoundboardDemo() {
                         <div style={{ fontSize: 20, fontWeight: 700, color: BLUE, letterSpacing: "-0.01em", lineHeight: 1.1, textAlign: "left" }}>{r.rating}/10</div>
                         <div style={{ marginTop: 1, textAlign: "left" }}>
                           <span style={{ fontSize: 14, fontWeight: 700 }}>{album.title}</span>
-                          <span style={{ fontSize: 13, color: MUTE, marginLeft: 6, cursor: "pointer", textDecoration: "underline" }} onClick={(e) => { e.stopPropagation(); openArtist(album.artist || album.artistName); }}>{album.artist || album.artistName}</span>
+                          <span style={{ fontSize: 13, color: MUTE, marginLeft: 6, cursor: "pointer" }} onClick={(e) => { e.stopPropagation(); openArtist(album.artist || album.artistName); }}>{album.artist || album.artistName}</span>
                         </div>
                         {r.text && <div style={{ fontSize: 13.5, color: INK, marginTop: 6, lineHeight: 1.5, textAlign: "left" }}>{r.text}</div>}
                         {(r.favTrack || r.leastFavTrack) && (
