@@ -1148,7 +1148,7 @@ export default function SoundboardDemo() {
   function loadInteractions(reviewIds) {
     reviewIds.forEach((rid) => {
       if (!rid) return;
-      // Reactions
+      // Reactions for the review
       apiFetch(`${BACKEND_URL}/api/interactions/reactions/${rid}`)
         .then((r) => r.json())
         .then((data) => {
@@ -1157,12 +1157,33 @@ export default function SoundboardDemo() {
           }
         })
         .catch(() => {});
-      // Comments
+      // Comments — then also load reactions for each comment/reply ID
       apiFetch(`${BACKEND_URL}/api/interactions/comments/${rid}`)
         .then((r) => r.json())
         .then((data) => {
           if (data.comments) {
             setReviewComments((prev) => ({ ...prev, [rid]: data.comments }));
+            // Collect all comment + reply IDs recursively
+            function collectIds(comments) {
+              const ids = [];
+              for (const c of comments) {
+                if (c.id) ids.push(c.id);
+                if (c.replies?.length) ids.push(...collectIds(c.replies));
+              }
+              return ids;
+            }
+            const commentIds = collectIds(data.comments);
+            // Load reactions for each comment/reply
+            commentIds.forEach((cid) => {
+              apiFetch(`${BACKEND_URL}/api/interactions/reactions/${cid}`)
+                .then((r) => r.json())
+                .then((rd) => {
+                  if (rd.heart || rd.frown) {
+                    setReviewReactions((prev) => ({ ...prev, [cid]: { heart: rd.heart || [], frown: rd.frown || [] } }));
+                  }
+                })
+                .catch(() => {});
+            });
           }
         })
         .catch(() => {});
@@ -4721,18 +4742,19 @@ function FollowListModal({ kind, userId, username, onClose, onVisitProfile }) {
             {kind === "followers" ? "no followers yet" : "not following anyone yet"}
           </div>
         )}
-        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        <div style={{ display: "flex", flexDirection: "column" }}>
           {users.map((u) => (
-            <div key={u.id} onClick={() => onVisitProfile(u.username)} style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer", padding: "8px 4px", borderRadius: 8 }}
+            <div key={u.id} onClick={() => onVisitProfile(u.username)}
+              style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer", padding: "10px 4px", borderRadius: 8 }}
               onMouseEnter={(e) => e.currentTarget.style.background = LINE}
               onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
             >
-              <div style={{ width: 40, height: 40, flexShrink: 0 }}>
-                <Avatar username={u.username} size={40} />
+              <div style={{ width: 42, height: 42, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Avatar username={u.username} size={42} />
               </div>
-              <div className="ui-sans" style={{ minWidth: 0 }}>
-                <div style={{ fontSize: 14, fontWeight: 700, lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{u.displayName || u.username}</div>
-                <div style={{ fontSize: 12, color: MUTE, marginTop: 1, lineHeight: 1.2 }}>@{(u.username || "").toLowerCase()}</div>
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div className="ui-sans" style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.3, color: INK, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{u.displayName || u.username}</div>
+                <div className="ui-sans" style={{ fontSize: 12.5, color: MUTE, lineHeight: 1.3, marginTop: 1 }}>@{(u.username || "").toLowerCase()}</div>
               </div>
             </div>
           ))}
