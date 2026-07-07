@@ -759,7 +759,36 @@ export default function SoundboardDemo() {
     }
   }, [authUser]);
 
-  // Load curated trending albums on mount for the browse page
+  // Poll for new notifications every 30 seconds while logged in.
+  // This gives a near-real-time feel without websockets.
+  useEffect(() => {
+    if (!authUser) return;
+    const poll = () => {
+      apiFetch(`${BACKEND_URL}/api/notifications`)
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.notifications) {
+            const mapped = data.notifications.map((n) => ({
+              id: n.id,
+              type: n.type,
+              fromUsername: n.actorUsername,
+              text: n.type === "follow" ? "started following you"
+                : n.type === "comment" ? "commented on your review"
+                : n.type === "reply" ? "replied to your comment"
+                : n.type === "reaction" ? "reacted to your review"
+                : "",
+              reviewId: n.referenceId,
+              date: n.createdAt ? new Date(n.createdAt).toISOString().slice(0, 10) : "",
+              read: n.read,
+            }));
+            setNotifications(mapped);
+          }
+        })
+        .catch(() => {});
+    };
+    const interval = setInterval(poll, 30000);
+    return () => clearInterval(interval);
+  }, [authUser]);
   useEffect(() => {
     apiFetch(`${BACKEND_URL}/api/albums/trending`)
       .then((r) => r.json())
@@ -2133,18 +2162,18 @@ export default function SoundboardDemo() {
             )}
             <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
               {notifications.map((n) => {
-                const icon = n.type === "follow" ? "👤" : n.type === "tag" ? "@" : n.type === "reply" ? "↩" : "💬";
+                const icon = n.type === "follow" ? "👤" : n.type === "reaction" ? "❤️" : n.type === "reply" ? "↩" : "💬";
                 return (
                   <div
                     key={n.id}
                     style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", borderRadius: 8, background: n.read ? "transparent" : darkMode ? "#1a1f2e" : "#EEF3FF", cursor: "pointer" }}
-                    onClick={() => n.reviewId && setView({ name: "home" })}
+                    onClick={() => n.fromUsername && openUserProfile(n.fromUsername)}
                   >
                     <div style={{ width: 32, height: 32, borderRadius: 8, background: BLUE, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0 }}>
                       {icon}
                     </div>
                     <div style={{ flex: 1 }} className="ui-sans">
-                      <span style={{ fontWeight: 600 }}>@{n.fromUsername}</span>
+                      <span style={{ fontWeight: 600 }}>@{(n.fromUsername || "").toLowerCase()}</span>
                       <span style={{ color: MUTE }}> {n.text}</span>
                     </div>
                     <span className="ui-sans" style={{ fontSize: 11, color: MUTE, flexShrink: 0 }}>{n.date}</span>
@@ -2230,7 +2259,7 @@ export default function SoundboardDemo() {
               )}
 
               <div style={{ marginTop: 30 }}>
-                <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 12 }} className="ui-sans">reviews</div>
+                <div style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14, textAlign: isMobile ? "center" : "left", fontWeight: 600 }} className="ui-sans">reviews</div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                   {(showAllUserReviews ? userReviews : userReviews.slice(0, 3)).map((r, i) => {
                     const album = fetchedAlbums[r.albumId] || albumById(r.albumId);
@@ -2622,7 +2651,7 @@ export default function SoundboardDemo() {
                 </div>
               ))}
               {albumMixes.length === 0 && (
-                <div className="ui-sans" style={{ color: MUTE, fontSize: 13.5 }}>
+                <div className="ui-sans" style={{ color: MUTE, fontSize: 13.5, textAlign: "left" }}>
                   no album mixes yet -- create one above.
                 </div>
               )}
@@ -2659,7 +2688,7 @@ export default function SoundboardDemo() {
             </>)}
 
             {/* SAVED ALBUM MIXES */}
-            <div className="ui-sans" style={{ fontSize: 20, fontWeight: 600, marginTop: 36, marginBottom: 16 }}>saved album mixes</div>
+            <div style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14, textAlign: isMobile ? "center" : "left", fontWeight: 600 }} className="ui-sans">saved album mixes</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               {savedAlbumMixes.map((m) => (
                 <div
@@ -3272,7 +3301,7 @@ export default function SoundboardDemo() {
                       </div>
                     </div>
                   ))}
-                  {albumMixes.length === 0 && <div className="ui-sans" style={{ color: MUTE, fontSize: 13 }}>no album mixes yet.</div>}
+                  {albumMixes.length === 0 && <div className="ui-sans" style={{ color: MUTE, fontSize: 13, textAlign: "left" }}>no album mixes yet.</div>}
                 </div>
               )}
               {/* Song mixes on profile — temporarily hidden */}
@@ -3969,18 +3998,18 @@ function CommentInput({ placeholder, onSubmit, currentUsername, initialValue = "
 
   return (
     <div style={{ position: "relative" }}>
-      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-        <Avatar username={currentUsername} size={22} />
+      <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+        <Avatar username={currentUsername} size={28} />
         <input
           className="sb-input ui-sans"
-          style={{ flex: 1, fontSize: 12.5, padding: "5px 10px" }}
+          style={{ flex: 1, fontSize: 13.5, padding: "7px 12px" }}
           placeholder={placeholder}
           value={text}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
         />
         {text.trim() && (
-          <button className="sb-btn sb-btn-solid" onClick={() => { onSubmit(text.trim()); setText(""); setMentionQuery(null); }} style={{ padding: "5px 10px", fontSize: 11.5 }}>post</button>
+          <button className="sb-btn sb-btn-solid" onClick={() => { onSubmit(text.trim()); setText(""); setMentionQuery(null); }} style={{ padding: "7px 12px", fontSize: 12 }}>post</button>
         )}
       </div>
       {mentionQuery !== null && mentionResults.length > 0 && (
@@ -4011,37 +4040,34 @@ function CommentInput({ placeholder, onSubmit, currentUsername, initialValue = "
 function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername }) {
   const { BLUE, INK, LINE, MUTE } = useTheme();
   const [replying, setReplying] = useState(false);
-  const totalReplies = countReplies(comment);
 
   return (
-    <div style={{ marginLeft: depth > 0 ? 20 : 0, borderLeft: depth > 0 ? `2px solid ${LINE}` : "none", paddingLeft: depth > 0 ? 10 : 0 }}>
-      <div style={{ display: "flex", gap: 8, marginBottom: 6 }}>
-        <Avatar username={comment.username} size={20} />
-        <div style={{ flex: 1 }}>
-          <div className="ui-sans" style={{ fontSize: 12.5 }}>
-            <span style={{ fontWeight: 600 }}>{comment.username === currentUsername ? "you" : `@${comment.username}`}</span>
-            <span style={{ color: MUTE, marginLeft: 6, fontSize: 11 }}>{comment.date}</span>
+    <div style={{ marginLeft: depth > 0 ? 24 : 0, borderLeft: depth > 0 ? `2px solid ${LINE}` : "none", paddingLeft: depth > 0 ? 12 : 0, marginBottom: 10 }}>
+      <div style={{ display: "flex", gap: 10 }}>
+        <Avatar username={comment.username} size={28} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div className="ui-sans" style={{ fontSize: 13.5, fontWeight: 600 }}>
+            {comment.username === currentUsername ? "you" : `@${(comment.username || "").toLowerCase()}`}
           </div>
-          <div className="ui-sans" style={{ fontSize: 12.5, color: INK, marginTop: 2, lineHeight: 1.5 }}>
+          <div className="ui-sans" style={{ fontSize: 14, color: INK, marginTop: 3, lineHeight: 1.55 }}>
             <CommentText text={comment.text} />
           </div>
           <button
             onClick={() => setReplying((r) => !r)}
             className="ui-sans"
-            style={{ background: "none", border: "none", cursor: "pointer", fontSize: 11, color: MUTE, padding: "3px 0", marginTop: 2 }}
+            style={{ background: "none", border: "none", cursor: "pointer", fontSize: 12, color: MUTE, padding: "4px 0", marginTop: 2 }}
           >
             {replying ? "cancel" : "reply"}
           </button>
         </div>
       </div>
 
-      {/* Nested replies */}
       {(comment.replies || []).map((reply) => (
         <CommentNode key={reply.id} comment={reply} depth={depth + 1} reviewId={reviewId} onReply={onReply} currentUsername={currentUsername} />
       ))}
 
       {replying && (
-        <div style={{ marginLeft: 28, marginBottom: 8 }}>
+        <div style={{ marginLeft: 38, marginBottom: 8 }}>
           <CommentInput
             placeholder={`reply to @${comment.username}...`}
             initialValue={`@${comment.username} `}
