@@ -1441,6 +1441,7 @@ export default function SoundboardDemo() {
   const [showAllOwnReviews, setShowAllOwnReviews] = useState(false);
   const [showAllUserReviews, setShowAllUserReviews] = useState(false);
   const [showFavPicker, setShowFavPicker] = useState(false);
+  const [albumListSort, setAlbumListSort] = useState("date");
 
   function openUserProfile(username) {
     setViewedUser(null);
@@ -2782,9 +2783,15 @@ export default function SoundboardDemo() {
               <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 12.5, marginBottom: 22, cursor: "pointer" }} onClick={() => setView({ name: "profile" })}>
                 <ChevronLeft size={14} /> back to profile
               </div>
-              <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 24 }}>
-                <div className="ui-sans" style={{ fontSize: 22, fontWeight: 600 }}>{label}</div>
-                <div className="ui-sans" style={{ fontSize: 13, color: MUTE }}>{matchingAlbums.length} album{matchingAlbums.length !== 1 ? "s" : ""} · sorted by year</div>
+              <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 24 }}>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 12 }}>
+                  <div className="ui-sans" style={{ fontSize: 22, fontWeight: 600 }}>{label}</div>
+                  <div className="ui-sans" style={{ fontSize: 13, color: MUTE }}>{matchingAlbums.length} album{matchingAlbums.length !== 1 ? "s" : ""}</div>
+                </div>
+                <div style={{ display: "flex", gap: 0, border: `1.5px solid ${LINE}`, borderRadius: 6, overflow: "hidden" }}>
+                  <button onClick={() => setAlbumListSort("date")} className="ui-sans" style={{ padding: "5px 12px", fontSize: 11, fontWeight: 500, cursor: "pointer", border: "none", background: albumListSort === "date" ? INK : "transparent", color: albumListSort === "date" ? BG : INK }}>date added</button>
+                  <button onClick={() => setAlbumListSort("year")} className="ui-sans" style={{ padding: "5px 12px", fontSize: 11, fontWeight: 500, cursor: "pointer", border: "none", borderLeft: `1.5px solid ${LINE}`, background: albumListSort === "year" ? INK : "transparent", color: albumListSort === "year" ? BG : INK }}>year</button>
+                </div>
               </div>
 
               {matchingAlbums.length === 0 && (
@@ -2793,7 +2800,24 @@ export default function SoundboardDemo() {
                 </div>
               )}
 
-              {decades.map((decade) => (
+              {albumListSort === "date" && matchingAlbums.length > 0 && (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: "20px 14px" }}>
+                  {matchingAlbums.map((album) => {
+                    const rev = reviews.find((r) => r.albumId === album.id);
+                    return (
+                      <div key={album.id} onClick={() => openAlbum(album.id)} className="sb-cover-wrap">
+                        <AlbumCover album={album} size={130} listened={listenStatus[album.id] === "listened"} />
+                        <div style={{ marginTop: 7 }}>
+                          <div className="ui-sans" style={{ fontSize: 12.5, fontWeight: 600, lineHeight: 1.3 }}>{album.title}</div>
+                          <div className="ui-sans" style={{ fontSize: 11.5, color: MUTE }}>{album.artist} · {album.year}</div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {albumListSort === "year" && decades.map((decade) => (
                 <div key={decade} style={{ marginBottom: 32 }}>
                   <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14 }}>{decade}</div>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: "20px 14px" }}>
@@ -3174,6 +3198,39 @@ export default function SoundboardDemo() {
                 </div>
               )}
             </div>
+
+            {/* QUEUED ALBUMS */}
+            {(() => {
+              const queuedIds = Object.entries(listenStatus)
+                .filter(([, s]) => s === "want_to_listen")
+                .map(([id]) => id);
+              const queuedAlbums = queuedIds
+                .map((id) => fetchedAlbums[id] || albumById(id))
+                .filter((a) => a && a.title !== "Unknown Album");
+              const preview = queuedAlbums.slice(0, 5);
+              return queuedIds.length > 0 ? (
+                <div style={{ marginTop: 30 }}>
+                  <div style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14, textAlign: isMobile ? "center" : "left", fontWeight: 600 }}>queued</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))", gap: "16px 12px" }}>
+                    {preview.map((album) => (
+                      <div key={album.id} onClick={() => openAlbum(album.id)} className="sb-cover-wrap" style={{ textAlign: "center" }}>
+                        <AlbumCover album={album} size={100} />
+                        <div className="ui-sans" style={{ fontSize: 11, fontWeight: 600, marginTop: 6, maxWidth: 100 }}>{album.title}</div>
+                      </div>
+                    ))}
+                  </div>
+                  {queuedAlbums.length > 5 && (
+                    <button
+                      className="sb-btn"
+                      onClick={() => setView({ name: "albumList", filter: "want_to_listen" })}
+                      style={{ marginTop: 14 }}
+                    >
+                      see all queued ({queuedAlbums.length})
+                    </button>
+                  )}
+                </div>
+              ) : null;
+            })()}
           </div>
         )}
       </div>
