@@ -549,7 +549,7 @@ export default function SoundboardDemo() {
   const [draftText, setDraftText] = useState("");
   const [draftFavTrack, setDraftFavTrack] = useState("");
   const [draftLeastFavTrack, setDraftLeastFavTrack] = useState("");
-  const [albumTab, setAlbumTab] = useState("albumMixes");
+  const [albumTab, setAlbumTab] = useState("reviews");
   const [ownProfileMixTab, setOwnProfileMixTab] = useState("album");
   const [userProfileMixTab, setUserProfileMixTab] = useState("album");
   const [newMixTitle, setNewMixTitle] = useState("");
@@ -738,7 +738,7 @@ export default function SoundboardDemo() {
     setDraftText(existing ? existing.text : "");
     setDraftFavTrack(existing ? existing.favTrack || "" : "");
     setDraftLeastFavTrack(existing ? existing.leastFavTrack || "" : "");
-    setAlbumTab("albumMixes");
+    setAlbumTab("reviews");
     setView({ name: "album", id });
     // If we already have the album object (e.g. from search results), cache it immediately
     if (albumObj && !fetchedAlbums[id]) {
@@ -4112,8 +4112,8 @@ function AlbumCommunitySection({ albumId, albumTab, setAlbumTab, openAlbum, revi
   return (
     <div style={{ marginTop: 28, paddingTop: 20, borderTop: `1px solid ${LINE}` }}>
       <div style={{ display: "flex", gap: 20, marginBottom: 16 }}>
-        <div className={`sb-nav-item ${albumTab === "albumMixes" ? "active" : ""}`} onClick={() => setAlbumTab("albumMixes")}>album mixes</div>
         <div className={`sb-nav-item ${albumTab === "reviews" ? "active" : ""}`} onClick={() => setAlbumTab("reviews")}>recent reviews</div>
+        <div className={`sb-nav-item ${albumTab === "albumMixes" ? "active" : ""}`} onClick={() => setAlbumTab("albumMixes")}>album mixes</div>
       </div>
 
       {albumTab === "albumMixes" && (
