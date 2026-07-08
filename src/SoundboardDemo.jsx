@@ -3955,22 +3955,9 @@ function AdminAlbumForm({ onAdded }) {
   function handleCoverChange(e) {
     const file = e.target.files[0];
     if (!file) return;
+    setCoverFile(file);
     const reader = new FileReader();
-    reader.onload = (ev) => {
-      const img = new Image();
-      img.onload = () => {
-        const MAX = 400;
-        const scale = Math.min(MAX / img.width, MAX / img.height, 1);
-        const canvas = document.createElement("canvas");
-        canvas.width = Math.round(img.width * scale);
-        canvas.height = Math.round(img.height * scale);
-        canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
-        const resized = canvas.toDataURL("image/jpeg", 0.75);
-        setCoverPreview(resized);
-        setCoverFile(resized);
-      };
-      img.src = ev.target.result;
-    };
+    reader.onload = (ev) => setCoverPreview(ev.target.result);
     reader.readAsDataURL(file);
   }
 
@@ -3997,17 +3984,21 @@ function AdminAlbumForm({ onAdded }) {
       // 2. Upload cover if provided
       if (coverFile && data.album.id) {
         // Upload cover as base64 via a simple PUT endpoint
-        try {
-          await apiFetch(`${BACKEND_URL}/api/albums/${data.album.id}/cover`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ coverDataUrl: coverFile }),
-          });
-          album.coverArtUrl = coverFile;
-        } catch (e) {}
-        onAdded(album);
-        setTitle(""); setArtistName(""); setYear(""); setCoverFile(null); setCoverPreview(null); setOpen(false);
-        setSaving(false);
+        const reader = new FileReader();
+        reader.onload = async (ev) => {
+          try {
+            await apiFetch(`${BACKEND_URL}/api/albums/${data.album.id}/cover`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ coverDataUrl: ev.target.result }),
+            });
+            album.coverArtUrl = ev.target.result;
+          } catch (e) {}
+          onAdded(album);
+          setTitle(""); setArtistName(""); setYear(""); setCoverFile(null); setCoverPreview(null); setOpen(false);
+          setSaving(false);
+        };
+        reader.readAsDataURL(coverFile);
       } else {
         onAdded(album);
         setTitle(""); setArtistName(""); setYear(""); setCoverFile(null); setCoverPreview(null); setOpen(false);
