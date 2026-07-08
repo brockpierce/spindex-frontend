@@ -20,7 +20,7 @@ const BACKEND_URL = "https://spindex-backend.onrender.com";
 // Only this account can edit album-level tags. Non-admin users can view and
 // click tags to filter but not add or remove them. Temporary curation gate
 // until we build a proper moderation flow.
-const ADMIN_USERNAME = "brock";
+const ADMIN_USERNAME = "brockpierce";
 
 // JWT token helpers -- stored in localStorage so it survives page refresh.
 // apiFetch wraps fetch to automatically attach the Authorization header.
@@ -1181,8 +1181,6 @@ export default function SoundboardDemo() {
   }
 
   // Load only reactions for comment/reply IDs — lightweight, no nested comment fetching
-  function deleteComment(commentId, reviewId) { setReviewComments((prev) => { const rm = (cs) => cs.filter((c) => c.id !== commentId).map((c) => ({...c, replies: rm(c.replies||[])})); return {...prev, [reviewId]: rm(prev[reviewId]||[])}; }); apiFetch(BACKEND_URL + "/api/interactions/comments/" + commentId, {method:"DELETE"}).catch(()=>{}); }
-
   function loadCommentReactions(commentIds) {
     commentIds.forEach((cid) => {
       if (!cid) return;
@@ -1959,7 +1957,7 @@ export default function SoundboardDemo() {
                                 <ReactionBar reactions={reviewReactions[c.id]} onReact={(kind) => toggleReaction(c.id, kind)} currentUsername={profile.username} />
                               </div>
                             )}
-                            {c.id && <ReviewComments reviewId={c.id} comments={reviewComments[c.id] || []} onAdd={addComment} onReply={addReply} currentUsername={profile.username} reviewOwnerUsername={c.username} reviewReactions={reviewReactions} onReact={toggleReaction} onLoadReactions={loadCommentReactions} onDelete={deleteComment} />}
+                            {c.id && <ReviewComments reviewId={c.id} comments={reviewComments[c.id] || []} onAdd={addComment} onReply={addReply} currentUsername={profile.username} reviewOwnerUsername={c.username} reviewReactions={reviewReactions} onReact={toggleReaction} onLoadReactions={loadCommentReactions} />}
                           </div>
                         );
                       }
@@ -1998,7 +1996,6 @@ export default function SoundboardDemo() {
                                   reviewReactions={reviewReactions}
                                   onReact={toggleReaction}
                                   onLoadReactions={loadCommentReactions}
-                                  onDelete={deleteComment}
                                 />
                               </>
                             )}
@@ -2101,8 +2098,6 @@ export default function SoundboardDemo() {
                               reviewOwnerUsername={c.username}
                               reviewReactions={reviewReactions}
                               onReact={toggleReaction}
-                              onLoadReactions={loadCommentReactions}
-                              onDelete={deleteComment}
                             />
                           )}
                         </div>
@@ -3705,94 +3700,98 @@ function AlbumSearchPicker({ onPick, onCancel, placeholder = "search for the alb
 // headphone placeholder.
 function generateShareCardBlob({ kind, album, username, rating, reviewText, questionText, accentColor }) {
   return new Promise((resolve) => {
-    const W = 1080, H = 1920;
+    const W = 1080, H = 1350; // 4:5, the safe aspect ratio for both feed and Stories crops
     const canvas = document.createElement("canvas");
-    canvas.width = W; canvas.height = H;
+    canvas.width = W;
+    canvas.height = H;
     const ctx = canvas.getContext("2d");
 
-    function drawCard(coverImg, logoImg) {
-      const grad = ctx.createLinearGradient(0, 0, 0, H);
-      grad.addColorStop(0, "#f7f8fa"); grad.addColorStop(1, "#eef0f3");
-      ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
+    const coverSize = 640;
+    const coverX = (W - coverSize) / 2;
+    const coverY = 180;
+    const radius = 36;
 
-      const cardW = 840, cardPad = 64, cardH = 1440, cardR = 44;
-      const cardX = (W - cardW) / 2, cardY = (H - cardH) / 2;
-      ctx.save();
-      ctx.shadowColor = "rgba(30,40,60,0.10)"; ctx.shadowBlur = 80; ctx.shadowOffsetY = 30;
-      ctx.fillStyle = "#ffffff"; roundRect(ctx, cardX, cardY, cardW, cardH, cardR); ctx.fill();
-      ctx.restore();
+    function drawCard() {
+      // Background
+      ctx.fillStyle = "#FFFFFF";
+      ctx.fillRect(0, 0, W, H);
 
-      const logoY = cardY + cardPad, logoSz = 56;
-      if (logoImg) {
-        ctx.save(); roundRect(ctx, cardX + cardPad, logoY, logoSz, logoSz, 14); ctx.clip();
-        ctx.drawImage(logoImg, cardX + cardPad, logoY, logoSz, logoSz); ctx.restore();
-      }
-      ctx.fillStyle = "#1a1a1a"; ctx.font = "700 30px Helvetica,Arial,sans-serif"; ctx.textAlign = "left";
-      ctx.fillText("spindex", cardX + cardPad + logoSz + 14, logoY + 38);
-
-      const artSz = 600, artX = cardX + (cardW - artSz) / 2, artY = logoY + logoSz + 52;
-      ctx.save();
-      ctx.shadowColor = "rgba(30,40,60,0.18)"; ctx.shadowBlur = 44; ctx.shadowOffsetY = 18;
-      if (coverImg) {
-        roundRect(ctx, artX, artY, artSz, artSz, 28); ctx.clip();
-        ctx.drawImage(coverImg, artX, artY, artSz, artSz);
+      // Album cover block (real image or placeholder)
+      if (album._img) {
+        // Clip to rounded rect then draw image
+        ctx.save();
+        roundRect(ctx, coverX, coverY, coverSize, coverSize, radius);
+        ctx.clip();
+        ctx.drawImage(album._img, coverX, coverY, coverSize, coverSize);
+        ctx.restore();
       } else {
-        ctx.fillStyle = accentColor; roundRect(ctx, artX, artY, artSz, artSz, 28); ctx.fill();
-        ctx.restore(); ctx.save();
-        ctx.strokeStyle = "#fff"; ctx.lineWidth = 26; ctx.lineCap = "round";
-        ctx.beginPath(); const cx = artX+artSz/2, cy = artY+artSz/2;
-        ctx.arc(cx, cy-30, 130, Math.PI, 0, false); ctx.stroke();
-        ctx.fillStyle = "#fff";
-        roundRect(ctx, cx-160, cy+40, 60, 110, 28); ctx.fill();
-        roundRect(ctx, cx+100, cy+40, 60, 110, 28); ctx.fill();
+        // Placeholder: solid accent square + headphone mark
+        ctx.fillStyle = accentColor;
+        roundRect(ctx, coverX, coverY, coverSize, coverSize, radius);
+        ctx.fill();
+        ctx.strokeStyle = "#FFFFFF";
+        ctx.lineWidth = 26;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        const cx = coverX + coverSize / 2, cy = coverY + coverSize / 2;
+        ctx.arc(cx, cy - 30, 130, Math.PI, 0, false);
+        ctx.stroke();
+        ctx.fillStyle = "#FFFFFF";
+        roundRect(ctx, cx - 160, cy + 40, 60, 110, 28); ctx.fill();
+        roundRect(ctx, cx + 100, cy + 40, 60, 110, 28); ctx.fill();
       }
-      ctx.restore();
 
-      const titleY = artY + artSz + 48;
-      ctx.textAlign = "center"; ctx.fillStyle = "#1a1a1a";
-      ctx.font = "800 52px Arial,sans-serif";
-      wrapText(ctx, album.title || "Unknown Album", W/2, titleY+52, cardW - cardPad*2, 60);
-      ctx.font = "500 30px Arial,sans-serif"; ctx.fillStyle = "#8a919b";
-      ctx.fillText((album.artist||album.artistName||"") + (album.year||album.releaseYear ? " · "+(album.year||album.releaseYear) : ""), W/2, titleY+136);
+      // Album title / artist
+      ctx.fillStyle = "#0A0A0A";
+      ctx.textAlign = "center";
+      ctx.font = "700 52px Arial, sans-serif";
+      wrapText(ctx, album.title || "Unknown Album", W / 2, coverY + coverSize + 90, 880, 58);
+      ctx.font = "400 36px Arial, sans-serif";
+      ctx.fillStyle = "#7A7A7A";
+      ctx.fillText((album.artist || album.artistName || "") + (album.year || album.releaseYear ? ` · ${album.year || album.releaseYear}` : ""), W / 2, coverY + coverSize + 155);
 
-      const scoreY = titleY + 240;
-      ctx.font = "800 132px Arial,sans-serif";
-      const nw = ctx.measureText(String(rating)).width;
-      ctx.font = "800 78px Arial,sans-serif";
-      const dw = ctx.measureText("/10").width;
-      const sx = W/2 - (nw+dw+4)/2;
-      ctx.font = "800 132px Arial,sans-serif"; ctx.fillStyle = "#3d6ef0"; ctx.textAlign = "left";
-      ctx.fillText(String(rating), sx, scoreY);
-      ctx.font = "800 78px Arial,sans-serif"; ctx.fillStyle = "#b9c6ea";
-      ctx.fillText("/10", sx+nw+4, scoreY);
+      // Rating or question label — big and prominent
+      if (kind === "qotd") {
+        ctx.font = "700 32px Arial, sans-serif";
+        ctx.fillStyle = accentColor;
+        wrapText(ctx, `"${questionText}"`, W / 2, coverY + coverSize + 230, 800, 42);
+      } else {
+        ctx.font = "700 96px Arial, sans-serif";
+        ctx.fillStyle = accentColor;
+        ctx.fillText(`${rating}/10`, W / 2, coverY + coverSize + 270);
+        ctx.font = "400 32px Arial, sans-serif";
+        ctx.fillStyle = "#7A7A7A";
+        ctx.fillText(`review by @${(username || "").toLowerCase()}`, W / 2, coverY + coverSize + 330);
+      }
 
-      const uname = "@"+(username||"").toLowerCase();
-      ctx.font = "500 30px Arial,sans-serif"; ctx.fillStyle = "#8a919b";
-      const pw = ctx.measureText("review by ").width;
-      ctx.font = "600 30px Arial,sans-serif";
-      const uw = ctx.measureText(uname).width;
-      const rx = W/2 - (pw+uw)/2;
-      ctx.font = "500 30px Arial,sans-serif"; ctx.fillStyle = "#8a919b"; ctx.textAlign = "left";
-      ctx.fillText("review by ", rx, scoreY+52);
-      ctx.font = "600 30px Arial,sans-serif"; ctx.fillStyle = "#3d6ef0";
-      ctx.fillText(uname, rx+pw, scoreY+52);
+      // Username + wordmark footer
+      ctx.font = "600 34px Arial, sans-serif";
+      ctx.fillStyle = "#0A0A0A";
+      ctx.fillText(`@${(username || "").toLowerCase()}`, W / 2, H - 110);
+      ctx.font = "700 38px Arial, sans-serif";
+      ctx.fillStyle = accentColor;
+      ctx.fillText("spindex", W / 2, H - 55);
 
       canvas.toBlob((blob) => resolve(blob), "image/png");
     }
 
-    const coverUrl = album && album.coverArtUrl && album.coverArtUrl !== "none" ? album.coverArtUrl : null;
-    let coverImg = null, logoImg = null, pending = 2;
-    function onReady() { if (--pending === 0) drawCard(coverImg, logoImg); }
-    const logo = new Image(); logo.crossOrigin = "anonymous";
-    logo.onload = () => { logoImg = logo; onReady(); }; logo.onerror = () => onReady();
-    logo.src = "/spindex-logo.jpeg";
+    // Load real cover art if available, then draw
+    const coverUrl = album && album.coverArtUrl && album.coverArtUrl !== "none"
+      ? album.coverArtUrl : null;
+
     if (coverUrl) {
-      const img = new Image(); img.crossOrigin = "anonymous";
-      img.onload = () => { coverImg = img; onReady(); }; img.onerror = () => onReady();
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => { album._img = img; drawCard(); };
+      img.onerror = () => { album._img = null; drawCard(); };
       img.src = coverUrl;
-    } else { onReady(); }
+    } else {
+      album._img = null;
+      drawCard();
+    }
   });
 }
+
 // Generates SVG polygon points for a comic-style "spikey" action bubble --
 // alternating outer/inner radius around a center point, like an explosion
 // or starburst shape. Used behind the QOTD button instead of a plain pill.
@@ -4318,7 +4317,7 @@ function CommentInput({ placeholder, onSubmit, currentUsername, initialValue = "
 }
 
 // Renders a single comment node with its nested replies, recursively
-function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername, reviewReactions = {}, onReact, onDelete }) {
+function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername, reviewReactions = {}, onReact }) {
   const { BLUE, INK, LINE, MUTE } = useTheme();
   const [replying, setReplying] = useState(false);
   const avatarSize = 32;
@@ -4326,9 +4325,7 @@ function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername, r
 
   function relativeTime(date) {
     if (!date) return "";
-    const parsed = new Date(date);
-    if (isNaN(parsed.getTime())) return "";
-    const diff = Date.now() - parsed.getTime();
+    const diff = Date.now() - new Date(date).getTime();
     const mins = Math.floor(diff / 60000);
     if (mins < 60) return mins + "m";
     const hrs = Math.floor(mins / 60);
@@ -4360,7 +4357,6 @@ function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername, r
             >
               {replying ? "cancel" : "Reply"}
             </button>
-            {comment.username === currentUsername && onDelete && <button onClick={() => onDelete(comment.id, reviewId)} style={{border:"none",background:"none",padding:0,cursor:"pointer",font:"inherit",color:"#9aa0a6",fontSize:13,fontWeight:600}}>delete</button>}
             {comment.id && onReact && (
               <button
                 onClick={() => onReact(comment.id, "heart")}
@@ -4378,7 +4374,7 @@ function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername, r
 
       {(comment.replies || []).map((reply) => (
         <div key={reply.id} style={{ marginTop: 16 }}>
-          <CommentNode comment={reply} depth={depth + 1} reviewId={reviewId} onReply={onReply} currentUsername={currentUsername} reviewReactions={reviewReactions} onReact={onReact} onDelete={onDelete} />
+          <CommentNode comment={reply} depth={depth + 1} reviewId={reviewId} onReply={onReply} currentUsername={currentUsername} reviewReactions={reviewReactions} onReact={onReact} />
         </div>
       ))}
 
@@ -4405,7 +4401,7 @@ function countAllComments(comments) {
   return comments.reduce((s, c) => s + 1 + countReplies(c), 0);
 }
 
-function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUsername, reviewOwnerUsername, reviewReactions = {}, onReact, onLoadReactions, onDelete }) {
+function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUsername, reviewOwnerUsername, reviewReactions = {}, onReact, onLoadReactions }) {
   const { BLUE, INK, LINE, MUTE, BG } = useTheme();
   const [open, setOpen] = useState(false);
   const total = countAllComments(comments);
@@ -4446,7 +4442,7 @@ function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUserna
           {comments.length > 0 && (
             <div style={{ maxHeight: 360, overflowY: "auto", padding: "20px 16px 6px", display: "flex", flexDirection: "column", gap: 22 }}>
               {comments.map((c) => (
-                <CommentNode key={c.id} comment={c} depth={0} reviewId={reviewId} onReply={onReply} currentUsername={currentUsername} reviewReactions={reviewReactions} onReact={onReact} onDelete={onDelete} />
+                <CommentNode key={c.id} comment={c} depth={0} reviewId={reviewId} onReply={onReply} currentUsername={currentUsername} reviewReactions={reviewReactions} onReact={onReact} />
               ))}
             </div>
           )}
