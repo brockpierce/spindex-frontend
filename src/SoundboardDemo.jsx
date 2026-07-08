@@ -1180,19 +1180,7 @@ export default function SoundboardDemo() {
       .catch(() => {});
   }
 
-  function deleteComment(commentId, reviewId) {
-    // Optimistic remove from state
-    setReviewComments((prev) => {
-      function removeFromTree(comments) {
-        return comments
-          .filter((c) => c.id !== commentId)
-          .map((c) => ({ ...c, replies: removeFromTree(c.replies || []) }));
-      }
-      return { ...prev, [reviewId]: removeFromTree(prev[reviewId] || []) };
-    });
-    apiFetch(`${BACKEND_URL}/api/interactions/comments/${commentId}`, { method: "DELETE" }).catch(() => {});
-  }
-
+  // Load only reactions for comment/reply IDs — lightweight, no nested comment fetching
   function loadCommentReactions(commentIds) {
     commentIds.forEach((cid) => {
       if (!cid) return;
@@ -1965,11 +1953,11 @@ export default function SoundboardDemo() {
                               </div>
                             </div>
                             {c.id && (
-                              <div style={{ marginTop: 12, paddingTop: 10, borderTop: `1px solid ${LINE}` }}>
+                              <div style={{ marginTop: 12, paddingTop: 10, paddingBottom: 10, borderTop: `1px solid ${LINE}` }}>
                                 <ReactionBar reactions={reviewReactions[c.id]} onReact={(kind) => toggleReaction(c.id, kind)} currentUsername={profile.username} />
                               </div>
                             )}
-                            {c.id && <ReviewComments reviewId={c.id} comments={reviewComments[c.id] || []} onAdd={addComment} onReply={addReply} currentUsername={profile.username} reviewOwnerUsername={c.username} reviewReactions={reviewReactions} onReact={toggleReaction} onLoadReactions={loadCommentReactions} onDelete={deleteComment} />}
+                            {c.id && <ReviewComments reviewId={c.id} comments={reviewComments[c.id] || []} onAdd={addComment} onReply={addReply} currentUsername={profile.username} reviewOwnerUsername={c.username} reviewReactions={reviewReactions} onReact={toggleReaction} onLoadReactions={loadCommentReactions} />}
                           </div>
                         );
                       }
@@ -2008,7 +1996,6 @@ export default function SoundboardDemo() {
                                   reviewReactions={reviewReactions}
                                   onReact={toggleReaction}
                                   onLoadReactions={loadCommentReactions}
-                                  onDelete={deleteComment}
                                 />
                               </>
                             )}
@@ -2038,7 +2025,7 @@ export default function SoundboardDemo() {
                               </div>
                             </div>
                             {c.id && (
-                              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12, paddingTop: 10, borderTop: `1px solid ${LINE}` }}>
+                              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12, paddingTop: 10, paddingBottom: 10, borderTop: `1px solid ${LINE}` }}>
                                 <ReactionBar
                                   reactions={reviewReactions[c.id]}
                                   onReact={(kind) => toggleReaction(c.id, kind)}
@@ -2057,8 +2044,6 @@ export default function SoundboardDemo() {
                                 reviewOwnerUsername={c.username}
                                 reviewReactions={reviewReactions}
                                 onReact={toggleReaction}
-                                onLoadReactions={loadCommentReactions}
-                                onDelete={deleteComment}
                               />
                             )}
                           </div>
@@ -2094,7 +2079,7 @@ export default function SoundboardDemo() {
                             </div>
                           </div>
                           {c.id && (
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12, paddingTop: 10, borderTop: `1px solid ${LINE}` }}>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12, paddingTop: 10, paddingBottom: 10, borderTop: `1px solid ${LINE}` }}>
                               <ReactionBar
                                 reactions={reviewReactions[c.id]}
                                 onReact={(kind) => toggleReaction(c.id, kind)}
@@ -2113,8 +2098,11 @@ export default function SoundboardDemo() {
                               reviewOwnerUsername={c.username}
                               reviewReactions={reviewReactions}
                               onReact={toggleReaction}
-                              onDelete={deleteComment}
                             />
+                          )}
+                        </div>
+                      );
+                    })}
                     {!isEveryone && displayItems.length === 0 && (
                       <div className="ui-sans" style={{ color: MUTE, fontSize: 13.5, padding: "20px 0" }}>
                         nothing here yet -- follow people, queue albums, or write a review and this fills in.
@@ -2783,7 +2771,7 @@ export default function SoundboardDemo() {
               </div>
 
               <ListenedByFriends albumId={album.id} />
-              <AlbumCommunitySection albumId={album.id} albumTab={albumTab} setAlbumTab={setAlbumTab} openAlbum={openAlbum} reviewComments={reviewComments} onAddComment={addComment} onAddReply={addReply} currentUsername={profile.username} reviewReactions={reviewReactions} onReact={toggleReaction} onDeleteComment={deleteComment} />
+              <AlbumCommunitySection albumId={album.id} albumTab={albumTab} setAlbumTab={setAlbumTab} openAlbum={openAlbum} reviewComments={reviewComments} onAddComment={addComment} onAddReply={addReply} currentUsername={profile.username} reviewReactions={reviewReactions} onReact={toggleReaction} />
             </div>
           );
         })()}
@@ -3771,31 +3759,18 @@ function generateShareCardBlob({ kind, album, username, rating, reviewText, ques
         ctx.font = "700 96px Arial, sans-serif";
         ctx.fillStyle = accentColor;
         ctx.fillText(`${rating}/10`, W / 2, coverY + coverSize + 270);
-
-        // "review by @username" below rating
         ctx.font = "400 32px Arial, sans-serif";
         ctx.fillStyle = "#7A7A7A";
         ctx.fillText(`review by @${(username || "").toLowerCase()}`, W / 2, coverY + coverSize + 330);
       }
 
-      // Wordmark footer — headphone logo in top-left corner
-      const logoSize = 80;
-      const logoPad = 48;
-      ctx.save();
-      ctx.strokeStyle = accentColor;
-      ctx.lineWidth = 8;
-      ctx.lineCap = "round";
-      // Arc (headband)
-      ctx.beginPath();
-      const lx = logoPad + logoSize / 2, ly = logoPad + logoSize / 2;
-      ctx.arc(lx, ly - 8, 34, Math.PI, 0, false);
-      ctx.stroke();
-      // Left ear cup
+      // Username + wordmark footer
+      ctx.font = "600 34px Arial, sans-serif";
+      ctx.fillStyle = "#0A0A0A";
+      ctx.fillText(`@${(username || "").toLowerCase()}`, W / 2, H - 110);
+      ctx.font = "700 38px Arial, sans-serif";
       ctx.fillStyle = accentColor;
-      roundRect(ctx, lx - 42, ly + 18, 16, 28, 6); ctx.fill();
-      // Right ear cup
-      roundRect(ctx, lx + 26, ly + 18, 16, 28, 6); ctx.fill();
-      ctx.restore();
+      ctx.fillText("spindex", W / 2, H - 55);
 
       canvas.toBlob((blob) => resolve(blob), "image/png");
     }
@@ -4342,7 +4317,7 @@ function CommentInput({ placeholder, onSubmit, currentUsername, initialValue = "
 }
 
 // Renders a single comment node with its nested replies, recursively
-function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername, reviewReactions = {}, onReact, onDelete }) {
+function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername, reviewReactions = {}, onReact }) {
   const { BLUE, INK, LINE, MUTE } = useTheme();
   const [replying, setReplying] = useState(false);
   const avatarSize = 32;
@@ -4382,14 +4357,6 @@ function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername, r
             >
               {replying ? "cancel" : "Reply"}
             </button>
-            {comment.username === currentUsername && onDelete && (
-              <button
-                onClick={() => onDelete(comment.id, reviewId)}
-                style={{ border: "none", background: "none", padding: 0, cursor: "pointer", font: "inherit", color: "#9aa0a6", fontSize: 13, fontWeight: 600 }}
-              >
-                delete
-              </button>
-            )}
             {comment.id && onReact && (
               <button
                 onClick={() => onReact(comment.id, "heart")}
@@ -4407,7 +4374,7 @@ function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername, r
 
       {(comment.replies || []).map((reply) => (
         <div key={reply.id} style={{ marginTop: 16 }}>
-          <CommentNode comment={reply} depth={depth + 1} reviewId={reviewId} onReply={onReply} currentUsername={currentUsername} reviewReactions={reviewReactions} onReact={onReact} onDelete={onDelete} />
+          <CommentNode comment={reply} depth={depth + 1} reviewId={reviewId} onReply={onReply} currentUsername={currentUsername} reviewReactions={reviewReactions} onReact={onReact} />
         </div>
       ))}
 
@@ -4434,7 +4401,7 @@ function countAllComments(comments) {
   return comments.reduce((s, c) => s + 1 + countReplies(c), 0);
 }
 
-function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUsername, reviewOwnerUsername, reviewReactions = {}, onReact, onLoadReactions, onDelete }) {
+function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUsername, reviewOwnerUsername, reviewReactions = {}, onReact, onLoadReactions }) {
   const { BLUE, INK, LINE, MUTE, BG } = useTheme();
   const [open, setOpen] = useState(false);
   const total = countAllComments(comments);
@@ -4456,11 +4423,11 @@ function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUserna
   }
 
   return (
-    <div className="sb-comment-bubble" style={{ background: "#fafbfc", borderTop: "1px solid #eceef0", margin: "0 -16px" }}>
+    <div className="sb-comment-bubble" style={{ background: "#fafbfc", borderTop: "1px solid #eceef0", marginTop: 10, marginLeft: -16, marginRight: -16, marginBottom: -14, borderRadius: "0 0 8px 8px", padding: "0 16px" }}>
       <button
         className="ui-sans"
         onClick={handleToggle}
-        style={{ display: "flex", alignItems: "center", gap: 8, border: "none", background: "none", padding: "14px 0 0", cursor: "pointer", fontSize: 13, fontWeight: 400, color: "#6b7280", letterSpacing: "0.01em", fontFamily: "inherit" }}
+        style={{ display: "flex", alignItems: "center", gap: 8, border: "none", background: "none", padding: "14px 0 0 0", cursor: "pointer", fontSize: 13, fontWeight: 400, color: "#6b7280", letterSpacing: "0.01em", fontFamily: "inherit" }}
         onMouseEnter={(e) => e.currentTarget.style.color = "#1a1a1a"}
         onMouseLeave={(e) => e.currentTarget.style.color = "#6b7280"}
       >
@@ -4475,7 +4442,7 @@ function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUserna
           {comments.length > 0 && (
             <div style={{ maxHeight: 360, overflowY: "auto", padding: "20px 16px 6px", display: "flex", flexDirection: "column", gap: 22 }}>
               {comments.map((c) => (
-                <CommentNode key={c.id} comment={c} depth={0} reviewId={reviewId} onReply={onReply} currentUsername={currentUsername} reviewReactions={reviewReactions} onReact={onReact} onDelete={onDelete} />
+                <CommentNode key={c.id} comment={c} depth={0} reviewId={reviewId} onReply={onReply} currentUsername={currentUsername} reviewReactions={reviewReactions} onReact={onReact} />
               ))}
             </div>
           )}
@@ -4933,7 +4900,7 @@ function ListenedByFriends({ albumId }) {
   );
 }
 
-function AlbumCommunitySection({ albumId, albumTab, setAlbumTab, openAlbum, reviewComments = {}, onAddComment, onAddReply, currentUsername, reviewReactions = {}, onReact, onDeleteComment }) {
+function AlbumCommunitySection({ albumId, albumTab, setAlbumTab, openAlbum, reviewComments = {}, onAddComment, onAddReply, currentUsername, reviewReactions = {}, onReact }) {
   const { BLUE, INK, LINE, MUTE } = useTheme();
   const mixes = COMMUNITY_ALBUM_MIXES.filter((l) => l.albumIds.includes(albumId));
 
@@ -5004,7 +4971,7 @@ function AlbumCommunitySection({ albumId, albumTab, setAlbumTab, openAlbum, revi
                 </div>
               </div>
               {r.id && onReact && (
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12, paddingTop: 10, borderTop: `1px solid ${LINE}` }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12, paddingTop: 10, paddingBottom: 10, borderTop: `1px solid ${LINE}` }}>
                   <ReactionBar
                     reactions={reviewReactions[r.id]}
                     onReact={(kind) => onReact(r.id, kind)}
@@ -5023,7 +4990,6 @@ function AlbumCommunitySection({ albumId, albumTab, setAlbumTab, openAlbum, revi
                   reviewOwnerUsername={r.username}
                   reviewReactions={reviewReactions}
                   onReact={onReact}
-                  onDelete={onDeleteComment}
                 />
               )}
             </div>
