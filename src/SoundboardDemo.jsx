@@ -2101,6 +2101,8 @@ export default function SoundboardDemo() {
                               reviewOwnerUsername={c.username}
                               reviewReactions={reviewReactions}
                               onReact={toggleReaction}
+                              onLoadReactions={loadCommentReactions}
+                              onDelete={deleteComment}
                             />
                           )}
                         </div>
