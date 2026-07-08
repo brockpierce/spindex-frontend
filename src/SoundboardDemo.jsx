@@ -1998,6 +1998,7 @@ export default function SoundboardDemo() {
                                   reviewReactions={reviewReactions}
                                   onReact={toggleReaction}
                                   onLoadReactions={loadCommentReactions}
+                                  onDelete={deleteComment}
                                 />
                               </>
                             )}
@@ -4323,7 +4324,9 @@ function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername, r
 
   function relativeTime(date) {
     if (!date) return "";
-    const diff = Date.now() - new Date(date).getTime();
+    const parsed = new Date(date);
+    if (isNaN(parsed.getTime())) return "";
+    const diff = Date.now() - parsed.getTime();
     const mins = Math.floor(diff / 60000);
     if (mins < 60) return mins + "m";
     const hrs = Math.floor(mins / 60);
