@@ -20,7 +20,7 @@ const BACKEND_URL = "https://spindex-backend.onrender.com";
 // Only this account can edit album-level tags. Non-admin users can view and
 // click tags to filter but not add or remove them. Temporary curation gate
 // until we build a proper moderation flow.
-const ADMIN_USERNAME = "brockpierce";
+const ADMIN_USERNAME = "brock";
 
 // JWT token helpers -- stored in localStorage so it survives page refresh.
 // apiFetch wraps fetch to automatically attach the Authorization header.
