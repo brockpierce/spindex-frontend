@@ -1181,6 +1181,11 @@ export default function SoundboardDemo() {
   }
 
   // Load only reactions for comment/reply IDs — lightweight, no nested comment fetching
+  function deleteComment(commentId, reviewId) {
+    setReviewComments((prev) => { const rm = (cs) => cs.filter((c) => c.id !== commentId).map((c) => ({...c, replies: rm(c.replies||[])})); return {...prev, [reviewId]: rm(prev[reviewId]||[])}; });
+    apiFetch(`${BACKEND_URL}/api/interactions/comments/${commentId}`, {method:"DELETE"}).catch(()=>{});
+  }
+
   function loadCommentReactions(commentIds) {
     commentIds.forEach((cid) => {
       if (!cid) return;
@@ -4357,6 +4362,9 @@ function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername, r
             >
               {replying ? "cancel" : "Reply"}
             </button>
+            {comment.username === currentUsername && onDelete && (
+              <button onClick={() => onDelete(comment.id, reviewId)} style={{border:"none",background:"none",padding:0,cursor:"pointer",font:"inherit",color:"#9aa0a6",fontSize:13,fontWeight:600}}>delete</button>
+            )}
             {comment.id && onReact && (
               <button
                 onClick={() => onReact(comment.id, "heart")}
