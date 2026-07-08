@@ -1180,19 +1180,7 @@ export default function SoundboardDemo() {
       .catch(() => {});
   }
 
-  function deleteComment(commentId, reviewId) {
-    // Optimistic remove from state
-    setReviewComments((prev) => {
-      function removeFromTree(comments) {
-        return comments
-          .filter((c) => c.id !== commentId)
-          .map((c) => ({ ...c, replies: removeFromTree(c.replies || []) }));
-      }
-      return { ...prev, [reviewId]: removeFromTree(prev[reviewId] || []) };
-    });
-    apiFetch(`${BACKEND_URL}/api/interactions/comments/${commentId}`, { method: "DELETE" }).catch(() => {});
-  }
-
+  // Load only reactions for comment/reply IDs — lightweight, no nested comment fetching
   function loadCommentReactions(commentIds) {
     commentIds.forEach((cid) => {
       if (!cid) return;
@@ -1965,11 +1953,11 @@ export default function SoundboardDemo() {
                               </div>
                             </div>
                             {c.id && (
-                              <div style={{ marginTop: 12, paddingTop: 10, borderTop: `1px solid ${LINE}` }}>
+                              <div style={{ marginTop: 12, paddingTop: 10, paddingBottom: 10, borderTop: `1px solid ${LINE}` }}>
                                 <ReactionBar reactions={reviewReactions[c.id]} onReact={(kind) => toggleReaction(c.id, kind)} currentUsername={profile.username} />
                               </div>
                             )}
-                            {c.id && <ReviewComments reviewId={c.id} comments={reviewComments[c.id] || []} onAdd={addComment} onReply={addReply} currentUsername={profile.username} reviewOwnerUsername={c.username} reviewReactions={reviewReactions} onReact={toggleReaction} onLoadReactions={loadCommentReactions} onDelete={deleteComment} />}
+                            {c.id && <ReviewComments reviewId={c.id} comments={reviewComments[c.id] || []} onAdd={addComment} onReply={addReply} currentUsername={profile.username} reviewOwnerUsername={c.username} reviewReactions={reviewReactions} onReact={toggleReaction} onLoadReactions={loadCommentReactions} />}
                           </div>
                         );
                       }
@@ -2008,7 +1996,6 @@ export default function SoundboardDemo() {
                                   reviewReactions={reviewReactions}
                                   onReact={toggleReaction}
                                   onLoadReactions={loadCommentReactions}
-                                  onDelete={deleteComment}
                                 />
                               </>
                             )}
@@ -2038,7 +2025,7 @@ export default function SoundboardDemo() {
                               </div>
                             </div>
                             {c.id && (
-                              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12, paddingTop: 10, borderTop: `1px solid ${LINE}` }}>
+                              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12, paddingTop: 10, paddingBottom: 10, borderTop: `1px solid ${LINE}` }}>
                                 <ReactionBar
                                   reactions={reviewReactions[c.id]}
                                   onReact={(kind) => toggleReaction(c.id, kind)}
@@ -2057,8 +2044,6 @@ export default function SoundboardDemo() {
                                 reviewOwnerUsername={c.username}
                                 reviewReactions={reviewReactions}
                                 onReact={toggleReaction}
-                                onLoadReactions={loadCommentReactions}
-                                onDelete={deleteComment}
                               />
                             )}
                           </div>
@@ -2094,7 +2079,7 @@ export default function SoundboardDemo() {
                             </div>
                           </div>
                           {c.id && (
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12, paddingTop: 10, borderTop: `1px solid ${LINE}` }}>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12, paddingTop: 10, paddingBottom: 10, borderTop: `1px solid ${LINE}` }}>
                               <ReactionBar
                                 reactions={reviewReactions[c.id]}
                                 onReact={(kind) => toggleReaction(c.id, kind)}
@@ -2113,7 +2098,6 @@ export default function SoundboardDemo() {
                               reviewOwnerUsername={c.username}
                               reviewReactions={reviewReactions}
                               onReact={toggleReaction}
-                              onDelete={deleteComment}
                             />
                           )}
                         </div>
@@ -2787,7 +2771,7 @@ export default function SoundboardDemo() {
               </div>
 
               <ListenedByFriends albumId={album.id} />
-              <AlbumCommunitySection albumId={album.id} albumTab={albumTab} setAlbumTab={setAlbumTab} openAlbum={openAlbum} reviewComments={reviewComments} onAddComment={addComment} onAddReply={addReply} currentUsername={profile.username} reviewReactions={reviewReactions} onReact={toggleReaction} onDeleteComment={deleteComment} />
+              <AlbumCommunitySection albumId={album.id} albumTab={albumTab} setAlbumTab={setAlbumTab} openAlbum={openAlbum} reviewComments={reviewComments} onAddComment={addComment} onAddReply={addReply} currentUsername={profile.username} reviewReactions={reviewReactions} onReact={toggleReaction} />
             </div>
           );
         })()}
@@ -3711,169 +3695,95 @@ function AlbumSearchPicker({ onPick, onCancel, placeholder = "search for the alb
 
 // Question-of-the-day popup: shows today's prompt, lets the person search
 // and pick an album that answers it, confirms the pick, then posts.
-// Draws a shareable image card matching the "1a Clean light" spec.
+// Draws a shareable image card onto an offscreen canvas and resolves a PNG
+// blob. Uses the real album cover art when available, falls back to the
+// headphone placeholder.
 function generateShareCardBlob({ kind, album, username, rating, reviewText, questionText, accentColor }) {
   return new Promise((resolve) => {
     const W = 1080, H = 1920;
     const canvas = document.createElement("canvas");
-    canvas.width = W;
-    canvas.height = H;
+    canvas.width = W; canvas.height = H;
     const ctx = canvas.getContext("2d");
 
     function drawCard(coverImg, logoImg) {
-      // Gradient background
       const grad = ctx.createLinearGradient(0, 0, 0, H);
-      grad.addColorStop(0, "#f7f8fa");
-      grad.addColorStop(1, "#eef0f3");
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, W, H);
+      grad.addColorStop(0, "#f7f8fa"); grad.addColorStop(1, "#eef0f3");
+      ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
 
-      // White card
-      const cardW = 840, cardPad = 64;
-      const cardX = (W - cardW) / 2;
-      const cardH = 1440;
-      const cardY = (H - cardH) / 2;
-      const cardR = 44;
-
+      const cardW = 840, cardPad = 64, cardH = 1440, cardR = 44;
+      const cardX = (W - cardW) / 2, cardY = (H - cardH) / 2;
       ctx.save();
-      ctx.shadowColor = "rgba(30,40,60,0.10)";
-      ctx.shadowBlur = 80;
-      ctx.shadowOffsetY = 30;
-      ctx.fillStyle = "#ffffff";
-      roundRect(ctx, cardX, cardY, cardW, cardH, cardR);
-      ctx.fill();
+      ctx.shadowColor = "rgba(30,40,60,0.10)"; ctx.shadowBlur = 80; ctx.shadowOffsetY = 30;
+      ctx.fillStyle = "#ffffff"; roundRect(ctx, cardX, cardY, cardW, cardH, cardR); ctx.fill();
       ctx.restore();
 
-      // Logo lockup
-      const logoAreaY = cardY + cardPad;
-      const logoSize = 56;
+      const logoY = cardY + cardPad, logoSz = 56;
       if (logoImg) {
-        ctx.save();
-        roundRect(ctx, cardX + cardPad, logoAreaY, logoSize, logoSize, 14);
-        ctx.clip();
-        ctx.drawImage(logoImg, cardX + cardPad, logoAreaY, logoSize, logoSize);
-        ctx.restore();
-      } else {
-        // Draw simple headphone icon
-        ctx.save();
-        ctx.strokeStyle = "#3d6ef0";
-        ctx.lineWidth = 5;
-        ctx.lineCap = "round";
-        ctx.beginPath();
-        const lx = cardX + cardPad + logoSize / 2, ly = logoAreaY + logoSize / 2;
-        ctx.arc(lx, ly - 4, 20, Math.PI, 0, false);
-        ctx.stroke();
-        ctx.fillStyle = "#3d6ef0";
-        roundRect(ctx, lx - 26, ly + 10, 10, 18, 4); ctx.fill();
-        roundRect(ctx, lx + 16, ly + 10, 10, 18, 4); ctx.fill();
-        ctx.restore();
+        ctx.save(); roundRect(ctx, cardX + cardPad, logoY, logoSz, logoSz, 14); ctx.clip();
+        ctx.drawImage(logoImg, cardX + cardPad, logoY, logoSz, logoSz); ctx.restore();
       }
-      ctx.fillStyle = "#1a1a1a";
-      ctx.font = "700 30px Helvetica, Arial, sans-serif";
-      ctx.textAlign = "left";
-      ctx.fillText("spindex", cardX + cardPad + logoSize + 14, logoAreaY + 38);
+      ctx.fillStyle = "#1a1a1a"; ctx.font = "700 30px Helvetica,Arial,sans-serif"; ctx.textAlign = "left";
+      ctx.fillText("spindex", cardX + cardPad + logoSz + 14, logoY + 38);
 
-      // Album art
-      const artSize = 600;
-      const artX = cardX + (cardW - artSize) / 2;
-      const artY = logoAreaY + logoSize + 52;
+      const artSz = 600, artX = cardX + (cardW - artSz) / 2, artY = logoY + logoSz + 52;
       ctx.save();
-      ctx.shadowColor = "rgba(30,40,60,0.18)";
-      ctx.shadowBlur = 44;
-      ctx.shadowOffsetY = 18;
+      ctx.shadowColor = "rgba(30,40,60,0.18)"; ctx.shadowBlur = 44; ctx.shadowOffsetY = 18;
       if (coverImg) {
-        roundRect(ctx, artX, artY, artSize, artSize, 28);
-        ctx.clip();
-        ctx.drawImage(coverImg, artX, artY, artSize, artSize);
+        roundRect(ctx, artX, artY, artSz, artSz, 28); ctx.clip();
+        ctx.drawImage(coverImg, artX, artY, artSz, artSz);
       } else {
-        ctx.fillStyle = accentColor;
-        roundRect(ctx, artX, artY, artSize, artSize, 28);
-        ctx.fill();
-        ctx.restore();
-        ctx.save();
-        ctx.strokeStyle = "#ffffff";
-        ctx.lineWidth = 26;
-        ctx.lineCap = "round";
-        ctx.beginPath();
-        const cx2 = artX + artSize / 2, cy2 = artY + artSize / 2;
-        ctx.arc(cx2, cy2 - 30, 130, Math.PI, 0, false);
-        ctx.stroke();
-        ctx.fillStyle = "#ffffff";
-        roundRect(ctx, cx2 - 160, cy2 + 40, 60, 110, 28); ctx.fill();
-        roundRect(ctx, cx2 + 100, cy2 + 40, 60, 110, 28); ctx.fill();
+        ctx.fillStyle = accentColor; roundRect(ctx, artX, artY, artSz, artSz, 28); ctx.fill();
+        ctx.restore(); ctx.save();
+        ctx.strokeStyle = "#fff"; ctx.lineWidth = 26; ctx.lineCap = "round";
+        ctx.beginPath(); const cx = artX+artSz/2, cy = artY+artSz/2;
+        ctx.arc(cx, cy-30, 130, Math.PI, 0, false); ctx.stroke();
+        ctx.fillStyle = "#fff";
+        roundRect(ctx, cx-160, cy+40, 60, 110, 28); ctx.fill();
+        roundRect(ctx, cx+100, cy+40, 60, 110, 28); ctx.fill();
       }
       ctx.restore();
 
-      // Title
-      const titleY = artY + artSize + 48;
-      ctx.textAlign = "center";
-      ctx.fillStyle = "#1a1a1a";
-      ctx.font = "800 52px Arial, sans-serif";
-      wrapText(ctx, album.title || "Unknown Album", W / 2, titleY + 52, cardW - cardPad * 2, 60);
-      ctx.font = "500 30px Arial, sans-serif";
-      ctx.fillStyle = "#8a919b";
-      const artistStr = (album.artist || album.artistName || "") + (album.year || album.releaseYear ? " · " + (album.year || album.releaseYear) : "");
-      ctx.fillText(artistStr, W / 2, titleY + 136);
+      const titleY = artY + artSz + 48;
+      ctx.textAlign = "center"; ctx.fillStyle = "#1a1a1a";
+      ctx.font = "800 52px Arial,sans-serif";
+      wrapText(ctx, album.title || "Unknown Album", W/2, titleY+52, cardW - cardPad*2, 60);
+      ctx.font = "500 30px Arial,sans-serif"; ctx.fillStyle = "#8a919b";
+      ctx.fillText((album.artist||album.artistName||"") + (album.year||album.releaseYear ? " · "+(album.year||album.releaseYear) : ""), W/2, titleY+136);
 
-      // Score — two tone
-      const scoreBaseY = titleY + 240;
-      const bigSz = 132, smlSz = 78;
-      ctx.font = "800 " + bigSz + "px Arial, sans-serif";
-      const numStr = String(rating);
-      const numW = ctx.measureText(numStr).width;
-      ctx.font = "800 " + smlSz + "px Arial, sans-serif";
-      const denomStr = "/10";
-      const denomW = ctx.measureText(denomStr).width;
-      const totalScoreW = numW + denomW + 4;
-      const sx = W / 2 - totalScoreW / 2;
+      const scoreY = titleY + 240;
+      ctx.font = "800 132px Arial,sans-serif";
+      const nw = ctx.measureText(String(rating)).width;
+      ctx.font = "800 78px Arial,sans-serif";
+      const dw = ctx.measureText("/10").width;
+      const sx = W/2 - (nw+dw+4)/2;
+      ctx.font = "800 132px Arial,sans-serif"; ctx.fillStyle = "#3d6ef0"; ctx.textAlign = "left";
+      ctx.fillText(String(rating), sx, scoreY);
+      ctx.font = "800 78px Arial,sans-serif"; ctx.fillStyle = "#b9c6ea";
+      ctx.fillText("/10", sx+nw+4, scoreY);
 
-      ctx.font = "800 " + bigSz + "px Arial, sans-serif";
-      ctx.fillStyle = "#3d6ef0";
-      ctx.textAlign = "left";
-      ctx.fillText(numStr, sx, scoreBaseY);
-
-      ctx.font = "800 " + smlSz + "px Arial, sans-serif";
-      ctx.fillStyle = "#b9c6ea";
-      ctx.fillText(denomStr, sx + numW + 4, scoreBaseY);
-
-      // Review by
-      ctx.textAlign = "center";
-      ctx.font = "500 30px Arial, sans-serif";
-      ctx.fillStyle = "#8a919b";
-      const uname = "@" + (username || "").toLowerCase();
-      const prefixStr = "review by ";
-      const prefixW2 = ctx.measureText(prefixStr).width;
-      ctx.font = "600 30px Arial, sans-serif";
-      const unameW = ctx.measureText(uname).width;
-      const totalRW = prefixW2 + unameW;
-      const rStartX = W / 2 - totalRW / 2;
-      ctx.font = "500 30px Arial, sans-serif";
-      ctx.fillStyle = "#8a919b";
-      ctx.textAlign = "left";
-      ctx.fillText(prefixStr, rStartX, scoreBaseY + 52);
-      ctx.font = "600 30px Arial, sans-serif";
-      ctx.fillStyle = "#3d6ef0";
-      ctx.fillText(uname, rStartX + prefixW2, scoreBaseY + 52);
+      const uname = "@"+(username||"").toLowerCase();
+      ctx.font = "500 30px Arial,sans-serif"; ctx.fillStyle = "#8a919b";
+      const pw = ctx.measureText("review by ").width;
+      ctx.font = "600 30px Arial,sans-serif";
+      const uw = ctx.measureText(uname).width;
+      const rx = W/2 - (pw+uw)/2;
+      ctx.font = "500 30px Arial,sans-serif"; ctx.fillStyle = "#8a919b"; ctx.textAlign = "left";
+      ctx.fillText("review by ", rx, scoreY+52);
+      ctx.font = "600 30px Arial,sans-serif"; ctx.fillStyle = "#3d6ef0";
+      ctx.fillText(uname, rx+pw, scoreY+52);
 
       canvas.toBlob((blob) => resolve(blob), "image/png");
     }
 
-    // Load cover + logo in parallel
     const coverUrl = album && album.coverArtUrl && album.coverArtUrl !== "none" ? album.coverArtUrl : null;
     let coverImg = null, logoImg = null, pending = 2;
-    function onReady() { pending--; if (pending === 0) drawCard(coverImg, logoImg); }
-
-    const logo = new Image();
-    logo.crossOrigin = "anonymous";
-    logo.onload = () => { logoImg = logo; onReady(); };
-    logo.onerror = () => onReady();
+    function onReady() { if (--pending === 0) drawCard(coverImg, logoImg); }
+    const logo = new Image(); logo.crossOrigin = "anonymous";
+    logo.onload = () => { logoImg = logo; onReady(); }; logo.onerror = () => onReady();
     logo.src = "https://spindex-frontend.vercel.app/favicon.ico";
-
     if (coverUrl) {
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.onload = () => { coverImg = img; onReady(); };
-      img.onerror = () => onReady();
+      const img = new Image(); img.crossOrigin = "anonymous";
+      img.onload = () => { coverImg = img; onReady(); }; img.onerror = () => onReady();
       img.src = coverUrl;
     } else { onReady(); }
   });
@@ -4403,7 +4313,7 @@ function CommentInput({ placeholder, onSubmit, currentUsername, initialValue = "
 }
 
 // Renders a single comment node with its nested replies, recursively
-function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername, reviewReactions = {}, onReact, onDelete }) {
+function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername, reviewReactions = {}, onReact }) {
   const { BLUE, INK, LINE, MUTE } = useTheme();
   const [replying, setReplying] = useState(false);
   const avatarSize = 32;
@@ -4443,14 +4353,6 @@ function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername, r
             >
               {replying ? "cancel" : "Reply"}
             </button>
-            {comment.username === currentUsername && onDelete && (
-              <button
-                onClick={() => onDelete(comment.id, reviewId)}
-                style={{ border: "none", background: "none", padding: 0, cursor: "pointer", font: "inherit", color: "#9aa0a6", fontSize: 13, fontWeight: 600 }}
-              >
-                delete
-              </button>
-            )}
             {comment.id && onReact && (
               <button
                 onClick={() => onReact(comment.id, "heart")}
@@ -4468,7 +4370,7 @@ function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername, r
 
       {(comment.replies || []).map((reply) => (
         <div key={reply.id} style={{ marginTop: 16 }}>
-          <CommentNode comment={reply} depth={depth + 1} reviewId={reviewId} onReply={onReply} currentUsername={currentUsername} reviewReactions={reviewReactions} onReact={onReact} onDelete={onDelete} />
+          <CommentNode comment={reply} depth={depth + 1} reviewId={reviewId} onReply={onReply} currentUsername={currentUsername} reviewReactions={reviewReactions} onReact={onReact} />
         </div>
       ))}
 
@@ -4495,7 +4397,7 @@ function countAllComments(comments) {
   return comments.reduce((s, c) => s + 1 + countReplies(c), 0);
 }
 
-function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUsername, reviewOwnerUsername, reviewReactions = {}, onReact, onLoadReactions, onDelete }) {
+function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUsername, reviewOwnerUsername, reviewReactions = {}, onReact, onLoadReactions }) {
   const { BLUE, INK, LINE, MUTE, BG } = useTheme();
   const [open, setOpen] = useState(false);
   const total = countAllComments(comments);
@@ -4517,11 +4419,11 @@ function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUserna
   }
 
   return (
-    <div className="sb-comment-bubble" style={{ background: "#fafbfc", borderTop: "1px solid #eceef0", margin: "0 -16px" }}>
+    <div className="sb-comment-bubble" style={{ background: "#fafbfc", borderTop: "1px solid #eceef0", marginTop: 10, marginLeft: -16, marginRight: -16, marginBottom: -14, borderRadius: "0 0 8px 8px", padding: "0 16px" }}>
       <button
         className="ui-sans"
         onClick={handleToggle}
-        style={{ display: "flex", alignItems: "center", gap: 8, border: "none", background: "none", padding: "14px 0 0", cursor: "pointer", fontSize: 13, fontWeight: 400, color: "#6b7280", letterSpacing: "0.01em", fontFamily: "inherit" }}
+        style={{ display: "flex", alignItems: "center", gap: 8, border: "none", background: "none", padding: "14px 0 0 0", cursor: "pointer", fontSize: 13, fontWeight: 400, color: "#6b7280", letterSpacing: "0.01em", fontFamily: "inherit" }}
         onMouseEnter={(e) => e.currentTarget.style.color = "#1a1a1a"}
         onMouseLeave={(e) => e.currentTarget.style.color = "#6b7280"}
       >
@@ -4536,7 +4438,7 @@ function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUserna
           {comments.length > 0 && (
             <div style={{ maxHeight: 360, overflowY: "auto", padding: "20px 16px 6px", display: "flex", flexDirection: "column", gap: 22 }}>
               {comments.map((c) => (
-                <CommentNode key={c.id} comment={c} depth={0} reviewId={reviewId} onReply={onReply} currentUsername={currentUsername} reviewReactions={reviewReactions} onReact={onReact} onDelete={onDelete} />
+                <CommentNode key={c.id} comment={c} depth={0} reviewId={reviewId} onReply={onReply} currentUsername={currentUsername} reviewReactions={reviewReactions} onReact={onReact} />
               ))}
             </div>
           )}
@@ -4994,7 +4896,7 @@ function ListenedByFriends({ albumId }) {
   );
 }
 
-function AlbumCommunitySection({ albumId, albumTab, setAlbumTab, openAlbum, reviewComments = {}, onAddComment, onAddReply, currentUsername, reviewReactions = {}, onReact, onDeleteComment }) {
+function AlbumCommunitySection({ albumId, albumTab, setAlbumTab, openAlbum, reviewComments = {}, onAddComment, onAddReply, currentUsername, reviewReactions = {}, onReact }) {
   const { BLUE, INK, LINE, MUTE } = useTheme();
   const mixes = COMMUNITY_ALBUM_MIXES.filter((l) => l.albumIds.includes(albumId));
 
@@ -5065,7 +4967,7 @@ function AlbumCommunitySection({ albumId, albumTab, setAlbumTab, openAlbum, revi
                 </div>
               </div>
               {r.id && onReact && (
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12, paddingTop: 10, borderTop: `1px solid ${LINE}` }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12, paddingTop: 10, paddingBottom: 10, borderTop: `1px solid ${LINE}` }}>
                   <ReactionBar
                     reactions={reviewReactions[r.id]}
                     onReact={(kind) => onReact(r.id, kind)}
@@ -5084,7 +4986,6 @@ function AlbumCommunitySection({ albumId, albumTab, setAlbumTab, openAlbum, revi
                   reviewOwnerUsername={r.username}
                   reviewReactions={reviewReactions}
                   onReact={onReact}
-                  onDelete={onDeleteComment}
                 />
               )}
             </div>
