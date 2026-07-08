@@ -2115,6 +2115,10 @@ export default function SoundboardDemo() {
                               onReact={toggleReaction}
                               onDelete={deleteComment}
                             />
+                          )}
+                        </div>
+                      );
+                    })}
                     {!isEveryone && displayItems.length === 0 && (
                       <div className="ui-sans" style={{ color: MUTE, fontSize: 13.5, padding: "20px 0" }}>
                         nothing here yet -- follow people, queue albums, or write a review and this fills in.
