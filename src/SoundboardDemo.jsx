@@ -3781,10 +3781,24 @@ function generateShareCardBlob({ kind, album, username, rating, reviewText, ques
         ctx.fillText(`review by @${(username || "").toLowerCase()}`, W / 2, coverY + coverSize + 330);
       }
 
-      // Wordmark footer — just "spindex" centered at bottom
-      ctx.font = "700 42px Arial, sans-serif";
+      // Wordmark footer — headphone logo in top-left corner
+      const logoSize = 80;
+      const logoPad = 48;
+      ctx.save();
+      ctx.strokeStyle = accentColor;
+      ctx.lineWidth = 8;
+      ctx.lineCap = "round";
+      // Arc (headband)
+      ctx.beginPath();
+      const lx = logoPad + logoSize / 2, ly = logoPad + logoSize / 2;
+      ctx.arc(lx, ly - 8, 34, Math.PI, 0, false);
+      ctx.stroke();
+      // Left ear cup
       ctx.fillStyle = accentColor;
-      ctx.fillText("spindex", W / 2, H - 60);
+      roundRect(ctx, lx - 42, ly + 18, 16, 28, 6); ctx.fill();
+      // Right ear cup
+      roundRect(ctx, lx + 26, ly + 18, 16, 28, 6); ctx.fill();
+      ctx.restore();
 
       canvas.toBlob((blob) => resolve(blob), "image/png");
     }
