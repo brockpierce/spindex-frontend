@@ -3689,7 +3689,7 @@ function AlbumSearchPicker({ onPick, onCancel, placeholder = "search for the alb
         })
         .catch(() => setResults([]))
         .finally(() => setLoading(false));
-    }, 250);
+    }, 500);
     return () => clearTimeout(timer);
   }, [query]);
 
