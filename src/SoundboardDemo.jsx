@@ -1585,6 +1585,7 @@ export default function SoundboardDemo() {
   const [viewedUserReviews, setViewedUserReviews] = useState([]);
   const [viewedUserFavorites, setViewedUserFavorites] = useState([]);
   const [viewedUserQueue, setViewedUserQueue] = useState([]);
+  const [viewedUserListenedCount, setViewedUserListenedCount] = useState(0);
   const [artistAlbums, setArtistAlbums] = useState([]);
   const [artistAliases, setArtistAliases] = useState([]);
   const [artistLoading, setArtistLoading] = useState(false);
@@ -1600,6 +1601,7 @@ export default function SoundboardDemo() {
     setViewedUserReviews([]);
     setViewedUserFavorites([]);
     setViewedUserQueue([]);
+    setViewedUserListenedCount(0);
     setShowAllUserReviews(false);
     setView({ name: "userProfile", username });
     apiFetch(`${BACKEND_URL}/api/users/${username}`)
@@ -1638,6 +1640,7 @@ export default function SoundboardDemo() {
             .then((qData) => {
               if (qData && qData.queue) {
                 setViewedUserQueue(qData.queue);
+                setViewedUserListenedCount(qData.listenedCount || 0);
                 qData.queue.forEach((id) => {
                   if (!fetchedAlbums[id]) {
                     apiFetch(`${BACKEND_URL}/api/albums/${id}`)
@@ -2357,6 +2360,7 @@ export default function SoundboardDemo() {
                       <Stat label="followers" value={user.followerCount || 0} onClick={() => setShowFollowList({ kind: "followers", userId: user.id, username: user.username })} />
                       <Stat label="following" value={user.followingCount || 0} onClick={() => setShowFollowList({ kind: "following", userId: user.id, username: user.username })} />
                       <Stat label="reviews" value={userReviews.length} />
+                      <Stat label="listened" value={viewedUserListenedCount} />
                       <Stat label="avg rating" value={userAvgRating} />
                     </div>
                   )}
@@ -2368,6 +2372,7 @@ export default function SoundboardDemo() {
                   <Stat label="followers" value={user.followerCount || 0} onClick={() => setShowFollowList({ kind: "followers", userId: user.id, username: user.username })} />
                   <Stat label="following" value={user.followingCount || 0} onClick={() => setShowFollowList({ kind: "following", userId: user.id, username: user.username })} />
                   <Stat label="reviews" value={userReviews.length} />
+                  <Stat label="listened" value={viewedUserListenedCount} />
                   <Stat label="avg rating" value={userAvgRating} />
                 </div>
               )}
@@ -2395,8 +2400,7 @@ export default function SoundboardDemo() {
                 <div style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14, textAlign: isMobile ? "center" : "left", fontWeight: 600 }} className="ui-sans">reviews</div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                   {(showAllUserReviews ? userReviews : userReviews.slice(0, 3)).map((r, i) => {
-                    const album = fetchedAlbums[r.albumId] || albumById(r.albumId);
-                    if (!album) return null;
+                    const album = fetchedAlbums[r.albumId] || albumById(r.albumId) || { id: r.albumId, title: "Loading...", artist: "", artistName: "", year: null };
                     return (
                       <div key={i} onClick={() => openAlbum(r.albumId, album)} style={{ display: "flex", gap: 14, cursor: "pointer", position: "relative" }}>
                         <div className="ui-sans" style={{ position: "absolute", top: 0, right: 0, fontSize: 11, color: MUTE }}>{r.date}</div>
