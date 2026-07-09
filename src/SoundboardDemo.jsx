@@ -1584,6 +1584,7 @@ export default function SoundboardDemo() {
   const [viewedUser, setViewedUser] = useState(null);
   const [viewedUserReviews, setViewedUserReviews] = useState([]);
   const [viewedUserFavorites, setViewedUserFavorites] = useState([]);
+  const [viewedUserQueue, setViewedUserQueue] = useState([]);
   const [artistAlbums, setArtistAlbums] = useState([]);
   const [artistAliases, setArtistAliases] = useState([]);
   const [artistLoading, setArtistLoading] = useState(false);
@@ -1598,6 +1599,7 @@ export default function SoundboardDemo() {
     setViewedUser(null);
     setViewedUserReviews([]);
     setViewedUserFavorites([]);
+    setViewedUserQueue([]);
     setShowAllUserReviews(false);
     setView({ name: "userProfile", username });
     apiFetch(`${BACKEND_URL}/api/users/${username}`)
@@ -1626,6 +1628,23 @@ export default function SoundboardDemo() {
                       }
                     })
                     .catch(() => {});
+                });
+              }
+            })
+            .catch(() => {});
+          // Load their queue
+          apiFetch(`${BACKEND_URL}/api/listen-status/user/${data.user.id}`)
+            .then((r) => r.json())
+            .then((qData) => {
+              if (qData && qData.queue) {
+                setViewedUserQueue(qData.queue);
+                qData.queue.forEach((id) => {
+                  if (!fetchedAlbums[id]) {
+                    apiFetch(`${BACKEND_URL}/api/albums/${id}`)
+                      .then((r) => r.json())
+                      .then((d) => { if (d.album) { const a = d.album; setFetchedAlbums((prev) => ({ ...prev, [a.id]: { ...a, artist: a.artistName || '', year: a.releaseYear || null } })); } })
+                      .catch(() => {});
+                  }
                 });
               }
             })
@@ -2407,6 +2426,25 @@ export default function SoundboardDemo() {
                   )}
                 </div>
               </div>
+
+              {/* QUEUED ALBUMS */}
+              {viewedUserQueue.length > 0 && (
+                <div style={{ marginTop: 30 }}>
+                  <div style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14, textAlign: isMobile ? "center" : "left", fontWeight: 600 }}>queued</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))", gap: "16px 12px" }}>
+                    {viewedUserQueue.slice(0, 5).map((id) => {
+                      const album = fetchedAlbums[id] || albumById(id);
+                      if (!album) return null;
+                      return (
+                        <div key={id} onClick={() => openAlbum(id)} className="sb-cover-wrap" style={{ textAlign: "center" }}>
+                          <AlbumCover album={album} size={100} />
+                          <div className="ui-sans" style={{ fontSize: 11, fontWeight: 600, marginTop: 6, maxWidth: 100 }}>{album.title}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           );
         })()}
