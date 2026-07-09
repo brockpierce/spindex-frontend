@@ -952,7 +952,7 @@ export default function SoundboardDemo() {
       text: draftText,
       date: originalDate,
     };
-    const sortByDate = (items) => [...items].sort((a, b) => (a.date < b.date ? 1 : -1));
+    const sortByDate = (items) => [...items].sort((a, b) => { if (a.date !== b.date) return a.date < b.date ? 1 : -1; return a.id < b.id ? 1 : -1; });
     setPublicFeedItems((prev) => sortByDate([feedItem, ...prev.filter((r) => !(r.username === profile.username && r.albumId === albumId))]));
     setRealFeedItems((prev) => sortByDate([feedItem, ...prev.filter((r) => !(r.username === profile.username && r.albumId === albumId))]));
     if (draftRating > 0) setListenStatus((prev) => ({ ...prev, [albumId]: "listened" }));
@@ -2331,7 +2331,7 @@ export default function SoundboardDemo() {
               <div className="ui-sans" style={{ color: MUTE, fontSize: 13 }}>loading...</div>
             </div>
           );
-          const userReviews = [...viewedUserReviews].sort((a, b) => (a.date < b.date ? 1 : -1));
+          const userReviews = [...viewedUserReviews].sort((a, b) => (a.date !== b.date ? (a.date < b.date ? 1 : -1) : (a.id < b.id ? 1 : -1)));
           const userAvgRating = userReviews.length ? (userReviews.reduce((s, r) => s + r.rating, 0) / userReviews.length).toFixed(1) : "--";
           return (
             <div>
