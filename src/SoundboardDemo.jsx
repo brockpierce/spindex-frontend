@@ -4917,12 +4917,22 @@ function Avatar({ username, size = 30 }) {
 
 function ListenedByFriends({ albumId }) {
   const { BLUE, INK, MUTE } = useTheme();
-  const entries = FRIENDS.flatMap((f) => f.reviews.filter((r) => r.albumId === albumId).map((r) => ({ username: f.username, rating: r.rating })));
+  const [entries, setEntries] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+  React.useEffect(() => {
+    if (!albumId) return;
+    apiFetch(BACKEND_URL + "/api/reviews/album/" + albumId)
+      .then((r) => r.json())
+      .then((data) => { if (data.reviews) setEntries(data.reviews.map((r) => ({ username: r.username, rating: r.rating }))); })
+      .catch(() => {}).finally(() => setLoading(false));
+  }, [albumId]);
   return (
-    <div style={{ marginTop: 36, paddingTop: 24, borderTop: `1.5px solid ${INK}` }}>
+    <div style={{ marginTop: 36, paddingTop: 24, borderTop: "1.5px solid " + INK }}>
       <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14 }}>listened by</div>
-      {entries.length === 0 ? (
-        <div className="ui-sans" style={{ fontSize: 13, color: MUTE }}>none of the people you follow have logged this one yet.</div>
+      {loading ? (
+        <div className="ui-sans" style={{ fontSize: 13, color: MUTE }}>loading...</div>
+      ) : entries.length === 0 ? (
+        <div className="ui-sans" style={{ fontSize: 13, color: MUTE }}>no one has logged this one yet.</div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {entries.map((e) => (
