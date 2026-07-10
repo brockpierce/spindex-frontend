@@ -3429,7 +3429,7 @@ export default function SoundboardDemo() {
               <div style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14, textAlign: isMobile ? "center" : "left", fontWeight: 600 }}>recent reviews</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 16, alignItems: isMobile ? "center" : "flex-start" }}>
                 {(() => {
-                  const sorted = [...reviews].sort((a, b) => (a.date < b.date ? 1 : -1));
+                  const sorted = [...reviews].sort((a, b) => (a.date !== b.date ? (a.date < b.date ? 1 : -1) : (a.id < b.id ? 1 : -1)));
                   const visible = showAllOwnReviews ? sorted : sorted.slice(0, 3);
                   return visible.map((r) => {
                   const album = fetchedAlbums[r.albumId] || albumById(r.albumId);
