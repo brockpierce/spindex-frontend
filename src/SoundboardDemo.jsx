@@ -1442,6 +1442,8 @@ export default function SoundboardDemo() {
             albumId: item.albumId,
             rating: item.rating,
             text: item.text || "",
+            mixId: item.mixId || null,
+            mixType: item.mixType || null,
             date: item.date ? new Date(item.date).toISOString().slice(0, 10) : "",
           }));
           setRealFeedItems(items);
@@ -1488,6 +1490,8 @@ export default function SoundboardDemo() {
             albumId: item.albumId,
             rating: item.rating,
             text: item.text || "",
+            mixId: item.mixId || null,
+            mixType: item.mixType || null,
             date: item.date ? new Date(item.date).toISOString().slice(0, 10) : "",
           }));
           setPublicFeedItems(items);
