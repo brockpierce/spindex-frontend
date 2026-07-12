@@ -3002,7 +3002,7 @@ export default function SoundboardDemo() {
             </>)}
 
             {/* SAVED ALBUM MIXES */}
-            <div style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14, textAlign: isMobile ? "center" : "left", fontWeight: 600 }} className="ui-sans">saved album mixes</div>
+            <div style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14, marginTop: 32, textAlign: "left", fontWeight: 600 }} className="ui-sans">saved album mixes</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               {savedAlbumMixes.map((m) => (
                 <div
@@ -3029,7 +3029,7 @@ export default function SoundboardDemo() {
                 </div>
               ))}
               {savedAlbumMixes.length === 0 && (
-                <div className="ui-sans" style={{ color: MUTE, fontSize: 13.5 }}>
+                <div className="ui-sans" style={{ color: MUTE, fontSize: 13.5, textAlign: "left" }}>
                   nothing saved yet -- album mixes you save from other people will show up here.
                 </div>
               )}
