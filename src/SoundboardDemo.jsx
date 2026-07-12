@@ -4377,62 +4377,85 @@ function QuickReviewModal({ onSubmit, onClose }) {
 
 function ShareMixModal({ albumMixes, songMixes, onSubmit, onClose }) {
   const { BLUE, INK, LINE, MUTE, BG } = useTheme();
-  // Song mixes temporarily hidden for beta — force album tab.
   const [tab, setTab] = useState("album");
   const [caption, setCaption] = useState("");
+  const [selectedMix, setSelectedMix] = useState(null);
 
   const mixes = tab === "album" ? albumMixes : songMixes;
 
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-      <div onClick={(e) => e.stopPropagation()} style={{ background: BG, border: `1.5px solid ${INK}`, borderRadius: 10, padding: 24, width: "100%", maxWidth: 420, maxHeight: "85vh", overflowY: "auto" }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: BG, border: "1.5px solid " + INK, borderRadius: 10, padding: 24, width: "100%", maxWidth: 420, maxHeight: "85vh", overflowY: "auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
           <div className="ui-sans" style={{ fontSize: 15, fontWeight: 600 }}>share a mix</div>
           <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: MUTE, padding: 0 }}><X size={16} /></button>
         </div>
 
-        {/* Album/song tab switcher temporarily hidden for beta */}
-        {false && (
-          <div style={{ display: "flex", border: `1.5px solid ${INK}`, borderRadius: 6, overflow: "hidden", marginBottom: 16 }}>
-            <button onClick={() => setTab("album")} style={{ flex: 1, padding: "7px 0", fontFamily: "inherit", fontSize: 12, fontWeight: 500, cursor: "pointer", border: "none", background: tab === "album" ? INK : "transparent", color: tab === "album" ? BG : INK }}>album mixes</button>
-            <button onClick={() => setTab("song")} style={{ flex: 1, padding: "7px 0", fontFamily: "inherit", fontSize: 12, fontWeight: 500, cursor: "pointer", border: "none", borderLeft: `1.5px solid ${INK}`, background: tab === "song" ? INK : "transparent", color: tab === "song" ? BG : INK }}>song mixes</button>
-          </div>
-        )}
-
-        <textarea className="sb-textarea ui-sans" placeholder="add a caption... (optional)" value={caption} onChange={(e) => setCaption(e.target.value)} rows={2} style={{ width: "100%", marginBottom: 12, fontSize: 13 }} />
-        {mixes.length === 0 && (
-          <div className="ui-sans" style={{ fontSize: 13, color: MUTE, padding: "12px 0" }}>
-            no {tab} mixes yet — create one from the mixes tab.
-          </div>
-        )}
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {mixes.map((m) => (
-            <button
-              key={m.id}
-              onClick={() => onSubmit(tab, m.id, caption)}
-              style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", border: `1.5px solid ${LINE}`, borderRadius: 8, background: "none", cursor: "pointer", textAlign: "left", width: "100%" }}
-              onMouseEnter={(e) => e.currentTarget.style.borderColor = BLUE}
-              onMouseLeave={(e) => e.currentTarget.style.borderColor = LINE}
-            >
-              {tab === "song" ? (
-                <SongMixCover mix={m} size={42} />
-              ) : (
-                <div style={{ display: "flex" }}>
-                  {(m.albums || []).slice(0, 3).map((a, i) => (
-                    <div key={a.albumId} style={{ marginLeft: i === 0 ? 0 : -12, zIndex: 3 - i, border: `2px solid ${BG}`, borderRadius: 6 }}>
-                      <AlbumCover album={albumById(a.albumId)} size={34} />
-                    </div>
-                  ))}
-                  {(m.albums || []).length === 0 && <ListMusic size={34} color={LINE} strokeWidth={1.4} />}
-                </div>
-              )}
-              <div className="ui-sans">
-                <div style={{ fontSize: 13.5, fontWeight: 600, color: INK }}>{m.title}</div>
-                <div style={{ fontSize: 11.5, color: MUTE }}>{tab === "song" ? `${(m.tracks || []).length} tracks` : `${(m.albums || []).length} albums`}</div>
+        {/* Step 1: pick a mix */}
+        {!selectedMix ? (
+          <>
+            {mixes.length === 0 && (
+              <div className="ui-sans" style={{ fontSize: 13, color: MUTE, padding: "12px 0" }}>
+                no {tab} mixes yet — create one from the mixes tab.
               </div>
-            </button>
-          ))}
-        </div>
+            )}
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {mixes.map((m) => (
+                <button
+                  key={m.id}
+                  onClick={() => setSelectedMix(m)}
+                  style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", border: "1.5px solid " + LINE, borderRadius: 8, background: "none", cursor: "pointer", textAlign: "left", width: "100%" }}
+                  onMouseEnter={(e) => e.currentTarget.style.borderColor = BLUE}
+                  onMouseLeave={(e) => e.currentTarget.style.borderColor = LINE}
+                >
+                  <div style={{ display: "flex" }}>
+                    {(m.albums || []).slice(0, 3).map((a, i) => (
+                      <div key={a.albumId} style={{ marginLeft: i === 0 ? 0 : -12, zIndex: 3 - i, border: "2px solid " + BG, borderRadius: 6 }}>
+                        <AlbumCover album={albumById(a.albumId)} size={34} />
+                      </div>
+                    ))}
+                    {(m.albums || []).length === 0 && <ListMusic size={34} color={LINE} strokeWidth={1.4} />}
+                  </div>
+                  <div className="ui-sans">
+                    <div style={{ fontSize: 13.5, fontWeight: 600, color: INK }}>{m.title}</div>
+                    <div style={{ fontSize: 11.5, color: MUTE }}>{(m.albums || []).length} albums</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </>
+        ) : (
+          /* Step 2: add caption and post */
+          <>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", border: "1.5px solid " + LINE, borderRadius: 8, marginBottom: 14 }}>
+              <div style={{ display: "flex" }}>
+                {(selectedMix.albums || []).slice(0, 3).map((a, i) => (
+                  <div key={a.albumId} style={{ marginLeft: i === 0 ? 0 : -12, zIndex: 3 - i, border: "2px solid " + BG, borderRadius: 6 }}>
+                    <AlbumCover album={albumById(a.albumId)} size={34} />
+                  </div>
+                ))}
+              </div>
+              <div className="ui-sans" style={{ flex: 1 }}>
+                <div style={{ fontSize: 13.5, fontWeight: 600, color: INK }}>{selectedMix.title}</div>
+                <div style={{ fontSize: 11.5, color: MUTE }}>{(selectedMix.albums || []).length} albums</div>
+              </div>
+              <button onClick={() => setSelectedMix(null)} style={{ background: "none", border: "none", cursor: "pointer", color: MUTE, fontSize: 11, padding: 0 }}>change</button>
+            </div>
+            <textarea
+              className="sb-textarea ui-sans"
+              placeholder="add a caption... (optional)"
+              value={caption}
+              onChange={(e) => setCaption(e.target.value)}
+              rows={3}
+              style={{ width: "100%", marginBottom: 14, fontSize: 13 }}
+              autoFocus
+            />
+            <div style={{ display: "flex", gap: 8 }}>
+              <button className="sb-btn sb-btn-solid" onClick={() => onSubmit(tab, selectedMix.id, caption)}>share to feed</button>
+              <button className="sb-btn" onClick={onClose}>cancel</button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
