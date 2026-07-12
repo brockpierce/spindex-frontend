@@ -1069,6 +1069,29 @@ export default function SoundboardDemo() {
     apiFetch(`${BACKEND_URL}/api/mixes/${mixId}/albums/${albumId}`, { method: "DELETE" }).catch(() => {});
   }
 
+  function reorderAlbumMix(mixId, fromIdx, toIdx) {
+    setAlbumMixes((prev) => prev.map((m) => {
+      if (m.id !== mixId) return m;
+      const albums = [...m.albums];
+      const [moved] = albums.splice(fromIdx, 1);
+      albums.splice(toIdx, 0, moved);
+      return { ...m, albums };
+    }));
+    // Persist new order to backend
+    apiFetch(BACKEND_URL + "/api/mixes/" + mixId + "/reorder", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ albumIds: (() => {
+        const mix = albumMixes.find((m) => m.id === mixId);
+        if (!mix) return [];
+        const albums = [...mix.albums];
+        const [moved] = albums.splice(fromIdx, 1);
+        albums.splice(toIdx, 0, moved);
+        return albums.map((a) => a.albumId);
+      })() }),
+    }).catch(() => {});
+  }
+
   function updateAlbumMixNote(mixId, albumId, note) {
     setAlbumMixes((prev) =>
       prev.map((m) => (m.id === mixId ? { ...m, albums: m.albums.map((a) => (a.albumId === albumId ? { ...a, note } : a)) } : m))
@@ -3109,10 +3132,24 @@ export default function SoundboardDemo() {
               {!isOwn && <div className="ui-sans" style={{ fontSize: 12, color: MUTE, marginTop: 3 }}>by @{mix.owner}</div>}
               {mix.description && <div className="ui-sans" style={{ fontSize: 13.5, color: MUTE, marginTop: 4 }}>{mix.description}</div>}
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: "26px 16px", marginTop: 24 }}>
-                {mix.albums.map((a) => {
+                {mix.albums.map((a, idx) => {
                   const album = fetchedAlbums[a.albumId] || albumById(a.albumId);
                   return (
-                    <div key={a.albumId} style={{ position: "relative" }}>
+                    <div
+                      key={a.albumId}
+                      style={{ position: "relative", cursor: isOwn ? "grab" : "default" }}
+                      draggable={isOwn}
+                      onDragStart={(e) => { e.dataTransfer.setData("fromIdx", idx); e.currentTarget.style.opacity = "0.5"; }}
+                      onDragEnd={(e) => { e.currentTarget.style.opacity = "1"; }}
+                      onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.outline = "2px solid #3d6ef0"; }}
+                      onDragLeave={(e) => { e.currentTarget.style.outline = "none"; }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        e.currentTarget.style.outline = "none";
+                        const fromIdx = parseInt(e.dataTransfer.getData("fromIdx"));
+                        if (fromIdx !== idx) reorderAlbumMix(mix.id, fromIdx, idx);
+                      }}
+                    >
                       <div className="sb-cover-wrap" onClick={() => openAlbum(a.albumId)}>
                         <AlbumCover album={album} size={150} />
                       </div>
@@ -3127,18 +3164,7 @@ export default function SoundboardDemo() {
                       )}
                       <div className="ui-sans" style={{ fontSize: 13, fontWeight: 600, marginTop: 8 }}>{album.title}</div>
                       <div className="ui-sans" style={{ fontSize: 11.5, color: MUTE }}>{album.artist}</div>
-                      {isOwn ? (
-                        <textarea
-                          className="sb-textarea ui-sans"
-                          placeholder="why's it on here? (optional)"
-                          value={a.note}
-                          onChange={(e) => updateAlbumMixNote(mix.id, a.albumId, e.target.value)}
-                          rows={2}
-                          style={{ display: "none" }}
-                        />
-                      ) : (
-                        a.note && <div className="ui-sans" style={{ fontSize: 10.5, color: MUTE, marginTop: 6, fontStyle: "italic", lineHeight: 1.4, wordBreak: "break-word" }}>"{a.note}"</div>
-                      )}
+                      {!isOwn && a.note && <div className="ui-sans" style={{ fontSize: 10.5, color: MUTE, marginTop: 6, fontStyle: "italic", lineHeight: 1.4, wordBreak: "break-word" }}>"{a.note}"</div>}
                     </div>
                   );
                 })}
