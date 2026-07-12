@@ -787,7 +787,7 @@ export default function SoundboardDemo() {
         })
         .catch(() => {});
     };
-    const interval = setInterval(poll, 30000);
+    const interval = setInterval(poll, 300000);
     return () => clearInterval(interval);
   }, [authUser]);
 
