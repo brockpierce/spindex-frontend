@@ -797,6 +797,20 @@ export default function SoundboardDemo() {
   }
 
   useEffect(() => {
+    if (view.name !== "albumMixDetail") return;
+    const mix = [...albumMixes, ...savedAlbumMixes].find((m) => m.id === view.id) || view.mix;
+    if (!mix || !mix.albums) return;
+    mix.albums.forEach((a) => {
+      if (!fetchedAlbums[a.albumId]) {
+        apiFetch(BACKEND_URL + "/api/albums/" + a.albumId)
+          .then((r) => r.json())
+          .then((d) => { if (d.album) { const al = d.album; setFetchedAlbums((prev) => ({ ...prev, [al.id]: { ...al, artist: al.artistName || "", year: al.releaseYear || null } })); } })
+          .catch(() => {});
+      }
+    });
+  }, [view.name, view.id]);
+
+  useEffect(() => {
     if (view.name !== "artist" || !view.artistName) return;
     setArtistLoading(true);
     setArtistAlbums([]);
