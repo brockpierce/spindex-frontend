@@ -2008,7 +2008,7 @@ export default function SoundboardDemo() {
                                 <ReactionBar reactions={reviewReactions[c.id]} onReact={(kind) => toggleReaction(c.id, kind)} currentUsername={profile.username} />
                               </div>
                             )}
-                            {c.id && <ReviewComments reviewId={c.id} comments={reviewComments[c.id] || []} onAdd={addComment} onReply={addReply} currentUsername={profile.username} reviewOwnerUsername={c.username} reviewReactions={reviewReactions} onReact={toggleReaction} onLoadReactions={loadCommentReactions} />}
+                            {c.id && <ReviewComments reviewId={c.id} comments={reviewComments[c.id] || []} onAdd={addComment} onReply={addReply} currentUsername={profile.username} reviewOwnerUsername={c.username} reviewReactions={reviewReactions} onReact={toggleReaction} onLoadReactions={loadCommentReactions} onOpenProfile={openUserProfile} />}
                           </div>
                         );
                       }
@@ -4468,7 +4468,7 @@ function CommentInput({ placeholder, onSubmit, currentUsername, initialValue = "
 }
 
 // Renders a single comment node with its nested replies, recursively
-function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername, reviewReactions = {}, onReact }) {
+function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername, reviewReactions = {}, onReact, onOpenProfile }) {
   const { BLUE, INK, LINE, MUTE } = useTheme();
   const [replying, setReplying] = useState(false);
   const avatarSize = 32;
@@ -4496,7 +4496,7 @@ function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername, r
         <Avatar username={comment.username} size={avatarSize} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <p style={{ margin: 0, fontSize, lineHeight: 1.45, color: "#2a2a2a", fontFamily: "inherit" }}>
-            <span style={{ fontWeight: 700 }}>{comment.username === currentUsername ? "you" : "@" + (comment.username || "").toLowerCase()}</span>
+            <span style={{ fontWeight: 700, cursor: comment.username !== currentUsername ? "pointer" : "default" }} onClick={(e) => { e.stopPropagation(); if (comment.username !== currentUsername && onOpenProfile) onOpenProfile(comment.username); }}>{comment.username === currentUsername ? "you" : "@" + (comment.username || "").toLowerCase()}</span>
             {"  "}
             <CommentText text={comment.text} />
           </p>
@@ -4525,7 +4525,7 @@ function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername, r
 
       {(comment.replies || []).map((reply) => (
         <div key={reply.id} style={{ marginTop: 16 }}>
-          <CommentNode comment={reply} depth={depth + 1} reviewId={reviewId} onReply={onReply} currentUsername={currentUsername} reviewReactions={reviewReactions} onReact={onReact} />
+          <CommentNode comment={reply} depth={depth + 1} reviewId={reviewId} onReply={onReply} currentUsername={currentUsername} reviewReactions={reviewReactions} onReact={onReact} onOpenProfile={onOpenProfile} />
         </div>
       ))}
 
@@ -4552,7 +4552,7 @@ function countAllComments(comments) {
   return comments.reduce((s, c) => s + 1 + countReplies(c), 0);
 }
 
-function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUsername, reviewOwnerUsername, reviewReactions = {}, onReact, onLoadReactions }) {
+function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUsername, reviewOwnerUsername, reviewReactions = {}, onReact, onLoadReactions, onOpenProfile }) {
   const { BLUE, INK, LINE, MUTE, BG } = useTheme();
   const [open, setOpen] = useState(false);
   const total = countAllComments(comments);
@@ -4593,7 +4593,7 @@ function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUserna
           {comments.length > 0 && (
             <div style={{ maxHeight: 360, overflowY: "auto", padding: "20px 16px 6px", display: "flex", flexDirection: "column", gap: 22 }}>
               {comments.map((c) => (
-                <CommentNode key={c.id} comment={c} depth={0} reviewId={reviewId} onReply={onReply} currentUsername={currentUsername} reviewReactions={reviewReactions} onReact={onReact} />
+                <CommentNode key={c.id} comment={c} depth={0} reviewId={reviewId} onReply={onReply} currentUsername={currentUsername} reviewReactions={reviewReactions} onReact={onReact} onOpenProfile={onOpenProfile} />
               ))}
             </div>
           )}
