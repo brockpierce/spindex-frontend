@@ -1986,39 +1986,43 @@ export default function SoundboardDemo() {
                         const allMixes = [...albumMixes, ...savedAlbumMixes, ...songMixes, ...savedSongMixes, ...ALL_USERS.flatMap((u) => [...(u.albumMixes || []), ...(u.songMixes || [])])];
                         const mix = allMixes.find((m) => m.id === c.mixId);
                         if (!mix) return null;
+                        const mixAlbums = (mix.albums || []).slice(0, 4);
+                        const artistNames = [...new Set(mixAlbums.map((a) => { const al = fetchedAlbums[a.albumId] || albumById(a.albumId); return al ? (al.artist || al.artistName) : null; }).filter(Boolean))].slice(0, 3);
                         return (
-                          <div key={i} style={{ border: `1.5px solid ${LINE}`, borderRadius: 8, padding: "14px 16px" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                          <div key={i} style={{ border: "1.5px solid " + LINE, borderRadius: 8, padding: "14px 16px" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
                               <Avatar username={c.username} size={26} />
                               <span className="ui-sans" style={{ fontSize: 13, fontWeight: 600, cursor: "pointer" }} onClick={() => openUserProfile(c.username)}>@{(c.username || "").toLowerCase()}</span>
                               <span className="ui-sans" style={{ fontSize: 11, color: MUTE, marginLeft: "auto" }}>{c.date}</span>
                             </div>
-                            <div className="ui-sans" style={{ fontSize: 11, color: MUTE, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 8 }}>shared a mix</div>
                             <div
                               onClick={() => setView({ name: c.mixType === "song" ? "songMixDetail" : "albumMixDetail", id: mix.id, mix, from: { name: "home" } })}
-                              style={{ display: "flex", gap: 12, alignItems: "center", cursor: "pointer", border: `1.5px solid ${LINE}`, borderRadius: 8, padding: "10px 12px" }}
+                              style={{ display: "flex", gap: 16, alignItems: "center", cursor: "pointer", background: "#f7f8fa", borderRadius: 12, padding: "14px 16px" }}
                             >
-                              {c.mixType === "song" ? <SongMixCover mix={mix} size={48} /> : (
-                                <div style={{ display: "flex" }}>
-                                  {(mix.albums || []).slice(0, 3).map((a, idx) => (
-                                    <div key={a.albumId} style={{ marginLeft: idx === 0 ? 0 : -14, zIndex: 3 - idx, border: `2px solid ${BG}`, borderRadius: 7 }}>
-                                      <AlbumCover album={fetchedAlbums[a.albumId] || albumById(a.albumId)} size={38} />
+                              {c.mixType === "song" ? <SongMixCover mix={mix} size={72} /> : (
+                                <div style={{ position: "relative", width: 80, height: 80, flexShrink: 0 }}>
+                                  {mixAlbums.slice(0, 3).map((a, idx) => (
+                                    <div key={a.albumId} style={{ position: "absolute", left: idx * 10, top: idx * 10, zIndex: 3 - idx, borderRadius: 8, overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,0.15)", width: 56, height: 56 }}>
+                                      <AlbumCover album={fetchedAlbums[a.albumId] || albumById(a.albumId)} size={56} />
                                     </div>
                                   ))}
-                                  {(mix.albums || []).length === 0 && <ListMusic size={38} color={LINE} strokeWidth={1.4} />}
+                                  {mixAlbums.length === 0 && <ListMusic size={54} color={LINE} strokeWidth={1.4} />}
                                 </div>
                               )}
-                              <div className="ui-sans">
-                                <div style={{ fontSize: 13.5, fontWeight: 600 }}>{mix.title}</div>
-                                <div style={{ fontSize: 11.5, color: MUTE }}>{c.mixType === "song" ? `${(mix.tracks || []).length} tracks` : `${(mix.albums || []).length} albums`}</div>
+                              <div className="ui-sans" style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontSize: 11, fontWeight: 700, color: "#d97706", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>mix</div>
+                                <div style={{ fontSize: 15, fontWeight: 700, color: INK, lineHeight: 1.3 }}>{mix.title}</div>
+                                <div style={{ fontSize: 12, color: MUTE, marginTop: 4 }}>
+                                  {artistNames.length > 0 ? artistNames.join(" · ") + " · " : ""}{c.mixType === "song" ? (mix.tracks || []).length + " tracks" : (mix.albums || []).length + " albums"}
+                                </div>
                               </div>
                             </div>
                             {c.id && (
-                              <div style={{ marginTop: 12, paddingTop: 10, paddingBottom: 10, borderTop: `1px solid ${LINE}` }}>
+                              <div style={{ marginTop: 12, paddingTop: 10, borderTop: "1px solid " + LINE }}>
                                 <ReactionBar reactions={reviewReactions[c.id]} onReact={(kind) => toggleReaction(c.id, kind)} currentUsername={profile.username} />
                               </div>
                             )}
-                            {c.id && <ReviewComments reviewId={c.id} comments={reviewComments[c.id] || []} onAdd={addComment} onReply={addReply} currentUsername={profile.username} reviewOwnerUsername={c.username} reviewReactions={reviewReactions} onReact={toggleReaction} onLoadReactions={loadCommentReactions} onOpenProfile={openUserProfile} />}
+                            {c.id && <ReviewComments reviewId={c.id} comments={reviewComments[c.id] || []} onAdd={addComment} onReply={addReply} currentUsername={profile.username} reviewOwnerUsername={c.username} />}
                           </div>
                         );
                       }
@@ -3130,7 +3134,7 @@ export default function SoundboardDemo() {
                           value={a.note}
                           onChange={(e) => updateAlbumMixNote(mix.id, a.albumId, e.target.value)}
                           rows={2}
-                          style={{ width: "100%", marginTop: 6, fontSize: 10.5, padding: "5px 7px", lineHeight: 1.4, resize: "none" }}
+                          style={{ display: "none" }}
                         />
                       ) : (
                         a.note && <div className="ui-sans" style={{ fontSize: 10.5, color: MUTE, marginTop: 6, fontStyle: "italic", lineHeight: 1.4, wordBreak: "break-word" }}>"{a.note}"</div>
