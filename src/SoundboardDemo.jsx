@@ -4950,18 +4950,17 @@ function ListenedByFriends({ albumId }) {
   }, [albumId]);
   return (
     <div style={{ marginTop: 36, paddingTop: 24, borderTop: "1.5px solid " + INK }}>
-      <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14 }}>listened by</div>
+      <div className="ui-sans" style={{ fontSize: 13, fontWeight: 700, color: INK, marginBottom: 14, textAlign: "left", letterSpacing: "0.01em" }}>friends who listened</div>
       {loading ? (
         <div className="ui-sans" style={{ fontSize: 13, color: MUTE }}>loading...</div>
       ) : entries.length === 0 ? (
         <div className="ui-sans" style={{ fontSize: 13, color: MUTE }}>no one has logged this one yet.</div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
           {entries.map((e) => (
-            <div key={e.username} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <Avatar username={e.username} />
-              <span className="ui-sans" style={{ fontSize: 13.5, fontWeight: 500, flex: 1 }}>@{(e.username || "").toLowerCase()}</span>
-              <span style={{ fontSize: 12.5, fontWeight: 600, color: BLUE }}>{e.rating}/10</span>
+            <div key={e.username} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+              <Avatar username={e.username} size={42} />
+              <span className="ui-sans" style={{ fontSize: 12, fontWeight: 700, color: BLUE }}>{e.rating}/10</span>
             </div>
           ))}
         </div>
