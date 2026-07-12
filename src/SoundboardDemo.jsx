@@ -2302,7 +2302,25 @@ export default function SoundboardDemo() {
                   <div
                     key={n.id}
                     style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", borderRadius: 8, background: n.read ? "transparent" : darkMode ? "#1a1f2e" : "#EEF3FF", cursor: "pointer" }}
-                    onClick={() => n.fromUsername && openUserProfile(n.fromUsername)}
+                    onClick={() => {
+                      if (n.type === "follow") {
+                        openUserProfile(n.fromUsername);
+                      } else if (n.reviewId) {
+                        // Find the album from the review ID
+                        const rev = reviews.find((r) => r.id === n.reviewId);
+                        if (rev) {
+                          openAlbum(rev.albumId);
+                        } else {
+                          // Fall back to fetching the review from backend
+                          apiFetch(BACKEND_URL + "/api/reviews/" + n.reviewId)
+                            .then((r) => r.json())
+                            .then((d) => { if (d.review && d.review.albumId) openAlbum(d.review.albumId); })
+                            .catch(() => openUserProfile(n.fromUsername));
+                        }
+                      } else {
+                        openUserProfile(n.fromUsername);
+                      }
+                    }}
                   >
                     <div style={{ width: 34, height: 34, borderRadius: "50%", border: `1.5px solid ${LINE}`, background: BG, display: "flex", alignItems: "center", justifyContent: "center", color: MUTE, flexShrink: 0 }}>
                       {icon}
