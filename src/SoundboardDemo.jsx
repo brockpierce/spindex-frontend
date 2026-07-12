@@ -1447,6 +1447,12 @@ export default function SoundboardDemo() {
           setRealFeedItems(items);
           // Load reactions + comments for each feed item
           loadInteractions(items.map((i) => i.id).filter(Boolean));
+          items.filter((i) => i.itemType === "sharemix" && i.mixId).forEach((i) => {
+            apiFetch(BACKEND_URL + "/api/mixes/" + i.mixId)
+              .then((r) => r.json())
+              .then((d) => { if (d.mix) setAlbumMixes((prev) => prev.find((m) => m.id === d.mix.id) ? prev : [...prev, d.mix]); })
+              .catch(() => {});
+          });
           // Prefetch album data for all feed items so covers show immediately
           const uniqueAlbumIds = [...new Set(items.map((i) => i.albumId).filter(Boolean))];
           uniqueAlbumIds.forEach((id) => {
@@ -2008,7 +2014,7 @@ export default function SoundboardDemo() {
                       if (c.itemType === "sharemix") {
                         const allMixes = [...albumMixes, ...savedAlbumMixes, ...songMixes, ...savedSongMixes, ...ALL_USERS.flatMap((u) => [...(u.albumMixes || []), ...(u.songMixes || [])])];
                         const mix = allMixes.find((m) => m.id === c.mixId);
-                        if (!mix) return null;
+                        if (!mix) return null; // mix not loaded yet
                         const mixAlbums = (mix.albums || []).slice(0, 4);
                         const artistNames = [...new Set(mixAlbums.map((a) => { const al = fetchedAlbums[a.albumId] || albumById(a.albumId); return al ? (al.artist || al.artistName) : null; }).filter(Boolean))].slice(0, 3);
                         return (
@@ -2017,6 +2023,9 @@ export default function SoundboardDemo() {
                               <Avatar username={c.username} size={26} />
                               <span className="ui-sans" style={{ fontSize: 13, fontWeight: 600, cursor: "pointer" }} onClick={() => openUserProfile(c.username)}>@{(c.username || "").toLowerCase()}</span>
                               <span className="ui-sans" style={{ fontSize: 11, color: MUTE, marginLeft: "auto" }}>{c.date}</span>
+                              {c.username === profile.username && (
+                                <button onClick={(e) => { e.stopPropagation(); apiFetch(BACKEND_URL + "/api/mix-shares/" + c.id, { method: "DELETE" }).catch(() => {}); setMixSharePosts((prev) => prev.filter((p) => p.id !== c.id)); setPublicFeedItems((prev) => prev.filter((p) => p.id !== c.id)); }} style={{ background: "transparent", border: "none", padding: 2, cursor: "pointer", color: MUTE, display: "flex", alignItems: "center" }}><X size={14} /></button>
+                              )}
                             </div>
                             <div
                               onClick={() => setView({ name: c.mixType === "song" ? "songMixDetail" : "albumMixDetail", id: mix.id, mix, from: { name: "home" } })}
