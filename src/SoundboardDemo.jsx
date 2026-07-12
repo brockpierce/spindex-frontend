@@ -2413,7 +2413,7 @@ export default function SoundboardDemo() {
                   <ShareButton kind="review" album={album} username={rev.username} rating={rev.rating} reviewText={rev.text} />
                 </div>
               </div>
-              <div style={{ background: "#fafbfc", borderRadius: "0 0 8px 8px", border: "1.5px solid " + LINE, borderTop: "none", padding: "16px 16px 20px" }}>
+              <div style={{ background: "#fafbfc", borderRadius: "0 0 8px 8px", border: "1.5px solid " + LINE, borderTop: "none", padding: "16px 16px 20px", textAlign: "left" }}>
                 <div style={{ maxHeight: "60vh", overflowY: "auto", display: "flex", flexDirection: "column", gap: 22, marginBottom: 16 }}>
                   {(reviewComments[rev.id] || []).length === 0
                     ? <div className="ui-sans" style={{ fontSize: 13, color: MUTE }}>no comments yet.</div>
@@ -2460,7 +2460,7 @@ export default function SoundboardDemo() {
                   <ShareButton kind="review" album={album} username={rev.username} rating={rev.rating} reviewText={rev.text} />
                 </div>
               </div>
-              <div style={{ background: "#fafbfc", borderRadius: "0 0 8px 8px", border: "1.5px solid " + LINE, borderTop: "none", padding: "16px 16px 20px" }}>
+              <div style={{ background: "#fafbfc", borderRadius: "0 0 8px 8px", border: "1.5px solid " + LINE, borderTop: "none", padding: "16px 16px 20px", textAlign: "left" }}>
                 <div style={{ maxHeight: "60vh", overflowY: "auto", display: "flex", flexDirection: "column", gap: 22, marginBottom: 16 }}>
                   {(reviewComments[rev.id] || []).length === 0
                     ? <div className="ui-sans" style={{ fontSize: 13, color: MUTE }}>no comments yet.</div>
