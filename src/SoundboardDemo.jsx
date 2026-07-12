@@ -20,7 +20,7 @@ const BACKEND_URL = "https://spindex-backend.onrender.com";
 // Only this account can edit album-level tags. Non-admin users can view and
 // click tags to filter but not add or remove them. Temporary curation gate
 // until we build a proper moderation flow.
-const ADMIN_USERNAME = "brockpierce";
+const ADMIN_USERNAME = "brock";
 
 // JWT token helpers -- stored in localStorage so it survives page refresh.
 // apiFetch wraps fetch to automatically attach the Authorization header.
@@ -749,7 +749,6 @@ export default function SoundboardDemo() {
                 : n.type === "reaction" ? "reacted to your review"
                 : "",
               reviewId: n.referenceId,
-              rawDate: n.createdAt || "",
               date: n.createdAt ? new Date(n.createdAt).toISOString().slice(0, 10) : "",
               read: n.read,
             }));
@@ -790,6 +789,43 @@ export default function SoundboardDemo() {
     const interval = setInterval(poll, 30000);
     return () => clearInterval(interval);
   }, [authUser]);
+
+  function openArtist(artistName) {
+    if (!artistName) return;
+    setView({ name: "artist", artistName });
+  }
+
+  useEffect(() => {
+    if (view.name !== "artist" || !view.artistName) return;
+    setArtistLoading(true);
+    setArtistAlbums([]);
+    setArtistAliases([]);
+    apiFetch(`${BACKEND_URL}/api/albums/by-artist/${encodeURIComponent(view.artistName)}`)
+      .then((r) => r.json())
+      .then((data) => {
+        const albums = (data.albums || []).map((a) => ({
+          ...a, artist: a.artistName || "", year: a.releaseYear || null,
+        }));
+        setArtistAlbums(albums);
+        setArtistAliases(data.aliases || []);
+        // Fetch each album to trigger lazy cover art loading
+        albums.forEach((a) => {
+          if (fetchedAlbums[a.id]?.coverArtUrl) return; // already have cover
+          apiFetch(`${BACKEND_URL}/api/albums/${a.id}`)
+            .then((r) => r.json())
+            .then((d) => {
+              if (d.album) {
+                const al = d.album;
+                setFetchedAlbums((prev) => ({ ...prev, [al.id]: { ...al, artist: al.artistName || "", year: al.releaseYear || null } }));
+              }
+            })
+            .catch(() => {});
+        });
+      })
+      .catch(() => setArtistAlbums([]))
+      .finally(() => setArtistLoading(false));
+  }, [view.name, view.artistName]);
+
   useEffect(() => {
     apiFetch(`${BACKEND_URL}/api/albums/trending`)
       .then((r) => r.json())
@@ -844,14 +880,14 @@ export default function SoundboardDemo() {
     : trendingAlbums.length > 0 ? trendingAlbums : ALBUMS;
 
 
-  function openAlbum(id, albumObj) {
+  function openAlbum(id, albumObj, from) {
     const existing = reviewFor(id);
     setDraftRating(existing ? existing.rating : 0);
     setDraftText(existing ? existing.text : "");
     setDraftFavTrack(existing ? existing.favTrack || "" : "");
     setDraftLeastFavTrack(existing ? existing.leastFavTrack || "" : "");
     setAlbumTab("reviews");
-    setView({ name: "album", id });
+    setView({ name: "album", id, from: from || null });
     // If we already have the album object (e.g. from search results), cache it immediately
     if (albumObj && !fetchedAlbums[id]) {
       const a = albumObj;
@@ -891,10 +927,12 @@ export default function SoundboardDemo() {
   function saveReview(albumId) {
     const now = nowTimestamp();
     const todayIso = new Date().toISOString().slice(0, 10);
-    // Optimistic update to personal reviews
+    // Optimistic update to personal reviews — preserve original date if updating
+    let originalDate = todayIso;
     setReviews((prev) => {
       const exists = prev.find((r) => r.albumId === albumId);
       if (exists) {
+        originalDate = exists.date || todayIso;
         return prev.map((r) =>
           r.albumId === albumId
             ? { ...r, rating: draftRating, text: draftText, favTrack: draftFavTrack, leastFavTrack: draftLeastFavTrack }
@@ -903,8 +941,8 @@ export default function SoundboardDemo() {
       }
       return [...prev, { id: "r" + Date.now(), albumId, rating: draftRating, text: draftText, favTrack: draftFavTrack, leastFavTrack: draftLeastFavTrack, date: now, username: profile.username }];
     });
-    // Optimistic update to feed caches so the review shows in the "everyone" tab
-    // immediately without needing a page refresh. Dedup by (username, albumId).
+    // Optimistic update to feed caches — use original date so existing reviews
+    // don't jump to the top. Sort after injecting so order is consistent.
     const feedItem = {
       itemType: "review",
       id: "r" + Date.now(),
@@ -912,10 +950,11 @@ export default function SoundboardDemo() {
       albumId,
       rating: draftRating,
       text: draftText,
-      date: todayIso,
+      date: originalDate,
     };
-    setPublicFeedItems((prev) => [feedItem, ...prev.filter((r) => !(r.username === profile.username && r.albumId === albumId))]);
-    setRealFeedItems((prev) => [feedItem, ...prev.filter((r) => !(r.username === profile.username && r.albumId === albumId))]);
+    const sortByDate = (items) => [...items].sort((a, b) => { if (a.date !== b.date) return a.date < b.date ? 1 : -1; return a.id < b.id ? 1 : -1; });
+    setPublicFeedItems((prev) => sortByDate([feedItem, ...prev.filter((r) => !(r.username === profile.username && r.albumId === albumId))]));
+    setRealFeedItems((prev) => sortByDate([feedItem, ...prev.filter((r) => !(r.username === profile.username && r.albumId === albumId))]));
     if (draftRating > 0) setListenStatus((prev) => ({ ...prev, [albumId]: "listened" }));
     flash("Review saved");
     // Persist to backend
@@ -927,15 +966,16 @@ export default function SoundboardDemo() {
       .then((r) => r.json())
       .then((data) => {
         if (data.review) {
-          // Update with real ID from server in both reviews state and feed caches
+          // Update with real ID + real date from server
+          const realDate = data.review.createdAt ? new Date(data.review.createdAt).toISOString().slice(0, 10) : originalDate;
           setReviews((prev) => prev.map((r) =>
-            r.albumId === albumId ? { ...r, id: data.review.id } : r
+            r.albumId === albumId ? { ...r, id: data.review.id, date: realDate } : r
           ));
           setPublicFeedItems((prev) => prev.map((r) =>
-            r.username === profile.username && r.albumId === albumId ? { ...r, id: data.review.id } : r
+            r.username === profile.username && r.albumId === albumId ? { ...r, id: data.review.id, date: realDate } : r
           ));
           setRealFeedItems((prev) => prev.map((r) =>
-            r.username === profile.username && r.albumId === albumId ? { ...r, id: data.review.id } : r
+            r.username === profile.username && r.albumId === albumId ? { ...r, id: data.review.id, date: realDate } : r
           ));
         }
       })
@@ -1140,12 +1180,25 @@ export default function SoundboardDemo() {
       .catch(() => {});
   }
 
+  // Load only reactions for comment/reply IDs — lightweight, no nested comment fetching
+  function loadCommentReactions(commentIds) {
+    commentIds.forEach((cid) => {
+      if (!cid) return;
+      apiFetch(`${BACKEND_URL}/api/interactions/reactions/${cid}`)
+        .then((r) => r.json())
+        .then((rd) => {
+          setReviewReactions((prev) => ({ ...prev, [cid]: { heart: rd.heart || [], frown: rd.frown || [] } }));
+        })
+        .catch(() => {});
+    });
+  }
+
   // Load reactions + comments from backend for a set of review IDs.
   // Called when feed items load, when album community reviews load, etc.
   function loadInteractions(reviewIds) {
     reviewIds.forEach((rid) => {
       if (!rid) return;
-      // Reactions
+      // Reactions for the review
       apiFetch(`${BACKEND_URL}/api/interactions/reactions/${rid}`)
         .then((r) => r.json())
         .then((data) => {
@@ -1154,12 +1207,33 @@ export default function SoundboardDemo() {
           }
         })
         .catch(() => {});
-      // Comments
+      // Comments — then also load reactions for each comment/reply ID
       apiFetch(`${BACKEND_URL}/api/interactions/comments/${rid}`)
         .then((r) => r.json())
         .then((data) => {
           if (data.comments) {
             setReviewComments((prev) => ({ ...prev, [rid]: data.comments }));
+            // Collect all comment + reply IDs recursively
+            function collectIds(comments) {
+              const ids = [];
+              for (const c of comments) {
+                if (c.id) ids.push(c.id);
+                if (c.replies?.length) ids.push(...collectIds(c.replies));
+              }
+              return ids;
+            }
+            const commentIds = collectIds(data.comments);
+            // Load reactions for each comment/reply
+            commentIds.forEach((cid) => {
+              apiFetch(`${BACKEND_URL}/api/interactions/reactions/${cid}`)
+                .then((r) => r.json())
+                .then((rd) => {
+                  if (rd.heart || rd.frown) {
+                    setReviewReactions((prev) => ({ ...prev, [cid]: { heart: rd.heart || [], frown: rd.frown || [] } }));
+                  }
+                })
+                .catch(() => {});
+            });
           }
         })
         .catch(() => {});
@@ -1328,7 +1402,7 @@ export default function SoundboardDemo() {
       .then((data) => {
         if (data.feed) {
           const items = data.feed.map((item) => ({
-            itemType: "review",
+            itemType: item.itemType || "review",
             id: item.id,
             username: item.username,
             albumId: item.albumId,
@@ -1368,7 +1442,7 @@ export default function SoundboardDemo() {
       .then((data) => {
         if (data.feed) {
           const items = data.feed.map((item) => ({
-            itemType: "review",
+            itemType: item.itemType || "review",
             id: item.id,
             username: item.username,
             albumId: item.albumId,
@@ -1510,6 +1584,11 @@ export default function SoundboardDemo() {
   const [viewedUser, setViewedUser] = useState(null);
   const [viewedUserReviews, setViewedUserReviews] = useState([]);
   const [viewedUserFavorites, setViewedUserFavorites] = useState([]);
+  const [viewedUserQueue, setViewedUserQueue] = useState([]);
+  const [viewedUserListenedCount, setViewedUserListenedCount] = useState(0);
+  const [artistAlbums, setArtistAlbums] = useState([]);
+  const [artistAliases, setArtistAliases] = useState([]);
+  const [artistLoading, setArtistLoading] = useState(false);
   const [tagResultAlbums, setTagResultAlbums] = useState([]);
   const [tagResultLoading, setTagResultLoading] = useState(false);
   const [showAllOwnReviews, setShowAllOwnReviews] = useState(false);
@@ -1521,6 +1600,8 @@ export default function SoundboardDemo() {
     setViewedUser(null);
     setViewedUserReviews([]);
     setViewedUserFavorites([]);
+    setViewedUserQueue([]);
+    setViewedUserListenedCount(0);
     setShowAllUserReviews(false);
     setView({ name: "userProfile", username });
     apiFetch(`${BACKEND_URL}/api/users/${username}`)
@@ -1549,6 +1630,24 @@ export default function SoundboardDemo() {
                       }
                     })
                     .catch(() => {});
+                });
+              }
+            })
+            .catch(() => {});
+          // Load their queue
+          apiFetch(`${BACKEND_URL}/api/listen-status/user/${data.user.id}`)
+            .then((r) => r.json())
+            .then((qData) => {
+              if (qData && qData.queue) {
+                setViewedUserQueue(qData.queue);
+                setViewedUserListenedCount(qData.listenedCount || 0);
+                qData.queue.forEach((id) => {
+                  if (!fetchedAlbums[id]) {
+                    apiFetch(`${BACKEND_URL}/api/albums/${id}`)
+                      .then((r) => r.json())
+                      .then((d) => { if (d.album) { const a = d.album; setFetchedAlbums((prev) => ({ ...prev, [a.id]: { ...a, artist: a.artistName || '', year: a.releaseYear || null } })); } })
+                      .catch(() => {});
+                  }
                 });
               }
             })
@@ -1646,6 +1745,8 @@ export default function SoundboardDemo() {
         .sb-input { font-family: inherit; border: 1.5px solid ${LINE}; background: ${BG}; padding: 9px 12px; font-size: 13px; outline: none; color: ${INK}; border-radius: 6px; width: 100%; }
         .sb-input:focus { border-color: ${BLUE}; }
         .sb-textarea { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; border: 1.5px solid ${LINE}; background: ${BG}; padding: 11px 12px; font-size: 13.5px; outline: none; color: ${INK}; width: 100%; border-radius: 6px; resize: vertical; line-height: 1.6; }
+        .sb-comment-bubble { text-align: left !important; }
+        .sb-comment-bubble * { text-align: left !important; }
         .sb-textarea:focus { border-color: ${BLUE}; }
         .sb-nav-item { cursor: pointer; font-size: 12px; letter-spacing: 0.03em; text-transform: uppercase; font-weight: 500; color: ${MUTE}; padding: 6px 0; border-bottom: 2px solid transparent; }
         .sb-nav-item.active { color: ${INK}; border-bottom-color: ${BLUE}; }
@@ -1663,7 +1764,7 @@ export default function SoundboardDemo() {
         </div>
         <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
           <div className={`sb-nav-item ${view.name === "home" ? "active" : ""}`} onClick={() => setView({ name: "home" })}>home</div>
-          <div className={`sb-nav-item ${view.name === "browse" || view.name === "tagResults" ? "active" : ""}`} onClick={() => setView({ name: "browse" })}>browse</div>
+          <div className={`sb-nav-item ${view.name === "browse" || view.name === "tagResults" || view.name === "artist" ? "active" : ""}`} onClick={() => setView({ name: "browse" })}>browse</div>
           <div className={`sb-nav-item ${view.name === "mixes" || view.name === "albumMixDetail" || view.name === "songMixDetail" ? "active" : ""}`} onClick={() => setView({ name: "mixes" })}>mixes</div>
           <div className={`sb-nav-item ${view.name === "profile" ? "active" : ""}`} onClick={() => setView({ name: "profile" })}>profile</div>
           <div
@@ -1874,11 +1975,11 @@ export default function SoundboardDemo() {
                               </div>
                             </div>
                             {c.id && (
-                              <div style={{ marginTop: 12, paddingTop: 10, borderTop: `1px solid ${LINE}` }}>
+                              <div style={{ marginTop: 12, paddingTop: 10, paddingBottom: 10, borderTop: `1px solid ${LINE}` }}>
                                 <ReactionBar reactions={reviewReactions[c.id]} onReact={(kind) => toggleReaction(c.id, kind)} currentUsername={profile.username} />
                               </div>
                             )}
-                            {c.id && <ReviewComments reviewId={c.id} comments={reviewComments[c.id] || []} onAdd={addComment} onReply={addReply} currentUsername={profile.username} reviewOwnerUsername={c.username} />}
+                            {c.id && <ReviewComments reviewId={c.id} comments={reviewComments[c.id] || []} onAdd={addComment} onReply={addReply} currentUsername={profile.username} reviewOwnerUsername={c.username} reviewReactions={reviewReactions} onReact={toggleReaction} onLoadReactions={loadCommentReactions} />}
                           </div>
                         );
                       }
@@ -1899,7 +2000,27 @@ export default function SoundboardDemo() {
                                 </button>
                               )}
                             </div>
-                            <div className="ui-sans" style={{ fontSize: 14, color: INK, lineHeight: 1.6 }}>{c.text}</div>
+                            <div className="ui-sans" style={{ fontSize: 14, color: INK, lineHeight: 1.6, marginBottom: 10, textAlign: "left" }}>{c.text}</div>
+                            {c.id && (
+                              <>
+                                <ReactionBar
+                                  reactions={reviewReactions[c.id] || { heart: [], frown: [] }}
+                                  onReact={(kind) => toggleReaction(c.id, kind)}
+                                  currentUsername={profile.username}
+                                />
+                                <ReviewComments
+                                  reviewId={c.id}
+                                  comments={reviewComments[c.id] || []}
+                                  onAdd={addComment}
+                                  onReply={addReply}
+                                  currentUsername={profile.username}
+                                  reviewOwnerUsername={c.username}
+                                  reviewReactions={reviewReactions}
+                                  onReact={toggleReaction}
+                                  onLoadReactions={loadCommentReactions}
+                                />
+                              </>
+                            )}
                           </div>
                         );
                       }
@@ -1926,7 +2047,7 @@ export default function SoundboardDemo() {
                               </div>
                             </div>
                             {c.id && (
-                              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12, paddingTop: 10, borderTop: `1px solid ${LINE}` }}>
+                              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12, paddingTop: 10, paddingBottom: 10, borderTop: `1px solid ${LINE}` }}>
                                 <ReactionBar
                                   reactions={reviewReactions[c.id]}
                                   onReact={(kind) => toggleReaction(c.id, kind)}
@@ -1943,6 +2064,8 @@ export default function SoundboardDemo() {
                                 onReply={addReply}
                                 currentUsername={profile.username}
                                 reviewOwnerUsername={c.username}
+                                reviewReactions={reviewReactions}
+                                onReact={toggleReaction}
                               />
                             )}
                           </div>
@@ -1972,13 +2095,13 @@ export default function SoundboardDemo() {
                               <div style={{ fontSize: 20, fontWeight: 700, color: BLUE, letterSpacing: "-0.01em", lineHeight: 1.1, textAlign: "left" }}>{c.rating}/10</div>
                               <div style={{ marginTop: 1, textAlign: "left" }}>
                                 <span style={{ fontSize: 14, fontWeight: 700 }}>{album.title}</span>
-                                <span style={{ fontSize: 13, color: MUTE, marginLeft: 6 }}>{album.artist || album.artistName}</span>
+                                <span style={{ fontSize: 13, color: MUTE, marginLeft: 6, cursor: "pointer" }} onClick={(e) => { e.stopPropagation(); openArtist(album.artist || album.artistName); }}>{album.artist || album.artistName}</span>
                               </div>
                               {c.text && <div style={{ fontSize: 13.5, color: INK, marginTop: 3, lineHeight: 1.5, textAlign: "left" }}>{c.text}</div>}
                             </div>
                           </div>
                           {c.id && (
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12, paddingTop: 10, borderTop: `1px solid ${LINE}` }}>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12, paddingTop: 10, paddingBottom: 10, borderTop: `1px solid ${LINE}` }}>
                               <ReactionBar
                                 reactions={reviewReactions[c.id]}
                                 onReact={(kind) => toggleReaction(c.id, kind)}
@@ -1995,6 +2118,8 @@ export default function SoundboardDemo() {
                               onReply={addReply}
                               currentUsername={profile.username}
                               reviewOwnerUsername={c.username}
+                              reviewReactions={reviewReactions}
+                              onReact={toggleReaction}
                             />
                           )}
                         </div>
@@ -2152,117 +2277,66 @@ export default function SoundboardDemo() {
         )}
 
         {/* ---------------- NOTIFICATIONS ---------------- */}
-        {view.name === "notifications" && (() => {
-          const DOT_COLOR = { reaction: "#e11d6f", follow: "#159a5b", comment: "#2563eb", reply: "#d97706" };
-          const NOTIF_TEXT = { reaction: "reacted to your review", follow: "started following you", comment: "commented on your review", reply: "replied to your comment" };
-
-          function relTimeNotif(dateStr) {
-            if (!dateStr) return "";
-            const diff = Date.now() - new Date(dateStr).getTime();
-            const mins = Math.floor(diff / 60000);
-            if (mins < 1) return "just now";
-            if (mins < 60) return mins + "m ago";
-            const hrs = Math.floor(mins / 60);
-            if (hrs < 24) return hrs + "h ago";
-            const days = Math.floor(hrs / 24);
-            if (days < 7) return days + " days ago";
-            const d = new Date(dateStr);
-            return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-          }
-
-          function getGroup(dateStr) {
-            if (!dateStr) return "earlier";
-            const diff = Date.now() - new Date(dateStr).getTime();
-            const days = diff / 86400000;
-            if (days < 1) return "new";
-            if (days < 7) return "week";
-            return "earlier";
-          }
-
-          const grouped = { new: [], week: [], earlier: [] };
-          notifications.forEach((n) => {
-            const g = getGroup(n.rawDate || n.date);
-            grouped[g].push(n);
-          });
-
-          const sections = [
-            { key: "new", label: "New", items: grouped.new },
-            { key: "week", label: "Earlier this week", items: grouped.week },
-            { key: "earlier", label: "Earlier", items: grouped.earlier },
-          ].filter((s) => s.items.length > 0);
-
-          return (
-            <div style={{ margin: "0 -16px", minHeight: "60vh", background: "#eceae5", padding: "32px 16px", display: "flex", justifyContent: "center" }}>
-              <div style={{ width: "100%", maxWidth: 460, background: "#fff", borderRadius: 22, boxShadow: "0 1px 3px rgba(0,0,0,.05), 0 16px 40px rgba(0,0,0,.07)", overflow: "hidden" }}>
-                {/* Header */}
-                <div style={{ padding: "28px 30px 20px" }}>
-                  <div style={{ fontSize: 24, fontWeight: 700, color: "#1a1a18", letterSpacing: "-0.01em", fontFamily: "inherit" }}>notifications</div>
-                  <div style={{ fontSize: 13.5, color: "#9a9a92", marginTop: 4, fontFamily: "inherit" }}>comments, replies & new followers</div>
-                </div>
-
-                {/* List */}
-                <div style={{ padding: "0 12px 10px" }}>
-                  {notifications.length === 0 && (
-                    <div style={{ padding: "20px 18px", fontSize: 14, color: "#9a9a92" }}>nothing yet.</div>
-                  )}
-                  {sections.map((section, si) => (
-                    <div key={section.key}>
-                      <div style={{ padding: si === 0 ? "10px 18px 8px" : "18px 18px 8px", fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase", color: "#a8a8a0", fontWeight: 600 }}>
-                        {section.label}
-                      </div>
-                      {section.items.map((n) => (
-                        <div
-                          key={n.id}
-                          style={{ display: "flex", alignItems: "center", gap: 14, padding: "13px 18px", borderRadius: 13, cursor: "pointer", transition: "background 0.12s ease" }}
-                          onMouseEnter={(e) => e.currentTarget.style.background = "#f5f4f1"}
-                          onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
-                          onClick={() => {
-                            if (n.type === "follow") {
-                              openUserProfile(n.fromUsername);
-                            } else if (n.reviewId) {
-                              const rev = reviews.find((r) => r.id === n.reviewId);
-                              if (rev) {
-                                openAlbum(rev.albumId, fetchedAlbums[rev.albumId]);
-                              } else {
-                                apiFetch(BACKEND_URL + "/api/reviews/" + n.reviewId)
-                                  .then((r) => r.json())
-                                  .then((d) => { if (d.review && d.review.albumId) openAlbum(d.review.albumId); })
-                                  .catch(() => {});
-                              }
-                            }
-                          }}
-                        >
-                          {/* Avatar with type dot */}
-                          <div style={{ position: "relative", flexShrink: 0 }}>
-                            <Avatar username={n.fromUsername} size={42} />
-                            <div style={{ position: "absolute", right: -2, bottom: -2, width: 16, height: 16, borderRadius: "50%", background: DOT_COLOR[n.type] || "#9a9a92", border: "2.5px solid #fff" }} />
-                          </div>
-                          {/* Body */}
-                          <div style={{ flex: 1, minWidth: 0, fontSize: 15, color: "#3a3a34", lineHeight: 1.35 }}>
-                            <span
-                              style={{ fontWeight: 700, color: "#1a1a18", cursor: "pointer" }}
-                              onClick={(e) => { e.stopPropagation(); openUserProfile(n.fromUsername); }}
-                            >
-                              @{(n.fromUsername || "").toLowerCase()}
-                            </span>
-                            {" "}{NOTIF_TEXT[n.type] || n.text}
-                          </div>
-                          {/* Timestamp + unread dot */}
-                          <div style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 9 }}>
-                            {!n.read && section.key === "new" && (
-                              <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#e11d6f", display: "inline-block" }} />
-                            )}
-                            <span style={{ fontSize: 13, color: "#a8a8a0", whiteSpace: "nowrap" }}>{relTimeNotif(n.rawDate || n.date)}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ))}
-                </div>
-              </div>
+        {view.name === "notifications" && (
+          <div>
+            <div className="ui-sans" style={{ fontSize: 20, fontWeight: 600, marginBottom: 4 }}>notifications</div>
+            <div className="ui-sans" style={{ fontSize: 13, color: MUTE, marginBottom: 22 }}>
+              comments, replies, and new followers
             </div>
-          );
-        })()}
+            {notifications.length === 0 && (
+              <div className="ui-sans" style={{ color: MUTE, fontSize: 13.5 }}>nothing yet</div>
+            )}
+            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              {notifications.map((n) => {
+                // Thin outlined SVG icons matching the app's reaction/rating aesthetic
+                const icon = n.type === "follow" ? (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                ) : n.type === "reaction" ? (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                ) : n.type === "reply" ? (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
+                ) : (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                );
+                return (
+                  <div
+                    key={n.id}
+                    style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", borderRadius: 8, background: n.read ? "transparent" : darkMode ? "#1a1f2e" : "#EEF3FF", cursor: "pointer" }}
+                    onClick={() => {
+                      if (n.type === "follow") {
+                        openUserProfile(n.fromUsername);
+                      } else if (n.reviewId) {
+                        // Find the album from the review ID
+                        const rev = reviews.find((r) => r.id === n.reviewId);
+                        if (rev) {
+                          openAlbum(rev.albumId);
+                        } else {
+                          // Fall back to fetching the review from backend
+                          apiFetch(BACKEND_URL + "/api/reviews/" + n.reviewId)
+                            .then((r) => r.json())
+                            .then((d) => { if (d.review && d.review.albumId) openAlbum(d.review.albumId); })
+                            .catch(() => openUserProfile(n.fromUsername));
+                        }
+                      } else {
+                        openUserProfile(n.fromUsername);
+                      }
+                    }}
+                  >
+                    <div style={{ width: 34, height: 34, borderRadius: "50%", border: `1.5px solid ${LINE}`, background: BG, display: "flex", alignItems: "center", justifyContent: "center", color: MUTE, flexShrink: 0 }}>
+                      {icon}
+                    </div>
+                    <div style={{ flex: 1 }} className="ui-sans">
+                      <span style={{ fontWeight: 600 }}>@{(n.fromUsername || "").toLowerCase()}</span>
+                      <span style={{ color: MUTE }}> {n.text}</span>
+                    </div>
+                    <span className="ui-sans" style={{ fontSize: 11, color: MUTE, flexShrink: 0 }}>{n.date}</span>
+                    {!n.read && <div style={{ width: 7, height: 7, borderRadius: "50%", background: BLUE, flexShrink: 0 }} />}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* ---------------- USER PROFILE (someone else's) ---------------- */}
         {view.name === "userProfile" && (() => {
@@ -2275,7 +2349,7 @@ export default function SoundboardDemo() {
               <div className="ui-sans" style={{ color: MUTE, fontSize: 13 }}>loading...</div>
             </div>
           );
-          const userReviews = [...viewedUserReviews].sort((a, b) => (a.date < b.date ? 1 : -1));
+          const userReviews = [...viewedUserReviews].sort((a, b) => (a.date !== b.date ? (a.date < b.date ? 1 : -1) : (a.id < b.id ? 1 : -1)));
           const userAvgRating = userReviews.length ? (userReviews.reduce((s, r) => s + r.rating, 0) / userReviews.length).toFixed(1) : "--";
           return (
             <div>
@@ -2304,6 +2378,7 @@ export default function SoundboardDemo() {
                       <Stat label="followers" value={user.followerCount || 0} onClick={() => setShowFollowList({ kind: "followers", userId: user.id, username: user.username })} />
                       <Stat label="following" value={user.followingCount || 0} onClick={() => setShowFollowList({ kind: "following", userId: user.id, username: user.username })} />
                       <Stat label="reviews" value={userReviews.length} />
+                      <Stat label="listened" value={viewedUserListenedCount} />
                       <Stat label="avg rating" value={userAvgRating} />
                     </div>
                   )}
@@ -2315,6 +2390,7 @@ export default function SoundboardDemo() {
                   <Stat label="followers" value={user.followerCount || 0} onClick={() => setShowFollowList({ kind: "followers", userId: user.id, username: user.username })} />
                   <Stat label="following" value={user.followingCount || 0} onClick={() => setShowFollowList({ kind: "following", userId: user.id, username: user.username })} />
                   <Stat label="reviews" value={userReviews.length} />
+                  <Stat label="listened" value={viewedUserListenedCount} />
                   <Stat label="avg rating" value={userAvgRating} />
                 </div>
               )}
@@ -2342,8 +2418,7 @@ export default function SoundboardDemo() {
                 <div style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14, textAlign: isMobile ? "center" : "left", fontWeight: 600 }} className="ui-sans">reviews</div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                   {(showAllUserReviews ? userReviews : userReviews.slice(0, 3)).map((r, i) => {
-                    const album = fetchedAlbums[r.albumId] || albumById(r.albumId);
-                    if (!album) return null;
+                    const album = fetchedAlbums[r.albumId] || albumById(r.albumId) || { id: r.albumId, title: "Loading...", artist: "", artistName: "", year: null };
                     return (
                       <div key={i} onClick={() => openAlbum(r.albumId, album)} style={{ display: "flex", gap: 14, cursor: "pointer", position: "relative" }}>
                         <div className="ui-sans" style={{ position: "absolute", top: 0, right: 0, fontSize: 11, color: MUTE }}>{r.date}</div>
@@ -2352,7 +2427,7 @@ export default function SoundboardDemo() {
                           <div style={{ fontSize: 20, fontWeight: 700, color: BLUE, letterSpacing: "-0.01em", lineHeight: 1.1, textAlign: "left" }}>{r.rating}/10</div>
                           <div style={{ marginTop: 1, textAlign: "left" }}>
                             <span style={{ fontSize: 14, fontWeight: 700 }}>{album.title}</span>
-                            <span style={{ fontSize: 13, color: MUTE, marginLeft: 6 }}>{album.artist || album.artistName}</span>
+                            <span style={{ fontSize: 13, color: MUTE, marginLeft: 6, cursor: "pointer" }} onClick={(e) => { e.stopPropagation(); openArtist(album.artist || album.artistName); }}>{album.artist || album.artistName}</span>
                           </div>
                           {r.text && <div style={{ fontSize: 13.5, color: INK, marginTop: 6, lineHeight: 1.5, textAlign: "left" }}>{r.text}</div>}
                         </div>
@@ -2373,9 +2448,65 @@ export default function SoundboardDemo() {
                   )}
                 </div>
               </div>
+
+              {/* QUEUED ALBUMS */}
+              {viewedUserQueue.length > 0 && (
+                <div style={{ marginTop: 30 }}>
+                  <div style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14, textAlign: isMobile ? "center" : "left", fontWeight: 600 }}>queued</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))", gap: "16px 12px" }}>
+                    {viewedUserQueue.slice(0, 5).map((id) => {
+                      const album = fetchedAlbums[id] || albumById(id);
+                      if (!album) return null;
+                      return (
+                        <div key={id} onClick={() => openAlbum(id)} className="sb-cover-wrap" style={{ textAlign: "center" }}>
+                          <AlbumCover album={album} size={100} />
+                          <div className="ui-sans" style={{ fontSize: 11, fontWeight: 600, marginTop: 6, maxWidth: 100 }}>{album.title}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           );
         })()}
+
+        {/* ---------------- ARTIST PAGE ---------------- */}
+        {view.name === "artist" && (
+          <div>
+            <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 12.5, marginBottom: 22, cursor: "pointer" }} onClick={() => setView({ name: "browse" })}>
+              <ChevronLeft size={14} /> browse
+            </div>
+            <div style={{ marginBottom: 28 }}>
+              <div className="ui-sans" style={{ fontSize: 28, fontWeight: 700, letterSpacing: "-0.01em", lineHeight: 1.2 }}>{view.artistName}</div>
+              {artistAliases.length > 0 && (
+                <div className="ui-sans" style={{ fontSize: 13, color: MUTE, marginTop: 4 }}>
+                  also known as {artistAliases.join(", ")}
+                </div>
+              )}
+              {!artistLoading && (
+                <div className="ui-sans" style={{ fontSize: 13, color: MUTE, marginTop: 6 }}>
+                  {artistAlbums.length} release{artistAlbums.length !== 1 ? "s" : ""}
+                </div>
+              )}
+            </div>
+            {artistLoading && <div className="ui-sans" style={{ color: MUTE, fontSize: 13 }}>loading...</div>}
+            {!artistLoading && artistAlbums.length === 0 && (
+              <div className="ui-sans" style={{ color: MUTE, fontSize: 13 }}>no albums found</div>
+            )}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: "20px 14px" }}>
+              {artistAlbums.map((album) => (
+                <div key={album.id} onClick={() => openAlbum(album.id, album, { name: "artist", artistName: view.artistName })} className="sb-cover-wrap">
+                  <AlbumCover album={fetchedAlbums[album.id] || album} size={140} listened={listenStatus[album.id] === "listened"} />
+                  <div style={{ marginTop: 8 }}>
+                    <div className="ui-sans" style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.3 }}>{album.title}</div>
+                    {album.year && <div className="ui-sans" style={{ fontSize: 11.5, color: MUTE, marginTop: 2 }}>{album.year}</div>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* ---------------- TAG RESULTS ---------------- */}
         {view.name === "tagResults" && (() => {
@@ -2554,7 +2685,7 @@ export default function SoundboardDemo() {
                     </div>
                     <div style={{ marginTop: 9 }}>
                       <div className="ui-sans" style={{ fontSize: 13.5, fontWeight: 600, lineHeight: 1.3, wordBreak: "break-word", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{album.title}</div>
-                      <div className="ui-sans" style={{ fontSize: 12, color: MUTE, marginTop: 2, wordBreak: "break-word", display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{album.artist || album.artistName} · {album.year || album.releaseYear}</div>
+                      <div className="ui-sans" style={{ fontSize: 12, color: MUTE, marginTop: 2, wordBreak: "break-word", display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{album.artist || album.artistName}{(album.year || album.releaseYear) ? ` · ${album.year || album.releaseYear}` : ""}</div>
                     </div>
                   </div>
                 );
@@ -2564,6 +2695,16 @@ export default function SoundboardDemo() {
               <div className="ui-sans" style={{ padding: "40px 0", textAlign: "center", color: MUTE, fontSize: 13 }}>
                 No albums match "{query}". <span style={{ textDecoration: "underline", cursor: "pointer", color: BLUE }} onClick={() => setQuery("")}>Clear search</span>
               </div>
+            )}
+
+            {/* Admin-only: manually add album to database */}
+            {profile.username === ADMIN_USERNAME && !query.trim() && (
+              <AdminAlbumForm
+                onAdded={(album) => {
+                  setFetchedAlbums((prev) => ({ ...prev, [album.id]: album }));
+                  flash("Album added — searchable now");
+                }}
+              />
             )}
           </div>
         )}
@@ -2589,14 +2730,17 @@ export default function SoundboardDemo() {
 
           return (
             <div style={{ maxWidth: "100%", overflowX: "hidden" }}>
-              <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 12.5, marginBottom: 22, cursor: "pointer" }} onClick={() => setView({ name: "browse" })}>
+              <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 12.5, marginBottom: 22, cursor: "pointer" }} onClick={() => setView(view.from || { name: "browse" })}>
                 <ChevronLeft size={14} /> back
               </div>
               <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 16 : 26, alignItems: isMobile ? "center" : "flex-start" }}>
                 <AlbumCover album={album} size={isMobile ? 140 : 160} listened={status === "listened"} />
                 <div style={{ flex: 1, width: "100%", textAlign: isMobile ? "center" : "left" }}>
                   <div className="ui-sans" style={{ fontSize: isMobile ? 20 : 24, fontWeight: 600, lineHeight: 1.2, wordBreak: "break-word" }}>{album.title}</div>
-                  <div className="ui-sans" style={{ fontSize: 14, color: MUTE, marginTop: 4 }}>{album.artist} · {album.year}</div>
+                  <div className="ui-sans" style={{ fontSize: 14, color: MUTE, marginTop: 4 }}>
+                    <span style={{ cursor: "pointer", textDecoration: "underline" }} onClick={() => openArtist(album.artist || album.artistName)}>{album.artist || album.artistName}</span>
+                    {album.year ? ` · ${album.year}` : ""}
+                  </div>
 
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 16, justifyContent: isMobile ? "center" : "flex-start" }}>
                     <button
@@ -3303,7 +3447,7 @@ export default function SoundboardDemo() {
               <div style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14, textAlign: isMobile ? "center" : "left", fontWeight: 600 }}>recent reviews</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 16, alignItems: isMobile ? "center" : "flex-start" }}>
                 {(() => {
-                  const sorted = [...reviews].sort((a, b) => (a.date < b.date ? 1 : -1));
+                  const sorted = [...reviews].sort((a, b) => (a.date !== b.date ? (a.date < b.date ? 1 : -1) : (a.id < b.id ? 1 : -1)));
                   const visible = showAllOwnReviews ? sorted : sorted.slice(0, 3);
                   return visible.map((r) => {
                   const album = fetchedAlbums[r.albumId] || albumById(r.albumId);
@@ -3326,7 +3470,7 @@ export default function SoundboardDemo() {
                         <div style={{ fontSize: 20, fontWeight: 700, color: BLUE, letterSpacing: "-0.01em", lineHeight: 1.1, textAlign: "left" }}>{r.rating}/10</div>
                         <div style={{ marginTop: 1, textAlign: "left" }}>
                           <span style={{ fontSize: 14, fontWeight: 700 }}>{album.title}</span>
-                          <span style={{ fontSize: 13, color: MUTE, marginLeft: 6 }}>{album.artist || album.artistName}</span>
+                          <span style={{ fontSize: 13, color: MUTE, marginLeft: 6, cursor: "pointer" }} onClick={(e) => { e.stopPropagation(); openArtist(album.artist || album.artistName); }}>{album.artist || album.artistName}</span>
                         </div>
                         {r.text && <div style={{ fontSize: 13.5, color: INK, marginTop: 6, lineHeight: 1.5, textAlign: "left" }}>{r.text}</div>}
                         {(r.favTrack || r.leastFavTrack) && (
@@ -3563,7 +3707,7 @@ function AlbumSearchPicker({ onPick, onCancel, placeholder = "search for the alb
         })
         .catch(() => setResults([]))
         .finally(() => setLoading(false));
-    }, 250);
+    }, 500);
     return () => clearTimeout(timer);
   }, [query]);
 
@@ -3612,9 +3756,8 @@ function AlbumSearchPicker({ onPick, onCancel, placeholder = "search for the alb
 // Question-of-the-day popup: shows today's prompt, lets the person search
 // and pick an album that answers it, confirms the pick, then posts.
 // Draws a shareable image card onto an offscreen canvas and resolves a PNG
-// blob. Mirrors the album-cover placeholder style used everywhere else in
-// the app (solid blue square + headphone mark) since there's no real cover
-// art in this demo -- the real app would draw the actual artwork here.
+// blob. Uses the real album cover art when available, falls back to the
+// headphone placeholder.
 function generateShareCardBlob({ kind, album, username, rating, reviewText, questionText, accentColor }) {
   return new Promise((resolve) => {
     const W = 1080, H = 1350; // 4:5, the safe aspect ratio for both feed and Stories crops
@@ -3623,59 +3766,89 @@ function generateShareCardBlob({ kind, album, username, rating, reviewText, ques
     canvas.height = H;
     const ctx = canvas.getContext("2d");
 
-    // Background
-    ctx.fillStyle = "#FFFFFF";
-    ctx.fillRect(0, 0, W, H);
-
-    // Album cover placeholder block
     const coverSize = 640;
     const coverX = (W - coverSize) / 2;
     const coverY = 180;
     const radius = 36;
-    ctx.fillStyle = accentColor;
-    roundRect(ctx, coverX, coverY, coverSize, coverSize, radius);
-    ctx.fill();
 
-    // Headphone mark, drawn directly since SVG can't be reused on canvas
-    ctx.strokeStyle = "#FFFFFF";
-    ctx.lineWidth = 26;
-    ctx.lineCap = "round";
-    ctx.beginPath();
-    const cx = coverX + coverSize / 2, cy = coverY + coverSize / 2;
-    ctx.arc(cx, cy - 30, 130, Math.PI, 0, false);
-    ctx.stroke();
-    ctx.fillStyle = "#FFFFFF";
-    roundRect(ctx, cx - 160, cy + 40, 60, 110, 28); ctx.fill();
-    roundRect(ctx, cx + 100, cy + 40, 60, 110, 28); ctx.fill();
+    function drawCard() {
+      // Background
+      ctx.fillStyle = "#FFFFFF";
+      ctx.fillRect(0, 0, W, H);
 
-    // Album title / artist
-    ctx.fillStyle = "#0A0A0A";
-    ctx.textAlign = "center";
-    ctx.font = "700 52px Arial, sans-serif";
-    wrapText(ctx, album.title, W / 2, coverY + coverSize + 90, 880, 58);
-    ctx.font = "400 36px Arial, sans-serif";
-    ctx.fillStyle = "#7A7A7A";
-    ctx.fillText(album.artist + (album.year ? ` · ${album.year}` : ""), W / 2, coverY + coverSize + 150);
+      // Album cover block (real image or placeholder)
+      if (album._img) {
+        // Clip to rounded rect then draw image
+        ctx.save();
+        roundRect(ctx, coverX, coverY, coverSize, coverSize, radius);
+        ctx.clip();
+        ctx.drawImage(album._img, coverX, coverY, coverSize, coverSize);
+        ctx.restore();
+      } else {
+        // Placeholder: solid accent square + headphone mark
+        ctx.fillStyle = accentColor;
+        roundRect(ctx, coverX, coverY, coverSize, coverSize, radius);
+        ctx.fill();
+        ctx.strokeStyle = "#FFFFFF";
+        ctx.lineWidth = 26;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        const cx = coverX + coverSize / 2, cy = coverY + coverSize / 2;
+        ctx.arc(cx, cy - 30, 130, Math.PI, 0, false);
+        ctx.stroke();
+        ctx.fillStyle = "#FFFFFF";
+        roundRect(ctx, cx - 160, cy + 40, 60, 110, 28); ctx.fill();
+        roundRect(ctx, cx + 100, cy + 40, 60, 110, 28); ctx.fill();
+      }
 
-    // Rating or question label
-    ctx.font = "700 44px Arial, sans-serif";
-    ctx.fillStyle = accentColor;
-    if (kind === "qotd") {
-      ctx.font = "700 32px Arial, sans-serif";
-      wrapText(ctx, `"${questionText}"`, W / 2, coverY + coverSize + 220, 800, 42);
-    } else {
-      ctx.fillText(`${rating}/10`, W / 2, coverY + coverSize + 225);
+      // Album title / artist
+      ctx.fillStyle = "#0A0A0A";
+      ctx.textAlign = "center";
+      ctx.font = "700 52px Arial, sans-serif";
+      wrapText(ctx, album.title || "Unknown Album", W / 2, coverY + coverSize + 90, 880, 58);
+      ctx.font = "400 36px Arial, sans-serif";
+      ctx.fillStyle = "#7A7A7A";
+      ctx.fillText((album.artist || album.artistName || "") + (album.year || album.releaseYear ? ` · ${album.year || album.releaseYear}` : ""), W / 2, coverY + coverSize + 155);
+
+      // Rating or question label — big and prominent
+      if (kind === "qotd") {
+        ctx.font = "700 32px Arial, sans-serif";
+        ctx.fillStyle = accentColor;
+        wrapText(ctx, `"${questionText}"`, W / 2, coverY + coverSize + 230, 800, 42);
+      } else {
+        ctx.font = "700 96px Arial, sans-serif";
+        ctx.fillStyle = accentColor;
+        ctx.fillText(`${rating}/10`, W / 2, coverY + coverSize + 270);
+        ctx.font = "400 32px Arial, sans-serif";
+        ctx.fillStyle = "#7A7A7A";
+        ctx.fillText(`review by @${(username || "").toLowerCase()}`, W / 2, coverY + coverSize + 330);
+      }
+
+      // Username + wordmark footer
+      ctx.font = "600 34px Arial, sans-serif";
+      ctx.fillStyle = "#0A0A0A";
+      ctx.fillText(`@${(username || "").toLowerCase()}`, W / 2, H - 110);
+      ctx.font = "700 38px Arial, sans-serif";
+      ctx.fillStyle = accentColor;
+      ctx.fillText("spindex", W / 2, H - 55);
+
+      canvas.toBlob((blob) => resolve(blob), "image/png");
     }
 
-    // Username + wordmark footer
-    ctx.font = "600 34px Arial, sans-serif";
-    ctx.fillStyle = "#0A0A0A";
-    ctx.fillText(`@${username}`, W / 2, H - 110);
-    ctx.font = "700 38px Arial, sans-serif";
-    ctx.fillStyle = accentColor;
-    ctx.fillText("spindex", W / 2, H - 55);
+    // Load real cover art if available, then draw
+    const coverUrl = album && album.coverArtUrl && album.coverArtUrl !== "none"
+      ? album.coverArtUrl : null;
 
-    canvas.toBlob((blob) => resolve(blob), "image/png");
+    if (coverUrl) {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => { album._img = img; drawCard(); };
+      img.onerror = () => { album._img = null; drawCard(); };
+      img.src = coverUrl;
+    } else {
+      album._img = null;
+      drawCard();
+    }
   });
 }
 
@@ -3824,6 +3997,109 @@ function QotdModal({ question, onSubmit, onClose }) {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function AdminAlbumForm({ onAdded }) {
+  const { BLUE, INK, LINE, MUTE, BG } = useTheme();
+  const [open, setOpen] = useState(false);
+  const [title, setTitle] = useState("");
+  const [artistName, setArtistName] = useState("");
+  const [year, setYear] = useState("");
+  const [coverFile, setCoverFile] = useState(null);
+  const [coverPreview, setCoverPreview] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  function handleCoverChange(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    setCoverFile(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => setCoverPreview(ev.target.result);
+    reader.readAsDataURL(file);
+  }
+
+  async function handleSubmit() {
+    if (!title.trim() || !artistName.trim()) { setError("Title and artist are required"); return; }
+    setSaving(true);
+    setError("");
+    try {
+      // 1. Create the album
+      const res = await apiFetch(`${BACKEND_URL}/api/albums`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: title.trim(),
+          artistName: artistName.trim(),
+          releaseYear: year ? parseInt(year, 10) : null,
+          releaseType: "Album",
+        }),
+      });
+      const data = await res.json();
+      if (!data.album) { setError(data.error || "Failed to create album"); setSaving(false); return; }
+      const album = { ...data.album, artist: data.album.artistName, year: data.album.releaseYear };
+
+      // 2. Upload cover if provided
+      if (coverFile && data.album.id) {
+        // Upload cover as base64 via a simple PUT endpoint
+        const reader = new FileReader();
+        reader.onload = async (ev) => {
+          try {
+            await apiFetch(`${BACKEND_URL}/api/albums/${data.album.id}/cover`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ coverDataUrl: ev.target.result }),
+            });
+            album.coverArtUrl = ev.target.result;
+          } catch (e) {}
+          onAdded(album);
+          setTitle(""); setArtistName(""); setYear(""); setCoverFile(null); setCoverPreview(null); setOpen(false);
+          setSaving(false);
+        };
+        reader.readAsDataURL(coverFile);
+      } else {
+        onAdded(album);
+        setTitle(""); setArtistName(""); setYear(""); setCoverFile(null); setCoverPreview(null); setOpen(false);
+        setSaving(false);
+      }
+    } catch (e) {
+      setError("Something went wrong"); setSaving(false);
+    }
+  }
+
+  return (
+    <div style={{ marginTop: 40, paddingTop: 28, borderTop: `1px solid ${LINE}` }}>
+      <div className="ui-sans" style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 12 }}>admin — add album to database</div>
+      {!open ? (
+        <button className="sb-btn" onClick={() => setOpen(true)} style={{ fontSize: 12 }}>+ add album manually</button>
+      ) : (
+        <div style={{ maxWidth: 420 }}>
+          {/* Cover upload */}
+          <div style={{ marginBottom: 16, display: "flex", gap: 16, alignItems: "flex-start" }}>
+            <label style={{ cursor: "pointer" }}>
+              <div style={{ width: 80, height: 80, borderRadius: 10, border: `1.5px dashed ${LINE}`, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", background: coverPreview ? "transparent" : "#f5f5f5" }}>
+                {coverPreview
+                  ? <img src={coverPreview} alt="cover" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  : <span style={{ fontSize: 22, color: MUTE }}>+</span>
+                }
+              </div>
+              <input type="file" accept="image/*" onChange={handleCoverChange} style={{ display: "none" }} />
+            </label>
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8 }}>
+              <input className="sb-input ui-sans" placeholder="Album title *" value={title} onChange={(e) => setTitle(e.target.value)} style={{ width: "100%" }} />
+              <input className="sb-input ui-sans" placeholder="Artist name *" value={artistName} onChange={(e) => setArtistName(e.target.value)} style={{ width: "100%" }} />
+              <input className="sb-input ui-sans" placeholder="Year (optional)" value={year} onChange={(e) => setYear(e.target.value)} style={{ width: "100%" }} type="number" min="1900" max="2099" />
+            </div>
+          </div>
+          {error && <div className="ui-sans" style={{ fontSize: 12, color: "red", marginBottom: 8 }}>{error}</div>}
+          <div style={{ display: "flex", gap: 8 }}>
+            <button className="sb-btn sb-btn-solid" onClick={handleSubmit} disabled={saving}>{saving ? "saving..." : "add album"}</button>
+            <button className="sb-btn" onClick={() => { setOpen(false); setError(""); }}>cancel</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -4101,47 +4377,72 @@ function CommentInput({ placeholder, onSubmit, currentUsername, initialValue = "
 }
 
 // Renders a single comment node with its nested replies, recursively
-function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername }) {
+function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername, reviewReactions = {}, onReact }) {
   const { BLUE, INK, LINE, MUTE } = useTheme();
   const [replying, setReplying] = useState(false);
+  const avatarSize = 32;
+  const fontSize = 14;
+
+  function relativeTime(date) {
+    if (!date) return "";
+    const diff = Date.now() - new Date(date).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 60) return mins + "m";
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return hrs + "h";
+    const days = Math.floor(hrs / 24);
+    if (days < 30) return days + "d";
+    const mos = Math.floor(days / 30);
+    if (mos < 12) return mos + "mo";
+    return Math.floor(mos / 12) + "y";
+  }
+
+  const youHearted = ((reviewReactions[comment.id] || {}).heart || []).includes(currentUsername);
 
   return (
-    <div style={{ marginLeft: depth > 0 ? 50 : 0, marginBottom: 14 }}>
+    <div style={{ marginLeft: depth > 0 ? 50 : 0 }}>
       <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-        <Avatar username={comment.username} size={38} />
+        <Avatar username={comment.username} size={avatarSize} />
         <div style={{ flex: 1, minWidth: 0 }}>
-          {/* Chat bubble — squared top-left corner points at avatar */}
-          <div style={{ background: "#ffffff", border: "1px solid #ebedf0", borderRadius: "4px 16px 16px 16px", padding: "12px 16px" }}>
-            <div style={{ fontWeight: 700, fontSize: 15, color: "#1a1a1a", fontFamily: "inherit" }}>
-              {comment.username === currentUsername ? "you" : `@${(comment.username || "").toLowerCase()}`}
-            </div>
-            <div style={{ fontSize: 16, lineHeight: 1.45, color: "#2a2a2a", marginTop: 4, fontFamily: "inherit" }}>
-              <CommentText text={comment.text} />
-            </div>
-          </div>
-          {/* Action row below bubble */}
-          <div style={{ display: "flex", alignItems: "center", gap: 16, margin: "7px 4px 0" }}>
+          <p style={{ margin: 0, fontSize, lineHeight: 1.45, color: "#2a2a2a", fontFamily: "inherit" }}>
+            <span style={{ fontWeight: 700 }}>{comment.username === currentUsername ? "you" : "@" + (comment.username || "").toLowerCase()}</span>
+            {"  "}
+            <CommentText text={comment.text} />
+          </p>
+          <div style={{ display: "flex", alignItems: "center", gap: 14, marginTop: 6, fontSize: 13, color: "#9aa0a6", fontWeight: 600 }}>
+            {comment.date && <span>{relativeTime(comment.date)}</span>}
             <button
               onClick={() => setReplying((r) => !r)}
-              style={{ border: "none", background: "none", padding: 0, cursor: "pointer", fontSize: 13, fontWeight: 600, color: replying ? "#1a1a1a" : "#9aa0a6", fontFamily: "inherit" }}
-              onMouseEnter={(e) => e.currentTarget.style.color = "#1a1a1a"}
-              onMouseLeave={(e) => e.currentTarget.style.color = replying ? "#1a1a1a" : "#9aa0a6"}
+              style={{ border: "none", background: "none", padding: 0, cursor: "pointer", font: "inherit", color: replying ? "#1a1a1a" : "#9aa0a6", fontSize: 13, fontWeight: 600 }}
             >
               {replying ? "cancel" : "Reply"}
             </button>
+            {comment.id && onReact && (
+              <button
+                onClick={() => onReact(comment.id, "heart")}
+                style={{ border: "none", background: "none", padding: 0, cursor: "pointer", display: "flex", alignItems: "center", gap: 4, color: youHearted ? "#E0537A" : "#c9ced4", fontSize: 13 }}
+              >
+                <Heart size={13} fill={youHearted ? "#E0537A" : "none"} strokeWidth={1.8} />
+                {((reviewReactions[comment.id] || {}).heart || []).length > 0 && (
+                  <span style={{ fontSize: 12 }}>{((reviewReactions[comment.id] || {}).heart || []).length}</span>
+                )}
+              </button>
+            )}
           </div>
         </div>
       </div>
 
       {(comment.replies || []).map((reply) => (
-        <CommentNode key={reply.id} comment={reply} depth={depth + 1} reviewId={reviewId} onReply={onReply} currentUsername={currentUsername} />
+        <div key={reply.id} style={{ marginTop: 16 }}>
+          <CommentNode comment={reply} depth={depth + 1} reviewId={reviewId} onReply={onReply} currentUsername={currentUsername} reviewReactions={reviewReactions} onReact={onReact} />
+        </div>
       ))}
 
       {replying && (
         <div style={{ marginTop: 10, marginLeft: 50 }}>
           <CommentInput
-            placeholder={`reply to @${comment.username}...`}
-            initialValue={`@${comment.username} `}
+            placeholder={"reply to @" + comment.username + "..."}
+            initialValue={"@" + comment.username + " "}
             currentUsername={currentUsername}
             onSubmit={(text) => { onReply(reviewId, comment.id, comment.username, text); setReplying(false); }}
           />
@@ -4160,42 +4461,61 @@ function countAllComments(comments) {
   return comments.reduce((s, c) => s + 1 + countReplies(c), 0);
 }
 
-function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUsername, reviewOwnerUsername }) {
+function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUsername, reviewOwnerUsername, reviewReactions = {}, onReact, onLoadReactions }) {
   const { BLUE, INK, LINE, MUTE, BG } = useTheme();
   const [open, setOpen] = useState(false);
   const total = countAllComments(comments);
 
+  function handleToggle() {
+    const next = !open;
+    setOpen(next);
+    if (next && onLoadReactions && comments.length > 0) {
+      function collectIds(cs) {
+        const ids = [];
+        for (const c of cs) {
+          if (c.id) ids.push(c.id);
+          if (c.replies && c.replies.length) ids.push(...collectIds(c.replies));
+        }
+        return ids;
+      }
+      onLoadReactions(collectIds(comments));
+    }
+  }
+
   return (
-    <div style={{ background: "#fafbfc", borderTop: "1px solid #eceef0", padding: "22px 0 28px", marginTop: 10 }}>
-      {/* Collapse header */}
+    <div className="sb-comment-bubble" style={{ background: "#fafbfc", borderTop: "1px solid #eceef0", marginTop: 10, marginLeft: -16, marginRight: -16, marginBottom: -14, borderRadius: "0 0 8px 8px", padding: "0 16px" }}>
       <button
         className="ui-sans"
-        onClick={() => setOpen((o) => !o)}
-        style={{ background: "none", border: "none", cursor: "pointer", fontSize: 15, fontWeight: 600, color: "#6b7280", letterSpacing: "0.01em", padding: 0, display: "flex", alignItems: "center", gap: 8 }}
+        onClick={handleToggle}
+        style={{ display: "flex", alignItems: "center", gap: 8, border: "none", background: "none", padding: "14px 0 0 0", cursor: "pointer", fontSize: 13, fontWeight: 400, color: "#6b7280", letterSpacing: "0.01em", fontFamily: "inherit" }}
         onMouseEnter={(e) => e.currentTarget.style.color = "#1a1a1a"}
         onMouseLeave={(e) => e.currentTarget.style.color = "#6b7280"}
       >
-        {total > 0 ? `${total} comment${total !== 1 ? "s" : ""}` : "add a comment"}
-        {total > 0 && <span style={{ fontSize: 11 }}>{open ? "▲" : "▼"}</span>}
+        {total > 0 ? total + " comment" + (total !== 1 ? "s" : "") : ""}
+        {total > 0 && (
+          <span style={{ fontSize: 11, display: "inline-block", transition: "transform 0.2s", transform: open ? "rotate(180deg)" : "rotate(0deg)" }}>&#9660;</span>
+        )}
       </button>
 
       {(open || total === 0) && (
-        <div style={{ marginTop: 20 }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            {comments.map((c) => (
-              <CommentNode key={c.id} comment={c} depth={0} reviewId={reviewId} onReply={onReply} currentUsername={currentUsername} />
-            ))}
-          </div>
-          {/* Composer */}
-          <div style={{ marginTop: comments.length > 0 ? 22 : 0 }}>
+        <>
+          {comments.length > 0 && (
+            <div style={{ maxHeight: 360, overflowY: "auto", padding: "20px 16px 6px", display: "flex", flexDirection: "column", gap: 22 }}>
+              {comments.map((c) => (
+                <CommentNode key={c.id} comment={c} depth={0} reviewId={reviewId} onReply={onReply} currentUsername={currentUsername} reviewReactions={reviewReactions} onReact={onReact} />
+              ))}
+            </div>
+          )}
+          <div style={{ borderTop: comments.length > 0 ? "1px solid #eceef0" : "none", marginTop: comments.length > 0 ? 14 : 12, paddingBottom: 22, paddingLeft: 16, paddingRight: 16 }}>
             <CommentInput
               placeholder="Write a comment..."
               currentUsername={currentUsername}
               onSubmit={(text) => onAdd(reviewId, text, reviewOwnerUsername)}
             />
           </div>
-        </div>
+        </>
       )}
+      {!open && total > 0 && <div style={{ height: 18 }} />}
     </div>
   );
 }
@@ -4263,7 +4583,7 @@ function NowPlayingBars() {
   );
 }
 
-function ReactionBar({ reactions = { heart: [], frown: [] }, onReact, currentUsername }) {
+function ReactionBar({ reactions = { heart: [], frown: [] }, onReact, currentUsername, inline = false }) {
   const { BLUE, MUTE } = useTheme();
   const heartCount = (reactions.heart || []).length;
   const frownCount = (reactions.frown || []).length;
@@ -4271,7 +4591,7 @@ function ReactionBar({ reactions = { heart: [], frown: [] }, onReact, currentUse
   const youFrowned = (reactions.frown || []).includes(currentUsername);
 
   return (
-    <div style={{ display: "flex", gap: 14, alignItems: "center", marginTop: 8 }}>
+    <div style={{ display: "flex", gap: 20, alignItems: "center", marginTop: inline ? 0 : 10 }}>
       <button
         onClick={() => onReact("heart")}
         className="ui-sans"
@@ -4621,22 +4941,15 @@ function ListenedByFriends({ albumId }) {
   const { BLUE, INK, MUTE } = useTheme();
   const [entries, setEntries] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
-
   React.useEffect(() => {
     if (!albumId) return;
-    apiFetch(`${BACKEND_URL}/api/reviews/album/${albumId}`)
+    apiFetch(BACKEND_URL + "/api/reviews/album/" + albumId)
       .then((r) => r.json())
-      .then((data) => {
-        if (data.reviews) {
-          setEntries(data.reviews.map((r) => ({ username: r.username, rating: r.rating })));
-        }
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+      .then((data) => { if (data.reviews) setEntries(data.reviews.map((r) => ({ username: r.username, rating: r.rating }))); })
+      .catch(() => {}).finally(() => setLoading(false));
   }, [albumId]);
-
   return (
-    <div style={{ marginTop: 36, paddingTop: 24, borderTop: `1.5px solid ${INK}` }}>
+    <div style={{ marginTop: 36, paddingTop: 24, borderTop: "1.5px solid " + INK }}>
       <div className="ui-sans" style={{ fontSize: 13, fontWeight: 700, color: INK, marginBottom: 14, textAlign: "left", letterSpacing: "0.01em" }}>friends who listened</div>
       {loading ? (
         <div className="ui-sans" style={{ fontSize: 13, color: MUTE }}>loading...</div>
@@ -4727,7 +5040,7 @@ function AlbumCommunitySection({ albumId, albumTab, setAlbumTab, openAlbum, revi
                 </div>
               </div>
               {r.id && onReact && (
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12, paddingTop: 10, borderTop: `1px solid ${LINE}` }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12, paddingTop: 10, paddingBottom: 10, borderTop: `1px solid ${LINE}` }}>
                   <ReactionBar
                     reactions={reviewReactions[r.id]}
                     onReact={(kind) => onReact(r.id, kind)}
@@ -4744,6 +5057,8 @@ function AlbumCommunitySection({ albumId, albumTab, setAlbumTab, openAlbum, revi
                   onReply={onAddReply}
                   currentUsername={currentUsername}
                   reviewOwnerUsername={r.username}
+                  reviewReactions={reviewReactions}
+                  onReact={onReact}
                 />
               )}
             </div>
@@ -4784,18 +5099,22 @@ function FollowListModal({ kind, userId, username, onClose, onVisitProfile }) {
         {loading && <div className="ui-sans" style={{ color: MUTE, fontSize: 13 }}>loading...</div>}
         {!loading && users.length === 0 && (
           <div className="ui-sans" style={{ color: MUTE, fontSize: 13 }}>
-            {kind === "followers" ? "no followers yet." : "not following anyone yet."}
+            {kind === "followers" ? "no followers yet" : "not following anyone yet"}
           </div>
         )}
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <div style={{ display: "flex", flexDirection: "column" }}>
           {users.map((u) => (
-            <div key={u.id} onClick={() => onVisitProfile(u.username)} style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}>
-              <div style={{ width: 38, height: 38, flexShrink: 0 }}>
-                <Avatar username={u.username} size={38} />
+            <div key={u.id} onClick={() => onVisitProfile(u.username)}
+              style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer", padding: "10px 4px", borderRadius: 8 }}
+              onMouseEnter={(e) => e.currentTarget.style.background = LINE}
+              onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+            >
+              <div style={{ width: 42, height: 42, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Avatar username={u.username} size={42} />
               </div>
-              <div className="ui-sans" style={{ minWidth: 0 }}>
-                <div style={{ fontSize: 13.5, fontWeight: 600 }}>{u.displayName || u.username}</div>
-                <div style={{ fontSize: 12, color: MUTE }}>@{(u.username || "").toLowerCase()}</div>
+              <div style={{ minWidth: 0, flex: 1, textAlign: "left" }}>
+                <div className="ui-sans" style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.3, color: INK, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textAlign: "left" }}>{u.displayName || u.username}</div>
+                <div className="ui-sans" style={{ fontSize: 12.5, color: MUTE, lineHeight: 1.3, marginTop: 1, textAlign: "left" }}>@{(u.username || "").toLowerCase()}</div>
               </div>
             </div>
           ))}
