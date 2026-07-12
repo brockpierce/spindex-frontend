@@ -2356,11 +2356,7 @@ export default function SoundboardDemo() {
                           onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
                           onClick={() => {
                             if (n.type === "follow") { openUserProfile(n.fromUsername); }
-
-
-
-
-
+                            else if (n.reviewId) { openThread(n.reviewId, { name: "notifications" }); }
                           }}
                         >
                           <div style={{ position: "relative", flexShrink: 0 }}>
