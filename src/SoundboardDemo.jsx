@@ -1155,11 +1155,11 @@ export default function SoundboardDemo() {
       .catch(() => {});
   }
 
-  function submitMixShare(mixType, mixId) {
+  function submitMixShare(mixType, mixId, caption) {
     apiFetch(BACKEND_URL + "/api/mix-shares", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mixId, mixType }),
+      body: JSON.stringify({ mixId, mixType, caption: caption || "" }),
     })
       .then((r) => r.json())
       .then((data) => {
@@ -1215,6 +1215,14 @@ export default function SoundboardDemo() {
   }
 
   // Load only reactions for comment/reply IDs — lightweight, no nested comment fetching
+  function deleteComment(commentId, reviewId) {
+    setReviewComments((prev) => {
+      const rm = (cs) => cs.filter((x) => x.id !== commentId).map((x) => ({...x, replies: rm(x.replies||[])}));
+      return {...prev, [reviewId]: rm(prev[reviewId]||[])};
+    });
+    apiFetch(BACKEND_URL + "/api/interactions/comments/" + commentId, {method:"DELETE"}).catch(()=>{});
+  }
+
   function loadCommentReactions(commentIds) {
     commentIds.forEach((cid) => {
       if (!cid) return;
@@ -2058,7 +2066,7 @@ export default function SoundboardDemo() {
                                 <ReactionBar reactions={reviewReactions[c.id]} onReact={(kind) => toggleReaction(c.id, kind)} currentUsername={profile.username} />
                               </div>
                             )}
-                            {c.id && <ReviewComments reviewId={c.id} comments={reviewComments[c.id] || []} onAdd={addComment} onReply={addReply} currentUsername={profile.username} reviewOwnerUsername={c.username} />}
+                            {c.id && <ReviewComments reviewId={c.id} comments={reviewComments[c.id] || []} onAdd={addComment} onReply={addReply} currentUsername={profile.username} reviewOwnerUsername={c.username} onDelete={deleteComment} onLoadReactions={loadCommentReactions} />}
                           </div>
                         );
                       }
@@ -4371,6 +4379,7 @@ function ShareMixModal({ albumMixes, songMixes, onSubmit, onClose }) {
   const { BLUE, INK, LINE, MUTE, BG } = useTheme();
   // Song mixes temporarily hidden for beta — force album tab.
   const [tab, setTab] = useState("album");
+  const [caption, setCaption] = useState("");
 
   const mixes = tab === "album" ? albumMixes : songMixes;
 
@@ -4390,6 +4399,7 @@ function ShareMixModal({ albumMixes, songMixes, onSubmit, onClose }) {
           </div>
         )}
 
+        <textarea className="sb-textarea ui-sans" placeholder="add a caption... (optional)" value={caption} onChange={(e) => setCaption(e.target.value)} rows={2} style={{ width: "100%", marginBottom: 12, fontSize: 13 }} />
         {mixes.length === 0 && (
           <div className="ui-sans" style={{ fontSize: 13, color: MUTE, padding: "12px 0" }}>
             no {tab} mixes yet — create one from the mixes tab.
@@ -4399,7 +4409,7 @@ function ShareMixModal({ albumMixes, songMixes, onSubmit, onClose }) {
           {mixes.map((m) => (
             <button
               key={m.id}
-              onClick={() => onSubmit(tab, m.id)}
+              onClick={() => onSubmit(tab, m.id, caption)}
               style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", border: `1.5px solid ${LINE}`, borderRadius: 8, background: "none", cursor: "pointer", textAlign: "left", width: "100%" }}
               onMouseEnter={(e) => e.currentTarget.style.borderColor = BLUE}
               onMouseLeave={(e) => e.currentTarget.style.borderColor = LINE}
