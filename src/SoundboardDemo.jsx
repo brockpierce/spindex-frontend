@@ -749,6 +749,7 @@ export default function SoundboardDemo() {
                 : n.type === "reaction" ? "reacted to your review"
                 : "",
               reviewId: n.referenceId,
+              rawDate: n.createdAt || "",
               date: n.createdAt ? new Date(n.createdAt).toISOString().slice(0, 10) : "",
               read: n.read,
             }));
@@ -2277,66 +2278,84 @@ export default function SoundboardDemo() {
         )}
 
         {/* ---------------- NOTIFICATIONS ---------------- */}
-        {view.name === "notifications" && (
-          <div>
-            <div className="ui-sans" style={{ fontSize: 20, fontWeight: 600, marginBottom: 4 }}>notifications</div>
-            <div className="ui-sans" style={{ fontSize: 13, color: MUTE, marginBottom: 22 }}>
-              comments, replies, and new followers
-            </div>
-            {notifications.length === 0 && (
-              <div className="ui-sans" style={{ color: MUTE, fontSize: 13.5 }}>nothing yet</div>
-            )}
-            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              {notifications.map((n) => {
-                // Thin outlined SVG icons matching the app's reaction/rating aesthetic
-                const icon = n.type === "follow" ? (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                ) : n.type === "reaction" ? (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                ) : n.type === "reply" ? (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
-                ) : (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                );
-                return (
-                  <div
-                    key={n.id}
-                    style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", borderRadius: 8, background: n.read ? "transparent" : darkMode ? "#1a1f2e" : "#EEF3FF", cursor: "pointer" }}
-                    onClick={() => {
-                      if (n.type === "follow") {
-                        openUserProfile(n.fromUsername);
-                      } else if (n.reviewId) {
-                        // Find the album from the review ID
-                        const rev = reviews.find((r) => r.id === n.reviewId);
-                        if (rev) {
-                          openAlbum(rev.albumId);
-                        } else {
-                          // Fall back to fetching the review from backend
-                          apiFetch(BACKEND_URL + "/api/reviews/" + n.reviewId)
-                            .then((r) => r.json())
-                            .then((d) => { if (d.review && d.review.albumId) openAlbum(d.review.albumId); })
-                            .catch(() => openUserProfile(n.fromUsername));
-                        }
-                      } else {
-                        openUserProfile(n.fromUsername);
-                      }
-                    }}
-                  >
-                    <div style={{ width: 34, height: 34, borderRadius: "50%", border: `1.5px solid ${LINE}`, background: BG, display: "flex", alignItems: "center", justifyContent: "center", color: MUTE, flexShrink: 0 }}>
-                      {icon}
+        {view.name === "notifications" && (() => {
+          const DOT_COLOR = { reaction: "#e11d6f", follow: "#159a5b", comment: "#2563eb", reply: "#d97706" };
+          const NOTIF_TEXT = { reaction: "reacted to your review", follow: "started following you", comment: "commented on your review", reply: "replied to your comment" };
+          function relTimeNotif(dateStr) {
+            if (!dateStr) return "";
+            const diff = Date.now() - new Date(dateStr).getTime();
+            const mins = Math.floor(diff / 60000);
+            if (mins < 1) return "just now";
+            if (mins < 60) return mins + "m ago";
+            const hrs = Math.floor(mins / 60);
+            if (hrs < 24) return hrs + "h ago";
+            const days = Math.floor(hrs / 24);
+            if (days < 7) return days + " days ago";
+            const d = new Date(dateStr);
+            return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+          }
+          function getGroup(dateStr) {
+            if (!dateStr) return "earlier";
+            const diff = Date.now() - new Date(dateStr).getTime();
+            const days = diff / 86400000;
+            if (days < 1) return "new";
+            if (days < 7) return "week";
+            return "earlier";
+          }
+          const grouped = { new: [], week: [], earlier: [] };
+          notifications.forEach((n) => { const g = getGroup(n.rawDate || n.date); grouped[g].push(n); });
+          const sections = [
+            { key: "new", label: "new", items: grouped.new },
+            { key: "week", label: "earlier this week", items: grouped.week },
+            { key: "earlier", label: "earlier", items: grouped.earlier },
+          ].filter((s) => s.items.length > 0);
+          return (
+            <div style={{ margin: "0 -16px", minHeight: "60vh", background: "#eceae5", padding: "32px 16px", display: "flex", justifyContent: "center" }}>
+              <div style={{ width: "100%", maxWidth: 460, background: "#fff", borderRadius: 22, boxShadow: "0 1px 3px rgba(0,0,0,.05), 0 16px 40px rgba(0,0,0,.07)", overflow: "hidden" }}>
+                <div style={{ padding: "28px 30px 20px" }}>
+                  <div style={{ fontSize: 24, fontWeight: 700, color: "#1a1a18", letterSpacing: "-0.01em" }}>notifications</div>
+                  <div style={{ fontSize: 13.5, color: "#9a9a92", marginTop: 4 }}>comments, replies & new followers</div>
+                </div>
+                <div style={{ padding: "0 12px 10px" }}>
+                  {notifications.length === 0 && <div style={{ padding: "20px 18px", fontSize: 14, color: "#9a9a92" }}>nothing yet.</div>}
+                  {sections.map((section, si) => (
+                    <div key={section.key}>
+                      <div style={{ padding: si === 0 ? "10px 18px 8px" : "18px 18px 8px", fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase", color: "#a8a8a0", fontWeight: 600 }}>{section.label}</div>
+                      {section.items.map((n) => (
+                        <div key={n.id}
+                          style={{ display: "flex", alignItems: "center", gap: 14, padding: "13px 18px", borderRadius: 13, cursor: "pointer", transition: "background 0.12s ease" }}
+                          onMouseEnter={(e) => e.currentTarget.style.background = "#f5f4f1"}
+                          onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+                          onClick={() => {
+                            if (n.type === "follow") { openUserProfile(n.fromUsername); }
+                            else if (n.reviewId) {
+                              const rev = reviews.find((r) => r.id === n.reviewId);
+                              if (rev) { openAlbum(rev.albumId, fetchedAlbums[rev.albumId]); }
+                              else { apiFetch(BACKEND_URL + "/api/reviews/" + n.reviewId).then((r) => r.json()).then((d) => { if (d.review && d.review.albumId) openAlbum(d.review.albumId); }).catch(() => {}); }
+                            }
+                          }}
+                        >
+                          <div style={{ position: "relative", flexShrink: 0 }}>
+                            <Avatar username={n.fromUsername} size={42} />
+                            <div style={{ position: "absolute", right: -2, bottom: -2, width: 16, height: 16, borderRadius: "50%", background: DOT_COLOR[n.type] || "#9a9a92", border: "2.5px solid #fff" }} />
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0, fontSize: 15, color: "#3a3a34", lineHeight: 1.35 }}>
+                            <span style={{ fontWeight: 700, color: "#1a1a18", cursor: "pointer" }} onClick={(e) => { e.stopPropagation(); openUserProfile(n.fromUsername); }}>@{(n.fromUsername || "").toLowerCase()}</span>
+                            {" "}{NOTIF_TEXT[n.type] || n.text}
+                          </div>
+                          <div style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 9 }}>
+                            {!n.read && section.key === "new" && <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#e11d6f", display: "inline-block" }} />}
+                            <span style={{ fontSize: 13, color: "#a8a8a0", whiteSpace: "nowrap" }}>{relTimeNotif(n.rawDate || n.date)}</span>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    <div style={{ flex: 1 }} className="ui-sans">
-                      <span style={{ fontWeight: 600 }}>@{(n.fromUsername || "").toLowerCase()}</span>
-                      <span style={{ color: MUTE }}> {n.text}</span>
-                    </div>
-                    <span className="ui-sans" style={{ fontSize: 11, color: MUTE, flexShrink: 0 }}>{n.date}</span>
-                    {!n.read && <div style={{ width: 7, height: 7, borderRadius: "50%", background: BLUE, flexShrink: 0 }} />}
-                  </div>
-                );
-              })}
+                  ))}
+                </div>
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* ---------------- USER PROFILE (someone else's) ---------------- */}
         {view.name === "userProfile" && (() => {
