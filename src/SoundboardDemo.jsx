@@ -1452,6 +1452,7 @@ export default function SoundboardDemo() {
             text: item.text || "",
             mixId: item.mixId || null,
             mixType: item.mixType || null,
+            caption: item.caption || "",
             date: item.date ? new Date(item.date).toISOString().slice(0, 10) : "",
           }));
           setRealFeedItems(items);
@@ -1500,6 +1501,7 @@ export default function SoundboardDemo() {
             text: item.text || "",
             mixId: item.mixId || null,
             mixType: item.mixType || null,
+            caption: item.caption || "",
             date: item.date ? new Date(item.date).toISOString().slice(0, 10) : "",
           }));
           setPublicFeedItems(items);
