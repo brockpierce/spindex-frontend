@@ -4165,6 +4165,7 @@ function QuickReviewModal({ onSubmit, onClose }) {
   const [text, setText] = useState("");
   const [favTrack, setFavTrack] = useState("");
   const [leastFavTrack, setLeastFavTrack] = useState("");
+  React.useEffect(() => { const fn = (e) => { if (e.key === "Escape") onClose(); }; window.addEventListener("keydown", fn); return () => window.removeEventListener("keydown", fn); }, [onClose]);
 
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
