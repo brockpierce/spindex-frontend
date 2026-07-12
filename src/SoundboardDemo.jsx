@@ -1133,10 +1133,20 @@ export default function SoundboardDemo() {
   }
 
   function submitMixShare(mixType, mixId) {
-    setMixSharePosts((prev) => [
-      { id: "msp" + Date.now(), username: profile.username, mixType, mixId, date: nowTimestamp() },
-      ...prev,
-    ]);
+    apiFetch(BACKEND_URL + "/api/mix-shares", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mixId, mixType }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.share) {
+          const item = { itemType: "sharemix", id: data.share.id, username: data.share.username, mixId: data.share.mixId, mixType: data.share.mixType, date: nowTimestamp() };
+          setMixSharePosts((prev) => [item, ...prev]);
+          setPublicFeedItems((prev) => [item, ...prev]);
+        }
+      })
+      .catch(() => {});
     setShowShareMixModal(false);
     flash("Mix shared to your feed");
   }
