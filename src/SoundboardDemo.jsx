@@ -2428,53 +2428,6 @@ export default function SoundboardDemo() {
           );
         })()}
 
-        {/* ---------------- THREAD VIEW ---------------- */}
-        {view.name === "thread" && (() => {
-          const rev = threadReview;
-          if (!rev) return <div className="ui-sans" style={{ color: MUTE, fontSize: 13 }}>loading...</div>;
-          const album = fetchedAlbums[rev.albumId] || albumById(rev.albumId) || {};
-          return (
-            <div>
-              <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 12.5, marginBottom: 22, cursor: "pointer" }} onClick={() => setView(view.from || { name: "home" })}>
-                <ChevronLeft size={14} /> back
-              </div>
-              <div style={{ border: "1.5px solid " + LINE, borderRadius: 8, padding: "14px 16px", marginBottom: 4 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-                  <Avatar username={rev.username} size={26} />
-                  <span className="ui-sans" style={{ fontSize: 13, fontWeight: 600, cursor: "pointer" }} onClick={() => openUserProfile(rev.username)}>@{(rev.username || "").toLowerCase()}</span>
-                  <span className="ui-sans" style={{ fontSize: 11, color: MUTE, marginLeft: "auto" }}>{rev.date}</span>
-                </div>
-                <div onClick={() => openAlbum(rev.albumId)} style={{ display: "flex", gap: 14, cursor: "pointer", marginBottom: 12 }}>
-                  <AlbumCover album={album} size={88} listened={listenStatus[rev.albumId] === "listened"} />
-                  <div className="ui-sans" style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
-                    <div style={{ fontSize: 20, fontWeight: 700, color: BLUE, letterSpacing: "-0.01em", lineHeight: 1.1 }}>{rev.rating}/10</div>
-                    <div style={{ marginTop: 1 }}>
-                      <span style={{ fontSize: 14, fontWeight: 700 }}>{album.title}</span>
-                      <span style={{ fontSize: 13, color: MUTE, marginLeft: 6 }}>{album.artist || album.artistName}</span>
-                    </div>
-                    {rev.text && <div style={{ fontSize: 13.5, color: INK, marginTop: 6, lineHeight: 1.5 }}>{rev.text}</div>}
-                  </div>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: 10, borderTop: "1px solid " + LINE }}>
-                  <ReactionBar reactions={reviewReactions[rev.id] || { heart: [], frown: [] }} onReact={(kind) => toggleReaction(rev.id, kind)} currentUsername={profile.username} />
-                  <ShareButton kind="review" album={album} username={rev.username} rating={rev.rating} reviewText={rev.text} />
-                </div>
-              </div>
-              <div style={{ background: "#fafbfc", borderRadius: "0 0 8px 8px", border: "1.5px solid " + LINE, borderTop: "none", padding: "16px 16px 20px", textAlign: "left" }}>
-                <div style={{ maxHeight: "60vh", overflowY: "auto", display: "flex", flexDirection: "column", gap: 22, marginBottom: 16 }}>
-                  {(reviewComments[rev.id] || []).length === 0
-                    ? <div className="ui-sans" style={{ fontSize: 13, color: MUTE }}>no comments yet.</div>
-                    : (reviewComments[rev.id] || []).map((comment) => (
-                        <CommentNode key={comment.id} comment={comment} depth={0} reviewId={rev.id} onReply={addReply} currentUsername={profile.username} reviewReactions={reviewReactions} onReact={toggleReaction} />
-                      ))
-                  }
-                </div>
-                <CommentInput placeholder="Write a comment..." currentUsername={profile.username} onSubmit={(text) => addComment(rev.id, text, rev.username)} />
-              </div>
-            </div>
-          );
-        })()}
-
         {/* ---------------- USER PROFILE (someone else's) ---------------- */}
         {view.name === "userProfile" && (() => {
           const user = viewedUser;
