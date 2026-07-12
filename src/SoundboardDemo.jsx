@@ -2192,8 +2192,8 @@ export default function SoundboardDemo() {
           ].filter((s) => s.items.length > 0);
 
           return (
-            <div style={{ margin: "0 -16px", minHeight: "60vh", background: "transparent", padding: "0 0 32px", display: "flex", justifyContent: "center" }}>
-              <div style={{ width: "100%", maxWidth: 460, background: "#fff", borderRadius: 22, boxShadow: "none", border: "1px solid #e5e5e5", overflow: "hidden" }}>
+            <div style={{ margin: "0 -16px", minHeight: "60vh", background: "#eceae5", padding: "32px 16px", display: "flex", justifyContent: "center" }}>
+              <div style={{ width: "100%", maxWidth: 460, background: "#fff", borderRadius: 22, boxShadow: "0 1px 3px rgba(0,0,0,.05), 0 16px 40px rgba(0,0,0,.07)", overflow: "hidden" }}>
                 {/* Header */}
                 <div style={{ padding: "28px 30px 20px" }}>
                   <div style={{ fontSize: 24, fontWeight: 700, color: "#1a1a18", letterSpacing: "-0.01em", fontFamily: "inherit" }}>notifications</div>
