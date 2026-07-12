@@ -2196,8 +2196,8 @@ export default function SoundboardDemo() {
               <div style={{ width: "100%", maxWidth: 460, background: "#fff", borderRadius: 22, boxShadow: "0 1px 3px rgba(0,0,0,.05), 0 16px 40px rgba(0,0,0,.07)", overflow: "hidden" }}>
                 {/* Header */}
                 <div style={{ padding: "28px 30px 20px" }}>
-                  <div style={{ fontSize: 24, fontWeight: 700, color: "#1a1a18", letterSpacing: "-0.01em", fontFamily: "inherit" }}>Notifications</div>
-                  <div style={{ fontSize: 13.5, color: "#9a9a92", marginTop: 4, fontFamily: "inherit" }}>Comments, replies &amp; new followers</div>
+                  <div style={{ fontSize: 24, fontWeight: 700, color: "#1a1a18", letterSpacing: "-0.01em", fontFamily: "inherit" }}>notifications</div>
+                  <div style={{ fontSize: 13.5, color: "#9a9a92", marginTop: 4, fontFamily: "inherit" }}>comments, replies & new followers</div>
                 </div>
 
                 {/* List */}
