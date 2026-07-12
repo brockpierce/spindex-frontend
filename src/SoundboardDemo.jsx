@@ -2418,7 +2418,7 @@ export default function SoundboardDemo() {
                   {(reviewComments[rev.id] || []).length === 0
                     ? <div className="ui-sans" style={{ fontSize: 13, color: MUTE }}>no comments yet.</div>
                     : (reviewComments[rev.id] || []).map((comment) => (
-                        <CommentNode key={comment.id} comment={comment} depth={0} reviewId={rev.id} onReply={addReply} currentUsername={profile.username} reviewReactions={reviewReactions} onReact={toggleReaction} onDelete={deleteComment} />
+                        <CommentNode key={comment.id} comment={comment} depth={0} reviewId={rev.id} onReply={addReply} currentUsername={profile.username} reviewReactions={reviewReactions} onReact={toggleReaction} />
                       ))
                   }
                 </div>
@@ -2465,7 +2465,7 @@ export default function SoundboardDemo() {
                   {(reviewComments[rev.id] || []).length === 0
                     ? <div className="ui-sans" style={{ fontSize: 13, color: MUTE }}>no comments yet.</div>
                     : (reviewComments[rev.id] || []).map((comment) => (
-                        <CommentNode key={comment.id} comment={comment} depth={0} reviewId={rev.id} onReply={addReply} currentUsername={profile.username} reviewReactions={reviewReactions} onReact={toggleReaction} onDelete={deleteComment} />
+                        <CommentNode key={comment.id} comment={comment} depth={0} reviewId={rev.id} onReply={addReply} currentUsername={profile.username} reviewReactions={reviewReactions} onReact={toggleReaction} />
                       ))
                   }
                 </div>
