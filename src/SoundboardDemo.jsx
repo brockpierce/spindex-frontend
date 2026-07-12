@@ -2931,7 +2931,7 @@ export default function SoundboardDemo() {
           <div>
             {/* YOUR ALBUM MIXES */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 22 }}>
-              <div className="ui-sans" style={{ fontSize: 20, fontWeight: 600 }}>your album mixes</div>
+              <div className="ui-sans" style={{ fontSize: 14, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, textAlign: "left" }}>your album mixes</div>
               <button className="sb-btn" onClick={() => setShowNewMix(showNewMix === "album" ? null : "album")} style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <Plus size={13} /> new album mix
               </button>
