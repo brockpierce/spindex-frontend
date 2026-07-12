@@ -3173,8 +3173,8 @@ export default function SoundboardDemo() {
                         if (fromIdx !== idx) reorderAlbumMix(mix.id, fromIdx, idx);
                       }}
                     >
-                      <div className="sb-cover-wrap" onClick={() => openAlbum(a.albumId)}>
-                        <AlbumCover album={album} size={150} />
+                      <div className="sb-cover-wrap" onClick={() => openAlbum(a.albumId, album, { name: "albumMixDetail", id: mix.id, from: view.from })}>
+                        <AlbumCover album={album} size={150} listened={listenStatus[a.albumId] === "listened"} />
                       </div>
                       {isOwn && (
                         <button
