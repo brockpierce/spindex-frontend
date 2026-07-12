@@ -1992,7 +1992,7 @@ export default function SoundboardDemo() {
                                 <div style={{ display: "flex" }}>
                                   {(mix.albums || []).slice(0, 3).map((a, idx) => (
                                     <div key={a.albumId} style={{ marginLeft: idx === 0 ? 0 : -14, zIndex: 3 - idx, border: `2px solid ${BG}`, borderRadius: 7 }}>
-                                      <AlbumCover album={albumById(a.albumId)} size={38} />
+                                      <AlbumCover album={fetchedAlbums[a.albumId] || albumById(a.albumId)} size={38} />
                                     </div>
                                   ))}
                                   {(mix.albums || []).length === 0 && <ListMusic size={38} color={LINE} strokeWidth={1.4} />}
@@ -2672,7 +2672,7 @@ export default function SoundboardDemo() {
                         <div style={{ display: "flex" }}>
                           {(m.albums || []).slice(0, 3).map((a, i) => (
                             <div key={a.albumId} style={{ marginLeft: i === 0 ? 0 : -16, zIndex: 3 - i, border: `2px solid ${BG}`, borderRadius: 7 }}>
-                              <AlbumCover album={albumById(a.albumId)} size={38} />
+                              <AlbumCover album={fetchedAlbums[a.albumId] || albumById(a.albumId)} size={38} />
                             </div>
                           ))}
                           {(m.albums || []).length === 0 && <ListMusic size={32} color={LINE} strokeWidth={1.4} />}
@@ -2952,7 +2952,7 @@ export default function SoundboardDemo() {
                   <div style={{ display: "flex" }}>
                     {m.albums.slice(0, 3).map((a, i) => (
                       <div key={a.albumId} style={{ marginLeft: i === 0 ? 0 : -20, zIndex: 3 - i, border: `2px solid ${BG}`, borderRadius: 9 }}>
-                        <AlbumCover album={albumById(a.albumId)} size={44} />
+                        <AlbumCover album={fetchedAlbums[a.albumId] || albumById(a.albumId)} size={44} />
                       </div>
                     ))}
                     {m.albums.length === 0 && <ListMusic size={36} color={LINE} strokeWidth={1.4} />}
@@ -3012,7 +3012,7 @@ export default function SoundboardDemo() {
                   <div onClick={() => setView({ name: "albumMixDetail", id: m.id })} style={{ display: "flex", cursor: "pointer" }}>
                     {m.albums.slice(0, 3).map((a, i) => (
                       <div key={a.albumId} style={{ marginLeft: i === 0 ? 0 : -20, zIndex: 3 - i, border: `2px solid ${BG}`, borderRadius: 9 }}>
-                        <AlbumCover album={albumById(a.albumId)} size={44} />
+                        <AlbumCover album={fetchedAlbums[a.albumId] || albumById(a.albumId)} size={44} />
                       </div>
                     ))}
                     {m.albums.length === 0 && <ListMusic size={36} color={LINE} strokeWidth={1.4} />}
@@ -3604,7 +3604,7 @@ export default function SoundboardDemo() {
                       <div style={{ display: "flex" }}>
                         {m.albums.slice(0, 3).map((a, i) => (
                           <div key={a.albumId} style={{ marginLeft: i === 0 ? 0 : -16, zIndex: 3 - i, border: `2px solid ${BG}`, borderRadius: 7 }}>
-                            <AlbumCover album={albumById(a.albumId)} size={38} />
+                            <AlbumCover album={fetchedAlbums[a.albumId] || albumById(a.albumId)} size={38} />
                           </div>
                         ))}
                         {m.albums.length === 0 && <ListMusic size={32} color={LINE} strokeWidth={1.4} />}
