@@ -2645,6 +2645,7 @@ export default function SoundboardDemo() {
                   </div>
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", alignItems: "flex-end", flexShrink: 0, gap: 16 }}>
+                  <button onClick={() => startConversationWith(user.username)} style={{ background: "none", border: "none", cursor: "pointer", color: MUTE, padding: 4, display: "flex", alignItems: "center" }} title="message"><MessageCircle size={18} strokeWidth={1.8} /></button>
                   <button
                     className="sb-btn"
                     style={followState[user.username] ? { background: INK, color: BG, flexShrink: 0 } : { flexShrink: 0 }}
@@ -2652,7 +2653,6 @@ export default function SoundboardDemo() {
                   >
                     {followState[user.username] ? "following" : "follow"}
                   </button>
-                  <button className="sb-btn" style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 5 }} onClick={() => startConversationWith(user.username)}><MessageCircle size={13} /> message</button>
                   {!isMobile && (
                     <div style={{ display: "flex", gap: 32, alignItems: "flex-start", flexShrink: 0, marginRight: 24 }}>
                       <Stat label="followers" value={user.followerCount || 0} onClick={() => setShowFollowList({ kind: "followers", userId: user.id, username: user.username })} />
