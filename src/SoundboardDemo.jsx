@@ -2139,7 +2139,7 @@ export default function SoundboardDemo() {
                                 <ReactionBar reactions={reviewReactions[c.id]} onReact={(kind) => toggleReaction(c.id, kind)} currentUsername={profile.username} />
                               </div>
                             )}
-                            {c.id && <ReviewComments reviewId={c.id} comments={reviewComments[c.id] || []} onAdd={addComment} onReply={addReply} currentUsername={profile.username} reviewOwnerUsername={c.username} onDelete={deleteComment} onLoadReactions={loadCommentReactions} />}
+                            {c.id && <ReviewComments reviewId={c.id} comments={reviewComments[c.id] || []} onAdd={addComment} onReply={addReply} currentUsername={profile.username} reviewOwnerUsername={c.username} onDelete={deleteComment} onLoadReactions={loadCommentReactions} onOpenProfile={openUserProfile} />}
                           </div>
                         );
                       }
@@ -2575,8 +2575,8 @@ export default function SoundboardDemo() {
                   <div key={conv.id} onClick={() => openConversation(conv)} style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 0", borderBottom: "1px solid " + LINE, cursor: "pointer" }}>
                     <Avatar username={other.username} size={48} />
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 600, fontSize: 15, color: INK }}>@{(other.username || "").toLowerCase()}</div>
-                      <div style={{ fontSize: 13.5, color: conv.unread ? INK : MUTE, fontWeight: conv.unread ? 500 : 400, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      <div style={{ fontWeight: 600, fontSize: 15, color: INK, textAlign: "left" }}>{other.displayName || ("@" + (other.username || "").toLowerCase())}</div>
+                      <div style={{ fontSize: 13.5, color: conv.unread ? INK : MUTE, fontWeight: conv.unread ? 500 : 400, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textAlign: "left" }}>
                         {conv.lastMessage ? conv.lastMessage.text : "no messages yet"}
                       </div>
                     </div>
