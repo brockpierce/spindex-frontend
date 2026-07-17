@@ -2315,7 +2315,7 @@ export default function SoundboardDemo() {
 
             {/* ---- NEWS TAB ---- */}
             {homeTab === "news" && (() => {
-              return <NewsTab openAlbum={openAlbum} fetchedAlbums={fetchedAlbums} albumById={albumById} setFetchedAlbums={setFetchedAlbums} isAdmin={profile.username === ADMIN_USERNAME} />;
+              return <NewsTab openAlbum={openAlbum} fetchedAlbums={fetchedAlbums} albumById={albumById} setFetchedAlbums={setFetchedAlbums} isAdmin={profile.username === ADMIN_USERNAME} albumMixes={albumMixes} setView={setView} />;
             })()}
           </div>
         )}
@@ -3882,7 +3882,7 @@ function AddToAlbumMixInline({ album, albumMixes, onAdd }) {
 // for auto-generated playlist art), or the plain headphone mark if the
 // mix has no tracks yet.
 
-function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmin }) {
+function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmin, albumMixes = [], setView }) {
   const { BLUE, INK, LINE, MUTE, BG } = useTheme();
   const [aotd, setAotd] = React.useState(null);
   const [interviews, setInterviews] = React.useState([]);
