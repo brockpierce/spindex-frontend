@@ -2014,9 +2014,7 @@ export default function SoundboardDemo() {
               <div style={{ display: "flex", gap: 0, border: `1.5px solid ${INK}`, borderRadius: 6, overflow: "hidden", flexShrink: 0 }}>
                 <button onClick={() => { setHomeTab("everyone"); if (publicFeedItems.length === 0) loadPublicFeed(); }} style={{ padding: "7px 16px", fontFamily: "inherit", fontSize: 12, fontWeight: 500, cursor: "pointer", border: "none", background: homeTab === "everyone" ? INK : "transparent", color: homeTab === "everyone" ? BG : INK }}>everyone</button>
                 <button onClick={() => setHomeTab("feed")} style={{ padding: "7px 16px", fontFamily: "inherit", fontSize: 12, fontWeight: 500, cursor: "pointer", border: "none", borderLeft: `1.5px solid ${INK}`, background: homeTab === "feed" ? INK : "transparent", color: homeTab === "feed" ? BG : INK }}>feed</button>
-                {false && (
-                  <button onClick={() => setHomeTab("news")} style={{ padding: "7px 16px", fontFamily: "inherit", fontSize: 12, fontWeight: 500, cursor: "pointer", border: "none", borderLeft: `1.5px solid ${INK}`, background: homeTab === "news" ? INK : "transparent", color: homeTab === "news" ? BG : INK }}>news</button>
-                )}
+                <button onClick={() => setHomeTab("news")} style={{ padding: "7px 16px", fontFamily: "inherit", fontSize: 12, fontWeight: 500, cursor: "pointer", border: "none", borderLeft: `1.5px solid ${INK}`, background: homeTab === "news" ? INK : "transparent", color: homeTab === "news" ? BG : INK }}>news</button>
               </div>
               {(homeTab === "feed" || homeTab === "everyone") && (
                 <>
