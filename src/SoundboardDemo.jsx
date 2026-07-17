@@ -2561,20 +2561,11 @@ export default function SoundboardDemo() {
 
         {/* ---------------- LISTENED LIST ---------------- */}
         {view.name === "listenedList" && (() => {
-          const [listenedAlbums, setListenedAlbums] = React.useState([]);
-          React.useEffect(() => {
-            apiFetch(BACKEND_URL + "/api/listen-status/user/" + view.userId)
-              .then((r) => r.json())
-              .then((data) => {
-                const ids = (data.queue || []).concat(data.listened || []);
-                // fetch all listened albums
-                apiFetch(BACKEND_URL + "/api/listen-status/user/" + view.userId + "?status=listened")
-                  .then(() => {}).catch(() => {});
-              }).catch(() => {});
-            // Use fetchedAlbums + listenStatus for own, or fetch from backend
-            const listened = Object.entries(listenStatus).filter(([,s]) => s === "listened").map(([id]) => fetchedAlbums[id] || albumById(id)).filter(Boolean);
-            setListenedAlbums(listened);
-          }, []);
+          // Use local listenStatus for own profile, viewedUserQueue for others
+          const isOwn = view.username === profile.username;
+          const listenedAlbums = isOwn
+            ? Object.entries(listenStatus).filter(([,s]) => s === "listened").map(([id]) => fetchedAlbums[id] || albumById(id)).filter(Boolean)
+            : (view.listenedIds || []).map((id) => fetchedAlbums[id] || albumById(id)).filter(Boolean);
           return (
             <div>
               <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 12.5, marginBottom: 22, cursor: "pointer" }} onClick={() => setView(view.from || { name: "home" })}>
