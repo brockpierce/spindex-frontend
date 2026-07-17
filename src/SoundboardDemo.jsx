@@ -2685,7 +2685,7 @@ export default function SoundboardDemo() {
                 {conversationMessages.length === 0 && <div className="ui-sans" style={{ color: MUTE, fontSize: 13.5, textAlign: "center", padding: "40px 0" }}>say hi!</div>}
                 {conversationMessages.map((msg) => (
                   <div key={msg.id} style={{ display: "flex", justifyContent: msg.isOwn ? "flex-end" : "flex-start" }}>
-                    <div style={{ maxWidth: "72%", padding: "10px 14px", borderRadius: msg.isOwn ? "18px 18px 4px 18px" : "18px 18px 18px 4px", background: msg.isOwn ? BLUE : "#f0f0f0", color: msg.isOwn ? "#fff" : INK, fontSize: 15, lineHeight: 1.4 }}>{msg.text}</div>
+                    <div style={{ maxWidth: "72%", padding: "10px 14px", borderRadius: msg.isOwn ? "18px 18px 4px 18px" : "18px 18px 18px 4px", background: msg.isOwn ? BLUE : "#f0f0f0", color: msg.isOwn ? "#fff" : INK, fontSize: 15, lineHeight: 1.4, textAlign: "left" }}>{msg.text}</div>
                   </div>
                 ))}
               </div>
