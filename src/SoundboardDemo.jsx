@@ -2559,6 +2559,74 @@ export default function SoundboardDemo() {
           );
         })()}
 
+        {/* ---------------- LISTENED LIST ---------------- */}
+        {view.name === "listenedList" && (() => {
+          const [listenedAlbums, setListenedAlbums] = React.useState([]);
+          React.useEffect(() => {
+            apiFetch(BACKEND_URL + "/api/listen-status/user/" + view.userId)
+              .then((r) => r.json())
+              .then((data) => {
+                const ids = (data.queue || []).concat(data.listened || []);
+                // fetch all listened albums
+                apiFetch(BACKEND_URL + "/api/listen-status/user/" + view.userId + "?status=listened")
+                  .then(() => {}).catch(() => {});
+              }).catch(() => {});
+            // Use fetchedAlbums + listenStatus for own, or fetch from backend
+            const listened = Object.entries(listenStatus).filter(([,s]) => s === "listened").map(([id]) => fetchedAlbums[id] || albumById(id)).filter(Boolean);
+            setListenedAlbums(listened);
+          }, []);
+          return (
+            <div>
+              <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 12.5, marginBottom: 22, cursor: "pointer" }} onClick={() => setView(view.from || { name: "home" })}>
+                <ChevronLeft size={14} /> back
+              </div>
+              <div className="ui-sans" style={{ fontSize: 20, fontWeight: 700, marginBottom: 20 }}>@{view.username} listened</div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: "20px 14px" }}>
+                {listenedAlbums.map((album) => (
+                  <div key={album.id} onClick={() => openAlbum(album.id, album)} className="sb-cover-wrap">
+                    <AlbumCover album={album} size={130} listened={true} />
+                    <div className="ui-sans" style={{ fontSize: 12.5, fontWeight: 600, marginTop: 6 }}>{album.title}</div>
+                    <div className="ui-sans" style={{ fontSize: 11, color: MUTE }}>{album.artist || album.artistName}</div>
+                  </div>
+                ))}
+                {listenedAlbums.length === 0 && <div className="ui-sans" style={{ color: MUTE, fontSize: 13 }}>nothing listened yet.</div>}
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* ---------------- REVIEWS LIST ---------------- */}
+        {view.name === "reviewsList" && (() => {
+          const revs = view.reviews || [];
+          return (
+            <div>
+              <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 12.5, marginBottom: 22, cursor: "pointer" }} onClick={() => setView(view.from || { name: "home" })}>
+                <ChevronLeft size={14} /> back
+              </div>
+              <div className="ui-sans" style={{ fontSize: 20, fontWeight: 700, marginBottom: 20 }}>@{view.username} reviews</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                {revs.map((r) => {
+                  const album = fetchedAlbums[r.albumId] || albumById(r.albumId);
+                  if (!album) return null;
+                  return (
+                    <div key={r.id} onClick={() => openAlbum(r.albumId, album)} style={{ display: "flex", gap: 14, cursor: "pointer", border: "1.5px solid " + LINE, borderRadius: 8, padding: "12px 14px" }}>
+                      <AlbumCover album={album} size={72} listened={listenStatus[r.albumId] === "listened"} />
+                      <div className="ui-sans" style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 18, fontWeight: 700, color: BLUE }}>{r.rating}/10</div>
+                        <div style={{ fontSize: 14, fontWeight: 600 }}>{album.title}</div>
+                        <div style={{ fontSize: 12, color: MUTE }}>{album.artist || album.artistName}</div>
+                        {r.text && <div style={{ fontSize: 13, color: INK, marginTop: 6, lineHeight: 1.5 }}>{r.text.slice(0, 120)}{r.text.length > 120 ? "..." : ""}</div>}
+                      </div>
+                      <div style={{ fontSize: 11, color: MUTE, flexShrink: 0 }}>{r.date}</div>
+                    </div>
+                  );
+                })}
+                {revs.length === 0 && <div className="ui-sans" style={{ color: MUTE, fontSize: 13 }}>no reviews yet.</div>}
+              </div>
+            </div>
+          );
+        })()}
+
         {/* ---------------- MESSAGES INBOX ---------------- */}
         {view.name === "messages" && (
           <div>
@@ -2598,8 +2666,10 @@ export default function SoundboardDemo() {
             <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 120px)" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 12, paddingBottom: 16, borderBottom: "1px solid " + LINE, marginBottom: 16 }}>
                 <button onClick={() => { setView({ name: "messages" }); loadConversations(); }} style={{ background: "none", border: "none", cursor: "pointer", color: MUTE, padding: 0, display: "flex" }}><ChevronLeft size={20} /></button>
-                <Avatar username={other && other.username} size={38} />
-                <div style={{ fontWeight: 600, fontSize: 15, color: INK }}>@{(other && other.username || "").toLowerCase()}</div>
+                <div style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: 12 }} onClick={() => other && openUserProfile(other.username)}>
+                  <Avatar username={other && other.username} size={38} />
+                  <div style={{ fontWeight: 600, fontSize: 15, color: INK }}>@{(other && other.username || "").toLowerCase()}</div>
+                </div>
               </div>
               <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8, paddingBottom: 16 }}>
                 {conversationMessages.length === 0 && <div className="ui-sans" style={{ color: MUTE, fontSize: 13.5, textAlign: "center", padding: "40px 0" }}>say hi!</div>}
@@ -2657,8 +2727,8 @@ export default function SoundboardDemo() {
                     <div style={{ display: "flex", gap: 32, alignItems: "flex-start", flexShrink: 0, marginRight: 24 }}>
                       <Stat label="followers" value={user.followerCount || 0} onClick={() => setShowFollowList({ kind: "followers", userId: user.id, username: user.username })} />
                       <Stat label="following" value={user.followingCount || 0} onClick={() => setShowFollowList({ kind: "following", userId: user.id, username: user.username })} />
-                      <Stat label="reviews" value={userReviews.length} />
-                      <Stat label="listened" value={viewedUserListenedCount} />
+                      <Stat label="reviews" value={userReviews.length} onClick={() => setView({ name: "reviewsList", username: user.username, userId: user.id, reviews: userReviews, from: view })} />
+                      <Stat label="listened" value={viewedUserListenedCount} onClick={() => setView({ name: "listenedList", username: user.username, userId: user.id, from: view })} />
                       <Stat label="avg rating" value={userAvgRating} />
                     </div>
                   )}
@@ -3507,7 +3577,7 @@ export default function SoundboardDemo() {
                     <Stat label="followers" value={profileStats.followers} onClick={() => setShowFollowList({ kind: "followers", userId: authUser?.id, username: profile.username })} />
                     <Stat label="following" value={profileStats.following} onClick={() => setShowFollowList({ kind: "following", userId: authUser?.id, username: profile.username })} />
                     <Stat label="listened" value={listenedCount} onClick={() => setView({ name: "albumList", filter: "listened" })} />
-                    <Stat label="reviews" value={reviews.length} />
+                    <Stat label="reviews" value={reviews.length} onClick={() => setView({ name: "reviewsList", username: profile.username, userId: profile.id, reviews: reviews, isOwn: true, from: view })} />
                     <Stat label="avg rating" value={avgRating} />
                   </div>
                 )}
@@ -3649,7 +3719,7 @@ export default function SoundboardDemo() {
                 <Stat label="followers" value={profileStats.followers} onClick={() => setShowFollowList({ kind: "followers", userId: authUser?.id, username: profile.username })} />
                 <Stat label="following" value={profileStats.following} onClick={() => setShowFollowList({ kind: "following", userId: authUser?.id, username: profile.username })} />
                 <Stat label="listened" value={listenedCount} onClick={() => setView({ name: "albumList", filter: "listened" })} />
-                <Stat label="reviews" value={reviews.length} />
+                <Stat label="reviews" value={reviews.length} onClick={() => setView({ name: "reviewsList", username: profile.username, userId: profile.id, reviews: reviews, isOwn: true, from: view })} />
                 <Stat label="avg rating" value={avgRating} />
               </div>
             )}
