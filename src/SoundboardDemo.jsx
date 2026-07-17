@@ -2077,15 +2077,17 @@ export default function SoundboardDemo() {
                               </button>
                             )}
                           </div>
-                          <div onClick={() => openAlbum(c.albumId)} style={{ display: "flex", gap: 14, cursor: "pointer" }}>
-                            <AlbumCover album={album} size={88} />
-                            <div className="ui-sans" style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
-                              <div style={{ fontSize: 20, fontWeight: 700, color: BLUE, letterSpacing: "-0.01em", lineHeight: 1.1, textAlign: "left" }}>{c.rating}/10</div>
-                              <div style={{ marginTop: 1, textAlign: "left" }}>
-                                <span style={{ fontSize: 14, fontWeight: 700 }}>{album.title}</span>
-                                <span style={{ fontSize: 13, color: MUTE, marginLeft: 6 }}>{album.artist || album.artistName}</span>
+                          <div onClick={() => openAlbum(c.albumId)} style={{ display: "flex", gap: 12, cursor: "pointer" }}>
+                            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5, flexShrink: 0 }}>
+                              <AlbumCover album={album} size={62} />
+                              <div className="ui-sans" style={{ textAlign: "center", maxWidth: 62 }}>
+                                <div style={{ fontSize: 11, fontWeight: 600, lineHeight: 1.3, wordBreak: "break-word" }}>{album.title}</div>
+                                <div style={{ fontSize: 10, color: MUTE, marginTop: 1 }}>{album.artist || album.artistName}</div>
                               </div>
-                              {c.text && <div style={{ fontSize: 13.5, color: INK, marginTop: 3, lineHeight: 1.5, textAlign: "left" }}>{c.text}</div>}
+                            </div>
+                            <div style={{ flex: 1, minWidth: 0 }} className="ui-sans">
+                              <div style={{ fontSize: 22, fontWeight: 700, color: BLUE, letterSpacing: "-0.02em", lineHeight: 1 }}>{c.rating}/10</div>
+                              {c.text && <div style={{ fontSize: 13, color: INK, marginTop: 8, lineHeight: 1.6 }}>{c.text}</div>}
                             </div>
                           </div>
                           {c.id && (
