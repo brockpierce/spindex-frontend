@@ -2719,7 +2719,7 @@ export default function SoundboardDemo() {
                       <Stat label="followers" value={user.followerCount || 0} onClick={() => setShowFollowList({ kind: "followers", userId: user.id, username: user.username })} />
                       <Stat label="following" value={user.followingCount || 0} onClick={() => setShowFollowList({ kind: "following", userId: user.id, username: user.username })} />
                       <Stat label="reviews" value={userReviews.length} onClick={() => setView({ name: "reviewsList", username: user.username, userId: user.id, reviews: userReviews, from: view })} />
-                      <Stat label="listened" value={viewedUserListenedCount} onClick={() => setView({ name: "listenedList", username: user.username, userId: user.id, from: view })} />
+                      <Stat label="listened" value={viewedUserListenedCount} onClick={() => setView({ name: "listenedList", username: user.username, userId: user.id, listenedIds: viewedUserQueue, from: view })} />
                       <Stat label="avg rating" value={userAvgRating} />
                     </div>
                   )}
