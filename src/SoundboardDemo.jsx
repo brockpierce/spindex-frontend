@@ -2107,7 +2107,7 @@ export default function SoundboardDemo() {
                             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
                               <Avatar username={c.username} size={26} />
                               <span className="ui-sans" style={{ fontSize: 13, fontWeight: 600, cursor: "pointer" }} onClick={() => openUserProfile(c.username)}>@{(c.username || "").toLowerCase()}</span>
-                              <span className="ui-sans" style={{ fontSize: 11, color: MUTE, marginLeft: "auto" }}>{c.date}</span>
+                              <span className="ui-sans" style={{ fontSize: 11, color: MUTE, marginLeft: "auto" }}>{relativeDate(c.date)}</span>
                               {c.username === profile.username && (
                                 <button onClick={(e) => { e.stopPropagation(); apiFetch(BACKEND_URL + "/api/mix-shares/" + c.id, { method: "DELETE" }).catch(() => {}); setMixSharePosts((prev) => prev.filter((p) => p.id !== c.id)); setPublicFeedItems((prev) => prev.filter((p) => p.id !== c.id)); }} style={{ background: "transparent", border: "none", padding: 2, cursor: "pointer", color: MUTE, display: "flex", alignItems: "center" }}><X size={14} /></button>
                               )}
@@ -2150,7 +2150,7 @@ export default function SoundboardDemo() {
                             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
                               <Avatar username={c.username} size={26} />
                               <span className="ui-sans" style={{ fontSize: 13, fontWeight: 600, cursor: "pointer" }} onClick={() => openUserProfile(c.username)}>@{(c.username || "").toLowerCase()}</span>
-                              <span className="ui-sans" style={{ fontSize: 11, color: MUTE, marginLeft: "auto" }}>{c.date}</span>
+                              <span className="ui-sans" style={{ fontSize: 11, color: MUTE, marginLeft: "auto" }}>{relativeDate(c.date)}</span>
                               {c.username === profile.username && (
                                 <button
                                   onClick={(e) => { e.stopPropagation(); deleteTextPost(c.id); }}
@@ -2192,7 +2192,7 @@ export default function SoundboardDemo() {
                             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
                               <Avatar username={c.username} size={26} />
                               <span className="ui-sans" style={{ fontSize: 13, fontWeight: 600, cursor: "pointer" }} onClick={() => openUserProfile(c.username)}>@{(c.username || "").toLowerCase()}</span>
-                              <span className="ui-sans" style={{ fontSize: 11, color: MUTE, marginLeft: "auto" }}>{c.date}</span>
+                              <span className="ui-sans" style={{ fontSize: 11, color: MUTE, marginLeft: "auto" }}>{relativeDate(c.date)}</span>
                             </div>
                             <div className="ui-sans" style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.04em", color: BLUE, marginBottom: 8, display: "flex", alignItems: "center", gap: 5 }}>
                               <Plus size={11} /> QOTD: {c.questionText}
@@ -2237,7 +2237,7 @@ export default function SoundboardDemo() {
                           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
                             <Avatar username={c.username} size={26} />
                             <span className="ui-sans" style={{ fontSize: 13, fontWeight: 600, cursor: "pointer" }} onClick={() => openUserProfile(c.username)}>@{(c.username || "").toLowerCase()}</span>
-                            <span className="ui-sans" style={{ fontSize: 11, color: MUTE, marginLeft: "auto" }}>{c.date}</span>
+                            <span className="ui-sans" style={{ fontSize: 11, color: MUTE, marginLeft: "auto" }}>{relativeDate(c.date)}</span>
                             {c.username === profile.username && (
                               <button
                                 onClick={(e) => { e.stopPropagation(); deleteReview(c.albumId); }}
@@ -2608,7 +2608,7 @@ export default function SoundboardDemo() {
                         <div style={{ fontSize: 12, color: MUTE }}>{album.artist || album.artistName}</div>
                         {r.text && <div style={{ fontSize: 13, color: INK, marginTop: 6, lineHeight: 1.5 }}>{r.text.slice(0, 120)}{r.text.length > 120 ? "..." : ""}</div>}
                       </div>
-                      <div style={{ fontSize: 11, color: MUTE, flexShrink: 0 }}>{r.date}</div>
+                      <div style={{ fontSize: 11, color: MUTE, flexShrink: 0 }}>{relativeDate(r.date)}</div>
                     </div>
                   );
                 })}
