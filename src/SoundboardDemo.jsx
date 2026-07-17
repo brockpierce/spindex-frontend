@@ -3892,6 +3892,8 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
   const [editingAotd, setEditingAotd] = React.useState(null);
   const [editingInterview, setEditingInterview] = React.useState(null);
   const [activeInterview, setActiveInterview] = React.useState(null);
+  const [allAotd, setAllAotd] = React.useState([]);
+  const [showArchive, setShowArchive] = React.useState(false);
 
   // AOTD form state
   const [aotdAlbumQuery, setAotdAlbumQuery] = React.useState("");
@@ -3914,7 +3916,6 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
       .then((data) => {
         setAotd(data.aotd || null);
         setInterviews(data.interviews || []);
-        // Prefetch aotd album
         if (data.aotd && data.aotd.album) {
           const a = data.aotd.album;
           setFetchedAlbums((prev) => ({ ...prev, [a.id]: { ...a, artist: a.artistName || "", year: a.releaseYear || null } }));
@@ -3922,6 +3923,17 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
       })
       .catch(() => {})
       .finally(() => setLoading(false));
+    apiFetch(BACKEND_URL + "/api/news/aotd")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.items) {
+          setAllAotd(data.items);
+          data.items.forEach((item) => {
+            if (item.album) setFetchedAlbums((prev) => ({ ...prev, [item.album.id]: { ...item.album, artist: item.album.artistName || "", year: item.album.releaseYear || null } }));
+          });
+        }
+      })
+      .catch(() => {});
   }, []);
 
   async function saveAotd() {
@@ -4036,6 +4048,39 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
           !showAotdForm && <div className="ui-sans" style={{ color: MUTE, fontSize: 13 }}>no album of the day yet.{isAdmin ? " Click + new to add one." : ""}</div>
         )}
       </div>
+
+      {/* AOTD ARCHIVE */}
+      {allAotd.length > 1 && (
+        <div style={{ marginBottom: 40 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+            <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE }}>past albums of the day</div>
+            <span className="ui-sans" style={{ fontSize: 12, color: BLUE, cursor: "pointer" }} onClick={() => setShowArchive((s) => !s)}>{showArchive ? "collapse ▲" : "show archive ▼"}</span>
+          </div>
+          {showArchive && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              {allAotd.slice(1).map((item) => {
+                const album = fetchedAlbums[item.albumId] || albumById(item.albumId) || item.album;
+                if (!album) return null;
+                return (
+                  <div key={item.id} style={{ display: "flex", gap: 14, alignItems: "center" }}>
+                    <div className="sb-cover-wrap" onClick={() => openAlbum(item.albumId)} style={{ flexShrink: 0 }}>
+                      {album.coverArtUrl
+                        ? <img src={album.coverArtUrl} alt="" style={{ width: 56, height: 56, borderRadius: 7, objectFit: "cover" }} />
+                        : <div style={{ width: 56, height: 56, borderRadius: 7, background: "#eee" }} />}
+                    </div>
+                    <div className="ui-sans" style={{ flex: 1 }}>
+                      <div style={{ fontSize: 14, fontWeight: 600, cursor: "pointer" }} onClick={() => openAlbum(item.albumId)}>{album.title}</div>
+                      <div style={{ fontSize: 12, color: MUTE }}>{album.artist || album.artistName} · <span style={{ color: BLUE, fontWeight: 600 }}>{item.staffRating}/10</span></div>
+                    </div>
+                    <div style={{ fontSize: 11, color: MUTE, flexShrink: 0 }}>{item.date}</div>
+                    {isAdmin && <button className="sb-btn" style={{ fontSize: 10 }} onClick={() => deleteAotd(item.id)}>×</button>}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* INTERVIEWS */}
       <div>
