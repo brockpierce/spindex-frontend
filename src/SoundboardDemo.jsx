@@ -3894,6 +3894,8 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
   const [activeInterview, setActiveInterview] = React.useState(null);
   const [allAotd, setAllAotd] = React.useState([]);
   const [showArchive, setShowArchive] = React.useState(false);
+  const [featuredMixId, setFeaturedMixId] = React.useState(null);
+  const [showMixPicker, setShowMixPicker] = React.useState(false);
 
   // AOTD form state
   const [aotdAlbumQuery, setAotdAlbumQuery] = React.useState("");
@@ -3916,6 +3918,7 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
       .then((data) => {
         setAotd(data.aotd || null);
         setInterviews(data.interviews || []);
+        if (data.featuredMixId) setFeaturedMixId(data.featuredMixId);
         if (data.aotd && data.aotd.album) {
           const a = data.aotd.album;
           setFetchedAlbums((prev) => ({ ...prev, [a.id]: { ...a, artist: a.artistName || "", year: a.releaseYear || null } }));
@@ -4081,6 +4084,52 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
           )}
         </div>
       )}
+
+      {/* STAFF MIX */}
+      <div style={{ marginBottom: 40 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+          <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE }}>staff picks mix</div>
+          {isAdmin && <button className="sb-btn" style={{ fontSize: 11 }} onClick={() => setShowMixPicker((s) => !s)}>change mix</button>}
+        </div>
+        {showMixPicker && isAdmin && (
+          <div style={{ border: "1.5px solid " + LINE, borderRadius: 10, padding: 16, marginBottom: 16 }}>
+            <div className="ui-sans" style={{ fontSize: 13, fontWeight: 600, marginBottom: 10 }}>pick a mix to feature</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {albumMixes.map((m) => (
+                <button key={m.id} className="sb-btn" style={{ textAlign: "left", fontSize: 13 }}
+                  onClick={() => {
+                    apiFetch(BACKEND_URL + "/api/news/featured-mix", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mixId: m.id }) })
+                      .then(() => { setFeaturedMixId(m.id); setShowMixPicker(false); })
+                      .catch(() => {});
+                  }}
+                >{m.title} ({(m.albums || []).length} albums)</button>
+              ))}
+              {albumMixes.length === 0 && <div className="ui-sans" style={{ color: MUTE, fontSize: 13 }}>no album mixes yet — create one from the mixes tab.</div>}
+            </div>
+          </div>
+        )}
+        {featuredMixId ? (() => {
+          const mix = albumMixes.find((m) => m.id === featuredMixId);
+          if (!mix) return <div className="ui-sans" style={{ color: MUTE, fontSize: 13 }}>mix not found — may need to reload.</div>;
+          return (
+            <div style={{ border: "1.5px solid " + LINE, borderRadius: 10, padding: 16, cursor: "pointer" }} onClick={() => setView && setView({ name: "albumMixDetail", id: mix.id, mix })}>
+              <div className="ui-sans" style={{ fontSize: 15, fontWeight: 700, marginBottom: 6 }}>{mix.title}</div>
+              {mix.description && <div className="ui-sans" style={{ fontSize: 13, color: MUTE, marginBottom: 10 }}>{mix.description}</div>}
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {(mix.albums || []).slice(0, 6).map((a) => {
+                  const album = fetchedAlbums[a.albumId] || albumById(a.albumId);
+                  return album && album.coverArtUrl ? (
+                    <img key={a.albumId} src={album.coverArtUrl} alt="" style={{ width: 64, height: 64, borderRadius: 7, objectFit: "cover" }} />
+                  ) : <div key={a.albumId} style={{ width: 64, height: 64, borderRadius: 7, background: "#eee" }} />;
+                })}
+              </div>
+              <div className="ui-sans" style={{ fontSize: 12, color: BLUE, marginTop: 10 }}>{(mix.albums || []).length} albums · tap to view</div>
+            </div>
+          );
+        })() : (
+          <div className="ui-sans" style={{ color: MUTE, fontSize: 13 }}>no staff mix featured yet.{isAdmin ? " Click change mix to pick one." : ""}</div>
+        )}
+      </div>
 
       {/* INTERVIEWS */}
       <div>
