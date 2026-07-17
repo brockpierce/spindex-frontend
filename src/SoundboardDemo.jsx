@@ -2315,135 +2315,7 @@ export default function SoundboardDemo() {
 
             {/* ---- NEWS TAB ---- */}
             {homeTab === "news" && (() => {
-              const aotd = STAFF_ALBUM_OF_THE_DAY;
-              const aotdAlbum = albumById(aotd.albumId);
-              const activeInterview = activeInterviewId
-                ? STAFF_INTERVIEWS.find((i) => i.id === activeInterviewId)
-                : null;
-
-              return (
-                <div>
-                  {/* ALBUM OF THE DAY */}
-                  <div style={{ marginBottom: 40 }}>
-                    <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14 }}>album of the day · {aotd.date}</div>
-                    <div style={{ display: "flex", gap: 22, alignItems: "flex-start" }}>
-                      <div className="sb-cover-wrap" onClick={() => openAlbum(aotd.albumId)} style={{ flexShrink: 0 }}>
-                        <AlbumCover album={aotdAlbum} size={120} />
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <div className="ui-sans" style={{ fontSize: 18, fontWeight: 600, lineHeight: 1.2, cursor: "pointer" }} onClick={() => openAlbum(aotd.albumId)}>{aotdAlbum.title}</div>
-                        <div className="ui-sans" style={{ fontSize: 13, color: MUTE, marginTop: 2 }}>{aotdAlbum.artist} · {aotdAlbum.year}</div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 8 }}>
-                          <RatingBlocks value={aotd.staffRating} size={13} />
-                          <span className="ui-sans" style={{ fontSize: 12, fontWeight: 600, color: BLUE }}>{aotd.staffRating}/10</span>
-                          <span className="ui-sans" style={{ fontSize: 11, color: MUTE }}>staff rating</span>
-                        </div>
-                        <div className="ui-sans" style={{ fontSize: 14, fontStyle: "italic", color: INK, marginTop: 12, lineHeight: 1.5, borderLeft: `3px solid ${BLUE}`, paddingLeft: 12 }}>
-                          "{aotd.pullQuote}"
-                        </div>
-                      </div>
-                    </div>
-                    <div className="ui-sans" style={{ fontSize: 13.5, lineHeight: 1.75, color: INK, marginTop: 18, whiteSpace: "pre-line" }}>
-                      {aotd.body}
-                    </div>
-                    <div className="ui-sans" style={{ fontSize: 11.5, color: MUTE, marginTop: 10 }}>— {aotd.staffName}</div>
-                  </div>
-
-                  {/* STAFF SONG MIX */}
-                  <div style={{ borderTop: `1px solid ${LINE}`, paddingTop: 32, marginBottom: 40 }}>
-                    <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14 }}>staff song mix</div>
-                    <div
-                      onClick={() => setView({ name: "songMixDetail", id: STAFF_SONG_MIX.id, mix: STAFF_SONG_MIX, from: { name: "home" } })}
-                      style={{ display: "flex", gap: 16, cursor: "pointer", alignItems: "center", border: `1.5px solid ${LINE}`, borderRadius: 8, padding: "14px 16px" }}
-                    >
-                      <SongMixCover mix={STAFF_SONG_MIX} size={72} />
-                      <div className="ui-sans" style={{ flex: 1 }}>
-                        <div style={{ fontSize: 14.5, fontWeight: 600 }}>{STAFF_SONG_MIX.title}</div>
-                        <div style={{ fontSize: 12.5, color: MUTE, marginTop: 3 }}>{STAFF_SONG_MIX.description}</div>
-                        <div style={{ fontSize: 11, color: MUTE, marginTop: 4 }}>{STAFF_SONG_MIX.tracks.length} tracks</div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* INTERVIEWS */}
-                  <div style={{ borderTop: `1px solid ${LINE}`, paddingTop: 32 }}>
-                    <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 20 }}>
-                      {activeInterview ? "interview" : "interview of the month"}
-                    </div>
-
-                    {activeInterview ? (
-                      <div>
-                        <button
-                          className="sb-btn ui-sans"
-                          onClick={() => setActiveInterviewId(null)}
-                          style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 24, fontSize: 12 }}
-                        >
-                          <ChevronLeft size={13} /> all interviews
-                        </button>
-                        <div style={{ display: "flex", gap: 18, alignItems: "flex-start", marginBottom: 24 }}>
-                          <div style={{ width: 80, height: 80, borderRadius: 12, background: BLUE, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                            <User color="#fff" size={32} />
-                          </div>
-                          <div className="ui-sans">
-                            <div style={{ fontSize: 18, fontWeight: 600 }}>{activeInterview.artistName}</div>
-                            <div style={{ fontSize: 12.5, color: MUTE, marginTop: 4, lineHeight: 1.5 }}>{activeInterview.artistBio}</div>
-                            <div style={{ fontSize: 11.5, color: MUTE, marginTop: 6 }}>{activeInterview.month}</div>
-                          </div>
-                        </div>
-                        <div className="ui-sans" style={{ fontSize: 14, fontStyle: "italic", color: INK, marginBottom: 24, borderLeft: `3px solid ${BLUE}`, paddingLeft: 12, lineHeight: 1.5 }}>
-                          "{activeInterview.coverPhrase}"
-                        </div>
-                        <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
-                          {activeInterview.qa.map((item, i) => (
-                            <div key={i}>
-                              <div className="ui-sans" style={{ fontSize: 13.5, fontWeight: 600, lineHeight: 1.5, marginBottom: 8 }}>
-                                {item.q}
-                              </div>
-                              <div className="ui-sans" style={{ fontSize: 13.5, color: INK, lineHeight: 1.75 }}>
-                                {item.a}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                        {activeInterview.relatedAlbumId && (
-                          <div style={{ marginTop: 28, paddingTop: 20, borderTop: `1px solid ${LINE}` }}>
-                            <div className="ui-sans" style={{ fontSize: 11, color: MUTE, marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.04em" }}>mentioned in this interview</div>
-                            <div style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }} onClick={() => openAlbum(activeInterview.relatedAlbumId)}>
-                              <AlbumCover album={albumById(activeInterview.relatedAlbumId)} size={48} />
-                              <div className="ui-sans">
-                                <div style={{ fontSize: 13.5, fontWeight: 600 }}>{albumById(activeInterview.relatedAlbumId).title}</div>
-                                <div style={{ fontSize: 12, color: MUTE }}>{albumById(activeInterview.relatedAlbumId).artist}</div>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                        {STAFF_INTERVIEWS.map((interview, i) => (
-                          <div
-                            key={interview.id}
-                            onClick={() => setActiveInterviewId(interview.id)}
-                            style={{ display: "flex", gap: 14, alignItems: "center", border: `1.5px solid ${i === 0 ? BLUE : LINE}`, borderRadius: 8, padding: "14px 16px", cursor: "pointer" }}
-                          >
-                            <div style={{ width: 48, height: 48, borderRadius: 8, background: BLUE, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, opacity: i === 0 ? 1 : 0.6 }}>
-                              <User color="#fff" size={22} />
-                            </div>
-                            <div style={{ flex: 1 }} className="ui-sans">
-                              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                <span style={{ fontSize: 14, fontWeight: 600 }}>{interview.artistName}</span>
-                                {i === 0 && <span style={{ fontSize: 10.5, color: BLUE, border: `1px solid ${BLUE}`, borderRadius: 11, padding: "1px 7px" }}>this month</span>}
-                              </div>
-                              <div style={{ fontSize: 12, color: MUTE, marginTop: 2, fontStyle: "italic" }}>"{interview.coverPhrase}"</div>
-                              <div style={{ fontSize: 11, color: MUTE, marginTop: 3 }}>{interview.month}</div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
+              return <NewsTab openAlbum={openAlbum} fetchedAlbums={fetchedAlbums} albumById={albumById} setFetchedAlbums={setFetchedAlbums} isAdmin={profile.username === ADMIN_USERNAME} />;
             })()}
           </div>
         )}
@@ -4009,6 +3881,223 @@ function AddToAlbumMixInline({ album, albumMixes, onAdd }) {
 // collage of its tracks' album covers (Spotify/Apple Music both do this
 // for auto-generated playlist art), or the plain headphone mark if the
 // mix has no tracks yet.
+
+function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmin }) {
+  const { BLUE, INK, LINE, MUTE, BG } = useTheme();
+  const [aotd, setAotd] = React.useState(null);
+  const [interviews, setInterviews] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+  const [showAotdForm, setShowAotdForm] = React.useState(false);
+  const [showInterviewForm, setShowInterviewForm] = React.useState(false);
+  const [editingAotd, setEditingAotd] = React.useState(null);
+  const [editingInterview, setEditingInterview] = React.useState(null);
+  const [activeInterview, setActiveInterview] = React.useState(null);
+
+  // AOTD form state
+  const [aotdAlbumQuery, setAotdAlbumQuery] = React.useState("");
+  const [aotdAlbumPicked, setAotdAlbumPicked] = React.useState(null);
+  const [aotdRating, setAotdRating] = React.useState(8);
+  const [aotdPullQuote, setAotdPullQuote] = React.useState("");
+  const [aotdBody, setAotdBody] = React.useState("");
+  const [aotdDate, setAotdDate] = React.useState(new Date().toISOString().slice(0, 10));
+  const [aotdSaving, setAotdSaving] = React.useState(false);
+
+  // Interview form state
+  const [intTitle, setIntTitle] = React.useState("");
+  const [intBody, setIntBody] = React.useState("");
+  const [intAlbumIds, setIntAlbumIds] = React.useState("");
+  const [intSaving, setIntSaving] = React.useState(false);
+
+  React.useEffect(() => {
+    apiFetch(BACKEND_URL + "/api/news")
+      .then((r) => r.json())
+      .then((data) => {
+        setAotd(data.aotd || null);
+        setInterviews(data.interviews || []);
+        // Prefetch aotd album
+        if (data.aotd && data.aotd.album) {
+          const a = data.aotd.album;
+          setFetchedAlbums((prev) => ({ ...prev, [a.id]: { ...a, artist: a.artistName || "", year: a.releaseYear || null } }));
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  async function saveAotd() {
+    if (!aotdAlbumPicked || !aotdPullQuote || !aotdBody) return;
+    setAotdSaving(true);
+    const method = editingAotd ? "PUT" : "POST";
+    const url = editingAotd ? BACKEND_URL + "/api/news/aotd/" + editingAotd.id : BACKEND_URL + "/api/news/aotd";
+    const res = await apiFetch(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ albumId: aotdAlbumPicked.id, staffRating: aotdRating, pullQuote: aotdPullQuote, body: aotdBody, date: aotdDate }),
+    });
+    const data = await res.json();
+    if (data.item) {
+      setAotd(data.item);
+      if (data.item.album) setFetchedAlbums((prev) => ({ ...prev, [data.item.album.id]: { ...data.item.album, artist: data.item.album.artistName || "", year: data.item.album.releaseYear || null } }));
+    }
+    setShowAotdForm(false); setEditingAotd(null); setAotdAlbumPicked(null); setAotdPullQuote(""); setAotdBody(""); setAotdSaving(false);
+  }
+
+  async function saveInterview() {
+    if (!intTitle || !intBody) return;
+    setIntSaving(true);
+    const method = editingInterview ? "PUT" : "POST";
+    const url = editingInterview ? BACKEND_URL + "/api/news/interviews/" + editingInterview.id : BACKEND_URL + "/api/news/interviews";
+    const albumIds = intAlbumIds.split(",").map((s) => s.trim()).filter(Boolean);
+    const res = await apiFetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ title: intTitle, body: intBody, albumIds }) });
+    const data = await res.json();
+    if (data.item) {
+      if (editingInterview) setInterviews((prev) => prev.map((i) => i.id === data.item.id ? data.item : i));
+      else setInterviews((prev) => [data.item, ...prev]);
+    }
+    setShowInterviewForm(false); setEditingInterview(null); setIntTitle(""); setIntBody(""); setIntAlbumIds(""); setIntSaving(false);
+  }
+
+  async function deleteAotd(id) {
+    if (!window.confirm("Delete this album of the day?")) return;
+    await apiFetch(BACKEND_URL + "/api/news/aotd/" + id, { method: "DELETE" });
+    setAotd(null);
+  }
+
+  async function deleteInterview(id) {
+    if (!window.confirm("Delete this interview?")) return;
+    await apiFetch(BACKEND_URL + "/api/news/interviews/" + id, { method: "DELETE" });
+    setInterviews((prev) => prev.filter((i) => i.id !== id));
+  }
+
+  if (loading) return <div className="ui-sans" style={{ color: MUTE, fontSize: 13 }}>loading...</div>;
+
+  const aotdAlbum = aotd ? (fetchedAlbums[aotd.albumId] || albumById(aotd.albumId) || aotd.album) : null;
+
+  return (
+    <div>
+      {/* ALBUM OF THE DAY */}
+      <div style={{ marginBottom: 40 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+          <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE }}>album of the day{aotd ? " · " + aotd.date : ""}</div>
+          {isAdmin && (
+            <div style={{ display: "flex", gap: 8 }}>
+              <button className="sb-btn" style={{ fontSize: 11 }} onClick={() => {
+                if (aotd) { setEditingAotd(aotd); setAotdAlbumPicked(aotdAlbum); setAotdRating(aotd.staffRating); setAotdPullQuote(aotd.pullQuote); setAotdBody(aotd.body); setAotdDate(aotd.date); }
+                setShowAotdForm(true);
+              }}>{aotd ? "edit" : "+ new"}</button>
+              {aotd && <button className="sb-btn" style={{ fontSize: 11 }} onClick={() => deleteAotd(aotd.id)}>delete</button>}
+            </div>
+          )}
+        </div>
+
+        {showAotdForm && (
+          <div style={{ border: "1.5px solid " + LINE, borderRadius: 10, padding: 20, marginBottom: 24 }}>
+            <div className="ui-sans" style={{ fontSize: 14, fontWeight: 600, marginBottom: 14 }}>{editingAotd ? "edit album of the day" : "new album of the day"}</div>
+            <AlbumSearchPicker onPick={(album) => { setAotdAlbumPicked(album); }} onCancel={() => {}} placeholder="search for album..." />
+            {aotdAlbumPicked && <div className="ui-sans" style={{ fontSize: 13, color: BLUE, marginBottom: 8 }}>selected: {aotdAlbumPicked.title}</div>}
+            <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 8 }}>
+              <span className="ui-sans" style={{ fontSize: 12, color: MUTE }}>rating:</span>
+              <input type="number" min="1" max="10" value={aotdRating} onChange={(e) => setAotdRating(parseInt(e.target.value))} className="sb-input ui-sans" style={{ width: 60 }} />
+              <span className="ui-sans" style={{ fontSize: 12, color: MUTE }}>date:</span>
+              <input type="date" value={aotdDate} onChange={(e) => setAotdDate(e.target.value)} className="sb-input ui-sans" style={{ width: 140 }} />
+            </div>
+            <input className="sb-input ui-sans" placeholder="pull quote (short, compelling)" value={aotdPullQuote} onChange={(e) => setAotdPullQuote(e.target.value)} style={{ width: "100%", marginBottom: 8 }} />
+            <textarea className="sb-textarea ui-sans" placeholder="full review body..." value={aotdBody} onChange={(e) => setAotdBody(e.target.value)} rows={8} style={{ width: "100%", marginBottom: 12, fontSize: 13 }} />
+            <div style={{ display: "flex", gap: 8 }}>
+              <button className="sb-btn sb-btn-solid" onClick={saveAotd} disabled={aotdSaving}>{aotdSaving ? "saving..." : "save"}</button>
+              <button className="sb-btn" onClick={() => { setShowAotdForm(false); setEditingAotd(null); }}>cancel</button>
+            </div>
+          </div>
+        )}
+
+        {aotd && aotdAlbum ? (
+          <div>
+            <div style={{ display: "flex", gap: 22, alignItems: "flex-start" }}>
+              <div className="sb-cover-wrap" onClick={() => openAlbum(aotd.albumId)} style={{ flexShrink: 0 }}>
+                <img src={aotdAlbum.coverArtUrl || ""} alt="" style={{ width: 120, height: 120, borderRadius: 10, objectFit: "cover", display: aotdAlbum.coverArtUrl ? "block" : "none" }} />
+                {!aotdAlbum.coverArtUrl && <div style={{ width: 120, height: 120, borderRadius: 10, background: "#eee", display: "flex", alignItems: "center", justifyContent: "center" }}><span style={{ fontSize: 11, color: MUTE }}>no cover</span></div>}
+              </div>
+              <div style={{ flex: 1 }}>
+                <div className="ui-sans" style={{ fontSize: 18, fontWeight: 600, lineHeight: 1.2, cursor: "pointer" }} onClick={() => openAlbum(aotd.albumId)}>{aotdAlbum.title || aotdAlbum.artistName}</div>
+                <div className="ui-sans" style={{ fontSize: 13, color: MUTE, marginTop: 2 }}>{aotdAlbum.artist || aotdAlbum.artistName}</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 8 }}>
+                  <RatingBlocks value={aotd.staffRating} size={13} />
+                  <span className="ui-sans" style={{ fontSize: 12, fontWeight: 600, color: BLUE }}>{aotd.staffRating}/10</span>
+                  <span className="ui-sans" style={{ fontSize: 11, color: MUTE }}>staff rating</span>
+                </div>
+                <div className="ui-sans" style={{ fontSize: 14, fontStyle: "italic", color: INK, marginTop: 12, lineHeight: 1.5, borderLeft: "3px solid " + BLUE, paddingLeft: 12 }}>
+                  "{aotd.pullQuote}"
+                </div>
+              </div>
+            </div>
+            <div className="ui-sans" style={{ fontSize: 13.5, lineHeight: 1.75, color: INK, marginTop: 18, whiteSpace: "pre-line" }}>{aotd.body}</div>
+          </div>
+        ) : (
+          !showAotdForm && <div className="ui-sans" style={{ color: MUTE, fontSize: 13 }}>no album of the day yet.{isAdmin ? " Click + new to add one." : ""}</div>
+        )}
+      </div>
+
+      {/* INTERVIEWS */}
+      <div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+          <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE }}>interviews</div>
+          {isAdmin && <button className="sb-btn" style={{ fontSize: 11 }} onClick={() => setShowInterviewForm(true)}>+ new</button>}
+        </div>
+
+        {showInterviewForm && (
+          <div style={{ border: "1.5px solid " + LINE, borderRadius: 10, padding: 20, marginBottom: 24 }}>
+            <div className="ui-sans" style={{ fontSize: 14, fontWeight: 600, marginBottom: 14 }}>{editingInterview ? "edit interview" : "new interview"}</div>
+            <input className="sb-input ui-sans" placeholder="title" value={intTitle} onChange={(e) => setIntTitle(e.target.value)} style={{ width: "100%", marginBottom: 8 }} />
+            <textarea className="sb-textarea ui-sans" placeholder="body text..." value={intBody} onChange={(e) => setIntBody(e.target.value)} rows={10} style={{ width: "100%", marginBottom: 8, fontSize: 13 }} />
+            <input className="sb-input ui-sans" placeholder="album IDs (comma separated, optional)" value={intAlbumIds} onChange={(e) => setIntAlbumIds(e.target.value)} style={{ width: "100%", marginBottom: 12 }} />
+            <div style={{ display: "flex", gap: 8 }}>
+              <button className="sb-btn sb-btn-solid" onClick={saveInterview} disabled={intSaving}>{intSaving ? "saving..." : "save"}</button>
+              <button className="sb-btn" onClick={() => { setShowInterviewForm(false); setEditingInterview(null); }}>cancel</button>
+            </div>
+          </div>
+        )}
+
+        {interviews.length === 0 && !showInterviewForm && <div className="ui-sans" style={{ color: MUTE, fontSize: 13 }}>no interviews yet.</div>}
+        <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+          {interviews.map((interview) => {
+            const isOpen = activeInterview === interview.id;
+            const albumIds = interview.albumIds ? interview.albumIds.split(",").filter(Boolean) : [];
+            return (
+              <div key={interview.id} style={{ borderBottom: "1px solid " + LINE, paddingBottom: 24 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                  <div className="ui-sans" style={{ fontSize: 16, fontWeight: 600, cursor: "pointer", flex: 1 }} onClick={() => setActiveInterview(isOpen ? null : interview.id)}>{interview.title}</div>
+                  {isAdmin && (
+                    <div style={{ display: "flex", gap: 6, flexShrink: 0, marginLeft: 12 }}>
+                      <button className="sb-btn" style={{ fontSize: 11 }} onClick={() => { setEditingInterview(interview); setIntTitle(interview.title); setIntBody(interview.body); setIntAlbumIds(interview.albumIds || ""); setShowInterviewForm(true); }}>edit</button>
+                      <button className="sb-btn" style={{ fontSize: 11 }} onClick={() => deleteInterview(interview.id)}>delete</button>
+                    </div>
+                  )}
+                </div>
+                {albumIds.length > 0 && (
+                  <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
+                    {albumIds.map((id) => {
+                      const a = fetchedAlbums[id] || albumById(id);
+                      return a ? (
+                        <div key={id} onClick={() => openAlbum(id)} className="ui-sans" style={{ fontSize: 12, color: BLUE, cursor: "pointer" }}>{a.title}</div>
+                      ) : null;
+                    })}
+                  </div>
+                )}
+                {isOpen && (
+                  <div className="ui-sans" style={{ fontSize: 13.5, lineHeight: 1.75, color: INK, marginTop: 14, whiteSpace: "pre-line" }}>{interview.body}</div>
+                )}
+                <div style={{ marginTop: 8 }}>
+                  <span className="ui-sans" style={{ fontSize: 12, color: BLUE, cursor: "pointer" }} onClick={() => setActiveInterview(isOpen ? null : interview.id)}>{isOpen ? "collapse ▲" : "read more ▼"}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function SongMixCover({ mix, size = 92 }) {
   const { BLUE } = useTheme();
   if (mix.coverImageUrl) {
