@@ -1510,6 +1510,7 @@ export default function SoundboardDemo() {
   const [viewedUser, setViewedUser] = useState(null);
   const [viewedUserReviews, setViewedUserReviews] = useState([]);
   const [viewedUserFavorites, setViewedUserFavorites] = useState([]);
+  const [viewedUserListenedCount, setViewedUserListenedCount] = useState(0);
   const [threadReview, setThreadReview] = useState(null);
   const [conversations, setConversations] = useState([]);
   const [dmUnreadCount, setDmUnreadCount] = useState(0);
@@ -1611,6 +1612,7 @@ export default function SoundboardDemo() {
     setViewedUser(null);
     setViewedUserReviews([]);
     setViewedUserFavorites([]);
+    setViewedUserListenedCount(0);
     setShowAllUserReviews(false);
     setView({ name: "userProfile", username });
     apiFetch(`${BACKEND_URL}/api/users/${username}`)
@@ -1662,6 +1664,13 @@ export default function SoundboardDemo() {
                     .catch(() => {});
                 });
               }
+            })
+            .catch(() => {});
+          // Load their listen count
+          apiFetch(`${BACKEND_URL}/api/listen-status/user/${data.user.id}`)
+            .then((r) => r.json())
+            .then((d) => {
+              if (d.listenedCount !== undefined) setViewedUserListenedCount(d.listenedCount);
             })
             .catch(() => {});
         }
@@ -2385,7 +2394,7 @@ export default function SoundboardDemo() {
                       <Avatar username={other.username} size={48} />
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 600, fontSize: 15, color: INK }}>@{(other.username || "").toLowerCase()}</div>
+                      <div style={{ fontWeight: 600, fontSize: 15, color: INK }}>{other.displayName || other.username}</div>
                       <div style={{ fontSize: 13.5, color: conv.unread ? INK : MUTE, fontWeight: conv.unread ? 500 : 400, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {conv.lastMessage ? conv.lastMessage.text : "no messages yet"}
                       </div>
@@ -2422,7 +2431,7 @@ export default function SoundboardDemo() {
                 </button>
                 <Avatar username={other?.username} size={38} />
                 <div>
-                  <div style={{ fontWeight: 600, fontSize: 15, color: INK }}>@{(other?.username || "").toLowerCase()}</div>
+                  <div style={{ fontWeight: 600, fontSize: 15, color: INK }}>{other?.displayName || other?.username}</div>
                 </div>
               </div>
 
@@ -2569,7 +2578,8 @@ export default function SoundboardDemo() {
                     <div style={{ display: "flex", gap: 32, alignItems: "flex-start", flexShrink: 0, marginRight: 24 }}>
                       <Stat label="followers" value={user.followerCount || 0} onClick={() => setShowFollowList({ kind: "followers", userId: user.id, username: user.username })} />
                       <Stat label="following" value={user.followingCount || 0} onClick={() => setShowFollowList({ kind: "following", userId: user.id, username: user.username })} />
-                      <Stat label="reviews" value={userReviews.length} />
+                      <Stat label="listened" value={viewedUserListenedCount} />
+                      <Stat label="reviews" value={userReviews.length} onClick={() => setShowAllUserReviews(true)} />
                       <Stat label="avg rating" value={userAvgRating} />
                     </div>
                   )}
@@ -2580,7 +2590,8 @@ export default function SoundboardDemo() {
                 <div style={{ display: "flex", gap: 16, padding: "20px 0", borderBottom: `1px solid ${LINE}`, overflowX: "auto", justifyContent: "center", alignItems: "flex-start" }}>
                   <Stat label="followers" value={user.followerCount || 0} onClick={() => setShowFollowList({ kind: "followers", userId: user.id, username: user.username })} />
                   <Stat label="following" value={user.followingCount || 0} onClick={() => setShowFollowList({ kind: "following", userId: user.id, username: user.username })} />
-                  <Stat label="reviews" value={userReviews.length} />
+                  <Stat label="listened" value={viewedUserListenedCount} />
+                  <Stat label="reviews" value={userReviews.length} onClick={() => setShowAllUserReviews(true)} />
                   <Stat label="avg rating" value={userAvgRating} />
                 </div>
               )}
