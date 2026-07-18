@@ -5363,9 +5363,9 @@ function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername, r
             {comment.id && onReact && (
               <button
                 onClick={() => onReact(comment.id, "heart")}
-                style={{ border: "none", background: "none", padding: 0, cursor: "pointer", display: "flex", alignItems: "center", gap: 4, color: youHearted ? "#E0537A" : "#c9ced4", fontSize: 13 }}
+                style={{ border: "none", background: "none", padding: 0, cursor: "pointer", display: "flex", alignItems: "center", gap: 4, color: youHearted ? BLUE : "#c9ced4", fontSize: 13 }}
               >
-                <Heart size={13} fill={youHearted ? "#E0537A" : "none"} strokeWidth={1.8} />
+                <Heart size={13} fill={youHearted ? BLUE : "none"} strokeWidth={1.6} />
                 {((reviewReactions[comment.id] || {}).heart || []).length > 0 && (
                   <span style={{ fontSize: 12 }}>{((reviewReactions[comment.id] || {}).heart || []).length}</span>
                 )}
