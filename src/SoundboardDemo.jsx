@@ -2068,7 +2068,7 @@ export default function SoundboardDemo() {
         .sb-comment-bubble { text-align: left !important; }
         .sb-comment-bubble * { text-align: left !important; }
         .sb-textarea:focus { border-color: ${BLUE}; }
-        .sb-nav-item { cursor: pointer; font-size: 12px; letter-spacing: 0.03em; text-transform: uppercase; font-weight: 500; color: ${MUTE}; padding: 6px 0; border-bottom: 1px solid transparent; }
+        .sb-nav-item { cursor: pointer; font-size: 13px; letter-spacing: 0; text-transform: none; font-weight: 400; color: ${MUTE}; padding: 6px 0; border-bottom: 1px solid transparent; }
         .sb-nav-item.active { color: ${INK}; border-bottom-color: ${BLUE}; }
         @media (max-width: 480px) {
           .sb-nav-item { font-size: 10px; letter-spacing: 0.01em; }
