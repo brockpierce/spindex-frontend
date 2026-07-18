@@ -3313,7 +3313,7 @@ export default function SoundboardDemo() {
               ) : (
                 <>
                   {/* Personality card */}
-                  <div style={{ textAlign: "center", background: BG === "#ffffff" || BG === "#fff" ? "#f6f9ff" : LINE, border: `1px solid ${LINE}`, borderRadius: 18, padding: "26px 24px 28px" }}>
+                  <div style={{ textAlign: "center", background: darkMode ? "#171d2e" : "#f6f9ff", border: `1px solid ${darkMode ? "#242c42" : "#e7effe"}`, borderRadius: 18, padding: "26px 24px 28px" }}>
                     <div style={{ width: 140, height: 140, margin: "0 auto 4px" }}>
                       <Mascot mood={tier.face} size={140} equalize={tier.face === "grin" || tier.face === "smile"} bob />
                     </div>
