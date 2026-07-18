@@ -3055,7 +3055,7 @@ export default function SoundboardDemo() {
             )}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: "20px 16px" }}>
               {albumSearchLoading && (
-                <div className="ui-sans" style={{ color: MUTE, fontSize: 13, gridColumn: "1 / -1", padding: "20px 0" }}>searching...</div>
+                <div style={{ gridColumn: "1 / -1", display: "flex", justifyContent: "center", padding: "20px 0" }}><Spinner label="searching…" /></div>
               )}
               {!albumSearchLoading && filtered.map((album) => {
                 const rev = reviewFor(album.id);
@@ -4467,7 +4467,7 @@ function AlbumSearchPicker({ onPick, onCancel, placeholder = "search for the alb
           <div className="ui-sans" style={{ fontSize: 12.5, color: MUTE, padding: "8px 4px" }}>type at least 3 characters to search...</div>
         )}
         {query.trim().length >= 3 && loading && (
-          <div className="ui-sans" style={{ fontSize: 12.5, color: MUTE, padding: "8px 4px" }}>searching...</div>
+          <div style={{ display: "flex", justifyContent: "center", padding: "12px 4px" }}><Spinner label="searching…" size={36} /></div>
         )}
         {query.trim().length >= 3 && !loading && results.map((album) => (
           <div
