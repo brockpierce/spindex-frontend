@@ -4046,9 +4046,7 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
               <span className="ui-sans" style={{ fontSize: 15, fontWeight: 800, color: ACCENT, background: "#f0f4fe", borderRadius: 8, padding: "5px 11px" }}>{aotd.staffRating} / 10</span>
               <span className="ui-sans" style={{ fontSize: 14, fontWeight: 600, color: ACCENT, cursor: "pointer" }} onClick={() => openAlbum(aotd.albumId)}>read the full review →</span>
             </div>
-            {aotd.body && (
-              <div className="ui-sans" style={{ fontSize: 13.5, lineHeight: 1.75, color: "#444", marginTop: 18, whiteSpace: "pre-line" }}>{aotd.body}</div>
-            )}
+
           </div>
         </div>
       ) : (
