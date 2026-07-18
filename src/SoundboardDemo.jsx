@@ -2079,7 +2079,7 @@ export default function SoundboardDemo() {
       {/* TOP NAV */}
       <div style={{ borderBottom: `1.5px solid ${INK}`, padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", overflowX: "hidden" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 9, cursor: "pointer" }} onClick={() => setView({ name: "home" })}>
-          <img src={LOGO_DATA_URI} alt="Spindex" style={{ height: 30, width: "auto" }} />
+          <Mascot mood="neutral" color={SPX_LIGHT} size={34} equalize />
         </div>
         <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
           <div className={`sb-nav-item ${view.name === "home" ? "active" : ""}`} onClick={() => setView({ name: "home" })}>home</div>
