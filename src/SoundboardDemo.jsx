@@ -16,7 +16,6 @@ import { Search, Heart, Plus, X, ChevronLeft, User, ListMusic, Check, Settings, 
 // changes to that live address instead of localhost.
 // ---------------------------------------------------------------------------
 const BACKEND_URL = "https://spindex-backend.onrender.com";
-const SPX_LIGHT = "#a9d4ef"; // light-blue shade for logo + loading/search spinners
 
 // Only this account can edit album-level tags. Non-admin users can view and
 // click tags to filter but not add or remove them. Temporary curation gate
@@ -348,7 +347,7 @@ const COMMUNITY_ALBUM_MIXES = [];
 // ---------------------------------------------------------------------------
 
 const ACCENTS = {
-  blue: { name: "blue", value: "#0159DE" },
+  blue: { name: "navy", value: "#1e3a8a" },
   skyblue: { name: "sky", value: "#3676C2" },
   green: { name: "jade", value: "#1E8E5A" },
   teal: { name: "teal", value: "#1A8A8A" },
@@ -646,7 +645,7 @@ export default function SoundboardDemo() {
   // Accent + dark mode apply immediately on click rather than needing a
   // "save" -- these are visual preferences, not profile data someone
   // might want to draft and cancel out of.
-  const [accentKey, setAccentKey] = useState("skyblue");
+  const [accentKey, setAccentKey] = useState("blue");
   const [darkMode, setDarkMode] = useState(false);
   const [isMobile, setIsMobile] = useState(() => typeof window !== "undefined" && window.innerWidth < 600);
 
@@ -2052,7 +2051,7 @@ export default function SoundboardDemo() {
         .sb-btn-solid:hover { filter: brightness(0.85); }
         .sb-cover-wrap { cursor: pointer; transition: opacity 0.12s; }
         .sb-cover-wrap:hover { opacity: 0.82; }
-        .spx-loader { display: inline-flex; flex-direction: column; align-items: center; gap: 12px; --spx-color: ${SPX_LIGHT}; }
+        .spx-loader { display: inline-flex; flex-direction: column; align-items: center; gap: 12px; --spx-color: ${BLUE}; }
         .spx-loader svg { display: block; overflow: visible; }
         .spx-label { font-size: 13px; font-weight: 600; color: ${MUTE}; font-family: inherit; }
         .spx-inner { transform-box: fill-box; transform-origin: center; animation: spx-bob 1.5s ease-in-out infinite; }
@@ -2080,7 +2079,7 @@ export default function SoundboardDemo() {
       {/* TOP NAV */}
       <div style={{ borderBottom: `1.5px solid ${INK}`, padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", overflowX: "hidden" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 9, cursor: "pointer" }} onClick={() => setView({ name: "home" })}>
-          <Mascot mood="neutral" color={SPX_LIGHT} size={34} equalize />
+          <Mascot mood="neutral" color={BLUE} size={34} equalize />
         </div>
         <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
           <div className={`sb-nav-item ${view.name === "home" ? "active" : ""}`} onClick={() => setView({ name: "home" })}>home</div>
