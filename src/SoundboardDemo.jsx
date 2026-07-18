@@ -4044,7 +4044,7 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
             <p className="ui-sans" style={{ fontSize: 15.5, lineHeight: 1.55, color: "#333", margin: "0 0 16px" }}>{aotd.pullQuote}</p>
             <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
               <span className="ui-sans" style={{ fontSize: 15, fontWeight: 800, color: ACCENT, background: "#f0f4fe", borderRadius: 8, padding: "5px 11px" }}>{aotd.staffRating} / 10</span>
-              <span className="ui-sans" style={{ fontSize: 14, fontWeight: 600, color: ACCENT, cursor: "pointer" }} onClick={() => openAlbum(aotd.albumId)}>read the full review →</span>
+              <span className="ui-sans" style={{ fontSize: 14, fontWeight: 600, color: ACCENT, cursor: "pointer" }} onClick={() => setView({ name: "editorialReview", aotd: aotd, album: aotdAlbum, from: { name: "home", tab: "news" } })}>read the full review →</span>
             </div>
 
           </div>
