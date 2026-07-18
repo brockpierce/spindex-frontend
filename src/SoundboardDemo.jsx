@@ -3834,35 +3834,6 @@ export default function SoundboardDemo() {
               )}
             </div>
 
-            {albumMixes.filter((m) => m.isPublic !== false).length > 0 && (
-              <div style={{ marginTop: 30 }}>
-                <div style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14, textAlign: isMobile ? "center" : "left", fontWeight: 600 }}>mixes</div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  {albumMixes.filter((m) => m.isPublic !== false).map((m) => (
-                    <div
-                      key={m.id}
-                      onClick={() => setView({ name: "albumMixDetail", id: m.id })}
-                      style={{ border: `1.5px solid ${LINE}`, borderRadius: 8, padding: "16px 18px", cursor: "pointer", display: "flex", gap: 14, alignItems: "center" }}
-                    >
-                      <div style={{ display: "flex" }}>
-                        {m.albums.slice(0, 3).map((a, i) => (
-                          <div key={a.albumId} style={{ marginLeft: i === 0 ? 0 : -20, zIndex: 3 - i, border: `2px solid ${BG}`, borderRadius: 9 }}>
-                            <AlbumCover album={fetchedAlbums[a.albumId] || albumById(a.albumId)} size={44} />
-                          </div>
-                        ))}
-                        {m.albums.length === 0 && <ListMusic size={36} color={LINE} strokeWidth={1.4} />}
-                      </div>
-                      <div style={{ flex: 1 }} className="ui-sans">
-                        <div style={{ fontSize: 14.5, fontWeight: 600 }}>{m.title}</div>
-                        {m.description && <div style={{ fontSize: 12.5, color: MUTE, marginTop: 2 }}>{m.description}</div>}
-                        <div style={{ fontSize: 11, color: MUTE, marginTop: 4 }}>{m.albums.length} album{m.albums.length !== 1 ? "s" : ""}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
             <div style={{ marginTop: 30 }}>
               <div style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14, textAlign: isMobile ? "center" : "left", fontWeight: 600 }}>recent reviews</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 16, alignItems: isMobile ? "center" : "flex-start" }}>
@@ -3929,7 +3900,7 @@ export default function SoundboardDemo() {
               {/* Always show album mixes since song mixes are hidden */}
               {true && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  {albumMixes.map((m) => (
+                  {albumMixes.filter((m) => m.isPublic !== false).map((m) => (
                     <div key={m.id} onClick={() => setView({ name: "albumMixDetail", id: m.id })} style={{ display: "flex", alignItems: "center", gap: 12, border: `1.5px solid ${LINE}`, borderRadius: 8, padding: "12px 14px", cursor: "pointer" }}>
                       <div style={{ display: "flex" }}>
                         {m.albums.slice(0, 3).map((a, i) => (
@@ -3945,7 +3916,7 @@ export default function SoundboardDemo() {
                       </div>
                     </div>
                   ))}
-                  {albumMixes.length === 0 && <div className="ui-sans" style={{ color: MUTE, fontSize: 13, textAlign: "left" }}>no album mixes yet.</div>}
+                  {albumMixes.filter((m) => m.isPublic !== false).length === 0 && <div className="ui-sans" style={{ color: MUTE, fontSize: 13, textAlign: "left" }}>no public mixes.</div>}
                 </div>
               )}
               {/* Song mixes on profile — temporarily hidden */}
