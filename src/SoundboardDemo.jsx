@@ -1751,10 +1751,12 @@ export default function SoundboardDemo() {
     const mockIds = new Set(reviewItems.map((r) => `${r.username}-${r.albumId}`));
     const realOnly = realFeedItems.filter((r) => !mockIds.has(`${r.username}-${r.albumId}`));
     const all = [...realOnly, ...reviewItems, ...ownReviewItems, ...qotdItems, ...mixShareItems];
-    const heartCount = (item) => (reviewReactions[item.id]?.heart || []).length;
-    const popular = all.filter((item) => heartCount(item) >= HEART_BUMP_THRESHOLD).sort((a, b) => heartCount(b) - heartCount(a));
-    const rest = all.filter((item) => heartCount(item) < HEART_BUMP_THRESHOLD).sort((a, b) => (a.date < b.date ? 1 : -1));
-    return [...popular, ...rest];
+    return [...all].sort((a, b) => {
+      const ta = new Date(a.rawDate || a.date || 0).getTime();
+      const tb = new Date(b.rawDate || b.date || 0).getTime();
+      if (tb !== ta) return tb - ta;
+      return a.id < b.id ? 1 : -1;
+    });
   }, [reviewReactions, qotdResponses, mixSharePosts, reviews, realFeedItems]);
 
   const [liveUserResults, setLiveUserResults] = useState([]);
