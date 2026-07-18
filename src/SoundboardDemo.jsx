@@ -3804,10 +3804,10 @@ export default function SoundboardDemo() {
                     <User color="#fff" size={isMobile ? 36 : 48} />
                   </div>
                 )}
-                <div className="ui-sans" style={{ textAlign: "left", minWidth: 0 }}>
-                  <div style={{ fontSize: isMobile ? 24 : 30, fontWeight: 700, lineHeight: 1.15, letterSpacing: "-0.01em", textAlign: "left" }}>{profile.displayName}</div>
-                  <div style={{ fontSize: isMobile ? 14 : 16, color: MUTE, marginTop: 3, textAlign: "left" }}>@{(profile.username || "").toLowerCase()}</div>
-                  {profile.bio && <div style={{ fontSize: isMobile ? 14 : 15, color: MUTE, marginTop: 10, maxWidth: 480, lineHeight: 1.5, textAlign: "left" }}>{!isMobile && profile.bio.length > 30 ? profile.bio.slice(0, 30) + "…" : profile.bio}</div>}
+                <div className="ui-sans" style={{ textAlign: "left", minWidth: 0, display: "flex", flexDirection: "column", gap: 6 }}>
+                  <div style={{ fontSize: isMobile ? 24 : 30, fontWeight: 400, lineHeight: 1.15, letterSpacing: "-0.01em", textAlign: "left" }}>{profile.displayName}</div>
+                  <div style={{ fontSize: isMobile ? 14 : 16, color: MUTE, textAlign: "left" }}>@{(profile.username || "").toLowerCase()}</div>
+                  {profile.bio && <div style={{ fontSize: isMobile ? 14 : 15, color: MUTE, maxWidth: 480, lineHeight: 1.5, textAlign: "left" }}>{!isMobile && profile.bio.length > 30 ? profile.bio.slice(0, 30) + "…" : profile.bio}</div>}
                 </div>
               </div>
               <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", alignItems: "flex-end", flexShrink: 0, gap: 16 }}>
@@ -3826,7 +3826,7 @@ export default function SoundboardDemo() {
                     <Stat label="following" value={profileStats.following} onClick={() => setShowFollowList({ kind: "following", userId: authUser?.id, username: profile.username })} />
                     <Stat label="listened" value={listenedCount} onClick={() => setView({ name: "albumList", filter: "listened" })} />
                     <Stat label="reviews" value={reviews.length} onClick={() => setView({ name: "reviewsList", username: profile.username, userId: profile.id, reviews: reviews, isOwn: true, from: view })} />
-                    <Stat label="avg rating" value={avgRating} highlight={reviews.length > 0} onClick={reviews.length > 0 ? () => setView({ name: "statsDetail" }) : undefined} />
+                    <Stat label="avg rating" value={avgRating} onClick={reviews.length > 0 ? () => setView({ name: "statsDetail" }) : undefined} />
                   </div>
                 )}
               </div>
@@ -3968,7 +3968,7 @@ export default function SoundboardDemo() {
                 <Stat label="following" value={profileStats.following} onClick={() => setShowFollowList({ kind: "following", userId: authUser?.id, username: profile.username })} />
                 <Stat label="listened" value={listenedCount} onClick={() => setView({ name: "albumList", filter: "listened" })} />
                 <Stat label="reviews" value={reviews.length} onClick={() => setView({ name: "reviewsList", username: profile.username, userId: profile.id, reviews: reviews, isOwn: true, from: view })} />
-                <Stat label="avg rating" value={avgRating} highlight={reviews.length > 0} onClick={reviews.length > 0 ? () => setView({ name: "statsDetail" }) : undefined} />
+                <Stat label="avg rating" value={avgRating} onClick={reviews.length > 0 ? () => setView({ name: "statsDetail" }) : undefined} />
               </div>
             )}
 
