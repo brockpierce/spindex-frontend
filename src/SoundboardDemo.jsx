@@ -2035,7 +2035,7 @@ export default function SoundboardDemo() {
             {(homeTab === "feed" || homeTab === "everyone") && (() => {
               const isEveryone = homeTab === "everyone";
               const displayItems = isEveryone ? publicFeedItems : feed;
-              const headerText = isEveryone ? "everyone" : "your feed";
+              const headerText = isEveryone ? "everyone" : "feed";
               const subheaderText = isEveryone ? "recent posts from anyone on spindex" : "posts from people you follow";
               return (
               userSearchQuery.trim() ? (
