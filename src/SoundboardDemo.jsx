@@ -1074,6 +1074,15 @@ export default function SoundboardDemo() {
     }).catch(() => {});
   }
 
+  function setMixPublic(mixId, isPublic) {
+    setAlbumMixes((prev) => prev.map((m) => (m.id === mixId ? { ...m, isPublic } : m)));
+    apiFetch(`${BACKEND_URL}/api/mixes/${mixId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ isPublic }),
+    }).catch(() => {});
+  }
+
   function createAlbumMix() {
     if (!newMixTitle.trim()) return;
     const tempId = "am" + Date.now();
@@ -3160,7 +3169,10 @@ export default function SoundboardDemo() {
                     {m.albums.length === 0 && <ListMusic size={36} color={LINE} strokeWidth={1.4} />}
                   </div>
                   <div style={{ flex: 1 }} className="ui-sans">
-                    <div style={{ fontSize: 14.5, fontWeight: 600 }}>{m.title}</div>
+                    <div style={{ fontSize: 14.5, fontWeight: 600, display: "flex", alignItems: "center", gap: 7 }}>
+                      {m.title}
+                      {m.isPublic === false && <span style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em", color: MUTE, border: `1px solid ${LINE}`, borderRadius: 4, padding: "1px 5px" }}>private</span>}
+                    </div>
                     {m.description && <div style={{ fontSize: 12.5, color: MUTE, marginTop: 2 }}>{m.description}</div>}
                     <div style={{ fontSize: 11, color: MUTE, marginTop: 4 }}>{m.albums.length} album{m.albums.length !== 1 ? "s" : ""}</div>
                   </div>
@@ -3298,11 +3310,12 @@ export default function SoundboardDemo() {
                 ) : (
                   <div
                     className="ui-sans"
-                    style={{ fontSize: 22, fontWeight: 600, cursor: isOwn ? "pointer" : "default" }}
+                    style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 22, fontWeight: 600, cursor: isOwn ? "pointer" : "default" }}
                     onClick={isOwn ? () => setEditingMixTitle(mix.title) : undefined}
                     title={isOwn ? "Click to rename" : undefined}
                   >
                     {mix.title}
+                    {isOwn && <Pencil size={15} color={MUTE} strokeWidth={1.8} />}
                   </div>
                 )}
                 {isOwn && (
@@ -3316,6 +3329,19 @@ export default function SoundboardDemo() {
                   </button>
                 )}
               </div>
+              {isOwn && (
+                <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, fontSize: 12.5 }}>
+                  <span style={{ color: MUTE }}>{mix.isPublic === false ? "Private" : "Public"}</span>
+                  <button
+                    onClick={() => setMixPublic(mix.id, mix.isPublic === false)}
+                    title={mix.isPublic === false ? "Make public" : "Make private"}
+                    style={{ position: "relative", width: 38, height: 22, borderRadius: 11, border: "none", cursor: "pointer", padding: 0, background: mix.isPublic === false ? LINE : BLUE, transition: "background 0.15s" }}
+                  >
+                    <span style={{ position: "absolute", top: 2, left: mix.isPublic === false ? 2 : 18, width: 18, height: 18, borderRadius: "50%", background: "#fff", transition: "left 0.15s" }} />
+                  </button>
+                  <span style={{ color: MUTE, fontSize: 11.5 }}>{mix.isPublic === false ? "only you can see this on your profile" : "visible on your profile"}</span>
+                </div>
+              )}
               {!isOwn && <div className="ui-sans" style={{ fontSize: 12, color: MUTE, marginTop: 3 }}>by @{mix.owner}</div>}
               {mix.description && <div className="ui-sans" style={{ fontSize: 13.5, color: MUTE, marginTop: 4 }}>{mix.description}</div>}
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: "26px 16px", marginTop: 24 }}>
@@ -3979,6 +4005,7 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
   const [allAotd, setAllAotd] = React.useState([]);
   const [showArchive, setShowArchive] = React.useState(false);
   const [featuredMixId, setFeaturedMixId] = React.useState(null);
+  const [featuredMix, setFeaturedMix] = React.useState(null);
   const [showMixPicker, setShowMixPicker] = React.useState(false);
 
   // AOTD form state
@@ -4003,6 +4030,12 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
         setAotd(data.aotd || null);
         setInterviews(data.interviews || []);
         if (data.featuredMixId) setFeaturedMixId(data.featuredMixId);
+        if (data.featuredMixId) {
+          apiFetch(BACKEND_URL + "/api/mixes/" + data.featuredMixId)
+            .then((r) => r.json())
+            .then((d) => { if (d.mix) setFeaturedMix(d.mix); })
+            .catch(() => {});
+        }
         if (data.aotd && data.aotd.album) {
           const a = data.aotd.album;
           setFetchedAlbums((prev) => ({ ...prev, [a.id]: { ...a, artist: a.artistName || "", year: a.releaseYear || null } }));
@@ -4163,8 +4196,8 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
       )}
 
       {featuredMixId ? (() => {
-        const mix = albumMixes.find((m) => m.id === featuredMixId);
-        if (!mix) return <div className="ui-sans" style={{ color: "#9a9a9a", fontSize: 13 }}>mix not found.</div>;
+        const mix = featuredMix || albumMixes.find((m) => m.id === featuredMixId);
+        if (!mix) return <div className="ui-sans" style={{ color: "#9a9a9a", fontSize: 13 }}>loading mix...</div>;
         const covers = (mix.albums || []).slice(0, 3).map((a) => fetchedAlbums[a.albumId] || albumById(a.albumId));
         return (
           <div onClick={() => setView && setView({ name: "albumMixDetail", id: mix.id, mix })}
