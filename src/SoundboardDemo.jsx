@@ -2401,6 +2401,35 @@ export default function SoundboardDemo() {
           );
         })()}
 
+        {/* ---------------- EDITORIAL REVIEW ---------------- */}
+        {view.name === "editorialReview" && (() => {
+          const ev_aotd = view.aotd;
+          const ev_album = view.album || fetchedAlbums[ev_aotd.albumId] || albumById(ev_aotd.albumId);
+          return (
+            <div style={{ maxWidth: 680, margin: "0 auto" }}>
+              <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 12.5, marginBottom: 32, cursor: "pointer" }} onClick={() => { const f = view.from || { name: "home" }; setView(f); if (f.tab) setHomeTab(f.tab); }}>
+                <ChevronLeft size={14} /> back
+              </div>
+              {ev_album && (
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", marginBottom: 40 }}>
+                  {ev_album.coverArtUrl
+                    ? <img src={ev_album.coverArtUrl} alt="" style={{ width: 200, height: 200, borderRadius: 18, objectFit: "cover", marginBottom: 24, boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }} />
+                    : <div style={{ width: 200, height: 200, borderRadius: 18, background: "#eee", marginBottom: 24 }} />}
+                  <div className="ui-sans" style={{ fontSize: 11, letterSpacing: ".12em", fontWeight: 700, color: "#9a9a9a", textTransform: "uppercase", marginBottom: 10 }}>album of the day · {ev_aotd.date}</div>
+                  <div className="ui-sans" style={{ fontSize: 36, fontWeight: 800, letterSpacing: "-.02em", lineHeight: 1.1, marginBottom: 8 }}>{ev_album.title}</div>
+                  <div className="ui-sans" style={{ fontSize: 16, color: "#8a8a8a", marginBottom: 20 }}>{ev_album.artist || ev_album.artistName} · {ev_album.year || ev_album.releaseYear}</div>
+                  <span className="ui-sans" style={{ fontSize: 20, fontWeight: 800, color: "#2f6ae0", background: "#f0f4fe", borderRadius: 10, padding: "8px 18px" }}>{ev_aotd.staffRating} / 10</span>
+                </div>
+              )}
+              <div style={{ height: 1, background: "#eee", margin: "32px 0" }} />
+              <p className="ui-sans" style={{ fontSize: 17, lineHeight: 1.6, color: "#333", fontStyle: "italic", marginBottom: 28, fontWeight: 500 }}>"{ev_aotd.pullQuote}"</p>
+              <div className="ui-sans" style={{ fontSize: 15.5, lineHeight: 1.8, color: "#222", whiteSpace: "pre-line" }}>{ev_aotd.body}</div>
+              <div style={{ height: 1, background: "#eee", margin: "40px 0 24px" }} />
+              <button className="sb-btn" onClick={() => openAlbum(ev_aotd.albumId)} style={{ fontSize: 13 }}>view album page →</button>
+            </div>
+          );
+        })()}
+
         {/* ---------------- THREAD VIEW ---------------- */}
         {view.name === "thread" && (() => {
           const rev = threadReview;
