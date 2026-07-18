@@ -2182,7 +2182,7 @@ export default function SoundboardDemo() {
         {view.name === "home" && (
           <div>
             {/* Tab toggle + people search */}
-            <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 22 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 22, flexWrap: "wrap" }}>
               <div style={{ display: "flex", gap: 0, border: `1px solid ${INK}`, borderRadius: 0, overflow: "hidden", flexShrink: 0 }}>
                 <button onClick={() => { setHomeTab("everyone"); if (publicFeedItems.length === 0) loadPublicFeed(); }} style={{ padding: "7px 16px", fontFamily: "inherit", fontSize: 12, fontWeight: 500, cursor: "pointer", border: "none", background: homeTab === "everyone" ? INK : "transparent", color: homeTab === "everyone" ? BG : INK }}>everyone</button>
                 <button onClick={() => setHomeTab("feed")} style={{ padding: "7px 16px", fontFamily: "inherit", fontSize: 12, fontWeight: 500, cursor: "pointer", border: "none", borderLeft: `1px solid ${INK}`, background: homeTab === "feed" ? INK : "transparent", color: homeTab === "feed" ? BG : INK }}>feed</button>
@@ -2190,7 +2190,7 @@ export default function SoundboardDemo() {
               </div>
               {(homeTab === "feed" || homeTab === "everyone") && (
                 <>
-                  <div style={{ flex: 1, minWidth: 0, maxWidth: "100%", boxSizing: "border-box", display: "flex", alignItems: "center", gap: 9, padding: "8px 2px", borderBottom: `1px solid ${peopleSearchFocused ? BLUE : "#d8d8d8"}`, transition: "border-color 0.15s" }}>
+                  <div style={{ flex: 1, minWidth: 180, maxWidth: "100%", boxSizing: "border-box", display: "flex", alignItems: "center", gap: 9, padding: "8px 2px", borderBottom: `1px solid ${peopleSearchFocused ? BLUE : "#d8d8d8"}`, transition: "border-color 0.15s" }}>
                     <Search size={15} color={peopleSearchFocused ? BLUE : "#b5b5b5"} style={{ flexShrink: 0, transition: "color 0.15s" }} />
                     <input
                       className="ui-sans"
@@ -2975,7 +2975,7 @@ export default function SoundboardDemo() {
             {!artistLoading && artistAlbums.length === 0 && (
               <div className="ui-sans" style={{ color: MUTE, fontSize: 13 }}>no albums found</div>
             )}
-            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(auto-fill, minmax(140px, 1fr))", gap: "20px 14px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(auto-fill, minmax(140px, 1fr))", gap: "20px 14px", justifyItems: isMobile ? "center" : "stretch" }}>
               {artistAlbums.map((album) => (
                 <div key={album.id} onClick={() => openAlbum(album.id, album, { name: "artist", artistName: view.artistName })} className="sb-cover-wrap">
                   <AlbumCover album={fetchedAlbums[album.id] || album} size={140} listened={listenStatus[album.id] === "listened"} />
@@ -3150,7 +3150,7 @@ export default function SoundboardDemo() {
                 </div>
               </>
             )}
-            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(auto-fill, minmax(150px, 1fr))", gap: "20px 16px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(auto-fill, minmax(150px, 1fr))", gap: "20px 16px", justifyItems: isMobile ? "center" : "stretch" }}>
               {albumSearchLoading && (
                 <div style={{ gridColumn: "1 / -1", display: "flex", justifyContent: "center", padding: "20px 0" }}><Spinner label="searching…" /></div>
               )}
