@@ -2224,7 +2224,7 @@ export default function SoundboardDemo() {
                         <div onClick={() => openUserProfile(u.username)} style={{ display: "flex", alignItems: "center", gap: 12, flex: 1, cursor: "pointer" }}>
                           <Avatar username={u.username} size={32} />
                           <div className="ui-sans">
-                            <div style={{ fontSize: 13.5, fontWeight: 600 }}>{u.displayName}</div>
+                            <div style={{ fontSize: 13.5, fontWeight: 400 }}>{u.displayName}</div>
                             <div style={{ fontSize: 11.5, color: MUTE }}>@{(u.username || "").toLowerCase()}</div>
                           </div>
                         </div>
@@ -2241,7 +2241,7 @@ export default function SoundboardDemo() {
               ) : (
                 <>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 4 }}>
-                    <div className="ui-sans" style={{ fontSize: 20, fontWeight: 600 }}>{headerText}</div>
+                    <div className="ui-sans" style={{ fontSize: 20, fontWeight: 400 }}>{headerText}</div>
                     <div style={{ position: "relative" }}>
                       <button
                         onClick={() => setShowPlusMenu((p) => !p)}
@@ -2269,7 +2269,7 @@ export default function SoundboardDemo() {
                                 onMouseEnter={(e) => e.currentTarget.style.background = LINE}
                                 onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
                               >
-                                <div style={{ fontSize: 13, fontWeight: 600, color: INK }}>{opt.label}</div>
+                                <div style={{ fontSize: 13, fontWeight: 400, color: INK }}>{opt.label}</div>
                                 <div style={{ fontSize: 11, color: MUTE, marginTop: 1 }}>{opt.desc}</div>
                               </button>
                             ))}
@@ -2332,7 +2332,7 @@ export default function SoundboardDemo() {
                                 <ReactionBar reactions={reviewReactions[c.id]} onReact={(kind) => toggleReaction(c.id, kind)} currentUsername={profile.username} inline={true} />
                                 <button onClick={() => setExpandedComments((prev) => ({ ...prev, [c.id]: !prev[c.id] }))} style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 5, color: expandedComments[c.id] ? BLUE : MUTE, padding: 0 }}>
                                   <MessageCircle size={16} strokeWidth={1.8} />
-                                  {countAllComments(reviewComments[c.id] || []) > 0 && <span style={{ fontSize: 13, fontWeight: 600 }}>{countAllComments(reviewComments[c.id] || [])}</span>}
+                                  {countAllComments(reviewComments[c.id] || []) > 0 && <span style={{ fontSize: 13, fontWeight: 400 }}>{countAllComments(reviewComments[c.id] || [])}</span>}
                                 </button>
                               </div>
                             )}
@@ -2398,7 +2398,7 @@ export default function SoundboardDemo() {
                               <AlbumCover album={album} size={56} />
                               <div className="ui-sans" style={{ flex: 1, display: "flex", alignItems: "center" }}>
                                 <div>
-                                  <div style={{ fontSize: 13.5, fontWeight: 600 }}>{album.title}</div>
+                                  <div style={{ fontSize: 13.5, fontWeight: 400 }}>{album.title}</div>
                                   <div style={{ fontSize: 11, color: MUTE }}>{album.artist}</div>
                                 </div>
                               </div>
@@ -2472,7 +2472,7 @@ export default function SoundboardDemo() {
                                 >
                                   <MessageCircle size={16} strokeWidth={1.8} />
                                   {(reviewComments[c.id] || []).length > 0 && (
-                                    <span style={{ fontSize: 13, fontWeight: 600 }}>{countAllComments(reviewComments[c.id] || [])}</span>
+                                    <span style={{ fontSize: 13, fontWeight: 400 }}>{countAllComments(reviewComments[c.id] || [])}</span>
                                   )}
                                 </button>
                               </div>
@@ -2561,7 +2561,7 @@ export default function SoundboardDemo() {
                   {notifications.length === 0 && <div style={{ padding: "20px 18px", fontSize: 14, color: "#9a9a92" }}>nothing yet.</div>}
                   {sections.map((section, si) => (
                     <div key={section.key}>
-                      <div style={{ padding: si === 0 ? "10px 18px 8px" : "18px 18px 8px", fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase", color: "#a8a8a0", fontWeight: 600 }}>{section.label}</div>
+                      <div style={{ padding: si === 0 ? "10px 18px 8px" : "18px 18px 8px", fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase", color: "#a8a8a0", fontWeight: 400 }}>{section.label}</div>
                       {section.items.map((n) => (
                         <div key={n.id}
                           style={{ display: "flex", alignItems: "center", gap: 14, padding: "13px 18px", borderRadius: 0, cursor: "pointer", transition: "background 0.12s ease" }}
@@ -2687,7 +2687,7 @@ export default function SoundboardDemo() {
                 {listenedAlbums.map((album) => (
                   <div key={album.id} onClick={() => openAlbum(album.id, album)} className="sb-cover-wrap">
                     <AlbumCover album={album} size={130} listened={true} />
-                    <div className="ui-sans" style={{ fontSize: 12.5, fontWeight: 600, marginTop: 6 }}>{album.title}</div>
+                    <div className="ui-sans" style={{ fontSize: 12.5, fontWeight: 400, marginTop: 6 }}>{album.title}</div>
                     <div className="ui-sans" style={{ fontSize: 11, color: MUTE }}>{album.artist || album.artistName}</div>
                   </div>
                 ))}
@@ -2715,7 +2715,7 @@ export default function SoundboardDemo() {
                       <AlbumCover album={album} size={72} listened={listenStatus[r.albumId] === "listened"} />
                       <div className="ui-sans" style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 18, fontWeight: 700, color: BLUE }}>{r.rating}/10</div>
-                        <div style={{ fontSize: 14, fontWeight: 600 }}>{album.title}</div>
+                        <div style={{ fontSize: 14, fontWeight: 400 }}>{album.title}</div>
                         <div style={{ fontSize: 12, color: MUTE }}>{album.artist || album.artistName}</div>
                         {r.text && <div style={{ fontSize: 13, color: INK, marginTop: 6, lineHeight: 1.5 }}>{r.text.slice(0, 120)}{r.text.length > 120 ? "..." : ""}</div>}
                       </div>
@@ -2734,7 +2734,7 @@ export default function SoundboardDemo() {
           <div>
             <div style={{ marginBottom: 28 }}>
               <div style={{ fontSize: 28, fontWeight: 700, letterSpacing: "-0.02em", color: INK }}>messages</div>
-              <div style={{ fontSize: 14, color: MUTE, marginTop: 4 }}>your dms{dmUnreadCount > 0 && <span> &middot; <span style={{ color: BLUE, fontWeight: 600 }}>{dmUnreadCount} unread</span></span>}</div>
+              <div style={{ fontSize: 14, color: MUTE, marginTop: 4 }}>your dms{dmUnreadCount > 0 && <span> &middot; <span style={{ color: BLUE, fontWeight: 400 }}>{dmUnreadCount} unread</span></span>}</div>
             </div>
             {conversations.length === 0 && <div className="ui-sans" style={{ color: MUTE, fontSize: 13.5 }}>no messages yet. send one from someone's profile.</div>}
             <div style={{ display: "flex", flexDirection: "column" }}>
@@ -2850,7 +2850,7 @@ export default function SoundboardDemo() {
               {/* TOP 3 ALBUMS — viewed user's favorites */}
               {viewedUserFavorites.length > 0 && (
                 <div style={{ marginTop: 26 }}>
-                  <div style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14, textAlign: "center", fontWeight: 600 }}>top 3 albums</div>
+                  <div style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14, textAlign: "center", fontWeight: 400 }}>top 3 albums</div>
                   <div style={{ display: "flex", gap: isMobile ? 20 : 28, justifyContent: "center" }}>
                     {viewedUserFavorites.map((fid) => {
                       const fAlbum = fetchedAlbums[fid] || albumById(fid);
@@ -2858,7 +2858,7 @@ export default function SoundboardDemo() {
                       return (
                         <div key={fid} onClick={() => openAlbum(fid)} className="sb-cover-wrap" style={{ textAlign: "center", maxWidth: favSize }}>
                           <AlbumCover album={fAlbum} size={favSize} />
-                          <div className="ui-sans" style={{ fontSize: isMobile ? 11.5 : 13, fontWeight: 600, marginTop: 8 }}>{fAlbum.title}</div>
+                          <div className="ui-sans" style={{ fontSize: isMobile ? 11.5 : 13, fontWeight: 400, marginTop: 8 }}>{fAlbum.title}</div>
                         </div>
                       );
                     })}
@@ -2868,7 +2868,7 @@ export default function SoundboardDemo() {
 
               {viewedUserMixes.length > 0 && (
                 <div style={{ marginTop: 30 }}>
-                  <div style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14, textAlign: isMobile ? "center" : "left", fontWeight: 600 }} className="ui-sans">mixes</div>
+                  <div style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14, textAlign: isMobile ? "center" : "left", fontWeight: 400 }} className="ui-sans">mixes</div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                     {viewedUserMixes.map((m) => (
                       <div
@@ -2885,7 +2885,7 @@ export default function SoundboardDemo() {
                           {m.albums.length === 0 && <ListMusic size={36} color={LINE} strokeWidth={1.4} />}
                         </div>
                         <div style={{ flex: 1 }} className="ui-sans">
-                          <div style={{ fontSize: 14.5, fontWeight: 600 }}>{m.title}</div>
+                          <div style={{ fontSize: 14.5, fontWeight: 400 }}>{m.title}</div>
                           {m.description && <div style={{ fontSize: 12.5, color: MUTE, marginTop: 2 }}>{m.description}</div>}
                           <div style={{ fontSize: 11, color: MUTE, marginTop: 4 }}>{m.albums.length} album{m.albums.length !== 1 ? "s" : ""}</div>
                         </div>
@@ -2896,7 +2896,7 @@ export default function SoundboardDemo() {
               )}
 
               <div style={{ marginTop: 30 }}>
-                <div style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14, textAlign: isMobile ? "center" : "left", fontWeight: 600 }} className="ui-sans">reviews</div>
+                <div style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14, textAlign: isMobile ? "center" : "left", fontWeight: 400 }} className="ui-sans">reviews</div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                   {(showAllUserReviews ? userReviews : userReviews.slice(0, 3)).map((r, i) => {
                     const album = fetchedAlbums[r.albumId] || albumById(r.albumId) || { id: r.albumId, title: "Loading...", artist: "", artistName: "", year: null };
@@ -2933,7 +2933,7 @@ export default function SoundboardDemo() {
               {/* QUEUED ALBUMS */}
               {viewedUserQueue.length > 0 && (
                 <div style={{ marginTop: 30 }}>
-                  <div style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14, textAlign: isMobile ? "center" : "left", fontWeight: 600 }}>queued</div>
+                  <div style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14, textAlign: isMobile ? "center" : "left", fontWeight: 400 }}>queued</div>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))", gap: "16px 12px" }}>
                     {viewedUserQueue.slice(0, 5).map((id) => {
                       const album = fetchedAlbums[id] || albumById(id);
@@ -2941,7 +2941,7 @@ export default function SoundboardDemo() {
                       return (
                         <div key={id} onClick={() => openAlbum(id)} className="sb-cover-wrap" style={{ textAlign: "center" }}>
                           <AlbumCover album={album} size={100} />
-                          <div className="ui-sans" style={{ fontSize: 11, fontWeight: 600, marginTop: 6, maxWidth: 100 }}>{album.title}</div>
+                          <div className="ui-sans" style={{ fontSize: 11, fontWeight: 400, marginTop: 6, maxWidth: 100 }}>{album.title}</div>
                         </div>
                       );
                     })}
@@ -2980,7 +2980,7 @@ export default function SoundboardDemo() {
                 <div key={album.id} onClick={() => openAlbum(album.id, album, { name: "artist", artistName: view.artistName })} className="sb-cover-wrap">
                   <AlbumCover album={fetchedAlbums[album.id] || album} size={140} listened={listenStatus[album.id] === "listened"} />
                   <div style={{ marginTop: 8 }}>
-                    <div className="ui-sans" style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.3 }}>{album.title}</div>
+                    <div className="ui-sans" style={{ fontSize: 13, fontWeight: 400, lineHeight: 1.3 }}>{album.title}</div>
                     {album.year && <div className="ui-sans" style={{ fontSize: 11.5, color: MUTE, marginTop: 2 }}>{album.year}</div>}
                   </div>
                 </div>
@@ -3016,7 +3016,7 @@ export default function SoundboardDemo() {
                 <ChevronLeft size={14} /> back to browse
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
-                <div className="ui-sans" style={{ fontSize: 22, fontWeight: 600 }}>#{tag}</div>
+                <div className="ui-sans" style={{ fontSize: 22, fontWeight: 400 }}>#{tag}</div>
               </div>
               <div className="ui-sans" style={{ fontSize: 13, color: MUTE, marginBottom: 28 }}>
                 {matchedAlbums.length} album{matchedAlbums.length !== 1 ? "s" : ""} · {matchedAlbum.length + matchedSong.length} mix{matchedAlbum.length + matchedSong.length !== 1 ? "es" : ""}
@@ -3034,7 +3034,7 @@ export default function SoundboardDemo() {
                             <AlbumCover album={album} size={140} />
                           </div>
                           <div style={{ marginTop: 8 }}>
-                            <div className="ui-sans" style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.3 }}>{album.title}</div>
+                            <div className="ui-sans" style={{ fontSize: 13, fontWeight: 400, lineHeight: 1.3 }}>{album.title}</div>
                             <div className="ui-sans" style={{ fontSize: 11.5, color: MUTE, marginTop: 1 }}>{album.artist} · {album.year}</div>
                             {rev && <span className="ui-sans" style={{ fontSize: 11, fontWeight: 600, color: BLUE }}>{rev.rating}/10</span>}
                             <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginTop: 4 }}>
@@ -3069,7 +3069,7 @@ export default function SoundboardDemo() {
                           {(m.albums || []).length === 0 && <ListMusic size={32} color={LINE} strokeWidth={1.4} />}
                         </div>
                         <div className="ui-sans" style={{ flex: 1 }}>
-                          <div style={{ fontSize: 13.5, fontWeight: 600 }}>{m.title}</div>
+                          <div style={{ fontSize: 13.5, fontWeight: 400 }}>{m.title}</div>
                           <div style={{ fontSize: 11.5, color: MUTE, marginTop: 2 }}>
                             {m.owner ? `by @${m.owner} · ` : ""}{(m.albums || []).length} album{(m.albums || []).length !== 1 ? "s" : ""}
                           </div>
@@ -3092,7 +3092,7 @@ export default function SoundboardDemo() {
                     {matchedSong.map((m) => (
                       <div key={m.id} onClick={() => setView({ name: "songMixDetail", id: m.id, mix: m, from: { name: "tagResults", tag } })} className="sb-cover-wrap">
                         <SongMixCover mix={m} size={130} />
-                        <div className="ui-sans" style={{ fontSize: 12.5, fontWeight: 600, marginTop: 6 }}>{m.title}</div>
+                        <div className="ui-sans" style={{ fontSize: 12.5, fontWeight: 400, marginTop: 6 }}>{m.title}</div>
                         <div className="ui-sans" style={{ fontSize: 11, color: MUTE }}>{m.tracks.length} track{m.tracks.length !== 1 ? "s" : ""}</div>
                         <div style={{ display: "flex", gap: 5, marginTop: 4, flexWrap: "wrap" }}>
                           {(m.tags || []).map((t) => (
@@ -3165,7 +3165,7 @@ export default function SoundboardDemo() {
                       <AlbumCover album={displayAlbum} size={150} listened={listenStatus[album.id] === "listened"} />
                     </div>
                     <div style={{ marginTop: 9 }}>
-                      <div className="ui-sans" style={{ fontSize: 13.5, fontWeight: 600, lineHeight: 1.3, wordBreak: "break-word", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{album.title}</div>
+                      <div className="ui-sans" style={{ fontSize: 13.5, fontWeight: 400, lineHeight: 1.3, wordBreak: "break-word", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{album.title}</div>
                       <div className="ui-sans" style={{ fontSize: 12, color: MUTE, marginTop: 2, wordBreak: "break-word", display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{album.artist || album.artistName}{(album.year || album.releaseYear) ? ` · ${album.year || album.releaseYear}` : ""}</div>
                     </div>
                   </div>
@@ -3217,7 +3217,7 @@ export default function SoundboardDemo() {
               <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 16 : 26, alignItems: isMobile ? "center" : "flex-start" }}>
                 <AlbumCover album={album} size={isMobile ? 140 : 160} listened={status === "listened"} />
                 <div style={{ flex: 1, width: "100%", textAlign: isMobile ? "center" : "left" }}>
-                  <div className="ui-sans" style={{ fontSize: isMobile ? 20 : 24, fontWeight: 600, lineHeight: 1.2, wordBreak: "break-word" }}>{album.title}</div>
+                  <div className="ui-sans" style={{ fontSize: isMobile ? 20 : 24, fontWeight: 400, lineHeight: 1.2, wordBreak: "break-word" }}>{album.title}</div>
                   <div className="ui-sans" style={{ fontSize: 14, color: MUTE, marginTop: 4 }}>
                     <span style={{ cursor: "pointer", textDecoration: "underline" }} onClick={() => openArtist(album.artist || album.artistName)}>{album.artist || album.artistName}</span>
                     {album.year ? ` · ${album.year}` : ""}
@@ -3352,12 +3352,12 @@ export default function SoundboardDemo() {
 
                   {siteCommunityAvg !== null && (
                     <>
-                      <div className="ui-sans" style={{ margin: "30px 2px 8px", fontSize: 13, fontWeight: 600, color: MUTE }}>you vs. the community</div>
+                      <div className="ui-sans" style={{ margin: "30px 2px 8px", fontSize: 13, fontWeight: 400, color: MUTE }}>you vs. the community</div>
                       <div style={{ position: "relative", height: 12, borderRadius: 0, background: LINE, margin: "0 2px" }}>
                         <div style={{ position: "absolute", top: 0, left: 0, height: 12, width: `${(siteCommunityAvg / 10 * 100).toFixed(1)}%`, borderRadius: 0, background: `linear-gradient(90deg, ${BLUE}99, ${BLUE})` }} />
                         <div style={{ position: "absolute", top: "50%", left: `${(numericAvg / 10 * 100).toFixed(1)}%`, transform: "translate(-50%,-50%)", width: 2, height: 24, background: INK }} />
                       </div>
-                      <div className="ui-sans" style={{ display: "flex", justifyContent: "space-between", fontSize: 12, fontWeight: 600, color: MUTE, margin: "9px 2px 0" }}>
+                      <div className="ui-sans" style={{ display: "flex", justifyContent: "space-between", fontSize: 12, fontWeight: 400, color: MUTE, margin: "9px 2px 0" }}>
                         <span style={{ color: BLUE }}>community avg {siteCommunityAvg.toFixed(1)}</span>
                         <span style={{ color: INK }}>you {numericAvg.toFixed(1)}</span>
                       </div>
@@ -3387,7 +3387,7 @@ export default function SoundboardDemo() {
                       );
                     })}
                   </div>
-                  <div className="ui-sans" style={{ textAlign: "center", fontSize: 14, fontWeight: 600, marginTop: 18, cursor: "pointer", color: BLUE }} onClick={() => setView({ name: "reviewsList", username: profile.username, userId: profile.id, reviews: reviews, isOwn: true, from: { name: "statsDetail" } })}>
+                  <div className="ui-sans" style={{ textAlign: "center", fontSize: 14, fontWeight: 400, marginTop: 18, cursor: "pointer", color: BLUE }} onClick={() => setView({ name: "reviewsList", username: profile.username, userId: profile.id, reviews: reviews, isOwn: true, from: { name: "statsDetail" } })}>
                     see all {reviews.length} reviews &rarr;
                   </div>
                 </>
@@ -3400,7 +3400,7 @@ export default function SoundboardDemo() {
           <div>
             {/* YOUR ALBUM MIXES */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 22 }}>
-              <div className="ui-sans" style={{ fontSize: 14, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, textAlign: "left" }}>your album mixes</div>
+              <div className="ui-sans" style={{ fontSize: 14, fontWeight: 400, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, textAlign: "left" }}>your album mixes</div>
               <button className="sb-btn" onClick={() => setShowNewMix(showNewMix === "album" ? null : "album")} style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <Plus size={12} strokeWidth={1.5} /> new album mix
               </button>
@@ -3427,9 +3427,9 @@ export default function SoundboardDemo() {
                     {m.albums.length === 0 && <ListMusic size={36} color={LINE} strokeWidth={1.4} />}
                   </div>
                   <div style={{ flex: 1 }} className="ui-sans">
-                    <div style={{ fontSize: 14.5, fontWeight: 600, display: "flex", alignItems: "center", gap: 7 }}>
+                    <div style={{ fontSize: 14.5, fontWeight: 400, display: "flex", alignItems: "center", gap: 7 }}>
                       {m.title}
-                      {m.isPublic === false && <span style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em", color: MUTE, border: `1px solid ${LINE}`, borderRadius: 0, padding: "1px 5px" }}>private</span>}
+                      {m.isPublic === false && <span style={{ fontSize: 10, fontWeight: 400, textTransform: "uppercase", letterSpacing: "0.04em", color: MUTE, border: `1px solid ${LINE}`, borderRadius: 0, padding: "1px 5px" }}>private</span>}
                     </div>
                     {m.description && <div style={{ fontSize: 12.5, color: MUTE, marginTop: 2 }}>{m.description}</div>}
                     <div style={{ fontSize: 11, color: MUTE, marginTop: 4 }}>{m.albums.length} album{m.albums.length !== 1 ? "s" : ""}</div>
@@ -3446,7 +3446,7 @@ export default function SoundboardDemo() {
             {/* YOUR SONG MIXES — temporarily hidden for beta */}
             {false && (<>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginTop: 36, marginBottom: 22 }}>
-              <div className="ui-sans" style={{ fontSize: 20, fontWeight: 600 }}>your song mixes</div>
+              <div className="ui-sans" style={{ fontSize: 20, fontWeight: 400 }}>your song mixes</div>
               <button className="sb-btn" onClick={() => setShowNewMix(showNewMix === "song" ? null : "song")} style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <Plus size={12} strokeWidth={1.5} /> new song mix
               </button>
@@ -3461,7 +3461,7 @@ export default function SoundboardDemo() {
               {songMixes.map((m) => (
                 <div key={m.id} onClick={() => setView({ name: "songMixDetail", id: m.id })} className="sb-cover-wrap">
                   <SongMixCover mix={m} size={150} />
-                  <div className="ui-sans" style={{ fontSize: 13.5, fontWeight: 600, marginTop: 8 }}>{m.title}</div>
+                  <div className="ui-sans" style={{ fontSize: 13.5, fontWeight: 400, marginTop: 8 }}>{m.title}</div>
                   <div className="ui-sans" style={{ fontSize: 11.5, color: MUTE }}>{m.tracks.length} track{m.tracks.length !== 1 ? "s" : ""}</div>
                 </div>
               ))}
@@ -3474,7 +3474,7 @@ export default function SoundboardDemo() {
             </>)}
 
             {/* SAVED ALBUM MIXES */}
-            <div style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14, marginTop: 32, textAlign: "left", fontWeight: 600 }} className="ui-sans">saved album mixes</div>
+            <div style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14, marginTop: 32, textAlign: "left", fontWeight: 400 }} className="ui-sans">saved album mixes</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               {savedAlbumMixes.map((m) => (
                 <div
@@ -3490,7 +3490,7 @@ export default function SoundboardDemo() {
                     {m.albums.length === 0 && <ListMusic size={36} color={LINE} strokeWidth={1.4} />}
                   </div>
                   <div style={{ flex: 1, cursor: "pointer" }} className="ui-sans" onClick={() => setView({ name: "albumMixDetail", id: m.id })}>
-                    <div style={{ fontSize: 14.5, fontWeight: 600 }}>{m.title}</div>
+                    <div style={{ fontSize: 14.5, fontWeight: 400 }}>{m.title}</div>
                     <div style={{ fontSize: 11.5, color: MUTE, marginTop: 2 }}>by @{m.owner}</div>
                     {m.description && <div style={{ fontSize: 12.5, color: MUTE, marginTop: 2 }}>{m.description}</div>}
                     <div style={{ fontSize: 11, color: MUTE, marginTop: 4 }}>{m.albums.length} album{m.albums.length !== 1 ? "s" : ""}</div>
@@ -3509,14 +3509,14 @@ export default function SoundboardDemo() {
 
             {/* SAVED SONG MIXES — temporarily hidden for beta */}
             {false && (<>
-            <div className="ui-sans" style={{ fontSize: 20, fontWeight: 600, marginTop: 36, marginBottom: 16 }}>saved song mixes</div>
+            <div className="ui-sans" style={{ fontSize: 20, fontWeight: 400, marginTop: 36, marginBottom: 16 }}>saved song mixes</div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: "20px 16px" }}>
               {savedSongMixes.map((m) => (
                 <div key={m.id} style={{ position: "relative" }}>
                   <div onClick={() => setView({ name: "songMixDetail", id: m.id })} className="sb-cover-wrap">
                     <SongMixCover mix={m} size={150} />
                   </div>
-                  <div className="ui-sans" style={{ fontSize: 13.5, fontWeight: 600, marginTop: 8 }}>{m.title}</div>
+                  <div className="ui-sans" style={{ fontSize: 13.5, fontWeight: 400, marginTop: 8 }}>{m.title}</div>
                   <div className="ui-sans" style={{ fontSize: 11.5, color: MUTE }}>by @{m.owner} · {m.tracks.length} track{m.tracks.length !== 1 ? "s" : ""}</div>
                   <button
                     className="sb-btn"
@@ -3555,7 +3555,7 @@ export default function SoundboardDemo() {
                 {isOwn && editingMixTitle !== null ? (
                   <input
                     className="sb-input ui-sans"
-                    style={{ fontSize: 22, fontWeight: 600, flex: 1, minWidth: 0 }}
+                    style={{ fontSize: 22, fontWeight: 400, flex: 1, minWidth: 0 }}
                     value={editingMixTitle}
                     autoFocus
                     onChange={(e) => setEditingMixTitle(e.target.value)}
@@ -3568,7 +3568,7 @@ export default function SoundboardDemo() {
                 ) : (
                   <div
                     className="ui-sans"
-                    style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 22, fontWeight: 600, cursor: isOwn ? "pointer" : "default" }}
+                    style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 22, fontWeight: 400, cursor: isOwn ? "pointer" : "default" }}
                     onClick={isOwn ? () => setEditingMixTitle(mix.title) : undefined}
                     title={isOwn ? "Click to rename" : undefined}
                   >
@@ -3633,7 +3633,7 @@ export default function SoundboardDemo() {
                           <X size={12} color="#fff" />
                         </button>
                       )}
-                      <div className="ui-sans" style={{ fontSize: 13, fontWeight: 600, marginTop: 8 }}>{album.title}</div>
+                      <div className="ui-sans" style={{ fontSize: 13, fontWeight: 400, marginTop: 8 }}>{album.title}</div>
                       <div className="ui-sans" style={{ fontSize: 11.5, color: MUTE }}>{album.artist}</div>
                       {!isOwn && a.note && <div className="ui-sans" style={{ fontSize: 10.5, color: MUTE, marginTop: 6, fontStyle: "italic", lineHeight: 1.4, wordBreak: "break-word" }}>"{a.note}"</div>}
                     </div>
@@ -3730,7 +3730,7 @@ export default function SoundboardDemo() {
               </div>
               <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 24 }}>
                 <div style={{ display: "flex", alignItems: "baseline", gap: 12 }}>
-                  <div className="ui-sans" style={{ fontSize: 22, fontWeight: 600 }}>{label}</div>
+                  <div className="ui-sans" style={{ fontSize: 22, fontWeight: 400 }}>{label}</div>
                   <div className="ui-sans" style={{ fontSize: 13, color: MUTE }}>{matchingAlbums.length} album{matchingAlbums.length !== 1 ? "s" : ""}</div>
                 </div>
                 <div style={{ display: "flex", gap: 0, border: `1px solid ${LINE}`, borderRadius: 0, overflow: "hidden" }}>
@@ -3753,7 +3753,7 @@ export default function SoundboardDemo() {
                       <div key={album.id} onClick={() => openAlbum(album.id)} className="sb-cover-wrap">
                         <AlbumCover album={album} size={130} listened={listenStatus[album.id] === "listened"} />
                         <div style={{ marginTop: 7 }}>
-                          <div className="ui-sans" style={{ fontSize: 12.5, fontWeight: 600, lineHeight: 1.3 }}>{album.title}</div>
+                          <div className="ui-sans" style={{ fontSize: 12.5, fontWeight: 400, lineHeight: 1.3 }}>{album.title}</div>
                           <div className="ui-sans" style={{ fontSize: 11.5, color: MUTE }}>{album.artist} · {album.year}</div>
                         </div>
                       </div>
@@ -3772,7 +3772,7 @@ export default function SoundboardDemo() {
                         <div key={album.id} onClick={() => openAlbum(album.id)} className="sb-cover-wrap">
                           <AlbumCover album={album} size={130} />
                           <div style={{ marginTop: 7 }}>
-                            <div className="ui-sans" style={{ fontSize: 12.5, fontWeight: 600, lineHeight: 1.3 }}>{album.title}</div>
+                            <div className="ui-sans" style={{ fontSize: 12.5, fontWeight: 400, lineHeight: 1.3 }}>{album.title}</div>
                             <div className="ui-sans" style={{ fontSize: 11.5, color: MUTE }}>{album.artist} · {album.year}</div>
                             {rev && (
                               <div className="ui-sans" style={{ fontSize: 11, fontWeight: 600, color: BLUE, marginTop: 2 }}>{rev.rating}/10</div>
@@ -3834,7 +3834,7 @@ export default function SoundboardDemo() {
 
             {showSettings && (
               <div style={{ marginTop: 18, border: `1px solid ${LINE}`, borderRadius: 0, padding: 18 }} className="ui-sans">
-                <div style={{ fontSize: 13.5, fontWeight: 600, marginBottom: 14 }}>edit profile</div>
+                <div style={{ fontSize: 13.5, fontWeight: 400, marginBottom: 14 }}>edit profile</div>
 
                 <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 18 }}>
                   {draftAvatarUrl ? (
@@ -3892,7 +3892,7 @@ export default function SoundboardDemo() {
                 </div>
 
                 <div style={{ borderTop: `1px solid ${LINE}`, marginTop: 20, paddingTop: 18 }}>
-                  <div style={{ fontSize: 13.5, fontWeight: 600, marginBottom: 14 }}>theme</div>
+                  <div style={{ fontSize: 13.5, fontWeight: 400, marginBottom: 14 }}>theme</div>
 
                   {/* Accent color picker temporarily hidden — keeping code in place
                       so we can re-enable later without rebuilding it. */}
@@ -3973,7 +3973,7 @@ export default function SoundboardDemo() {
             )}
 
             <div style={{ marginTop: 26 }}>
-              <div style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14, textAlign: "center", fontWeight: 600 }}>top 3 albums</div>
+              <div style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14, textAlign: "center", fontWeight: 400 }}>top 3 albums</div>
               <div style={{ display: "flex", gap: isMobile ? 20 : 28, justifyContent: "center" }}>
                 {favorites.map((id) => {
                   const album = fetchedAlbums[id] || albumById(id);
@@ -4007,7 +4007,7 @@ export default function SoundboardDemo() {
                       >
                         <X size={12} color="#fff" />
                       </div>
-                      <div className="ui-sans" style={{ fontSize: isMobile ? 11.5 : 13, fontWeight: 600, marginTop: 8, maxWidth: favSize }}>{album.title !== "Unknown Album" ? album.title : "..."}</div>
+                      <div className="ui-sans" style={{ fontSize: isMobile ? 11.5 : 13, fontWeight: 400, marginTop: 8, maxWidth: favSize }}>{album.title !== "Unknown Album" ? album.title : "..."}</div>
                     </div>
                   );
                 })}
@@ -4045,7 +4045,7 @@ export default function SoundboardDemo() {
             </div>
 
             <div style={{ marginTop: 30 }}>
-              <div style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14, textAlign: isMobile ? "center" : "left", fontWeight: 600 }}>recent reviews</div>
+              <div style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14, textAlign: isMobile ? "center" : "left", fontWeight: 400 }}>recent reviews</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 16, alignItems: isMobile ? "center" : "flex-start" }}>
                 {(() => {
                   const sorted = [...reviews].sort((a, b) => (a.date !== b.date ? (a.date < b.date ? 1 : -1) : (a.id < b.id ? 1 : -1)));
@@ -4099,7 +4099,7 @@ export default function SoundboardDemo() {
             </div>
 
             <div style={{ marginTop: 30 }}>
-              <div style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14, textAlign: isMobile ? "center" : "left", fontWeight: 600 }}>mixes</div>
+              <div style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14, textAlign: isMobile ? "center" : "left", fontWeight: 400 }}>mixes</div>
               {/* Song mix tab toggle temporarily hidden */}
               {false && (
                 <div style={{ display: "flex", border: `1px solid ${LINE}`, borderRadius: 0, overflow: "hidden", width: 220, marginBottom: 18 }}>
@@ -4121,7 +4121,7 @@ export default function SoundboardDemo() {
                         {m.albums.length === 0 && <ListMusic size={32} color={LINE} strokeWidth={1.4} />}
                       </div>
                       <div className="ui-sans" style={{ flex: 1 }}>
-                        <div style={{ fontSize: 13.5, fontWeight: 600 }}>{m.title}</div>
+                        <div style={{ fontSize: 13.5, fontWeight: 400 }}>{m.title}</div>
                         <div style={{ fontSize: 11, color: MUTE, marginTop: 2 }}>{m.albums.length} album{m.albums.length !== 1 ? "s" : ""}</div>
                       </div>
                     </div>
@@ -4135,7 +4135,7 @@ export default function SoundboardDemo() {
                   {songMixes.map((m) => (
                     <div key={m.id} onClick={() => setView({ name: "songMixDetail", id: m.id })} className="sb-cover-wrap">
                       <SongMixCover mix={m} size={130} />
-                      <div className="ui-sans" style={{ fontSize: 12.5, fontWeight: 600, marginTop: 6 }}>{m.title}</div>
+                      <div className="ui-sans" style={{ fontSize: 12.5, fontWeight: 400, marginTop: 6 }}>{m.title}</div>
                       <div className="ui-sans" style={{ fontSize: 11, color: MUTE }}>{m.tracks.length} track{m.tracks.length !== 1 ? "s" : ""}</div>
                     </div>
                   ))}
@@ -4155,12 +4155,12 @@ export default function SoundboardDemo() {
               const preview = queuedAlbums.slice(0, 5);
               return queuedIds.length > 0 ? (
                 <div style={{ marginTop: 30 }}>
-                  <div style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14, textAlign: isMobile ? "center" : "left", fontWeight: 600 }}>queued</div>
+                  <div style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14, textAlign: isMobile ? "center" : "left", fontWeight: 400 }}>queued</div>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))", gap: "16px 12px" }}>
                     {preview.map((album) => (
                       <div key={album.id} onClick={() => openAlbum(album.id)} className="sb-cover-wrap" style={{ textAlign: "center" }}>
                         <AlbumCover album={album} size={100} />
-                        <div className="ui-sans" style={{ fontSize: 11, fontWeight: 600, marginTop: 6, maxWidth: 100 }}>{album.title}</div>
+                        <div className="ui-sans" style={{ fontSize: 11, fontWeight: 400, marginTop: 6, maxWidth: 100 }}>{album.title}</div>
                       </div>
                     ))}
                   </div>
@@ -4208,7 +4208,7 @@ function Stat({ label, value, onClick, highlight }) {
         userSelect: "none",
       }}
     >
-      <div style={{ fontSize: 18, fontWeight: 600, lineHeight: 1.2, color: highlight ? BLUE : INK, textDecoration: highlight ? "underline" : "none", textUnderlineOffset: 3 }}>{value}</div>
+      <div style={{ fontSize: 18, fontWeight: 400, lineHeight: 1.2, color: highlight ? BLUE : INK, textDecoration: highlight ? "underline" : "none", textUnderlineOffset: 3 }}>{value}</div>
       <div style={{ fontSize: 10, color: MUTE, textTransform: "uppercase", letterSpacing: "0.04em", marginTop: 4, lineHeight: 1.2 }}>{label}</div>
     </div>
   );
@@ -4385,7 +4385,7 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
 
       {showAotdForm && (
         <div style={{ border: "1px solid #eee", borderRadius: 0, padding: 20, marginBottom: 24 }}>
-          <div className="ui-sans" style={{ fontSize: 14, fontWeight: 600, marginBottom: 14 }}>{editingAotd ? "edit album of the day" : "new album of the day"}</div>
+          <div className="ui-sans" style={{ fontSize: 14, fontWeight: 400, marginBottom: 14 }}>{editingAotd ? "edit album of the day" : "new album of the day"}</div>
           <AlbumSearchPicker onPick={(album) => setAotdAlbumPicked(album)} onCancel={() => {}} placeholder="search for album..." />
           {aotdAlbumPicked && <div className="ui-sans" style={{ fontSize: 13, color: ACCENT, marginBottom: 8 }}>selected: {aotdAlbumPicked.title}</div>}
           <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 8 }}>
@@ -4419,7 +4419,7 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
             <p className="ui-sans" style={{ fontSize: 15.5, lineHeight: 1.55, color: "#333", margin: "0 0 16px" }}>{aotd.pullQuote}</p>
             <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
               <span className="ui-sans" style={{ fontSize: 15, fontWeight: 800, color: ACCENT, background: "#f0f4fe", borderRadius: 0, padding: "5px 11px" }}>{aotd.staffRating} / 10</span>
-              <span className="ui-sans" style={{ fontSize: 14, fontWeight: 600, color: ACCENT, cursor: "pointer" }} onClick={() => setView({ name: "editorialReview", aotd: aotd, album: aotdAlbum, from: { name: "home", tab: "news" } })}>read the full review →</span>
+              <span className="ui-sans" style={{ fontSize: 14, fontWeight: 400, color: ACCENT, cursor: "pointer" }} onClick={() => setView({ name: "editorialReview", aotd: aotd, album: aotdAlbum, from: { name: "home", tab: "news" } })}>read the full review →</span>
             </div>
 
           </div>
@@ -4438,7 +4438,7 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
 
       {showMixPicker && isAdmin && (
         <div style={{ border: "1px solid #eee", borderRadius: 0, padding: 16, marginBottom: 16 }}>
-          <div className="ui-sans" style={{ fontSize: 13, fontWeight: 600, marginBottom: 10 }}>pick a mix to feature</div>
+          <div className="ui-sans" style={{ fontSize: 13, fontWeight: 400, marginBottom: 10 }}>pick a mix to feature</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {albumMixes.map((m) => (
               <button key={m.id} className="sb-btn" style={{ textAlign: "left", fontSize: 13 }}
@@ -4486,7 +4486,7 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
 
       {showInterviewForm && (
         <div style={{ border: "1px solid #eee", borderRadius: 0, padding: 20, marginBottom: 24 }}>
-          <div className="ui-sans" style={{ fontSize: 14, fontWeight: 600, marginBottom: 14 }}>{editingInterview ? "edit interview" : "new interview"}</div>
+          <div className="ui-sans" style={{ fontSize: 14, fontWeight: 400, marginBottom: 14 }}>{editingInterview ? "edit interview" : "new interview"}</div>
           <input className="sb-input ui-sans" placeholder="subject name (e.g. Alex G)" value={intTitle} onChange={(e) => setIntTitle(e.target.value)} style={{ width: "100%", marginBottom: 8 }} />
           <textarea className="sb-textarea ui-sans" placeholder="body text..." value={intBody} onChange={(e) => setIntBody(e.target.value)} rows={10} style={{ width: "100%", marginBottom: 8, fontSize: 13 }} />
           <input className="sb-input ui-sans" placeholder="album IDs (comma separated, optional)" value={intAlbumIds} onChange={(e) => setIntAlbumIds(e.target.value)} style={{ width: "100%", marginBottom: 12 }} />
@@ -4548,7 +4548,7 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
                         : <div style={{ width: 48, height: 48, borderRadius: 0, background: "#eee" }} />}
                     </div>
                     <div className="ui-sans" style={{ flex: 1 }}>
-                      <div style={{ fontSize: 14, fontWeight: 600, cursor: "pointer" }} onClick={() => openAlbum(item.albumId)}>{album.title}</div>
+                      <div style={{ fontSize: 14, fontWeight: 400, cursor: "pointer" }} onClick={() => openAlbum(item.albumId)}>{album.title}</div>
                       <div style={{ fontSize: 12, color: "#9a9a9a" }}>{album.artist || album.artistName} · <span style={{ color: ACCENT, fontWeight: 600 }}>{item.staffRating}/10</span></div>
                     </div>
                     <div style={{ fontSize: 11, color: "#9a9a9a", flexShrink: 0 }}>{item.date}</div>
@@ -4655,7 +4655,7 @@ function AlbumSearchPicker({ onPick, onCancel, placeholder = "search for the alb
           >
             <AlbumCover album={album} size={44} />
             <div style={{ minWidth: 0, textAlign: "left" }}>
-              <div style={{ fontSize: 13.5, fontWeight: 600, lineHeight: 1.2, textAlign: "left" }}>{album.title}</div>
+              <div style={{ fontSize: 13.5, fontWeight: 400, lineHeight: 1.2, textAlign: "left" }}>{album.title}</div>
               <div style={{ fontSize: 12, color: MUTE, lineHeight: 1.2, marginTop: 1, textAlign: "left" }}>{album.artist}{album.year ? ` · ${album.year}` : ""}</div>
             </div>
           </div>
@@ -4887,7 +4887,7 @@ function QotdModal({ question, onSubmit, onClose }) {
             <X size={16} />
           </button>
         </div>
-        <div className="ui-sans" style={{ fontSize: 18, fontWeight: 600, marginTop: 6, marginBottom: 20, lineHeight: 1.3 }}>
+        <div className="ui-sans" style={{ fontSize: 18, fontWeight: 400, marginTop: 6, marginBottom: 20, lineHeight: 1.3 }}>
           {question}
         </div>
 
@@ -4899,7 +4899,7 @@ function QotdModal({ question, onSubmit, onClose }) {
             <div style={{ display: "flex", alignItems: "center", gap: 12, border: `1px solid ${LINE}`, borderRadius: 0, padding: "10px 12px", marginBottom: 16 }}>
               <AlbumCover album={pickedAlbum} size={48} />
               <div className="ui-sans" style={{ flex: 1 }}>
-                <div style={{ fontSize: 13.5, fontWeight: 600 }}>{pickedAlbum.title}</div>
+                <div style={{ fontSize: 13.5, fontWeight: 400 }}>{pickedAlbum.title}</div>
                 <div style={{ fontSize: 11.5, color: MUTE }}>{pickedAlbum.artist} · {pickedAlbum.year}</div>
               </div>
               <button onClick={() => setPickedAlbum(null)} style={{ background: "none", border: "none", cursor: "pointer", color: MUTE, padding: 4 }} title="Pick a different album">
@@ -5028,7 +5028,7 @@ function TextPostModal({ onSubmit, onClose }) {
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
       <div onClick={(e) => e.stopPropagation()} style={{ background: BG, border: `1px solid ${INK}`, borderRadius: 0, padding: 24, width: "100%", maxWidth: 440 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-          <div className="ui-sans" style={{ fontSize: 15, fontWeight: 600 }}>post a thought</div>
+          <div className="ui-sans" style={{ fontSize: 15, fontWeight: 400 }}>post a thought</div>
           <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: MUTE, padding: 0 }}><X size={16} /></button>
         </div>
         <textarea
@@ -5068,7 +5068,7 @@ function QuickReviewModal({ onSubmit, onClose }) {
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
       <div onClick={(e) => e.stopPropagation()} style={{ background: BG, border: `1px solid ${INK}`, borderRadius: 0, padding: 24, width: "100%", maxWidth: 420, maxHeight: "85vh", overflowY: "auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-          <div className="ui-sans" style={{ fontSize: 15, fontWeight: 600 }}>post a review</div>
+          <div className="ui-sans" style={{ fontSize: 15, fontWeight: 400 }}>post a review</div>
           <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: MUTE, padding: 0 }}><X size={16} /></button>
         </div>
 
@@ -5079,7 +5079,7 @@ function QuickReviewModal({ onSubmit, onClose }) {
             <div style={{ display: "flex", alignItems: "center", gap: 12, border: `1px solid ${LINE}`, borderRadius: 0, padding: "10px 12px", marginBottom: 18 }}>
               <AlbumCover album={pickedAlbum} size={48} />
               <div className="ui-sans" style={{ flex: 1 }}>
-                <div style={{ fontSize: 13.5, fontWeight: 600 }}>{pickedAlbum.title}</div>
+                <div style={{ fontSize: 13.5, fontWeight: 400 }}>{pickedAlbum.title}</div>
                 <div style={{ fontSize: 11.5, color: MUTE }}>{pickedAlbum.artist} · {pickedAlbum.year}</div>
               </div>
               <button onClick={() => { setPickedAlbum(null); setRating(0); setText(""); setFavTrack(""); setLeastFavTrack(""); }} style={{ background: "none", border: "none", cursor: "pointer", color: MUTE, padding: 4 }}><X size={14} /></button>
@@ -5152,7 +5152,7 @@ function ShareMixModal({ albumMixes, songMixes, onSubmit, onClose }) {
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
       <div onClick={(e) => e.stopPropagation()} style={{ background: BG, border: "1px solid " + INK, borderRadius: 0, padding: 24, width: "100%", maxWidth: 420, maxHeight: "85vh", overflowY: "auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-          <div className="ui-sans" style={{ fontSize: 15, fontWeight: 600 }}>share a mix</div>
+          <div className="ui-sans" style={{ fontSize: 15, fontWeight: 400 }}>share a mix</div>
           <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: MUTE, padding: 0 }}><X size={16} /></button>
         </div>
 
@@ -5182,7 +5182,7 @@ function ShareMixModal({ albumMixes, songMixes, onSubmit, onClose }) {
                     {(m.albums || []).length === 0 && <ListMusic size={34} color={LINE} strokeWidth={1.4} />}
                   </div>
                   <div className="ui-sans">
-                    <div style={{ fontSize: 13.5, fontWeight: 600, color: INK }}>{m.title}</div>
+                    <div style={{ fontSize: 13.5, fontWeight: 400, color: INK }}>{m.title}</div>
                     <div style={{ fontSize: 11.5, color: MUTE }}>{(m.albums || []).length} albums</div>
                   </div>
                 </button>
@@ -5201,7 +5201,7 @@ function ShareMixModal({ albumMixes, songMixes, onSubmit, onClose }) {
                 ))}
               </div>
               <div className="ui-sans" style={{ flex: 1 }}>
-                <div style={{ fontSize: 13.5, fontWeight: 600, color: INK }}>{selectedMix.title}</div>
+                <div style={{ fontSize: 13.5, fontWeight: 400, color: INK }}>{selectedMix.title}</div>
                 <div style={{ fontSize: 11.5, color: MUTE }}>{(selectedMix.albums || []).length} albums</div>
               </div>
               <button onClick={() => setSelectedMix(null)} style={{ background: "none", border: "none", cursor: "pointer", color: MUTE, fontSize: 11, padding: 0 }}>change</button>
@@ -5298,7 +5298,7 @@ function CommentInput({ placeholder, onSubmit, currentUsername, initialValue = "
           <button
             onClick={() => { if (text.trim()) { onSubmit(text.trim()); setText(""); setMentionQuery(null); } }}
             disabled={!text.trim()}
-            style={{ border: "none", background: text.trim() ? BLUE : "#c2c7cc", color: "#fff", fontWeight: 600, fontSize: 13, padding: "6px 14px", borderRadius: 0, cursor: text.trim() ? "pointer" : "default", transition: "background 0.12s", fontFamily: "inherit" }}
+            style={{ border: "none", background: text.trim() ? BLUE : "#c2c7cc", color: "#fff", fontWeight: 400, fontSize: 13, padding: "6px 14px", borderRadius: 0, cursor: text.trim() ? "pointer" : "default", transition: "background 0.12s", fontFamily: "inherit" }}
           >
             Post
           </button>
@@ -5351,7 +5351,7 @@ function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername, r
             {"  "}
             <CommentText text={comment.text} />
           </p>
-          <div style={{ display: "flex", alignItems: "center", gap: 14, marginTop: 6, fontSize: 13, color: "#9aa0a6", fontWeight: 600 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 14, marginTop: 6, fontSize: 13, color: "#9aa0a6", fontWeight: 400 }}>
             {comment.date && <span style={{ fontWeight: 400 }}>{relativeTime(comment.date)}</span>}
             <button
               onClick={() => setReplying((r) => !r)}
@@ -5499,7 +5499,7 @@ function InRotationSection({ albumId, isOwn, onOpenAlbum, onChangeAlbum }) {
             </div>
           </div>
           <div className="ui-sans">
-            <div style={{ fontSize: 13.5, fontWeight: 600 }}>{album.title}</div>
+            <div style={{ fontSize: 13.5, fontWeight: 400 }}>{album.title}</div>
             <div style={{ fontSize: 11.5, color: MUTE }}>{album.artist} · {album.year}</div>
           </div>
         </div>
@@ -5539,9 +5539,9 @@ function ReactionBar({ reactions = { heart: [], frown: [] }, onReact, currentUse
       <button
         onClick={() => onReact("heart")}
         className="ui-sans"
-        style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 5, padding: 0, color: youHearted ? "#E0537A" : MUTE, fontSize: 12 }}
+        style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 5, padding: 0, color: youHearted ? BLUE : MUTE, fontSize: 12 }}
       >
-        <Heart size={15} fill={youHearted ? "#E0537A" : "none"} strokeWidth={1.8} />
+        <Heart size={15} fill={youHearted ? BLUE : "none"} strokeWidth={1.6} />
         {heartCount > 0 && heartCount}
       </button>
       <button
@@ -5549,7 +5549,7 @@ function ReactionBar({ reactions = { heart: [], frown: [] }, onReact, currentUse
         className="ui-sans"
         style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 5, padding: 0, color: youFrowned ? BLUE : MUTE, fontSize: 12 }}
       >
-        <Frown size={15} strokeWidth={1.8} />
+        <Frown size={15} strokeWidth={1.6} />
         {frownCount > 0 && frownCount}
       </button>
     </div>
@@ -5722,11 +5722,11 @@ function SongMixDetail({ mix, isOwn, onBack, onOpenAlbum, onAddTrack, onRemoveTr
               onChange={(e) => setDraftTitle(e.target.value)}
               onBlur={commitTitle}
               onKeyDown={(e) => { if (e.key === "Enter") { e.target.blur(); } if (e.key === "Escape") { setDraftTitle(mix.title); setEditingTitle(false); } }}
-              style={{ width: "100%", fontSize: 22, fontWeight: 600, marginTop: 4, padding: "4px 8px" }}
+              style={{ width: "100%", fontSize: 22, fontWeight: 400, marginTop: 4, padding: "4px 8px" }}
             />
           ) : (
             <div
-              style={{ fontSize: 26, fontWeight: 600, lineHeight: 1.15, marginTop: 4, display: "flex", alignItems: "center", gap: 8, cursor: isOwn ? "pointer" : "default" }}
+              style={{ fontSize: 26, fontWeight: 400, lineHeight: 1.15, marginTop: 4, display: "flex", alignItems: "center", gap: 8, cursor: isOwn ? "pointer" : "default" }}
               onClick={() => isOwn && setEditingTitle(true)}
             >
               {mix.title}
@@ -5775,7 +5775,7 @@ function SongMixDetail({ mix, isOwn, onBack, onOpenAlbum, onAddTrack, onRemoveTr
                 <AlbumCover album={album} size={42} />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13.5, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.trackTitle}</div>
+                <div style={{ fontSize: 13.5, fontWeight: 400, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.trackTitle}</div>
                 <div style={{ fontSize: 11.5, color: MUTE, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{album.artist} · {album.title}</div>
               </div>
               {isOwn && (
@@ -5821,7 +5821,7 @@ function SongMixDetail({ mix, isOwn, onBack, onOpenAlbum, onAddTrack, onRemoveTr
                 <AlbumCover album={pickedAlbum} size={36} />
                 <div>
                   <div style={{ fontSize: 12, color: MUTE }}>from</div>
-                  <div style={{ fontSize: 13.5, fontWeight: 600 }}>{pickedAlbum.title} · {pickedAlbum.artist}</div>
+                  <div style={{ fontSize: 13.5, fontWeight: 400 }}>{pickedAlbum.title} · {pickedAlbum.artist}</div>
                 </div>
               </div>
               <div style={{ fontSize: 11, color: MUTE, marginBottom: 5 }}>track title</div>
@@ -5872,7 +5872,7 @@ function Avatar({ username, size = 30 }) {
       style={{
         width: size, height: size, borderRadius: "50%", background: BLUE, color: "#fff",
         display: "flex", alignItems: "center", justifyContent: "center",
-        fontSize: size * 0.42, fontWeight: 600, flexShrink: 0,
+        fontSize: size * 0.42, fontWeight: 400, flexShrink: 0,
       }}
       className="ui-sans"
     >
@@ -5956,7 +5956,7 @@ function AlbumCommunitySection({ albumId, albumTab, setAlbumTab, openAlbum, revi
           {mixes.map((l) => (
             <div key={l.id} className="ui-sans" style={{ border: `1px solid ${LINE}`, borderRadius: 0, padding: "12px 14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div>
-                <div style={{ fontSize: 13.5, fontWeight: 600 }}>{l.title}</div>
+                <div style={{ fontSize: 13.5, fontWeight: 400 }}>{l.title}</div>
                 <div style={{ fontSize: 11.5, color: MUTE, marginTop: 2 }}>by @{l.owner} · {l.albumIds.length} albums</div>
               </div>
             </div>
@@ -6037,7 +6037,7 @@ function FollowListModal({ kind, userId, username, onClose, onVisitProfile }) {
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
       <div onClick={(e) => e.stopPropagation()} style={{ background: BG, border: `1px solid ${INK}`, borderRadius: 0, padding: 24, width: "100%", maxWidth: 380, maxHeight: "70vh", overflowY: "auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-          <div className="ui-sans" style={{ fontSize: 15, fontWeight: 600 }}>{kind}</div>
+          <div className="ui-sans" style={{ fontSize: 15, fontWeight: 400 }}>{kind}</div>
           <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: MUTE, padding: 0 }}><X size={16} /></button>
         </div>
         {loading && <div className="ui-sans" style={{ color: MUTE, fontSize: 13 }}>loading...</div>}
@@ -6080,7 +6080,7 @@ function TermsScreen({ onBack, inline }) {
         </div>
       )}
 
-      <div style={{ fontSize: 22, fontWeight: 600, marginBottom: 4 }}>Terms of Service</div>
+      <div style={{ fontSize: 22, fontWeight: 400, marginBottom: 4 }}>Terms of Service</div>
       <div style={{ fontSize: 12.5, color: MUTE, marginBottom: 28 }}>Last updated: {lastUpdated}</div>
 
       {[
@@ -6139,7 +6139,7 @@ function TermsScreen({ onBack, inline }) {
         },
       ].map((section) => (
         <div key={section.title} style={{ marginBottom: 24 }}>
-          <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 6 }}>{section.title}</div>
+          <div style={{ fontWeight: 400, fontSize: 14, marginBottom: 6 }}>{section.title}</div>
           {section.flagged && (
             <div style={{ background: "#FEF3C7", border: "1px solid #F59E0B", borderRadius: 0, padding: "8px 12px", marginBottom: 8, fontSize: 11.5, color: "#92400E" }}>
               ⚠️ <strong>Legal review recommended</strong> — this clause covers data transfer in acquisition scenarios and should be reviewed by a qualified attorney before the app is made public.
