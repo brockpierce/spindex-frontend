@@ -362,6 +362,31 @@ const SURFACES = {
 const ThemeContext = React.createContext(null);
 const AvatarContext = React.createContext({});
 
+function Spinner({ label = "loading…", size = 52 }) {
+  return (
+    <div className="spx-loader" style={{ padding: "28px 0" }}>
+      <svg viewBox="0 0 200 200" width={size} height={size} role="img" aria-label="Loading">
+        <g className="spx-inner">
+          <path d="M36,134 A64,64 0 0 1 164,134" fill="none" stroke="var(--spx-color)" strokeWidth="11" strokeLinecap="round" />
+          <path d="M44,130 A31,31 0 0 0 44,192 Z" fill="var(--spx-color)" />
+          <path d="M156,130 A31,31 0 0 1 156,192 Z" fill="var(--spx-color)" />
+          <path className="spx-hair" style={{ animationDelay: "0s" }}   d="M78,88 q-6,24 -4,42"  fill="none" stroke="var(--spx-color)" strokeWidth="7" strokeLinecap="round" />
+          <path className="spx-hair" style={{ animationDelay: ".12s" }} d="M90,84 q-4,26 -3,46"  fill="none" stroke="var(--spx-color)" strokeWidth="7" strokeLinecap="round" />
+          <path className="spx-hair" style={{ animationDelay: ".24s" }} d="M100,82 q0,28 0,48"   fill="none" stroke="var(--spx-color)" strokeWidth="7" strokeLinecap="round" />
+          <path className="spx-hair" style={{ animationDelay: ".36s" }} d="M110,84 q4,26 3,46"   fill="none" stroke="var(--spx-color)" strokeWidth="7" strokeLinecap="round" />
+          <path className="spx-hair" style={{ animationDelay: ".48s" }} d="M122,88 q6,24 4,42"   fill="none" stroke="var(--spx-color)" strokeWidth="7" strokeLinecap="round" />
+          <g className="spx-eyes">
+            <circle cx="76" cy="164" r="6" fill="var(--spx-color)" />
+            <circle cx="124" cy="164" r="6" fill="var(--spx-color)" />
+          </g>
+          <rect x="89" y="174" width="22" height="7" rx="3.5" fill="var(--spx-color)" />
+        </g>
+      </svg>
+      {label && <span className="spx-label">{label}</span>}
+    </div>
+  );
+}
+
 function useTheme() {
   return React.useContext(ThemeContext);
 }
@@ -1948,6 +1973,16 @@ export default function SoundboardDemo() {
         .sb-btn-solid:hover { filter: brightness(0.85); }
         .sb-cover-wrap { cursor: pointer; transition: opacity 0.12s; }
         .sb-cover-wrap:hover { opacity: 0.82; }
+        .spx-loader { display: inline-flex; flex-direction: column; align-items: center; gap: 12px; --spx-color: ${BLUE}; }
+        .spx-loader svg { display: block; overflow: visible; }
+        .spx-label { font-size: 13px; font-weight: 600; color: ${MUTE}; font-family: inherit; }
+        .spx-inner { transform-box: fill-box; transform-origin: center; animation: spx-bob 1.5s ease-in-out infinite; }
+        .spx-eyes { transform-box: fill-box; transform-origin: center; animation: spx-blink 4s ease-in-out infinite; }
+        .spx-hair { transform-box: fill-box; transform-origin: center top; animation: spx-eq 1.1s ease-in-out infinite; }
+        @keyframes spx-bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+        @keyframes spx-blink { 0%,90%,100% { transform: scaleY(1); } 95% { transform: scaleY(.12); } }
+        @keyframes spx-eq { 0%,100% { transform: scaleY(.55); } 50% { transform: scaleY(1); } }
+        @media (prefers-reduced-motion: reduce) { .spx-inner, .spx-eyes, .spx-hair { animation: none; } }
         .sb-input { font-family: inherit; border: 1.5px solid ${LINE}; background: ${BG}; padding: 9px 12px; font-size: 13px; outline: none; color: ${INK}; border-radius: 6px; width: 100%; }
         .sb-input:focus { border-color: ${BLUE}; }
         .sb-textarea { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; border: 1.5px solid ${LINE}; background: ${BG}; padding: 11px 12px; font-size: 13.5px; outline: none; color: ${INK}; width: 100%; border-radius: 6px; resize: vertical; line-height: 1.6; }
@@ -2151,7 +2186,7 @@ export default function SoundboardDemo() {
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
                     {isEveryone && publicFeedLoading && (
-                      <div className="ui-sans" style={{ fontSize: 13, color: MUTE, textAlign: "center", padding: "20px 0" }}>loading recent posts...</div>
+                      <div style={{ display: "flex", justifyContent: "center" }}><Spinner label="loading your feed…" /></div>
                     )}
                     {isEveryone && !publicFeedLoading && displayItems.length === 0 && (
                       <div className="ui-sans" style={{ fontSize: 13, color: MUTE, textAlign: "center", padding: "20px 0" }}>no posts yet. (backend needs to expose /api/feed/public for this tab.)</div>
@@ -2494,7 +2529,7 @@ export default function SoundboardDemo() {
         {/* ---------------- THREAD VIEW ---------------- */}
         {view.name === "thread" && (() => {
           const rev = threadReview;
-          if (!rev) return <div className="ui-sans" style={{ color: MUTE, fontSize: 13 }}>loading...</div>;
+          if (!rev) return <div style={{ display: "flex", justifyContent: "center" }}><Spinner label="loading…" /></div>;
           const album = fetchedAlbums[rev.albumId] || albumById(rev.albumId) || {};
           return (
             <div>
@@ -2665,7 +2700,7 @@ export default function SoundboardDemo() {
               <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 12.5, marginBottom: 22, cursor: "pointer" }} onClick={() => setView({ name: "home" })}>
                 <ChevronLeft size={14} /> back
               </div>
-              <div className="ui-sans" style={{ color: MUTE, fontSize: 13 }}>loading...</div>
+              <div style={{ display: "flex", justifyContent: "center" }}><Spinner label="loading profile…" /></div>
             </div>
           );
           const userReviews = [...viewedUserReviews].sort((a, b) => (a.date !== b.date ? (a.date < b.date ? 1 : -1) : (a.id < b.id ? 1 : -1)));
@@ -2839,7 +2874,7 @@ export default function SoundboardDemo() {
                 </div>
               )}
             </div>
-            {artistLoading && <div className="ui-sans" style={{ color: MUTE, fontSize: 13 }}>loading...</div>}
+            {artistLoading && <div style={{ display: "flex", justifyContent: "center" }}><Spinner label="loading albums…" /></div>}
             {!artistLoading && artistAlbums.length === 0 && (
               <div className="ui-sans" style={{ color: MUTE, fontSize: 13 }}>no albums found</div>
             )}
@@ -3062,7 +3097,7 @@ export default function SoundboardDemo() {
         {view.name === "album" && (() => {
           const album = fetchedAlbums[view.id] || albumById(view.id);
           if (!album) return (
-            <div className="ui-sans" style={{ color: MUTE, padding: "40px 0" }}>loading...</div>
+            <div style={{ display: "flex", justifyContent: "center", padding: "20px 0" }}><Spinner label="loading albums…" /></div>
           );
           const existing = reviewFor(album.id);
           const status = listenStatus[album.id];
@@ -4149,7 +4184,7 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
     setInterviews((prev) => prev.filter((i) => i.id !== id));
   }
 
-  if (loading) return <div className="ui-sans" style={{ color: MUTE, fontSize: 13 }}>loading...</div>;
+  if (loading) return <div style={{ display: "flex", justifyContent: "center" }}><Spinner label="loading…" /></div>;
 
   const aotdAlbum = aotd ? (fetchedAlbums[aotd.albumId] || albumById(aotd.albumId) || aotd.album) : null;
   const LABEL_STYLE = { fontSize: 12, letterSpacing: ".12em", fontWeight: 700, color: "#9a9a9a", textTransform: "uppercase", marginBottom: 14 };
@@ -4245,7 +4280,7 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
 
       {featuredMixId ? (() => {
         const mix = featuredMix || albumMixes.find((m) => m.id === featuredMixId);
-        if (!mix) return <div className="ui-sans" style={{ color: "#9a9a9a", fontSize: 13 }}>loading mix...</div>;
+        if (!mix) return <div style={{ display: "flex", justifyContent: "center" }}><Spinner label="loading mix…" /></div>;
         const covers = (mix.albums || []).slice(0, 3).map((a) => fetchedAlbums[a.albumId] || albumById(a.albumId));
         return (
           <div onClick={() => setView && setView({ name: "albumMixDetail", id: mix.id, mix })}
@@ -5756,7 +5791,7 @@ function AlbumCommunitySection({ albumId, albumTab, setAlbumTab, openAlbum, revi
 
       {albumTab === "reviews" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          {reviewsLoading && <div className="ui-sans" style={{ fontSize: 13, color: MUTE }}>loading reviews...</div>}
+          {reviewsLoading && <div style={{ display: "flex", justifyContent: "center" }}><Spinner label="loading reviews…" /></div>}
           {!reviewsLoading && reviews.length === 0 && <div className="ui-sans" style={{ fontSize: 13, color: MUTE }}>no reviews yet -- be the first.</div>}
           {reviews.map((r, i) => (
             <div key={i} style={{ border: `1.5px solid ${LINE}`, borderRadius: 8, padding: "12px 14px", marginBottom: 6 }}>
