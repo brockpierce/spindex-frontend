@@ -599,6 +599,7 @@ export default function SoundboardDemo() {
   const [listenStatus, setListenStatus] = useState(INITIAL_LISTEN_STATUS);
   const [favorites, setFavorites] = useState(INITIAL_FAVORITES);
   const [albumMixes, setAlbumMixes] = useState(INITIAL_ALBUM_MIXES);
+  const [editingMixTitle, setEditingMixTitle] = useState(null);
   const [savedAlbumMixes, setSavedAlbumMixes] = useState(INITIAL_SAVED_ALBUM_MIXES);
   const [songMixes, setSongMixes] = useState(INITIAL_SONG_MIXES);
   const [savedSongMixes, setSavedSongMixes] = useState(INITIAL_SAVED_SONG_MIXES);
@@ -1057,6 +1058,20 @@ export default function SoundboardDemo() {
       // Revert on failure
       setFavorites((prev) => isFav ? [...prev, albumId] : prev.filter((id) => id !== albumId));
     });
+  }
+
+  function renameAlbumMix(mixId, newTitle) {
+    const t = (newTitle || "").trim();
+    setEditingMixTitle(null);
+    if (!t) return;
+    const current = albumMixes.find((m) => m.id === mixId);
+    if (current && current.title === t) return;
+    setAlbumMixes((prev) => prev.map((m) => (m.id === mixId ? { ...m, title: t } : m)));
+    apiFetch(`${BACKEND_URL}/api/mixes/${mixId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: t }),
+    }).catch(() => {});
   }
 
   function createAlbumMix() {
@@ -3267,7 +3282,29 @@ export default function SoundboardDemo() {
                 <ChevronLeft size={14} /> back
               </div>
               <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 14 }}>
-                <div className="ui-sans" style={{ fontSize: 22, fontWeight: 600 }}>{mix.title}</div>
+                {isOwn && editingMixTitle !== null ? (
+                  <input
+                    className="sb-input ui-sans"
+                    style={{ fontSize: 22, fontWeight: 600, flex: 1, minWidth: 0 }}
+                    value={editingMixTitle}
+                    autoFocus
+                    onChange={(e) => setEditingMixTitle(e.target.value)}
+                    onBlur={() => renameAlbumMix(mix.id, editingMixTitle)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") { e.preventDefault(); renameAlbumMix(mix.id, editingMixTitle); }
+                      if (e.key === "Escape") { e.preventDefault(); setEditingMixTitle(null); }
+                    }}
+                  />
+                ) : (
+                  <div
+                    className="ui-sans"
+                    style={{ fontSize: 22, fontWeight: 600, cursor: isOwn ? "pointer" : "default" }}
+                    onClick={isOwn ? () => setEditingMixTitle(mix.title) : undefined}
+                    title={isOwn ? "Click to rename" : undefined}
+                  >
+                    {mix.title}
+                  </div>
+                )}
                 {isOwn && (
                   <button
                     className="sb-btn"
