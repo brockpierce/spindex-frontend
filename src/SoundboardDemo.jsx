@@ -2153,11 +2153,15 @@ export default function SoundboardDemo() {
                               </div>
                             </div>
                             {c.id && (
-                              <div style={{ marginTop: 12, paddingTop: 10, borderTop: "1px solid " + LINE }}>
-                                <ReactionBar reactions={reviewReactions[c.id]} onReact={(kind) => toggleReaction(c.id, kind)} currentUsername={profile.username} />
+                              <div style={{ display: "flex", alignItems: "center", gap: 20, marginTop: 12, paddingTop: 10, borderTop: "1px solid " + LINE }}>
+                                <ReactionBar reactions={reviewReactions[c.id]} onReact={(kind) => toggleReaction(c.id, kind)} currentUsername={profile.username} inline={true} />
+                                <button onClick={() => setExpandedComments((prev) => ({ ...prev, [c.id]: !prev[c.id] }))} style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 5, color: expandedComments[c.id] ? BLUE : MUTE, padding: 0 }}>
+                                  <MessageCircle size={16} strokeWidth={1.8} />
+                                  {countAllComments(reviewComments[c.id] || []) > 0 && <span style={{ fontSize: 13, fontWeight: 600 }}>{countAllComments(reviewComments[c.id] || [])}</span>}
+                                </button>
                               </div>
                             )}
-                            {c.id && <ReviewComments reviewId={c.id} comments={reviewComments[c.id] || []} onAdd={addComment} onReply={addReply} currentUsername={profile.username} reviewOwnerUsername={c.username} onDelete={deleteComment} onLoadReactions={loadCommentReactions} onOpenProfile={openUserProfile} />}
+                            {c.id && expandedComments[c.id] && <ReviewComments reviewId={c.id} comments={reviewComments[c.id] || []} onAdd={addComment} onReply={addReply} currentUsername={profile.username} reviewOwnerUsername={c.username} onDelete={deleteComment} onLoadReactions={loadCommentReactions} onOpenProfile={openUserProfile} startOpen={true} />}
                           </div>
                         );
                       }
@@ -5094,18 +5098,20 @@ function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUserna
 
   return (
     <div className="sb-comment-bubble" style={{ background: "#fafbfc", borderTop: "1px solid #eceef0", marginTop: 10, marginLeft: -16, marginRight: -16, marginBottom: -14, borderRadius: "0 0 8px 8px", padding: "0 16px" }}>
-      <button
-        className="ui-sans"
-        onClick={handleToggle}
-        style={{ display: "flex", alignItems: "center", gap: 8, border: "none", background: "none", padding: "14px 0 0 0", cursor: "pointer", fontSize: 13, fontWeight: 400, color: "#6b7280", letterSpacing: "0.01em", fontFamily: "inherit" }}
-        onMouseEnter={(e) => e.currentTarget.style.color = "#1a1a1a"}
-        onMouseLeave={(e) => e.currentTarget.style.color = "#6b7280"}
-      >
-        {total > 0 ? total + " comment" + (total !== 1 ? "s" : "") : ""}
-        {total > 0 && (
-          <span style={{ fontSize: 11, display: "inline-block", transition: "transform 0.2s", transform: open ? "rotate(180deg)" : "rotate(0deg)" }}>&#9660;</span>
-        )}
-      </button>
+      {!startOpen && (
+        <button
+          className="ui-sans"
+          onClick={handleToggle}
+          style={{ display: "flex", alignItems: "center", gap: 8, border: "none", background: "none", padding: "14px 0 0 0", cursor: "pointer", fontSize: 13, fontWeight: 400, color: "#6b7280", letterSpacing: "0.01em", fontFamily: "inherit" }}
+          onMouseEnter={(e) => e.currentTarget.style.color = "#1a1a1a"}
+          onMouseLeave={(e) => e.currentTarget.style.color = "#6b7280"}
+        >
+          {total > 0 ? total + " comment" + (total !== 1 ? "s" : "") : ""}
+          {total > 0 && (
+            <span style={{ fontSize: 11, display: "inline-block", transition: "transform 0.2s", transform: open ? "rotate(180deg)" : "rotate(0deg)" }}>&#9660;</span>
+          )}
+        </button>
+      )}
 
       {(open || total === 0) && (
         <>
@@ -5116,7 +5122,7 @@ function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUserna
               ))}
             </div>
           )}
-          <div style={{ borderTop: comments.length > 0 ? "1px solid #eceef0" : "none", marginTop: comments.length > 0 ? 14 : 12, paddingBottom: 22, paddingLeft: 16, paddingRight: 16 }}>
+          <div style={{ borderTop: comments.length > 0 ? "1px solid #eceef0" : "none", marginTop: comments.length > 0 ? 20 : 12, paddingTop: comments.length > 0 ? 14 : 0, paddingBottom: 22, paddingLeft: 16, paddingRight: 16 }}>
             <CommentInput
               placeholder="Write a comment..."
               currentUsername={currentUsername}
