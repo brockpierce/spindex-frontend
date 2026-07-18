@@ -5024,10 +5024,10 @@ function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername, r
             <CommentText text={comment.text} />
           </p>
           <div style={{ display: "flex", alignItems: "center", gap: 14, marginTop: 6, fontSize: 13, color: "#9aa0a6", fontWeight: 600 }}>
-            {comment.date && <span>{relativeTime(comment.date)}</span>}
+            {comment.date && <span style={{ fontWeight: 400 }}>{relativeTime(comment.date)}</span>}
             <button
               onClick={() => setReplying((r) => !r)}
-              style={{ border: "none", background: "none", padding: 0, cursor: "pointer", font: "inherit", color: replying ? "#1a1a1a" : "#9aa0a6", fontSize: 13, fontWeight: 600 }}
+              style={{ border: "none", background: "none", padding: 0, cursor: "pointer", font: "inherit", color: replying ? "#1a1a1a" : "#9aa0a6", fontSize: 13, fontWeight: 400 }}
             >
               {replying ? "cancel" : "Reply"}
             </button>
