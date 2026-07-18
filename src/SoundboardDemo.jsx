@@ -16,6 +16,7 @@ import { Search, Heart, Plus, X, ChevronLeft, User, ListMusic, Check, Settings, 
 // changes to that live address instead of localhost.
 // ---------------------------------------------------------------------------
 const BACKEND_URL = "https://spindex-backend.onrender.com";
+const SPX_LIGHT = "#a9d4ef"; // light-blue shade for logo + loading/search spinners
 
 // Only this account can edit album-level tags. Non-admin users can view and
 // click tags to filter but not add or remove them. Temporary curation gate
@@ -2051,7 +2052,7 @@ export default function SoundboardDemo() {
         .sb-btn-solid:hover { filter: brightness(0.85); }
         .sb-cover-wrap { cursor: pointer; transition: opacity 0.12s; }
         .sb-cover-wrap:hover { opacity: 0.82; }
-        .spx-loader { display: inline-flex; flex-direction: column; align-items: center; gap: 12px; --spx-color: ${BLUE}; }
+        .spx-loader { display: inline-flex; flex-direction: column; align-items: center; gap: 12px; --spx-color: ${SPX_LIGHT}; }
         .spx-loader svg { display: block; overflow: visible; }
         .spx-label { font-size: 13px; font-weight: 600; color: ${MUTE}; font-family: inherit; }
         .spx-inner { transform-box: fill-box; transform-origin: center; animation: spx-bob 1.5s ease-in-out infinite; }
