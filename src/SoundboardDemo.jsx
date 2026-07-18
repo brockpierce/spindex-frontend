@@ -491,9 +491,9 @@ function RatingBlocks({ value, onChange, size = 14 }) {
           style={{
             width: size,
             height: size,
-            borderRadius: 3,
+            borderRadius: 0,
             background: display >= i ? BLUE : "transparent",
-            border: `1.5px solid ${display >= i ? BLUE : LINE}`,
+            border: `1px solid ${display >= i ? BLUE : LINE}`,
             cursor: onChange ? "pointer" : "default",
           }}
         />
@@ -523,7 +523,7 @@ function AlbumCover({ album, size = 92, listened = false }) {
         fontSize: 10.5,
         fontWeight: 700,
         letterSpacing: "0.03em",
-        borderRadius: 999,
+        borderRadius: 0,
         boxShadow: `0 2px 6px ${BLUE}80`,
         lineHeight: 1,
         zIndex: 2,
@@ -2045,7 +2045,7 @@ export default function SoundboardDemo() {
         * { box-sizing: border-box; }
         html, body { overflow-x: hidden; max-width: 100vw; }
         .ui-sans { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
-        .sb-btn { font-family: inherit; border: 1.5px solid ${INK}; background: transparent; color: ${INK}; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; letter-spacing: 0.01em; transition: background 0.12s, color 0.12s, border-color 0.12s; }
+        .sb-btn { font-family: inherit; border: 1px solid ${INK}; background: transparent; color: ${INK}; padding: 8px 14px; border-radius: 0; cursor: pointer; font-size: 12px; font-weight: 500; letter-spacing: 0.01em; transition: background 0.12s, color 0.12s, border-color 0.12s; }
         .sb-btn:hover { background: ${INK}; color: ${BG}; }
         .sb-btn-solid { background: ${BLUE}; color: #fff; border-color: ${BLUE}; }
         .sb-btn-solid:hover { filter: brightness(0.85); }
@@ -2061,13 +2061,13 @@ export default function SoundboardDemo() {
         @keyframes spx-blink { 0%,90%,100% { transform: scaleY(1); } 95% { transform: scaleY(.12); } }
         @keyframes spx-eq { 0%,100% { transform: scaleY(.55); } 50% { transform: scaleY(1); } }
         @media (prefers-reduced-motion: reduce) { .spx-inner, .spx-eyes, .spx-hair { animation: none; } }
-        .sb-input { font-family: inherit; border: 1.5px solid ${LINE}; background: ${BG}; padding: 9px 12px; font-size: 13px; outline: none; color: ${INK}; border-radius: 6px; width: 100%; }
+        .sb-input { font-family: inherit; border: 1px solid ${LINE}; background: ${BG}; padding: 9px 12px; font-size: 13px; outline: none; color: ${INK}; border-radius: 0; width: 100%; }
         .sb-input:focus { border-color: ${BLUE}; }
-        .sb-textarea { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; border: 1.5px solid ${LINE}; background: ${BG}; padding: 11px 12px; font-size: 13.5px; outline: none; color: ${INK}; width: 100%; border-radius: 6px; resize: vertical; line-height: 1.6; }
+        .sb-textarea { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; border: 1px solid ${LINE}; background: ${BG}; padding: 11px 12px; font-size: 13.5px; outline: none; color: ${INK}; width: 100%; border-radius: 0; resize: vertical; line-height: 1.6; }
         .sb-comment-bubble { text-align: left !important; }
         .sb-comment-bubble * { text-align: left !important; }
         .sb-textarea:focus { border-color: ${BLUE}; }
-        .sb-nav-item { cursor: pointer; font-size: 12px; letter-spacing: 0.03em; text-transform: uppercase; font-weight: 500; color: ${MUTE}; padding: 6px 0; border-bottom: 2px solid transparent; }
+        .sb-nav-item { cursor: pointer; font-size: 12px; letter-spacing: 0.03em; text-transform: uppercase; font-weight: 500; color: ${MUTE}; padding: 6px 0; border-bottom: 1px solid transparent; }
         .sb-nav-item.active { color: ${INK}; border-bottom-color: ${BLUE}; }
         @media (max-width: 480px) {
           .sb-nav-item { font-size: 10px; letter-spacing: 0.01em; }
@@ -2077,7 +2077,7 @@ export default function SoundboardDemo() {
       `}</style>
 
       {/* TOP NAV */}
-      <div style={{ borderBottom: `1.5px solid ${INK}`, padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", overflowX: "hidden" }}>
+      <div style={{ borderBottom: `1px solid ${INK}`, padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", overflowX: "hidden" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 9, cursor: "pointer" }} onClick={() => setView({ name: "home" })}>
           <svg viewBox="0 0 200 200" width={34} height={34} fill="none" style={{ display: "block" }} aria-label="Spindex">
             <g stroke="#1e3a8a" fill="#1e3a8a">
@@ -2172,7 +2172,7 @@ export default function SoundboardDemo() {
       <div style={{ maxWidth: 920, margin: "0 auto", padding: "28px 16px 64px" }}>
         {/* TOAST */}
         {toast && (
-          <div style={{ position: "sticky", top: 8, zIndex: 10, background: INK, color: BG, padding: "8px 14px", borderRadius: 6, fontSize: 12, marginBottom: 16, display: "inline-flex", alignItems: "center", gap: 6 }}>
+          <div style={{ position: "sticky", top: 8, zIndex: 10, background: INK, color: BG, padding: "8px 14px", borderRadius: 0, fontSize: 12, marginBottom: 16, display: "inline-flex", alignItems: "center", gap: 6 }}>
             <Check size={13} /> {toast}
           </div>
         )}
@@ -2182,10 +2182,10 @@ export default function SoundboardDemo() {
           <div>
             {/* Tab toggle + people search */}
             <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 22 }}>
-              <div style={{ display: "flex", gap: 0, border: `1.5px solid ${INK}`, borderRadius: 6, overflow: "hidden", flexShrink: 0 }}>
+              <div style={{ display: "flex", gap: 0, border: `1px solid ${INK}`, borderRadius: 0, overflow: "hidden", flexShrink: 0 }}>
                 <button onClick={() => { setHomeTab("everyone"); if (publicFeedItems.length === 0) loadPublicFeed(); }} style={{ padding: "7px 16px", fontFamily: "inherit", fontSize: 12, fontWeight: 500, cursor: "pointer", border: "none", background: homeTab === "everyone" ? INK : "transparent", color: homeTab === "everyone" ? BG : INK }}>everyone</button>
-                <button onClick={() => setHomeTab("feed")} style={{ padding: "7px 16px", fontFamily: "inherit", fontSize: 12, fontWeight: 500, cursor: "pointer", border: "none", borderLeft: `1.5px solid ${INK}`, background: homeTab === "feed" ? INK : "transparent", color: homeTab === "feed" ? BG : INK }}>feed</button>
-                <button onClick={() => setHomeTab("news")} style={{ padding: "7px 16px", fontFamily: "inherit", fontSize: 12, fontWeight: 500, cursor: "pointer", border: "none", borderLeft: `1.5px solid ${INK}`, background: homeTab === "news" ? INK : "transparent", color: homeTab === "news" ? BG : INK }}>news</button>
+                <button onClick={() => setHomeTab("feed")} style={{ padding: "7px 16px", fontFamily: "inherit", fontSize: 12, fontWeight: 500, cursor: "pointer", border: "none", borderLeft: `1px solid ${INK}`, background: homeTab === "feed" ? INK : "transparent", color: homeTab === "feed" ? BG : INK }}>feed</button>
+                <button onClick={() => setHomeTab("news")} style={{ padding: "7px 16px", fontFamily: "inherit", fontSize: 12, fontWeight: 500, cursor: "pointer", border: "none", borderLeft: `1px solid ${INK}`, background: homeTab === "news" ? INK : "transparent", color: homeTab === "news" ? BG : INK }}>news</button>
               </div>
               {(homeTab === "feed" || homeTab === "everyone") && (
                 <>
@@ -2215,7 +2215,7 @@ export default function SoundboardDemo() {
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                     {userSearchResults.map((u) => (
-                      <div key={u.username} style={{ display: "flex", alignItems: "center", gap: 12, border: `1.5px solid ${LINE}`, borderRadius: 8, padding: "10px 14px" }}>
+                      <div key={u.username} style={{ display: "flex", alignItems: "center", gap: 12, border: `1px solid ${LINE}`, borderRadius: 0, padding: "10px 14px" }}>
                         <div onClick={() => openUserProfile(u.username)} style={{ display: "flex", alignItems: "center", gap: 12, flex: 1, cursor: "pointer" }}>
                           <Avatar username={u.username} size={32} />
                           <div className="ui-sans">
@@ -2242,7 +2242,7 @@ export default function SoundboardDemo() {
                         onClick={() => setShowPlusMenu((p) => !p)}
                         className="ui-sans"
                         title="Create a post"
-                        style={{ display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: `2px solid ${INK}`, borderRadius: 10, width: 34, height: 34, cursor: "pointer", color: INK, padding: 0 }}
+                        style={{ display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: `1px solid ${INK}`, borderRadius: 0, width: 34, height: 34, cursor: "pointer", color: INK, padding: 0 }}
                       >
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                           <rect x="7" y="1" width="2" height="14" rx="1" fill={INK} />
@@ -2252,7 +2252,7 @@ export default function SoundboardDemo() {
                       {showPlusMenu && (
                         <>
                           <div onClick={() => setShowPlusMenu(false)} style={{ position: "fixed", inset: 0, zIndex: 30 }} />
-                          <div className="ui-sans" style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, zIndex: 40, background: BG, border: `1.5px solid ${LINE}`, borderRadius: 8, minWidth: 170, overflow: "hidden", boxShadow: "0 4px 14px rgba(0,0,0,0.1)" }}>
+                          <div className="ui-sans" style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, zIndex: 40, background: BG, border: `1px solid ${LINE}`, borderRadius: 0, minWidth: 170, overflow: "hidden", boxShadow: "0 4px 14px rgba(0,0,0,0.1)" }}>
                             {[
                               /* QOTD temporarily hidden */
                               // { label: "QOTD", desc: "answer today's question", action: () => { setShowPlusMenu(false); setShowQotdModal(true); } },
@@ -2291,7 +2291,7 @@ export default function SoundboardDemo() {
                         const mixAlbums = (mix.albums || []).slice(0, 4);
                         const artistNames = [...new Set(mixAlbums.map((a) => { const al = fetchedAlbums[a.albumId] || albumById(a.albumId); return al ? (al.artist || al.artistName) : null; }).filter(Boolean))].slice(0, 3);
                         return (
-                          <div key={i} style={{ border: "1.5px solid " + LINE, borderRadius: 8, padding: "14px 16px" }}>
+                          <div key={i} style={{ border: "1px solid " + LINE, borderRadius: 0, padding: "14px 16px" }}>
                             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
                               <Avatar username={c.username} size={26} />
                               <span className="ui-sans" style={{ fontSize: 13, fontWeight: 600, cursor: "pointer" }} onClick={() => openUserProfile(c.username)}>@{(c.username || "").toLowerCase()}</span>
@@ -2302,12 +2302,12 @@ export default function SoundboardDemo() {
                             </div>
                             <div
                               onClick={() => setView({ name: c.mixType === "song" ? "songMixDetail" : "albumMixDetail", id: mix.id, mix, from: { name: "home" } })}
-                              style={{ display: "flex", gap: 16, alignItems: "center", cursor: "pointer", background: "#f7f8fa", borderRadius: 12, padding: "14px 16px" }}
+                              style={{ display: "flex", gap: 16, alignItems: "center", cursor: "pointer", background: "#f7f8fa", borderRadius: 0, padding: "14px 16px" }}
                             >
                               {c.mixType === "song" ? <SongMixCover mix={mix} size={72} /> : (
                                 <div style={{ position: "relative", width: 80, height: 80, flexShrink: 0 }}>
                                   {mixAlbums.slice(0, 3).map((a, idx) => (
-                                    <div key={a.albumId} style={{ position: "absolute", left: idx * 10, top: idx * 10, zIndex: 3 - idx, borderRadius: 8, overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,0.15)", width: 56, height: 56 }}>
+                                    <div key={a.albumId} style={{ position: "absolute", left: idx * 10, top: idx * 10, zIndex: 3 - idx, borderRadius: 0, overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,0.15)", width: 56, height: 56 }}>
                                       <AlbumCover album={fetchedAlbums[a.albumId] || albumById(a.albumId)} size={56} />
                                     </div>
                                   ))}
@@ -2338,7 +2338,7 @@ export default function SoundboardDemo() {
 
                       if (c.itemType === "textpost") {
                         return (
-                          <div key={i} style={{ border: `1.5px solid ${LINE}`, borderRadius: 8, padding: "14px 16px" }}>
+                          <div key={i} style={{ border: `1px solid ${LINE}`, borderRadius: 0, padding: "14px 16px" }}>
                             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
                               <Avatar username={c.username} size={26} />
                               <span className="ui-sans" style={{ fontSize: 13, fontWeight: 600, cursor: "pointer" }} onClick={() => openUserProfile(c.username)}>@{(c.username || "").toLowerCase()}</span>
@@ -2380,7 +2380,7 @@ export default function SoundboardDemo() {
                       if (c.itemType === "qotd") {
                         const album = fetchedAlbums[c.albumId] || albumById(c.albumId);
                         return (
-                          <div key={i} style={{ border: `1.5px solid ${BLUE}`, borderRadius: 8, padding: "14px 16px" }}>
+                          <div key={i} style={{ border: `1px solid ${BLUE}`, borderRadius: 0, padding: "14px 16px" }}>
                             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
                               <Avatar username={c.username} size={26} />
                               <span className="ui-sans" style={{ fontSize: 13, fontWeight: 600, cursor: "pointer" }} onClick={() => openUserProfile(c.username)}>@{(c.username || "").toLowerCase()}</span>
@@ -2425,7 +2425,7 @@ export default function SoundboardDemo() {
                       }
                       const album = fetchedAlbums[c.albumId] || albumById(c.albumId);
                       return (
-                        <div key={i} style={{ border: `1.5px solid ${LINE}`, borderRadius: 8, padding: "14px 16px" }}>
+                        <div key={i} style={{ border: `1px solid ${LINE}`, borderRadius: 0, padding: "14px 16px" }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
                             <Avatar username={c.username} size={26} />
                             <span className="ui-sans" style={{ fontSize: 13, fontWeight: 600, cursor: "pointer" }} onClick={() => openUserProfile(c.username)}>@{(c.username || "").toLowerCase()}</span>
@@ -2547,7 +2547,7 @@ export default function SoundboardDemo() {
           ].filter((s) => s.items.length > 0);
           return (
             <div style={{ margin: "0 -16px", minHeight: "60vh", background: "#eceae5", padding: "32px 16px", display: "flex", justifyContent: "center" }}>
-              <div style={{ width: "100%", maxWidth: 460, background: "#fff", borderRadius: 22, boxShadow: "0 1px 3px rgba(0,0,0,.05), 0 16px 40px rgba(0,0,0,.07)", overflow: "hidden" }}>
+              <div style={{ width: "100%", maxWidth: 460, background: "#fff", borderRadius: 0, boxShadow: "0 1px 3px rgba(0,0,0,.05), 0 16px 40px rgba(0,0,0,.07)", overflow: "hidden" }}>
                 <div style={{ padding: "28px 30px 20px" }}>
                   <div style={{ fontSize: 24, fontWeight: 700, color: "#1a1a18", letterSpacing: "-0.01em" }}>notifications</div>
                   <div style={{ fontSize: 13.5, color: "#9a9a92", marginTop: 4 }}>comments, replies & new followers</div>
@@ -2559,7 +2559,7 @@ export default function SoundboardDemo() {
                       <div style={{ padding: si === 0 ? "10px 18px 8px" : "18px 18px 8px", fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase", color: "#a8a8a0", fontWeight: 600 }}>{section.label}</div>
                       {section.items.map((n) => (
                         <div key={n.id}
-                          style={{ display: "flex", alignItems: "center", gap: 14, padding: "13px 18px", borderRadius: 13, cursor: "pointer", transition: "background 0.12s ease" }}
+                          style={{ display: "flex", alignItems: "center", gap: 14, padding: "13px 18px", borderRadius: 0, cursor: "pointer", transition: "background 0.12s ease" }}
                           onMouseEnter={(e) => e.currentTarget.style.background = "#f5f4f1"}
                           onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
                           onClick={() => {
@@ -2569,7 +2569,7 @@ export default function SoundboardDemo() {
                         >
                           <div style={{ position: "relative", flexShrink: 0 }}>
                             <Avatar username={n.fromUsername} size={42} />
-                            <div style={{ position: "absolute", right: -2, bottom: -2, width: 16, height: 16, borderRadius: "50%", background: DOT_COLOR[n.type] || "#9a9a92", border: "2.5px solid #fff" }} />
+                            <div style={{ position: "absolute", right: -2, bottom: -2, width: 16, height: 16, borderRadius: "50%", background: DOT_COLOR[n.type] || "#9a9a92", border: "1px solid #fff" }} />
                           </div>
                           <div style={{ flex: 1, minWidth: 0, fontSize: 15, color: "#3a3a34", lineHeight: 1.35 }}>
                             <span style={{ fontWeight: 700, color: "#1a1a18", cursor: "pointer" }} onClick={(e) => { e.stopPropagation(); openUserProfile(n.fromUsername); }}>@{(n.fromUsername || "").toLowerCase()}</span>
@@ -2601,12 +2601,12 @@ export default function SoundboardDemo() {
               {ev_album && (
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", marginBottom: 40 }}>
                   {ev_album.coverArtUrl
-                    ? <img src={ev_album.coverArtUrl} alt="" style={{ width: 200, height: 200, borderRadius: 18, objectFit: "cover", marginBottom: 24, boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }} />
-                    : <div style={{ width: 200, height: 200, borderRadius: 18, background: "#eee", marginBottom: 24 }} />}
+                    ? <img src={ev_album.coverArtUrl} alt="" style={{ width: 200, height: 200, borderRadius: 0, objectFit: "cover", marginBottom: 24, boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }} />
+                    : <div style={{ width: 200, height: 200, borderRadius: 0, background: "#eee", marginBottom: 24 }} />}
                   <div className="ui-sans" style={{ fontSize: 11, letterSpacing: ".12em", fontWeight: 700, color: "#9a9a9a", textTransform: "uppercase", marginBottom: 10 }}>album of the day · {ev_aotd.date}</div>
                   <div className="ui-sans" style={{ fontSize: 36, fontWeight: 800, letterSpacing: "-.02em", lineHeight: 1.1, marginBottom: 8 }}>{ev_album.title}</div>
                   <div className="ui-sans" style={{ fontSize: 16, color: "#8a8a8a", marginBottom: 20 }}>{ev_album.artist || ev_album.artistName} · {ev_album.year || ev_album.releaseYear}</div>
-                  <span className="ui-sans" style={{ fontSize: 20, fontWeight: 800, color: "#2f6ae0", background: "#f0f4fe", borderRadius: 10, padding: "8px 18px" }}>{ev_aotd.staffRating} / 10</span>
+                  <span className="ui-sans" style={{ fontSize: 20, fontWeight: 800, color: "#2f6ae0", background: "#f0f4fe", borderRadius: 0, padding: "8px 18px" }}>{ev_aotd.staffRating} / 10</span>
                 </div>
               )}
               <div style={{ height: 1, background: "#eee", margin: "32px 0" }} />
@@ -2628,7 +2628,7 @@ export default function SoundboardDemo() {
               <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 12.5, marginBottom: 22, cursor: "pointer" }} onClick={() => setView(view.from || { name: "home" })}>
                 <ChevronLeft size={14} /> back
               </div>
-              <div style={{ border: "1.5px solid " + LINE, borderRadius: 8, padding: "14px 16px", marginBottom: 4 }}>
+              <div style={{ border: "1px solid " + LINE, borderRadius: 0, padding: "14px 16px", marginBottom: 4 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
                   <Avatar username={rev.username} size={26} />
                   <span className="ui-sans" style={{ fontSize: 13, fontWeight: 600, cursor: "pointer" }} onClick={() => openUserProfile(rev.username)}>@{(rev.username || "").toLowerCase()}</span>
@@ -2650,7 +2650,7 @@ export default function SoundboardDemo() {
                   <ShareButton kind="review" album={album} username={rev.username} rating={rev.rating} reviewText={rev.text} />
                 </div>
               </div>
-              <div style={{ background: "#fafbfc", borderRadius: "0 0 8px 8px", border: "1.5px solid " + LINE, borderTop: "none", padding: "16px 16px 20px", textAlign: "left" }}>
+              <div style={{ background: "#fafbfc", borderRadius: 0, border: "1px solid " + LINE, borderTop: "none", padding: "16px 16px 20px", textAlign: "left" }}>
                 <div style={{ maxHeight: "60vh", overflowY: "auto", display: "flex", flexDirection: "column", gap: 22, marginBottom: 16 }}>
                   {(reviewComments[rev.id] || []).length === 0
                     ? <div className="ui-sans" style={{ fontSize: 13, color: MUTE }}>no comments yet.</div>
@@ -2706,7 +2706,7 @@ export default function SoundboardDemo() {
                   const album = fetchedAlbums[r.albumId] || albumById(r.albumId);
                   if (!album) return null;
                   return (
-                    <div key={r.id} onClick={() => openAlbum(r.albumId, album)} style={{ display: "flex", gap: 14, cursor: "pointer", border: "1.5px solid " + LINE, borderRadius: 8, padding: "12px 14px" }}>
+                    <div key={r.id} onClick={() => openAlbum(r.albumId, album)} style={{ display: "flex", gap: 14, cursor: "pointer", border: "1px solid " + LINE, borderRadius: 0, padding: "12px 14px" }}>
                       <AlbumCover album={album} size={72} listened={listenStatus[r.albumId] === "listened"} />
                       <div className="ui-sans" style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 18, fontWeight: 700, color: BLUE }}>{r.rating}/10</div>
@@ -2777,7 +2777,7 @@ export default function SoundboardDemo() {
                 ))}
               </div>
               <div style={{ display: "flex", gap: 10, alignItems: "center", paddingTop: 12, borderTop: "1px solid " + LINE }}>
-                <input className="ui-sans" placeholder={"Message @" + (other && other.username || "") + "..."} value={dmInput} onChange={(e) => setDmInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); sendDM(activeConversation.id, dmInput); } }} style={{ flex: 1, border: "1.5px solid " + LINE, borderRadius: 24, padding: "10px 16px", fontSize: 15, outline: "none", background: BG, color: INK }} />
+                <input className="ui-sans" placeholder={"Message @" + (other && other.username || "") + "..."} value={dmInput} onChange={(e) => setDmInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); sendDM(activeConversation.id, dmInput); } }} style={{ flex: 1, border: "1px solid " + LINE, borderRadius: 0, padding: "10px 16px", fontSize: 15, outline: "none", background: BG, color: INK }} />
                 <button onClick={() => sendDM(activeConversation.id, dmInput)} disabled={!dmInput.trim()} style={{ background: dmInput.trim() ? BLUE : LINE, border: "none", borderRadius: "50%", width: 42, height: 42, display: "flex", alignItems: "center", justifyContent: "center", cursor: dmInput.trim() ? "pointer" : "default", flexShrink: 0 }}><Send size={16} color="#fff" /></button>
               </div>
             </div>
@@ -2802,7 +2802,7 @@ export default function SoundboardDemo() {
               <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 12.5, marginBottom: 22, cursor: "pointer" }} onClick={() => setView({ name: "home" })}>
                 <ChevronLeft size={14} /> back
               </div>
-              <div style={{ display: "flex", alignItems: isMobile ? "center" : "stretch", justifyContent: "space-between", gap: isMobile ? 18 : 24, paddingBottom: 22, borderBottom: `1.5px solid ${INK}` }}>
+              <div style={{ display: "flex", alignItems: isMobile ? "center" : "stretch", justifyContent: "space-between", gap: isMobile ? 18 : 24, paddingBottom: 22, borderBottom: `1px solid ${INK}` }}>
                 <div style={{ display: "flex", alignItems: "center", gap: isMobile ? 18 : 24, flex: 1, minWidth: 0 }}>
                   <Avatar username={user.username} size={isMobile ? 88 : 120} />
                   <div className="ui-sans" style={{ textAlign: "left", minWidth: 0 }}>
@@ -2869,11 +2869,11 @@ export default function SoundboardDemo() {
                       <div
                         key={m.id}
                         onClick={() => setView({ name: "albumMixDetail", id: m.id, mix: { ...m, owner: user.username }, from: view })}
-                        style={{ border: `1.5px solid ${LINE}`, borderRadius: 8, padding: "16px 18px", cursor: "pointer", display: "flex", gap: 14, alignItems: "center" }}
+                        style={{ border: `1px solid ${LINE}`, borderRadius: 0, padding: "16px 18px", cursor: "pointer", display: "flex", gap: 14, alignItems: "center" }}
                       >
                         <div style={{ display: "flex" }}>
                           {m.albums.slice(0, 3).map((a, i) => (
-                            <div key={a.albumId} style={{ marginLeft: i === 0 ? 0 : -20, zIndex: 3 - i, border: `2px solid ${BG}`, borderRadius: 9 }}>
+                            <div key={a.albumId} style={{ marginLeft: i === 0 ? 0 : -20, zIndex: 3 - i, border: `1px solid ${BG}`, borderRadius: 0 }}>
                               <AlbumCover album={fetchedAlbums[a.albumId] || albumById(a.albumId)} size={44} />
                             </div>
                           ))}
@@ -3053,11 +3053,11 @@ export default function SoundboardDemo() {
                       <div
                         key={m.id}
                         onClick={() => setView({ name: "albumMixDetail", id: m.id, mix: m, from: { name: "tagResults", tag } })}
-                        style={{ display: "flex", alignItems: "center", gap: 12, border: `1.5px solid ${LINE}`, borderRadius: 8, padding: "12px 14px", cursor: "pointer" }}
+                        style={{ display: "flex", alignItems: "center", gap: 12, border: `1px solid ${LINE}`, borderRadius: 0, padding: "12px 14px", cursor: "pointer" }}
                       >
                         <div style={{ display: "flex" }}>
                           {(m.albums || []).slice(0, 3).map((a, i) => (
-                            <div key={a.albumId} style={{ marginLeft: i === 0 ? 0 : -16, zIndex: 3 - i, border: `2px solid ${BG}`, borderRadius: 7 }}>
+                            <div key={a.albumId} style={{ marginLeft: i === 0 ? 0 : -16, zIndex: 3 - i, border: `1px solid ${BG}`, borderRadius: 0 }}>
                               <AlbumCover album={fetchedAlbums[a.albumId] || albumById(a.albumId)} size={38} />
                             </div>
                           ))}
@@ -3132,7 +3132,7 @@ export default function SoundboardDemo() {
                           key={tag}
                           className="ui-sans"
                           onClick={() => setView({ name: "tagResults", tag })}
-                          style={{ background: "transparent", border: `1.5px solid ${BLUE}`, borderRadius: 20, padding: "5px 12px", fontSize: 12.5, color: BLUE, cursor: "pointer", fontFamily: "inherit" }}
+                          style={{ background: "transparent", border: `1px solid ${BLUE}`, borderRadius: 0, padding: "5px 12px", fontSize: 12.5, color: BLUE, cursor: "pointer", fontFamily: "inherit" }}
                         >
                           #{tag}
                         </button>
@@ -3336,7 +3336,7 @@ export default function SoundboardDemo() {
               ) : (
                 <>
                   {/* Personality card */}
-                  <div style={{ textAlign: "center", background: darkMode ? "#171d2e" : "#f6f9ff", border: `1px solid ${darkMode ? "#242c42" : "#e7effe"}`, borderRadius: 18, padding: "26px 24px 28px" }}>
+                  <div style={{ textAlign: "center", background: darkMode ? "#171d2e" : "#f6f9ff", border: `1px solid ${darkMode ? "#242c42" : "#e7effe"}`, borderRadius: 0, padding: "26px 24px 28px" }}>
                     <div style={{ width: 140, height: 140, margin: "0 auto 4px" }}>
                       <Mascot mood={tier.face} size={140} equalize={tier.face === "grin" || tier.face === "smile"} bob />
                     </div>
@@ -3348,8 +3348,8 @@ export default function SoundboardDemo() {
                   {siteCommunityAvg !== null && (
                     <>
                       <div className="ui-sans" style={{ margin: "30px 2px 8px", fontSize: 13, fontWeight: 600, color: MUTE }}>you vs. the community</div>
-                      <div style={{ position: "relative", height: 12, borderRadius: 20, background: LINE, margin: "0 2px" }}>
-                        <div style={{ position: "absolute", top: 0, left: 0, height: 12, width: `${(siteCommunityAvg / 10 * 100).toFixed(1)}%`, borderRadius: 20, background: `linear-gradient(90deg, ${BLUE}99, ${BLUE})` }} />
+                      <div style={{ position: "relative", height: 12, borderRadius: 0, background: LINE, margin: "0 2px" }}>
+                        <div style={{ position: "absolute", top: 0, left: 0, height: 12, width: `${(siteCommunityAvg / 10 * 100).toFixed(1)}%`, borderRadius: 0, background: `linear-gradient(90deg, ${BLUE}99, ${BLUE})` }} />
                         <div style={{ position: "absolute", top: "50%", left: `${(numericAvg / 10 * 100).toFixed(1)}%`, transform: "translate(-50%,-50%)", width: 2, height: 24, background: INK }} />
                       </div>
                       <div className="ui-sans" style={{ display: "flex", justifyContent: "space-between", fontSize: 12, fontWeight: 600, color: MUTE, margin: "9px 2px 0" }}>
@@ -3411,11 +3411,11 @@ export default function SoundboardDemo() {
                 <div
                   key={m.id}
                   onClick={() => setView({ name: "albumMixDetail", id: m.id })}
-                  style={{ border: `1.5px solid ${LINE}`, borderRadius: 8, padding: "16px 18px", cursor: "pointer", display: "flex", gap: 14, alignItems: "center" }}
+                  style={{ border: `1px solid ${LINE}`, borderRadius: 0, padding: "16px 18px", cursor: "pointer", display: "flex", gap: 14, alignItems: "center" }}
                 >
                   <div style={{ display: "flex" }}>
                     {m.albums.slice(0, 3).map((a, i) => (
-                      <div key={a.albumId} style={{ marginLeft: i === 0 ? 0 : -20, zIndex: 3 - i, border: `2px solid ${BG}`, borderRadius: 9 }}>
+                      <div key={a.albumId} style={{ marginLeft: i === 0 ? 0 : -20, zIndex: 3 - i, border: `1px solid ${BG}`, borderRadius: 0 }}>
                         <AlbumCover album={fetchedAlbums[a.albumId] || albumById(a.albumId)} size={44} />
                       </div>
                     ))}
@@ -3424,7 +3424,7 @@ export default function SoundboardDemo() {
                   <div style={{ flex: 1 }} className="ui-sans">
                     <div style={{ fontSize: 14.5, fontWeight: 600, display: "flex", alignItems: "center", gap: 7 }}>
                       {m.title}
-                      {m.isPublic === false && <span style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em", color: MUTE, border: `1px solid ${LINE}`, borderRadius: 4, padding: "1px 5px" }}>private</span>}
+                      {m.isPublic === false && <span style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em", color: MUTE, border: `1px solid ${LINE}`, borderRadius: 0, padding: "1px 5px" }}>private</span>}
                     </div>
                     {m.description && <div style={{ fontSize: 12.5, color: MUTE, marginTop: 2 }}>{m.description}</div>}
                     <div style={{ fontSize: 11, color: MUTE, marginTop: 4 }}>{m.albums.length} album{m.albums.length !== 1 ? "s" : ""}</div>
@@ -3474,11 +3474,11 @@ export default function SoundboardDemo() {
               {savedAlbumMixes.map((m) => (
                 <div
                   key={m.id}
-                  style={{ border: `1.5px solid ${LINE}`, borderRadius: 8, padding: "16px 18px", display: "flex", gap: 14, alignItems: "center" }}
+                  style={{ border: `1px solid ${LINE}`, borderRadius: 0, padding: "16px 18px", display: "flex", gap: 14, alignItems: "center" }}
                 >
                   <div onClick={() => setView({ name: "albumMixDetail", id: m.id })} style={{ display: "flex", cursor: "pointer" }}>
                     {m.albums.slice(0, 3).map((a, i) => (
-                      <div key={a.albumId} style={{ marginLeft: i === 0 ? 0 : -20, zIndex: 3 - i, border: `2px solid ${BG}`, borderRadius: 9 }}>
+                      <div key={a.albumId} style={{ marginLeft: i === 0 ? 0 : -20, zIndex: 3 - i, border: `1px solid ${BG}`, borderRadius: 0 }}>
                         <AlbumCover album={fetchedAlbums[a.albumId] || albumById(a.albumId)} size={44} />
                       </div>
                     ))}
@@ -3588,7 +3588,7 @@ export default function SoundboardDemo() {
                   <button
                     onClick={() => setMixPublic(mix.id, mix.isPublic === false)}
                     title={mix.isPublic === false ? "Make public" : "Make private"}
-                    style={{ position: "relative", width: 38, height: 22, borderRadius: 11, border: "none", cursor: "pointer", padding: 0, background: mix.isPublic === false ? LINE : BLUE, transition: "background 0.15s" }}
+                    style={{ position: "relative", width: 38, height: 22, borderRadius: 0, border: "none", cursor: "pointer", padding: 0, background: mix.isPublic === false ? LINE : BLUE, transition: "background 0.15s" }}
                   >
                     <span style={{ position: "absolute", top: 2, left: mix.isPublic === false ? 2 : 18, width: 18, height: 18, borderRadius: "50%", background: "#fff", transition: "left 0.15s" }} />
                   </button>
@@ -3607,7 +3607,7 @@ export default function SoundboardDemo() {
                       draggable={isOwn}
                       onDragStart={(e) => { e.dataTransfer.setData("fromIdx", idx); e.currentTarget.style.opacity = "0.5"; }}
                       onDragEnd={(e) => { e.currentTarget.style.opacity = "1"; }}
-                      onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.outline = "2px solid #3d6ef0"; }}
+                      onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.outline = "1px solid #3d6ef0"; }}
                       onDragLeave={(e) => { e.currentTarget.style.outline = "none"; }}
                       onDrop={(e) => {
                         e.preventDefault();
@@ -3728,9 +3728,9 @@ export default function SoundboardDemo() {
                   <div className="ui-sans" style={{ fontSize: 22, fontWeight: 600 }}>{label}</div>
                   <div className="ui-sans" style={{ fontSize: 13, color: MUTE }}>{matchingAlbums.length} album{matchingAlbums.length !== 1 ? "s" : ""}</div>
                 </div>
-                <div style={{ display: "flex", gap: 0, border: `1.5px solid ${LINE}`, borderRadius: 6, overflow: "hidden" }}>
+                <div style={{ display: "flex", gap: 0, border: `1px solid ${LINE}`, borderRadius: 0, overflow: "hidden" }}>
                   <button onClick={() => setAlbumListSort("date")} className="ui-sans" style={{ padding: "5px 12px", fontSize: 11, fontWeight: 500, cursor: "pointer", border: "none", background: albumListSort === "date" ? INK : "transparent", color: albumListSort === "date" ? BG : INK }}>date added</button>
-                  <button onClick={() => setAlbumListSort("year")} className="ui-sans" style={{ padding: "5px 12px", fontSize: 11, fontWeight: 500, cursor: "pointer", border: "none", borderLeft: `1.5px solid ${LINE}`, background: albumListSort === "year" ? INK : "transparent", color: albumListSort === "year" ? BG : INK }}>year</button>
+                  <button onClick={() => setAlbumListSort("year")} className="ui-sans" style={{ padding: "5px 12px", fontSize: 11, fontWeight: 500, cursor: "pointer", border: "none", borderLeft: `1px solid ${LINE}`, background: albumListSort === "year" ? INK : "transparent", color: albumListSort === "year" ? BG : INK }}>year</button>
                 </div>
               </div>
 
@@ -3786,7 +3786,7 @@ export default function SoundboardDemo() {
         {/* ---------------- PROFILE ---------------- */}
         {view.name === "profile" && (
           <div>
-            <div style={{ display: "flex", gap: isMobile ? 18 : 24, alignItems: isMobile ? "center" : "stretch", justifyContent: "space-between", paddingBottom: 22, borderBottom: `1.5px solid ${INK}` }}>
+            <div style={{ display: "flex", gap: isMobile ? 18 : 24, alignItems: isMobile ? "center" : "stretch", justifyContent: "space-between", paddingBottom: 22, borderBottom: `1px solid ${INK}` }}>
               <div style={{ display: "flex", gap: isMobile ? 18 : 24, alignItems: "center", flex: 1, minWidth: 0 }}>
                 {avatarUrl ? (
                   <img
@@ -3828,7 +3828,7 @@ export default function SoundboardDemo() {
             </div>
 
             {showSettings && (
-              <div style={{ marginTop: 18, border: `1.5px solid ${LINE}`, borderRadius: 8, padding: 18 }} className="ui-sans">
+              <div style={{ marginTop: 18, border: `1px solid ${LINE}`, borderRadius: 0, padding: 18 }} className="ui-sans">
                 <div style={{ fontSize: 13.5, fontWeight: 600, marginBottom: 14 }}>edit profile</div>
 
                 <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 18 }}>
@@ -3904,9 +3904,9 @@ export default function SoundboardDemo() {
                             style={{
                               width: 30,
                               height: 30,
-                              borderRadius: 8,
+                              borderRadius: 0,
                               background: a.value,
-                              border: accentKey === key ? `2px solid ${INK}` : `2px solid transparent`,
+                              border: accentKey === key ? `1px solid ${INK}` : `1px solid transparent`,
                               padding: 0,
                               cursor: "pointer",
                               boxShadow: accentKey === key ? `0 0 0 2px ${BG}` : "none",
@@ -3918,7 +3918,7 @@ export default function SoundboardDemo() {
                   )}
 
                   <div style={{ fontSize: 11, color: MUTE, marginBottom: 8 }}>appearance</div>
-                  <div style={{ display: "flex", border: `1.5px solid ${INK}`, borderRadius: 6, overflow: "hidden", width: 200 }}>
+                  <div style={{ display: "flex", border: `1px solid ${INK}`, borderRadius: 0, overflow: "hidden", width: 200 }}>
                     <button
                       onClick={() => setDarkMode(false)}
                       style={{
@@ -3945,7 +3945,7 @@ export default function SoundboardDemo() {
                         fontWeight: 500,
                         cursor: "pointer",
                         border: "none",
-                        borderLeft: `1.5px solid ${INK}`,
+                        borderLeft: `1px solid ${INK}`,
                         background: darkMode ? INK : "transparent",
                         color: darkMode ? BG : INK,
                       }}
@@ -4012,7 +4012,7 @@ export default function SoundboardDemo() {
                     <div
                       key={i}
                       onClick={() => setShowFavPicker(true)}
-                      style={{ width: favSize, height: favSize, border: `1.5px dashed ${LINE}`, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", color: MUTE, cursor: "pointer" }}
+                      style={{ width: favSize, height: favSize, border: `1.5px dashed ${LINE}`, borderRadius: 0, display: "flex", alignItems: "center", justifyContent: "center", color: MUTE, cursor: "pointer" }}
                       title="Add a favorite album"
                     >
                       <Plus size={isMobile ? 18 : 24} />
@@ -4097,19 +4097,19 @@ export default function SoundboardDemo() {
               <div style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14, textAlign: isMobile ? "center" : "left", fontWeight: 600 }}>mixes</div>
               {/* Song mix tab toggle temporarily hidden */}
               {false && (
-                <div style={{ display: "flex", border: `1.5px solid ${LINE}`, borderRadius: 6, overflow: "hidden", width: 220, marginBottom: 18 }}>
+                <div style={{ display: "flex", border: `1px solid ${LINE}`, borderRadius: 0, overflow: "hidden", width: 220, marginBottom: 18 }}>
                   <button onClick={() => setOwnProfileMixTab("album")} style={{ flex: 1, padding: "7px 0", fontFamily: "inherit", fontSize: 12, fontWeight: 500, cursor: "pointer", border: "none", background: ownProfileMixTab === "album" ? INK : "transparent", color: ownProfileMixTab === "album" ? BG : INK }}>album mixes</button>
-                  <button onClick={() => setOwnProfileMixTab("song")} style={{ flex: 1, padding: "7px 0", fontFamily: "inherit", fontSize: 12, fontWeight: 500, cursor: "pointer", border: "none", borderLeft: `1.5px solid ${LINE}`, background: ownProfileMixTab === "song" ? INK : "transparent", color: ownProfileMixTab === "song" ? BG : INK }}>song mixes</button>
+                  <button onClick={() => setOwnProfileMixTab("song")} style={{ flex: 1, padding: "7px 0", fontFamily: "inherit", fontSize: 12, fontWeight: 500, cursor: "pointer", border: "none", borderLeft: `1px solid ${LINE}`, background: ownProfileMixTab === "song" ? INK : "transparent", color: ownProfileMixTab === "song" ? BG : INK }}>song mixes</button>
                 </div>
               )}
               {/* Always show album mixes since song mixes are hidden */}
               {true && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                   {albumMixes.filter((m) => m.isPublic !== false).map((m) => (
-                    <div key={m.id} onClick={() => setView({ name: "albumMixDetail", id: m.id })} style={{ display: "flex", alignItems: "center", gap: 12, border: `1.5px solid ${LINE}`, borderRadius: 8, padding: "12px 14px", cursor: "pointer" }}>
+                    <div key={m.id} onClick={() => setView({ name: "albumMixDetail", id: m.id })} style={{ display: "flex", alignItems: "center", gap: 12, border: `1px solid ${LINE}`, borderRadius: 0, padding: "12px 14px", cursor: "pointer" }}>
                       <div style={{ display: "flex" }}>
                         {m.albums.slice(0, 3).map((a, i) => (
-                          <div key={a.albumId} style={{ marginLeft: i === 0 ? 0 : -16, zIndex: 3 - i, border: `2px solid ${BG}`, borderRadius: 7 }}>
+                          <div key={a.albumId} style={{ marginLeft: i === 0 ? 0 : -16, zIndex: 3 - i, border: `1px solid ${BG}`, borderRadius: 0 }}>
                             <AlbumCover album={fetchedAlbums[a.albumId] || albumById(a.albumId)} size={38} />
                           </div>
                         ))}
@@ -4226,7 +4226,7 @@ function AddToAlbumMixInline({ album, albumMixes, onAdd }) {
                 key={m.id}
                 onClick={() => !already && onAdd(m.id, album.id)}
                 className="ui-sans"
-                style={{ fontSize: 13, padding: "7px 10px", border: `1.5px solid ${LINE}`, borderRadius: 6, cursor: already ? "default" : "pointer", display: "flex", justifyContent: "space-between", color: already ? MUTE : INK }}
+                style={{ fontSize: 13, padding: "7px 10px", border: `1px solid ${LINE}`, borderRadius: 0, cursor: already ? "default" : "pointer", display: "flex", justifyContent: "space-between", color: already ? MUTE : INK }}
               >
                 <span>{m.title}</span>
                 {already && <Check size={14} color={BLUE} />}
@@ -4379,7 +4379,7 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
       </div>
 
       {showAotdForm && (
-        <div style={{ border: "1px solid #eee", borderRadius: 10, padding: 20, marginBottom: 24 }}>
+        <div style={{ border: "1px solid #eee", borderRadius: 0, padding: 20, marginBottom: 24 }}>
           <div className="ui-sans" style={{ fontSize: 14, fontWeight: 600, marginBottom: 14 }}>{editingAotd ? "edit album of the day" : "new album of the day"}</div>
           <AlbumSearchPicker onPick={(album) => setAotdAlbumPicked(album)} onCancel={() => {}} placeholder="search for album..." />
           {aotdAlbumPicked && <div className="ui-sans" style={{ fontSize: 13, color: ACCENT, marginBottom: 8 }}>selected: {aotdAlbumPicked.title}</div>}
@@ -4402,8 +4402,8 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
         <div style={{ display: "flex", gap: 24 }}>
           <div style={{ flexShrink: 0, cursor: "pointer" }} onClick={() => openAlbum(aotd.albumId)}>
             {aotdAlbum.coverArtUrl
-              ? <img src={aotdAlbum.coverArtUrl} alt="" style={{ width: 172, height: 172, borderRadius: 14, objectFit: "cover" }} />
-              : <div style={{ width: 172, height: 172, borderRadius: 14, background: "#eee", display: "flex", alignItems: "center", justifyContent: "center" }}><span style={{ fontSize: 11, color: "#9a9a9a" }}>no cover</span></div>}
+              ? <img src={aotdAlbum.coverArtUrl} alt="" style={{ width: 172, height: 172, borderRadius: 0, objectFit: "cover" }} />
+              : <div style={{ width: 172, height: 172, borderRadius: 0, background: "#eee", display: "flex", alignItems: "center", justifyContent: "center" }}><span style={{ fontSize: 11, color: "#9a9a9a" }}>no cover</span></div>}
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 12, letterSpacing: ".1em", fontWeight: 700, color: ACCENT, textTransform: "uppercase" }}>
@@ -4413,7 +4413,7 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
             <div className="ui-sans" style={{ fontSize: 15, color: "#8a8a8a", marginBottom: 12 }}>{aotdAlbum.artist || aotdAlbum.artistName} · {aotdAlbum.year || aotdAlbum.releaseYear}</div>
             <p className="ui-sans" style={{ fontSize: 15.5, lineHeight: 1.55, color: "#333", margin: "0 0 16px" }}>{aotd.pullQuote}</p>
             <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-              <span className="ui-sans" style={{ fontSize: 15, fontWeight: 800, color: ACCENT, background: "#f0f4fe", borderRadius: 8, padding: "5px 11px" }}>{aotd.staffRating} / 10</span>
+              <span className="ui-sans" style={{ fontSize: 15, fontWeight: 800, color: ACCENT, background: "#f0f4fe", borderRadius: 0, padding: "5px 11px" }}>{aotd.staffRating} / 10</span>
               <span className="ui-sans" style={{ fontSize: 14, fontWeight: 600, color: ACCENT, cursor: "pointer" }} onClick={() => setView({ name: "editorialReview", aotd: aotd, album: aotdAlbum, from: { name: "home", tab: "news" } })}>read the full review →</span>
             </div>
 
@@ -4432,7 +4432,7 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
       </div>
 
       {showMixPicker && isAdmin && (
-        <div style={{ border: "1px solid #eee", borderRadius: 10, padding: 16, marginBottom: 16 }}>
+        <div style={{ border: "1px solid #eee", borderRadius: 0, padding: 16, marginBottom: 16 }}>
           <div className="ui-sans" style={{ fontSize: 13, fontWeight: 600, marginBottom: 10 }}>pick a mix to feature</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {albumMixes.map((m) => (
@@ -4454,11 +4454,11 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
         const covers = (mix.albums || []).slice(0, 3).map((a) => fetchedAlbums[a.albumId] || albumById(a.albumId));
         return (
           <div onClick={() => setView && setView({ name: "albumMixDetail", id: mix.id, mix })}
-            style={{ display: "flex", alignItems: "center", gap: 18, border: "1px solid #eee", borderRadius: 14, padding: "16px 18px", cursor: "pointer" }}>
+            style={{ display: "flex", alignItems: "center", gap: 18, border: "1px solid #eee", borderRadius: 0, padding: "16px 18px", cursor: "pointer" }}>
             <div style={{ display: "flex", flexShrink: 0 }}>
               {covers.map((album, i) => album && album.coverArtUrl
-                ? <img key={i} src={album.coverArtUrl && album.coverArtUrl.replace("http://", "https://")} alt="" style={{ width: 52, height: 52, borderRadius: 9, objectFit: "cover", marginLeft: i === 0 ? 0 : -16, zIndex: 3-i, position: "relative" }} />
-                : <div key={i} style={{ width: 52, height: 52, borderRadius: 9, background: "#ddd", marginLeft: i === 0 ? 0 : -16, zIndex: 3-i, position: "relative" }} />
+                ? <img key={i} src={album.coverArtUrl && album.coverArtUrl.replace("http://", "https://")} alt="" style={{ width: 52, height: 52, borderRadius: 0, objectFit: "cover", marginLeft: i === 0 ? 0 : -16, zIndex: 3-i, position: "relative" }} />
+                : <div key={i} style={{ width: 52, height: 52, borderRadius: 0, background: "#ddd", marginLeft: i === 0 ? 0 : -16, zIndex: 3-i, position: "relative" }} />
               )}
             </div>
             <div style={{ flex: 1 }}>
@@ -4480,7 +4480,7 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
       </div>
 
       {showInterviewForm && (
-        <div style={{ border: "1px solid #eee", borderRadius: 10, padding: 20, marginBottom: 24 }}>
+        <div style={{ border: "1px solid #eee", borderRadius: 0, padding: 20, marginBottom: 24 }}>
           <div className="ui-sans" style={{ fontSize: 14, fontWeight: 600, marginBottom: 14 }}>{editingInterview ? "edit interview" : "new interview"}</div>
           <input className="sb-input ui-sans" placeholder="subject name (e.g. Alex G)" value={intTitle} onChange={(e) => setIntTitle(e.target.value)} style={{ width: "100%", marginBottom: 8 }} />
           <textarea className="sb-textarea ui-sans" placeholder="body text..." value={intBody} onChange={(e) => setIntBody(e.target.value)} rows={10} style={{ width: "100%", marginBottom: 8, fontSize: 13 }} />
@@ -4500,7 +4500,7 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
           const firstAlbum = albumIds.length > 0 ? (fetchedAlbums[albumIds[0]] || albumById(albumIds[0])) : null;
           return (
             <div key={interview.id} style={{ cursor: "pointer" }} onClick={() => setActiveInterview(activeInterview === interview.id ? null : interview.id)}>
-              <div style={{ height: 130, borderRadius: 10, background: firstAlbum && firstAlbum.coverArtUrl ? "transparent" : "#eee", overflow: "hidden", marginBottom: 10 }}>
+              <div style={{ height: 130, borderRadius: 0, background: firstAlbum && firstAlbum.coverArtUrl ? "transparent" : "#eee", overflow: "hidden", marginBottom: 10 }}>
                 {firstAlbum && firstAlbum.coverArtUrl
                   ? <img src={firstAlbum.coverArtUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}><span style={{ fontSize: 11, color: "#9a9a9a" }}>portrait</span></div>}
@@ -4539,8 +4539,8 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
                   <div key={item.id} style={{ display: "flex", gap: 14, alignItems: "center" }}>
                     <div style={{ cursor: "pointer", flexShrink: 0 }} onClick={() => openAlbum(item.albumId)}>
                       {album.coverArtUrl
-                        ? <img src={album.coverArtUrl && album.coverArtUrl.replace("http://", "https://")} alt="" style={{ width: 48, height: 48, borderRadius: 7, objectFit: "cover" }} />
-                        : <div style={{ width: 48, height: 48, borderRadius: 7, background: "#eee" }} />}
+                        ? <img src={album.coverArtUrl && album.coverArtUrl.replace("http://", "https://")} alt="" style={{ width: 48, height: 48, borderRadius: 0, objectFit: "cover" }} />
+                        : <div style={{ width: 48, height: 48, borderRadius: 0, background: "#eee" }} />}
                     </div>
                     <div className="ui-sans" style={{ flex: 1 }}>
                       <div style={{ fontSize: 14, fontWeight: 600, cursor: "pointer" }} onClick={() => openAlbum(item.albumId)}>{album.title}</div>
@@ -4623,7 +4623,7 @@ function AlbumSearchPicker({ onPick, onCancel, placeholder = "search for the alb
   }, [query]);
 
   return (
-    <div style={{ border: `1.5px solid ${LINE}`, borderRadius: 8, padding: 14 }}>
+    <div style={{ border: `1px solid ${LINE}`, borderRadius: 0, padding: 14 }}>
       <input
         className="sb-input ui-sans"
         style={{ width: "100%" }}
@@ -4644,7 +4644,7 @@ function AlbumSearchPicker({ onPick, onCancel, placeholder = "search for the alb
             key={album.id}
             onClick={() => onPick(album)}
             className="ui-sans"
-            style={{ display: "flex", alignItems: "center", gap: 12, padding: "6px 8px", borderRadius: 6, cursor: "pointer", textAlign: "left" }}
+            style={{ display: "flex", alignItems: "center", gap: 12, padding: "6px 8px", borderRadius: 0, cursor: "pointer", textAlign: "left" }}
             onMouseEnter={(e) => (e.currentTarget.style.background = LINE)}
             onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
           >
@@ -4874,7 +4874,7 @@ function QotdModal({ question, onSubmit, onClose }) {
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        style={{ background: BG, border: `1.5px solid ${INK}`, borderRadius: 10, padding: 24, width: "100%", maxWidth: 420, maxHeight: "85vh", overflowY: "auto" }}
+        style={{ background: BG, border: `1px solid ${INK}`, borderRadius: 0, padding: 24, width: "100%", maxWidth: 420, maxHeight: "85vh", overflowY: "auto" }}
       >
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 4 }}>
           <div className="ui-sans" style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: BLUE }}>QOTD</div>
@@ -4891,7 +4891,7 @@ function QotdModal({ question, onSubmit, onClose }) {
         ) : (
           <div>
             <div className="ui-sans" style={{ fontSize: 11, color: MUTE, marginBottom: 8 }}>your answer</div>
-            <div style={{ display: "flex", alignItems: "center", gap: 12, border: `1.5px solid ${LINE}`, borderRadius: 8, padding: "10px 12px", marginBottom: 16 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, border: `1px solid ${LINE}`, borderRadius: 0, padding: "10px 12px", marginBottom: 16 }}>
               <AlbumCover album={pickedAlbum} size={48} />
               <div className="ui-sans" style={{ flex: 1 }}>
                 <div style={{ fontSize: 13.5, fontWeight: 600 }}>{pickedAlbum.title}</div>
@@ -4990,7 +4990,7 @@ function AdminAlbumForm({ onAdded }) {
           {/* Cover upload */}
           <div style={{ marginBottom: 16, display: "flex", gap: 16, alignItems: "flex-start" }}>
             <label style={{ cursor: "pointer" }}>
-              <div style={{ width: 80, height: 80, borderRadius: 10, border: `1.5px dashed ${LINE}`, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", background: coverPreview ? "transparent" : "#f5f5f5" }}>
+              <div style={{ width: 80, height: 80, borderRadius: 0, border: `1.5px dashed ${LINE}`, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", background: coverPreview ? "transparent" : "#f5f5f5" }}>
                 {coverPreview
                   ? <img src={coverPreview} alt="cover" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   : <span style={{ fontSize: 22, color: MUTE }}>+</span>
@@ -5021,7 +5021,7 @@ function TextPostModal({ onSubmit, onClose }) {
 
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-      <div onClick={(e) => e.stopPropagation()} style={{ background: BG, border: `1.5px solid ${INK}`, borderRadius: 10, padding: 24, width: "100%", maxWidth: 440 }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: BG, border: `1px solid ${INK}`, borderRadius: 0, padding: 24, width: "100%", maxWidth: 440 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
           <div className="ui-sans" style={{ fontSize: 15, fontWeight: 600 }}>post a thought</div>
           <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: MUTE, padding: 0 }}><X size={16} /></button>
@@ -5061,7 +5061,7 @@ function QuickReviewModal({ onSubmit, onClose }) {
 
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-      <div onClick={(e) => e.stopPropagation()} style={{ background: BG, border: `1.5px solid ${INK}`, borderRadius: 10, padding: 24, width: "100%", maxWidth: 420, maxHeight: "85vh", overflowY: "auto" }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: BG, border: `1px solid ${INK}`, borderRadius: 0, padding: 24, width: "100%", maxWidth: 420, maxHeight: "85vh", overflowY: "auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
           <div className="ui-sans" style={{ fontSize: 15, fontWeight: 600 }}>post a review</div>
           <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: MUTE, padding: 0 }}><X size={16} /></button>
@@ -5071,7 +5071,7 @@ function QuickReviewModal({ onSubmit, onClose }) {
           <AlbumSearchPicker onPick={setPickedAlbum} onCancel={onClose} placeholder="search for an album..." />
         ) : (
           <div>
-            <div style={{ display: "flex", alignItems: "center", gap: 12, border: `1.5px solid ${LINE}`, borderRadius: 8, padding: "10px 12px", marginBottom: 18 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, border: `1px solid ${LINE}`, borderRadius: 0, padding: "10px 12px", marginBottom: 18 }}>
               <AlbumCover album={pickedAlbum} size={48} />
               <div className="ui-sans" style={{ flex: 1 }}>
                 <div style={{ fontSize: 13.5, fontWeight: 600 }}>{pickedAlbum.title}</div>
@@ -5145,7 +5145,7 @@ function ShareMixModal({ albumMixes, songMixes, onSubmit, onClose }) {
 
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-      <div onClick={(e) => e.stopPropagation()} style={{ background: BG, border: "1.5px solid " + INK, borderRadius: 10, padding: 24, width: "100%", maxWidth: 420, maxHeight: "85vh", overflowY: "auto" }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: BG, border: "1px solid " + INK, borderRadius: 0, padding: 24, width: "100%", maxWidth: 420, maxHeight: "85vh", overflowY: "auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
           <div className="ui-sans" style={{ fontSize: 15, fontWeight: 600 }}>share a mix</div>
           <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: MUTE, padding: 0 }}><X size={16} /></button>
@@ -5164,13 +5164,13 @@ function ShareMixModal({ albumMixes, songMixes, onSubmit, onClose }) {
                 <button
                   key={m.id}
                   onClick={() => setSelectedMix(m)}
-                  style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", border: "1.5px solid " + LINE, borderRadius: 8, background: "none", cursor: "pointer", textAlign: "left", width: "100%" }}
+                  style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", border: "1px solid " + LINE, borderRadius: 0, background: "none", cursor: "pointer", textAlign: "left", width: "100%" }}
                   onMouseEnter={(e) => e.currentTarget.style.borderColor = BLUE}
                   onMouseLeave={(e) => e.currentTarget.style.borderColor = LINE}
                 >
                   <div style={{ display: "flex" }}>
                     {(m.albums || []).slice(0, 3).map((a, i) => (
-                      <div key={a.albumId} style={{ marginLeft: i === 0 ? 0 : -12, zIndex: 3 - i, border: "2px solid " + BG, borderRadius: 6 }}>
+                      <div key={a.albumId} style={{ marginLeft: i === 0 ? 0 : -12, zIndex: 3 - i, border: "1px solid " + BG, borderRadius: 0 }}>
                         <AlbumCover album={albumById(a.albumId)} size={34} />
                       </div>
                     ))}
@@ -5187,10 +5187,10 @@ function ShareMixModal({ albumMixes, songMixes, onSubmit, onClose }) {
         ) : (
           /* Step 2: add caption and post */
           <>
-            <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", border: "1.5px solid " + LINE, borderRadius: 8, marginBottom: 14 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", border: "1px solid " + LINE, borderRadius: 0, marginBottom: 14 }}>
               <div style={{ display: "flex" }}>
                 {(selectedMix.albums || []).slice(0, 3).map((a, i) => (
-                  <div key={a.albumId} style={{ marginLeft: i === 0 ? 0 : -12, zIndex: 3 - i, border: "2px solid " + BG, borderRadius: 6 }}>
+                  <div key={a.albumId} style={{ marginLeft: i === 0 ? 0 : -12, zIndex: 3 - i, border: "1px solid " + BG, borderRadius: 0 }}>
                     <AlbumCover album={albumById(a.albumId)} size={34} />
                   </div>
                 ))}
@@ -5282,7 +5282,7 @@ function CommentInput({ placeholder, onSubmit, currentUsername, initialValue = "
     <div style={{ position: "relative" }}>
       <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
         <Avatar username={currentUsername} size={30} />
-        <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 8, background: "#ffffff", border: "1px solid #e3e6ea", borderRadius: 18, padding: "2px 4px 2px 14px" }}>
+        <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 8, background: "#ffffff", border: "1px solid #e3e6ea", borderRadius: 0, padding: "2px 4px 2px 14px" }}>
           <input
             style={{ flex: 1, border: "none", outline: "none", background: "none", fontSize: 14, color: "#1a1a1a", padding: "7px 0", fontFamily: "inherit" }}
             placeholder={placeholder || "Write a comment..."}
@@ -5293,14 +5293,14 @@ function CommentInput({ placeholder, onSubmit, currentUsername, initialValue = "
           <button
             onClick={() => { if (text.trim()) { onSubmit(text.trim()); setText(""); setMentionQuery(null); } }}
             disabled={!text.trim()}
-            style={{ border: "none", background: text.trim() ? BLUE : "#c2c7cc", color: "#fff", fontWeight: 600, fontSize: 13, padding: "6px 14px", borderRadius: 14, cursor: text.trim() ? "pointer" : "default", transition: "background 0.12s", fontFamily: "inherit" }}
+            style={{ border: "none", background: text.trim() ? BLUE : "#c2c7cc", color: "#fff", fontWeight: 600, fontSize: 13, padding: "6px 14px", borderRadius: 0, cursor: text.trim() ? "pointer" : "default", transition: "background 0.12s", fontFamily: "inherit" }}
           >
             Post
           </button>
         </div>
       </div>
       {mentionQuery !== null && mentionResults.length > 0 && (
-        <div style={{ position: "absolute", top: "100%", left: 50, zIndex: 20, background: BG, border: `1.5px solid ${LINE}`, borderRadius: 8, marginTop: 4, minWidth: 180, boxShadow: "0 4px 12px rgba(0,0,0,0.12)" }}>
+        <div style={{ position: "absolute", top: "100%", left: 50, zIndex: 20, background: BG, border: `1px solid ${LINE}`, borderRadius: 0, marginTop: 4, minWidth: 180, boxShadow: "0 4px 12px rgba(0,0,0,0.12)" }}>
           {mentionResults.map((u) => (
             <div key={u.username} onClick={() => insertMention(u.username)} className="ui-sans" style={{ padding: "8px 12px", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, fontSize: 13 }} onMouseEnter={(e) => e.currentTarget.style.background = LINE} onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>
               <Avatar username={u.username} size={20} />
@@ -5420,7 +5420,7 @@ function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUserna
   }
 
   return (
-    <div className="sb-comment-bubble" style={{ background: "#fafbfc", borderTop: "1px solid #eceef0", marginTop: 10, marginLeft: -16, marginRight: -16, marginBottom: -14, borderRadius: "0 0 8px 8px", padding: "0 16px" }}>
+    <div className="sb-comment-bubble" style={{ background: "#fafbfc", borderTop: "1px solid #eceef0", marginTop: 10, marginLeft: -16, marginRight: -16, marginBottom: -14, borderRadius: 0, padding: "0 16px" }}>
       {!startOpen && (
         <button
           className="ui-sans"
@@ -5590,7 +5590,7 @@ function MixTagEditor({ tags, isOwn, onUpdateTags, onTagClick }) {
           <div
             key={tag}
             className="ui-sans"
-            style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "transparent", border: `1.5px solid ${BLUE}`, borderRadius: 20, padding: "4px 10px", fontSize: 12.5, color: BLUE, cursor: "pointer" }}
+            style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "transparent", border: `1px solid ${BLUE}`, borderRadius: 0, padding: "4px 10px", fontSize: 12.5, color: BLUE, cursor: "pointer" }}
             onClick={() => onTagClick && onTagClick(tag)}
           >
             #{tag}
@@ -5612,7 +5612,7 @@ function MixTagEditor({ tags, isOwn, onUpdateTags, onTagClick }) {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             onBlur={addTag}
-            style={{ width: 110, fontSize: 12.5, padding: "4px 10px", borderRadius: 20 }}
+            style={{ width: 110, fontSize: 12.5, padding: "4px 10px", borderRadius: 0 }}
           />
         )}
       </div>
@@ -5699,7 +5699,7 @@ function SongMixDetail({ mix, isOwn, onBack, onOpenAlbum, onAddTrack, onRemoveTr
               <button
                 onClick={() => coverFileInputRef.current && coverFileInputRef.current.click()}
                 className="ui-sans"
-                style={{ position: "absolute", bottom: 6, right: 6, background: INK, color: BG, border: "none", borderRadius: 6, fontSize: 10, padding: "4px 7px", cursor: "pointer" }}
+                style={{ position: "absolute", bottom: 6, right: 6, background: INK, color: BG, border: "none", borderRadius: 0, fontSize: 10, padding: "4px 7px", cursor: "pointer" }}
               >
                 {mix.coverImageUrl ? "change cover" : "add cover"}
               </button>
@@ -5811,7 +5811,7 @@ function SongMixDetail({ mix, isOwn, onBack, onOpenAlbum, onAddTrack, onRemoveTr
           ) : !pickedAlbum ? (
             <AlbumSearchPicker onPick={setPickedAlbum} onCancel={() => setAdding(false)} />
           ) : (
-            <div style={{ border: `1.5px solid ${LINE}`, borderRadius: 8, padding: 14 }} className="ui-sans">
+            <div style={{ border: `1px solid ${LINE}`, borderRadius: 0, padding: 14 }} className="ui-sans">
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
                 <AlbumCover album={pickedAlbum} size={36} />
                 <div>
@@ -5888,7 +5888,7 @@ function ListenedByFriends({ albumId }) {
       .catch(() => {}).finally(() => setLoading(false));
   }, [albumId]);
   return (
-    <div style={{ marginTop: 36, paddingTop: 24, borderTop: "1.5px solid " + INK }}>
+    <div style={{ marginTop: 36, paddingTop: 24, borderTop: "1px solid " + INK }}>
       <div className="ui-sans" style={{ fontSize: 13, fontWeight: 700, color: INK, marginBottom: 14, textAlign: "left", letterSpacing: "0.01em" }}>friends who listened</div>
       {loading ? (
         <div className="ui-sans" style={{ fontSize: 13, color: MUTE }}>loading...</div>
@@ -5949,7 +5949,7 @@ function AlbumCommunitySection({ albumId, albumTab, setAlbumTab, openAlbum, revi
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {mixes.length === 0 && <div className="ui-sans" style={{ fontSize: 13, color: MUTE }}>no public album mixes include this album yet.</div>}
           {mixes.map((l) => (
-            <div key={l.id} className="ui-sans" style={{ border: `1.5px solid ${LINE}`, borderRadius: 8, padding: "12px 14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div key={l.id} className="ui-sans" style={{ border: `1px solid ${LINE}`, borderRadius: 0, padding: "12px 14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div>
                 <div style={{ fontSize: 13.5, fontWeight: 600 }}>{l.title}</div>
                 <div style={{ fontSize: 11.5, color: MUTE, marginTop: 2 }}>by @{l.owner} · {l.albumIds.length} albums</div>
@@ -5964,7 +5964,7 @@ function AlbumCommunitySection({ albumId, albumTab, setAlbumTab, openAlbum, revi
           {reviewsLoading && <div style={{ display: "flex", justifyContent: "center" }}><Spinner label="loading reviews…" /></div>}
           {!reviewsLoading && reviews.length === 0 && <div className="ui-sans" style={{ fontSize: 13, color: MUTE }}>no reviews yet -- be the first.</div>}
           {reviews.map((r, i) => (
-            <div key={i} style={{ border: `1.5px solid ${LINE}`, borderRadius: 8, padding: "12px 14px", marginBottom: 6 }}>
+            <div key={i} style={{ border: `1px solid ${LINE}`, borderRadius: 0, padding: "12px 14px", marginBottom: 6 }}>
               <div style={{ display: "flex", gap: 10 }}>
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, flexShrink: 0 }}>
                   <Avatar username={r.username} />
@@ -6030,7 +6030,7 @@ function FollowListModal({ kind, userId, username, onClose, onVisitProfile }) {
 
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-      <div onClick={(e) => e.stopPropagation()} style={{ background: BG, border: `1.5px solid ${INK}`, borderRadius: 10, padding: 24, width: "100%", maxWidth: 380, maxHeight: "70vh", overflowY: "auto" }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: BG, border: `1px solid ${INK}`, borderRadius: 0, padding: 24, width: "100%", maxWidth: 380, maxHeight: "70vh", overflowY: "auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
           <div className="ui-sans" style={{ fontSize: 15, fontWeight: 600 }}>{kind}</div>
           <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: MUTE, padding: 0 }}><X size={16} /></button>
@@ -6044,7 +6044,7 @@ function FollowListModal({ kind, userId, username, onClose, onVisitProfile }) {
         <div style={{ display: "flex", flexDirection: "column" }}>
           {users.map((u) => (
             <div key={u.id} onClick={() => onVisitProfile(u.username)}
-              style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer", padding: "10px 4px", borderRadius: 8 }}
+              style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer", padding: "10px 4px", borderRadius: 0 }}
               onMouseEnter={(e) => e.currentTarget.style.background = LINE}
               onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
             >
@@ -6136,7 +6136,7 @@ function TermsScreen({ onBack, inline }) {
         <div key={section.title} style={{ marginBottom: 24 }}>
           <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 6 }}>{section.title}</div>
           {section.flagged && (
-            <div style={{ background: "#FEF3C7", border: "1.5px solid #F59E0B", borderRadius: 6, padding: "8px 12px", marginBottom: 8, fontSize: 11.5, color: "#92400E" }}>
+            <div style={{ background: "#FEF3C7", border: "1px solid #F59E0B", borderRadius: 0, padding: "8px 12px", marginBottom: 8, fontSize: 11.5, color: "#92400E" }}>
               ⚠️ <strong>Legal review recommended</strong> — this clause covers data transfer in acquisition scenarios and should be reviewed by a qualified attorney before the app is made public.
             </div>
           )}
@@ -6220,12 +6220,12 @@ function AuthScreen({ backendUrl, onAuthed }) {
     >
       <style>{`
         .ui-sans { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
-        .sb-btn { font-family: inherit; border: 1.5px solid ${INK}; background: transparent; color: ${INK}; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; letter-spacing: 0.01em; transition: background 0.12s, color 0.12s, border-color 0.12s; }
+        .sb-btn { font-family: inherit; border: 1px solid ${INK}; background: transparent; color: ${INK}; padding: 8px 14px; border-radius: 0; cursor: pointer; font-size: 12px; font-weight: 500; letter-spacing: 0.01em; transition: background 0.12s, color 0.12s, border-color 0.12s; }
         .sb-btn:hover { background: ${INK}; color: ${theme.BG}; }
         .sb-btn-solid { background: ${BLUE}; color: #fff; border-color: ${BLUE}; }
         .sb-btn-solid:hover { filter: brightness(0.85); }
         .sb-btn-solid:disabled { opacity: 0.5; cursor: default; }
-        .sb-input { font-family: inherit; border: 1.5px solid ${LINE}; background: ${theme.BG}; padding: 9px 12px; font-size: 13px; outline: none; color: ${INK}; border-radius: 6px; width: 100%; }
+        .sb-input { font-family: inherit; border: 1px solid ${LINE}; background: ${theme.BG}; padding: 9px 12px; font-size: 13px; outline: none; color: ${INK}; border-radius: 0; width: 100%; }
         .sb-input:focus { border-color: ${BLUE}; }
       `}</style>
 
@@ -6234,7 +6234,7 @@ function AuthScreen({ backendUrl, onAuthed }) {
           <img src={LOGO_DATA_URI} alt="Spindex" style={{ height: 40, width: "auto" }} />
         </div>
 
-        <div style={{ display: "flex", border: `1.5px solid ${INK}`, borderRadius: 6, marginBottom: 22, overflow: "hidden" }}>
+        <div style={{ display: "flex", border: `1px solid ${INK}`, borderRadius: 0, marginBottom: 22, overflow: "hidden" }}>
           <button
             onClick={() => setMode("login")}
             style={{
@@ -6261,7 +6261,7 @@ function AuthScreen({ backendUrl, onAuthed }) {
               fontWeight: 500,
               cursor: "pointer",
               border: "none",
-              borderLeft: `1.5px solid ${INK}`,
+              borderLeft: `1px solid ${INK}`,
               background: mode === "signup" ? INK : "transparent",
               color: mode === "signup" ? theme.BG : INK,
             }}
@@ -6293,7 +6293,7 @@ function AuthScreen({ backendUrl, onAuthed }) {
           </div>
 
           {error && (
-            <div style={{ fontSize: 12, color: "#A32D2D", background: "#FCEBEB", borderRadius: 6, padding: "8px 10px", lineHeight: 1.5 }}>
+            <div style={{ fontSize: 12, color: "#A32D2D", background: "#FCEBEB", borderRadius: 0, padding: "8px 10px", lineHeight: 1.5 }}>
               {error}
             </div>
           )}
