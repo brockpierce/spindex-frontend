@@ -5071,9 +5071,9 @@ function countAllComments(comments) {
   return comments.reduce((s, c) => s + 1 + countReplies(c), 0);
 }
 
-function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUsername, reviewOwnerUsername, reviewReactions = {}, onReact, onLoadReactions, onOpenProfile }) {
+function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUsername, reviewOwnerUsername, reviewReactions = {}, onReact, onLoadReactions, onOpenProfile, startOpen = false }) {
   const { BLUE, INK, LINE, MUTE, BG } = useTheme();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(startOpen);
   const total = countAllComments(comments);
 
   function handleToggle() {
