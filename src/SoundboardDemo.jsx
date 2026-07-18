@@ -3989,7 +3989,7 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
   const aotdAlbum = aotd ? (fetchedAlbums[aotd.albumId] || albumById(aotd.albumId) || aotd.album) : null;
   const LABEL_STYLE = { fontSize: 12, letterSpacing: ".12em", fontWeight: 700, color: "#9a9a9a", textTransform: "uppercase", marginBottom: 14 };
   const DIVIDER = <div style={{ height: 1, background: "#eee", margin: "32px 0" }} />;
-  const BLUE = "#2f6ae0";
+  const ACCENT = "#2f6ae0";
 
   return (
     <div style={{ maxWidth: 900, margin: "0 auto" }}>
@@ -4012,7 +4012,7 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
         <div style={{ border: "1px solid #eee", borderRadius: 10, padding: 20, marginBottom: 24 }}>
           <div className="ui-sans" style={{ fontSize: 14, fontWeight: 600, marginBottom: 14 }}>{editingAotd ? "edit album of the day" : "new album of the day"}</div>
           <AlbumSearchPicker onPick={(album) => setAotdAlbumPicked(album)} onCancel={() => {}} placeholder="search for album..." />
-          {aotdAlbumPicked && <div className="ui-sans" style={{ fontSize: 13, color: BLUE, marginBottom: 8 }}>selected: {aotdAlbumPicked.title}</div>}
+          {aotdAlbumPicked && <div className="ui-sans" style={{ fontSize: 13, color: ACCENT, marginBottom: 8 }}>selected: {aotdAlbumPicked.title}</div>}
           <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 8 }}>
             <span className="ui-sans" style={{ fontSize: 12, color: "#9a9a9a" }}>rating:</span>
             <input type="number" min="1" max="10" value={aotdRating} onChange={(e) => setAotdRating(parseInt(e.target.value))} className="sb-input ui-sans" style={{ width: 60 }} />
@@ -4036,15 +4036,15 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
               : <div style={{ width: 172, height: 172, borderRadius: 14, background: "#eee", display: "flex", alignItems: "center", justifyContent: "center" }}><span style={{ fontSize: 11, color: "#9a9a9a" }}>no cover</span></div>}
           </div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 12, letterSpacing: ".1em", fontWeight: 700, color: BLUE, textTransform: "uppercase" }}>
+            <div style={{ fontSize: 12, letterSpacing: ".1em", fontWeight: 700, color: ACCENT, textTransform: "uppercase" }}>
               {(() => { const d = new Date(aotd.date); return "Today · " + d.toLocaleDateString("en-US", { month: "short", day: "numeric" }); })()}
             </div>
             <div className="ui-sans" style={{ fontSize: 27, fontWeight: 800, letterSpacing: "-.02em", margin: "6px 0 2px", lineHeight: 1.15 }}>{aotdAlbum.title}</div>
             <div className="ui-sans" style={{ fontSize: 15, color: "#8a8a8a", marginBottom: 12 }}>{aotdAlbum.artist || aotdAlbum.artistName} · {aotdAlbum.year || aotdAlbum.releaseYear}</div>
             <p className="ui-sans" style={{ fontSize: 15.5, lineHeight: 1.55, color: "#333", margin: "0 0 16px" }}>{aotd.pullQuote}</p>
             <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-              <span className="ui-sans" style={{ fontSize: 15, fontWeight: 800, color: BLUE, background: "#f0f4fe", borderRadius: 8, padding: "5px 11px" }}>{aotd.staffRating} / 10</span>
-              <span className="ui-sans" style={{ fontSize: 14, fontWeight: 600, color: BLUE, cursor: "pointer" }} onClick={() => openAlbum(aotd.albumId)}>read the full review →</span>
+              <span className="ui-sans" style={{ fontSize: 15, fontWeight: 800, color: ACCENT, background: "#f0f4fe", borderRadius: 8, padding: "5px 11px" }}>{aotd.staffRating} / 10</span>
+              <span className="ui-sans" style={{ fontSize: 14, fontWeight: 600, color: ACCENT, cursor: "pointer" }} onClick={() => openAlbum(aotd.albumId)}>read the full review →</span>
             </div>
             {aotd.body && (
               <div className="ui-sans" style={{ fontSize: 13.5, lineHeight: 1.75, color: "#444", marginTop: 18, whiteSpace: "pre-line" }}>{aotd.body}</div>
@@ -4160,7 +4160,7 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
         <div style={{ marginTop: 48 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
             <div style={LABEL_STYLE}>past albums of the day</div>
-            <span className="ui-sans" style={{ fontSize: 12, color: BLUE, cursor: "pointer" }} onClick={() => setShowArchive((s) => !s)}>{showArchive ? "collapse ▲" : "show all ▼"}</span>
+            <span className="ui-sans" style={{ fontSize: 12, color: ACCENT, cursor: "pointer" }} onClick={() => setShowArchive((s) => !s)}>{showArchive ? "collapse ▲" : "show all ▼"}</span>
           </div>
           {showArchive && (
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -4176,7 +4176,7 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
                     </div>
                     <div className="ui-sans" style={{ flex: 1 }}>
                       <div style={{ fontSize: 14, fontWeight: 600, cursor: "pointer" }} onClick={() => openAlbum(item.albumId)}>{album.title}</div>
-                      <div style={{ fontSize: 12, color: "#9a9a9a" }}>{album.artist || album.artistName} · <span style={{ color: BLUE, fontWeight: 600 }}>{item.staffRating}/10</span></div>
+                      <div style={{ fontSize: 12, color: "#9a9a9a" }}>{album.artist || album.artistName} · <span style={{ color: ACCENT, fontWeight: 600 }}>{item.staffRating}/10</span></div>
                     </div>
                     <div style={{ fontSize: 11, color: "#9a9a9a", flexShrink: 0 }}>{item.date}</div>
                     {isAdmin && <button className="sb-btn" style={{ fontSize: 10 }} onClick={() => deleteAotd(item.id)}>×</button>}
