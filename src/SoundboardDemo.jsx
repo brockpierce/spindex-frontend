@@ -684,6 +684,7 @@ export default function SoundboardDemo() {
     { id: "msp1", username: "m.delacroix", mixType: "album", mixId: "u-mm1", date: "2026-06-27 · 11:38pm" },
   ]);
   const [userSearchQuery, setUserSearchQuery] = useState("");
+  const [peopleSearchFocused, setPeopleSearchFocused] = useState(false);
   const [followState, setFollowState] = useState(() => {
     const map = {};
     ALL_USERS.forEach((u) => (map[u.username] = u.isFollowing));
@@ -2189,14 +2190,18 @@ export default function SoundboardDemo() {
               </div>
               {(homeTab === "feed" || homeTab === "everyone") && (
                 <>
-                  <Search size={15} color={MUTE} style={{ flexShrink: 0 }} />
-                  <input
-                    className="sb-input ui-sans"
-                    style={{ flex: 1 }}
-                    placeholder="search for people..."
-                    value={userSearchQuery}
-                    onChange={(e) => setUserSearchQuery(e.target.value)}
-                  />
+                  <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 9, padding: "8px 2px", borderBottom: `1px solid ${peopleSearchFocused ? BLUE : "#d8d8d8"}`, transition: "border-color 0.15s" }}>
+                    <Search size={15} color={peopleSearchFocused ? BLUE : "#b5b5b5"} style={{ flexShrink: 0, transition: "color 0.15s" }} />
+                    <input
+                      className="ui-sans"
+                      style={{ flex: 1, border: 0, outline: 0, background: "transparent", fontSize: 13, color: INK }}
+                      placeholder="search for people..."
+                      value={userSearchQuery}
+                      onChange={(e) => setUserSearchQuery(e.target.value)}
+                      onFocus={() => setPeopleSearchFocused(true)}
+                      onBlur={() => setPeopleSearchFocused(false)}
+                    />
+                  </div>
                 </>
               )}
             </div>
