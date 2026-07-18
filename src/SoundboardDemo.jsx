@@ -4116,7 +4116,7 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
             style={{ display: "flex", alignItems: "center", gap: 18, border: "1px solid #eee", borderRadius: 14, padding: "16px 18px", cursor: "pointer" }}>
             <div style={{ display: "flex", flexShrink: 0 }}>
               {covers.map((album, i) => album && album.coverArtUrl
-                ? <img key={i} src={album.coverArtUrl} alt="" style={{ width: 52, height: 52, borderRadius: 9, objectFit: "cover", marginLeft: i === 0 ? 0 : -16, zIndex: 3-i, position: "relative" }} />
+                ? <img key={i} src={album.coverArtUrl && album.coverArtUrl.replace("http://", "https://")} alt="" style={{ width: 52, height: 52, borderRadius: 9, objectFit: "cover", marginLeft: i === 0 ? 0 : -16, zIndex: 3-i, position: "relative" }} />
                 : <div key={i} style={{ width: 52, height: 52, borderRadius: 9, background: "#ddd", marginLeft: i === 0 ? 0 : -16, zIndex: 3-i, position: "relative" }} />
               )}
             </div>
@@ -4198,7 +4198,7 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
                   <div key={item.id} style={{ display: "flex", gap: 14, alignItems: "center" }}>
                     <div style={{ cursor: "pointer", flexShrink: 0 }} onClick={() => openAlbum(item.albumId)}>
                       {album.coverArtUrl
-                        ? <img src={album.coverArtUrl} alt="" style={{ width: 48, height: 48, borderRadius: 7, objectFit: "cover" }} />
+                        ? <img src={album.coverArtUrl && album.coverArtUrl.replace("http://", "https://")} alt="" style={{ width: 48, height: 48, borderRadius: 7, objectFit: "cover" }} />
                         : <div style={{ width: 48, height: 48, borderRadius: 7, background: "#eee" }} />}
                     </div>
                     <div className="ui-sans" style={{ flex: 1 }}>
