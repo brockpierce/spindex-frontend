@@ -2079,7 +2079,21 @@ export default function SoundboardDemo() {
       {/* TOP NAV */}
       <div style={{ borderBottom: `1.5px solid ${INK}`, padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", overflowX: "hidden" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 9, cursor: "pointer" }} onClick={() => setView({ name: "home" })}>
-          <Mascot mood="neutral" color={BLUE} size={34} equalize />
+          <svg viewBox="0 0 200 200" width={34} height={34} fill="none" style={{ display: "block" }} aria-label="Spindex">
+            <g stroke="#1e3a8a" fill="#1e3a8a">
+              <path d="M36,134 A64,64 0 0 1 164,134" fill="none" strokeWidth="11" strokeLinecap="round" />
+              <path d="M44,130 A31,31 0 0 0 44,192 Z" stroke="none" />
+              <path d="M156,130 A31,31 0 0 1 156,192 Z" stroke="none" />
+              <path d="M78,88 q-6,24 -4,42" fill="none" strokeWidth="7" strokeLinecap="round" />
+              <path d="M90,84 q-4,26 -3,46" fill="none" strokeWidth="7" strokeLinecap="round" />
+              <path d="M100,82 q0,28 0,48" fill="none" strokeWidth="7" strokeLinecap="round" />
+              <path d="M110,84 q4,26 3,46" fill="none" strokeWidth="7" strokeLinecap="round" />
+              <path d="M122,88 q6,24 4,42" fill="none" strokeWidth="7" strokeLinecap="round" />
+              <circle cx="76" cy="164" r="6" stroke="none" />
+              <circle cx="124" cy="164" r="6" stroke="none" />
+              <rect x="89" y="174" width="22" height="7" rx="3.5" stroke="none" />
+            </g>
+          </svg>
         </div>
         <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
           <div className={`sb-nav-item ${view.name === "home" ? "active" : ""}`} onClick={() => setView({ name: "home" })}>home</div>
