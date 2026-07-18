@@ -2071,7 +2071,7 @@ export default function SoundboardDemo() {
         .sb-nav-item { cursor: pointer; font-size: 13px; letter-spacing: 0; text-transform: none; font-weight: 400; color: ${MUTE}; padding: 6px 0; border-bottom: 1px solid transparent; }
         .sb-nav-item.active { color: ${INK}; border-bottom-color: ${BLUE}; }
         @media (max-width: 480px) {
-          .sb-nav-item { font-size: 10px; letter-spacing: 0.01em; }
+          .sb-nav-item { font-size: 12px; letter-spacing: 0.01em; }
           .sb-btn { padding: 7px 10px; font-size: 11px; }
           .sb-rating-row { flex-wrap: wrap; }
         }
@@ -2190,11 +2190,11 @@ export default function SoundboardDemo() {
               </div>
               {(homeTab === "feed" || homeTab === "everyone") && (
                 <>
-                  <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 9, padding: "8px 2px", borderBottom: `1px solid ${peopleSearchFocused ? BLUE : "#d8d8d8"}`, transition: "border-color 0.15s" }}>
+                  <div style={{ flex: 1, minWidth: 0, maxWidth: "100%", boxSizing: "border-box", display: "flex", alignItems: "center", gap: 9, padding: "8px 2px", borderBottom: `1px solid ${peopleSearchFocused ? BLUE : "#d8d8d8"}`, transition: "border-color 0.15s" }}>
                     <Search size={15} color={peopleSearchFocused ? BLUE : "#b5b5b5"} style={{ flexShrink: 0, transition: "color 0.15s" }} />
                     <input
                       className="ui-sans"
-                      style={{ flex: 1, border: 0, outline: 0, background: "transparent", fontSize: 13, color: INK }}
+                      style={{ flex: 1, minWidth: 0, border: 0, outline: 0, background: "transparent", fontSize: 13, color: INK }}
                       placeholder="search for people..."
                       value={userSearchQuery}
                       onChange={(e) => setUserSearchQuery(e.target.value)}
@@ -2975,7 +2975,7 @@ export default function SoundboardDemo() {
             {!artistLoading && artistAlbums.length === 0 && (
               <div className="ui-sans" style={{ color: MUTE, fontSize: 13 }}>no albums found</div>
             )}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: "20px 14px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(auto-fill, minmax(140px, 1fr))", gap: "20px 14px" }}>
               {artistAlbums.map((album) => (
                 <div key={album.id} onClick={() => openAlbum(album.id, album, { name: "artist", artistName: view.artistName })} className="sb-cover-wrap">
                   <AlbumCover album={fetchedAlbums[album.id] || album} size={140} listened={listenStatus[album.id] === "listened"} />
@@ -3150,7 +3150,7 @@ export default function SoundboardDemo() {
                 </div>
               </>
             )}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: "20px 16px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(auto-fill, minmax(150px, 1fr))", gap: "20px 16px" }}>
               {albumSearchLoading && (
                 <div style={{ gridColumn: "1 / -1", display: "flex", justifyContent: "center", padding: "20px 0" }}><Spinner label="searching…" /></div>
               )}
