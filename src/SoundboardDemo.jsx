@@ -1695,6 +1695,7 @@ export default function SoundboardDemo() {
   const [viewedUser, setViewedUser] = useState(null);
   const [viewedUserReviews, setViewedUserReviews] = useState([]);
   const [viewedUserFavorites, setViewedUserFavorites] = useState([]);
+  const [viewedUserMixes, setViewedUserMixes] = useState([]);
   const [conversations, setConversations] = useState([]);
   const [dmUnreadCount, setDmUnreadCount] = useState(0);
   const [activeConversation, setActiveConversation] = useState(null);
@@ -1787,6 +1788,7 @@ export default function SoundboardDemo() {
     setViewedUser(null);
     setViewedUserReviews([]);
     setViewedUserFavorites([]);
+    setViewedUserMixes([]);
     setViewedUserQueue([]);
     setViewedUserListenedCount(0);
     setShowAllUserReviews(false);
@@ -1796,6 +1798,23 @@ export default function SoundboardDemo() {
       .then((data) => {
         if (data.user) {
           setViewedUser(data.user);
+          // Load their PUBLIC mixes (server filters out private)
+          apiFetch(`${BACKEND_URL}/api/mixes/user/${data.user.id}`)
+            .then((r) => r.json())
+            .then((mixData) => {
+              if (mixData && mixData.mixes) {
+                setViewedUserMixes(mixData.mixes);
+                mixData.mixes.forEach((mix) => (mix.albums || []).forEach((a) => {
+                  if (!fetchedAlbums[a.albumId]) {
+                    apiFetch(`${BACKEND_URL}/api/albums/${a.albumId}`)
+                      .then((r) => r.json())
+                      .then((d) => { if (d.album) { const al = d.album; setFetchedAlbums((prev) => ({ ...prev, [al.id]: { ...al, artist: al.artistName || '', year: al.releaseYear || null } })); } })
+                      .catch(() => {});
+                  }
+                }));
+              }
+            })
+            .catch(() => {});
           // Load their reviews
           apiFetch(`${BACKEND_URL}/api/reviews/user/${data.user.id}`)
             .then((r) => r.json())
@@ -2711,6 +2730,35 @@ export default function SoundboardDemo() {
                         </div>
                       );
                     })}
+                  </div>
+                </div>
+              )}
+
+              {viewedUserMixes.length > 0 && (
+                <div style={{ marginTop: 30 }}>
+                  <div style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14, textAlign: isMobile ? "center" : "left", fontWeight: 600 }} className="ui-sans">mixes</div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                    {viewedUserMixes.map((m) => (
+                      <div
+                        key={m.id}
+                        onClick={() => setView({ name: "albumMixDetail", id: m.id, mix: { ...m, owner: user.username }, from: view })}
+                        style={{ border: `1.5px solid ${LINE}`, borderRadius: 8, padding: "16px 18px", cursor: "pointer", display: "flex", gap: 14, alignItems: "center" }}
+                      >
+                        <div style={{ display: "flex" }}>
+                          {m.albums.slice(0, 3).map((a, i) => (
+                            <div key={a.albumId} style={{ marginLeft: i === 0 ? 0 : -20, zIndex: 3 - i, border: `2px solid ${BG}`, borderRadius: 9 }}>
+                              <AlbumCover album={fetchedAlbums[a.albumId] || albumById(a.albumId)} size={44} />
+                            </div>
+                          ))}
+                          {m.albums.length === 0 && <ListMusic size={36} color={LINE} strokeWidth={1.4} />}
+                        </div>
+                        <div style={{ flex: 1 }} className="ui-sans">
+                          <div style={{ fontSize: 14.5, fontWeight: 600 }}>{m.title}</div>
+                          {m.description && <div style={{ fontSize: 12.5, color: MUTE, marginTop: 2 }}>{m.description}</div>}
+                          <div style={{ fontSize: 11, color: MUTE, marginTop: 4 }}>{m.albums.length} album{m.albums.length !== 1 ? "s" : ""}</div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
@@ -3785,6 +3833,35 @@ export default function SoundboardDemo() {
                 </div>
               )}
             </div>
+
+            {albumMixes.filter((m) => m.isPublic !== false).length > 0 && (
+              <div style={{ marginTop: 30 }}>
+                <div style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14, textAlign: isMobile ? "center" : "left", fontWeight: 600 }}>mixes</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  {albumMixes.filter((m) => m.isPublic !== false).map((m) => (
+                    <div
+                      key={m.id}
+                      onClick={() => setView({ name: "albumMixDetail", id: m.id })}
+                      style={{ border: `1.5px solid ${LINE}`, borderRadius: 8, padding: "16px 18px", cursor: "pointer", display: "flex", gap: 14, alignItems: "center" }}
+                    >
+                      <div style={{ display: "flex" }}>
+                        {m.albums.slice(0, 3).map((a, i) => (
+                          <div key={a.albumId} style={{ marginLeft: i === 0 ? 0 : -20, zIndex: 3 - i, border: `2px solid ${BG}`, borderRadius: 9 }}>
+                            <AlbumCover album={fetchedAlbums[a.albumId] || albumById(a.albumId)} size={44} />
+                          </div>
+                        ))}
+                        {m.albums.length === 0 && <ListMusic size={36} color={LINE} strokeWidth={1.4} />}
+                      </div>
+                      <div style={{ flex: 1 }} className="ui-sans">
+                        <div style={{ fontSize: 14.5, fontWeight: 600 }}>{m.title}</div>
+                        {m.description && <div style={{ fontSize: 12.5, color: MUTE, marginTop: 2 }}>{m.description}</div>}
+                        <div style={{ fontSize: 11, color: MUTE, marginTop: 4 }}>{m.albums.length} album{m.albums.length !== 1 ? "s" : ""}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div style={{ marginTop: 30 }}>
               <div style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14, textAlign: isMobile ? "center" : "left", fontWeight: 600 }}>recent reviews</div>
