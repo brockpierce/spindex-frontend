@@ -3335,12 +3335,12 @@ export default function SoundboardDemo() {
                     <>
                       <div className="ui-sans" style={{ margin: "30px 2px 8px", fontSize: 13, fontWeight: 600, color: MUTE }}>You vs. the community</div>
                       <div style={{ position: "relative", height: 12, borderRadius: 20, background: LINE, margin: "0 2px" }}>
-                        <div style={{ position: "absolute", top: 0, left: 0, height: 12, width: `${(numericAvg / 10 * 100).toFixed(1)}%`, borderRadius: 20, background: `linear-gradient(90deg, ${BLUE}99, ${BLUE})` }} />
-                        <div style={{ position: "absolute", top: "50%", left: `${(siteCommunityAvg / 10 * 100).toFixed(1)}%`, transform: "translate(-50%,-50%)", width: 2, height: 24, background: INK }} />
+                        <div style={{ position: "absolute", top: 0, left: 0, height: 12, width: `${(siteCommunityAvg / 10 * 100).toFixed(1)}%`, borderRadius: 20, background: `linear-gradient(90deg, ${BLUE}99, ${BLUE})` }} />
+                        <div style={{ position: "absolute", top: "50%", left: `${(numericAvg / 10 * 100).toFixed(1)}%`, transform: "translate(-50%,-50%)", width: 2, height: 24, background: INK }} />
                       </div>
                       <div className="ui-sans" style={{ display: "flex", justifyContent: "space-between", fontSize: 12, fontWeight: 600, color: MUTE, margin: "9px 2px 0" }}>
-                        <span>community {siteCommunityAvg.toFixed(1)}</span>
                         <span style={{ color: BLUE }}>you {numericAvg.toFixed(1)}</span>
+                        <span>community {siteCommunityAvg.toFixed(1)}</span>
                       </div>
                     </>
                   )}
