@@ -693,6 +693,7 @@ export default function SoundboardDemo() {
   const [listenStatus, setListenStatus] = useState(INITIAL_LISTEN_STATUS);
   const [favorites, setFavorites] = useState(INITIAL_FAVORITES);
   const [albumMixes, setAlbumMixes] = useState(INITIAL_ALBUM_MIXES);
+  const [siteCommunityAvg, setSiteCommunityAvg] = useState(null);
   const [editingMixTitle, setEditingMixTitle] = useState(null);
   const [savedAlbumMixes, setSavedAlbumMixes] = useState(INITIAL_SAVED_ALBUM_MIXES);
   const [songMixes, setSongMixes] = useState(INITIAL_SONG_MIXES);
@@ -1153,6 +1154,14 @@ export default function SoundboardDemo() {
       setFavorites((prev) => isFav ? [...prev, albumId] : prev.filter((id) => id !== albumId));
     });
   }
+
+  React.useEffect(() => {
+    if (view.name !== "statsDetail" || siteCommunityAvg !== null) return;
+    apiFetch(`${BACKEND_URL}/api/reviews/community-average`)
+      .then((r) => r.json())
+      .then((d) => { if (d && typeof d.average === "number") setSiteCommunityAvg(d.average); })
+      .catch(() => {});
+  }, [view.name]);
 
   function renameAlbumMix(mixId, newTitle) {
     const t = (newTitle || "").trim();
@@ -3321,6 +3330,20 @@ export default function SoundboardDemo() {
                     <div className="ui-sans" style={{ fontSize: 60, fontWeight: 800, letterSpacing: "-0.03em", lineHeight: 1, margin: "8px 0 4px" }}>{numericAvg.toFixed(1)}</div>
                     <div className="ui-sans" style={{ fontSize: 14, color: MUTE }}>{tier.blurb}</div>
                   </div>
+
+                  {siteCommunityAvg !== null && (
+                    <>
+                      <div className="ui-sans" style={{ margin: "30px 2px 8px", fontSize: 13, fontWeight: 600, color: MUTE }}>You vs. the community</div>
+                      <div style={{ position: "relative", height: 12, borderRadius: 20, background: LINE, margin: "0 2px" }}>
+                        <div style={{ position: "absolute", top: 0, left: 0, height: 12, width: `${(numericAvg / 10 * 100).toFixed(1)}%`, borderRadius: 20, background: `linear-gradient(90deg, ${BLUE}99, ${BLUE})` }} />
+                        <div style={{ position: "absolute", top: "50%", left: `${(siteCommunityAvg / 10 * 100).toFixed(1)}%`, transform: "translate(-50%,-50%)", width: 2, height: 24, background: INK }} />
+                      </div>
+                      <div className="ui-sans" style={{ display: "flex", justifyContent: "space-between", fontSize: 12, fontWeight: 600, color: MUTE, margin: "9px 2px 0" }}>
+                        <span>community {siteCommunityAvg.toFixed(1)}</span>
+                        <span style={{ color: BLUE }}>you {numericAvg.toFixed(1)}</span>
+                      </div>
+                    </>
+                  )}
 
                   {/* Highest rated */}
                   <div className="ui-sans" style={{ fontSize: 12, letterSpacing: "0.12em", fontWeight: 700, color: MUTE, textTransform: "uppercase", margin: "34px 0 10px" }}>Your highest rated</div>
