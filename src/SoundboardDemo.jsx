@@ -505,7 +505,7 @@ function RatingBlocks({ value, onChange, size = 14 }) {
 function AlbumCover({ album, size = 92, listened = false }) {
   const { BLUE } = useTheme();
   const coverUrl = album?.coverArtUrl && album.coverArtUrl !== "none" ? album.coverArtUrl : null;
-  const radius = Math.max(8, size * 0.14);
+  const radius = 0; // squared per redesign
   const offset = Math.round(size * 0.06);
   const pill = listened ? (
     <span
@@ -2387,7 +2387,7 @@ export default function SoundboardDemo() {
                               <span className="ui-sans" style={{ fontSize: 11, color: MUTE, marginLeft: "auto" }}>{relativeDate(c.date)}</span>
                             </div>
                             <div className="ui-sans" style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.04em", color: BLUE, marginBottom: 8, display: "flex", alignItems: "center", gap: 5 }}>
-                              <Plus size={11} /> QOTD: {c.questionText}
+                              <Plus size={11} strokeWidth={1.5} /> QOTD: {c.questionText}
                             </div>
                             <div onClick={() => openAlbum(c.albumId)} style={{ display: "flex", gap: 12, cursor: "pointer" }}>
                               <AlbumCover album={album} size={56} />
@@ -3397,7 +3397,7 @@ export default function SoundboardDemo() {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 22 }}>
               <div className="ui-sans" style={{ fontSize: 14, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, textAlign: "left" }}>your album mixes</div>
               <button className="sb-btn" onClick={() => setShowNewMix(showNewMix === "album" ? null : "album")} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <Plus size={13} /> new album mix
+                <Plus size={12} strokeWidth={1.5} /> new album mix
               </button>
             </div>
             {showNewMix === "album" && (
@@ -3443,7 +3443,7 @@ export default function SoundboardDemo() {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginTop: 36, marginBottom: 22 }}>
               <div className="ui-sans" style={{ fontSize: 20, fontWeight: 600 }}>your song mixes</div>
               <button className="sb-btn" onClick={() => setShowNewMix(showNewMix === "song" ? null : "song")} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <Plus size={13} /> new song mix
+                <Plus size={12} strokeWidth={1.5} /> new song mix
               </button>
             </div>
             {showNewMix === "song" && (
@@ -4015,7 +4015,7 @@ export default function SoundboardDemo() {
                       style={{ width: favSize, height: favSize, border: `1.5px dashed ${LINE}`, borderRadius: 0, display: "flex", alignItems: "center", justifyContent: "center", color: MUTE, cursor: "pointer" }}
                       title="Add a favorite album"
                     >
-                      <Plus size={isMobile ? 18 : 24} />
+                      <Plus size={isMobile ? 15 : 18} strokeWidth={1.5} />
                     </div>
                   );
                 })}
@@ -5806,7 +5806,7 @@ function SongMixDetail({ mix, isOwn, onBack, onOpenAlbum, onAddTrack, onRemoveTr
         <div style={{ marginTop: 18 }}>
           {!adding ? (
             <button className="sb-btn" onClick={startAdd} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <Plus size={13} /> add track
+              <Plus size={12} strokeWidth={1.5} /> add track
             </button>
           ) : !pickedAlbum ? (
             <AlbumSearchPicker onPick={setPickedAlbum} onCancel={() => setAdding(false)} />
