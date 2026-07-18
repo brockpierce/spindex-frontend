@@ -1677,6 +1677,7 @@ export default function SoundboardDemo() {
   const [conversationMessages, setConversationMessages] = useState([]);
   const [dmInput, setDmInput] = useState("");
   const [threadReview, setThreadReview] = useState(null);
+  const [expandedComments, setExpandedComments] = useState({});
   const [viewedUserQueue, setViewedUserQueue] = useState([]);
   const [viewedUserListenedCount, setViewedUserListenedCount] = useState(0);
   const [artistAlbums, setArtistAlbums] = useState([]);
@@ -2279,15 +2280,27 @@ export default function SoundboardDemo() {
                           </div>
                           {c.id && (
                             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12, paddingTop: 10, paddingBottom: 10, borderTop: `1px solid ${LINE}` }}>
-                              <ReactionBar
-                                reactions={reviewReactions[c.id]}
-                                onReact={(kind) => toggleReaction(c.id, kind)}
-                                currentUsername={profile.username}
-                              />
+                              <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+                                <ReactionBar
+                                  reactions={reviewReactions[c.id]}
+                                  onReact={(kind) => toggleReaction(c.id, kind)}
+                                  currentUsername={profile.username}
+                                  inline={true}
+                                />
+                                <button
+                                  onClick={() => setExpandedComments((prev) => ({ ...prev, [c.id]: !prev[c.id] }))}
+                                  style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 5, color: expandedComments[c.id] ? BLUE : MUTE, padding: 0 }}
+                                >
+                                  <MessageCircle size={16} strokeWidth={1.8} />
+                                  {(reviewComments[c.id] || []).length > 0 && (
+                                    <span style={{ fontSize: 13, fontWeight: 600 }}>{countAllComments(reviewComments[c.id] || [])}</span>
+                                  )}
+                                </button>
+                              </div>
                               <ShareButton kind="review" album={album} username={c.username} rating={c.rating} reviewText={c.text} />
                             </div>
                           )}
-                          {c.id && (
+                          {c.id && expandedComments[c.id] && (
                             <ReviewComments
                               reviewId={c.id}
                               comments={reviewComments[c.id] || []}
@@ -2297,6 +2310,7 @@ export default function SoundboardDemo() {
                               reviewOwnerUsername={c.username}
                               reviewReactions={reviewReactions}
                               onReact={toggleReaction}
+                              startOpen={true}
                             />
                           )}
                         </div>
