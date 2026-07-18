@@ -2145,7 +2145,7 @@ export default function SoundboardDemo() {
                                 </div>
                               )}
                               <div className="ui-sans" style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
-                                <div style={{ fontSize: 11, fontWeight: 700, color: "#d97706", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>mix</div>
+                                <div style={{ fontSize: 11, fontWeight: 700, color: BLUE, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>mix</div>
                                 <div style={{ fontSize: 15, fontWeight: 700, color: INK, lineHeight: 1.3 }}>{mix.title}</div>
                                 <div style={{ fontSize: 12, color: MUTE, marginTop: 4 }}>
                                   {artistNames.length > 0 ? artistNames.join(" · ") + " · " : ""}{c.mixType === "song" ? (mix.tracks || []).length + " tracks" : (mix.albums || []).length + " albums"}
