@@ -362,6 +362,75 @@ const SURFACES = {
 const ThemeContext = React.createContext(null);
 const AvatarContext = React.createContext({});
 
+const STATS_TIERS = [
+  { min: 10,  face: "grin",    title: "Real Love Baby",               blurb: "i genuinely admire how you view the world" },
+  { min: 9.9, face: "grin",    title: "The Charming Man",             blurb: "im glad someone so handsome cares" },
+  { min: 9.6, face: "grin",    title: "Semi-Charmed Life",            blurb: "you either have an open mind or the best music taste ever" },
+  { min: 9.5, face: "grin",    title: "A Love Supreme",               blurb: "you can't beat that" },
+  { min: 9.0, face: "grin",    title: "Lust For Life",                blurb: "you see the world with rose colored glasses" },
+  { min: 8.7, face: "grin",    title: "Lovefool",                     blurb: "you love almost everything you hear" },
+  { min: 8.0, face: "smile",   title: "Mr. Brightside",               blurb: "you see the good in things" },
+  { min: 7.6, face: "smile",   title: "The Wild Kindness",            blurb: "you're generous but realistic" },
+  { min: 7.0, face: "smile",   title: "The Modern Lover",             blurb: "you lean high" },
+  { min: 6.9, face: "smile",   title: "The Funny Number",             blurb: "haha" },
+  { min: 6.6, face: "neutral", title: "Sweet Jane",                   blurb: "you can be a bit of a fatal optimist" },
+  { min: 6.0, face: "neutral", title: "Sweet Disposition",            blurb: "you are a realist" },
+  { min: 5.0, face: "neutral", title: "Neither Heaven nor Las Vegas", blurb: "you're very middle of the road" },
+  { min: 4.6, face: "frown",   title: "Negative Creep",               blurb: "idk, you might need some new music" },
+  { min: 4.0, face: "frown",   title: "El Scorcho",                   blurb: "that burns" },
+  { min: 3.0, face: "frown",   title: "Psycho Killer",                blurb: "you can be a bit harsh" },
+  { min: 2.5, face: "frown",   title: "Elvis Depressedly",            blurb: "lighten up a bit" },
+  { min: 2.0, face: "frown",   title: "Meat Grinder",                 blurb: "tough crowd" },
+  { min: 1.6, face: "dead",    title: "Jude Jury and Executioner",    blurb: "You know you can show a little mercy, right?" },
+  { min: 0,   face: "dead",    title: "Miss Misery",                  blurb: "there's really no hope for you" },
+];
+function tierForAvg(avg) { return STATS_TIERS.find((t) => avg >= t.min) || STATS_TIERS[STATS_TIERS.length - 1]; }
+function moodForScore(s) { return s >= 8.7 ? "grin" : s >= 6.9 ? "smile" : s >= 5 ? "neutral" : (s < 2 ? "dead" : "frown"); }
+
+function Mascot({ mood = "neutral", size = 140, equalize = false, bob = false, color }) {
+  const { BLUE } = useTheme();
+  const c = color || BLUE;
+  const bangs = [
+    { d: "M78,88 q-6,24 -4,42", delay: "0s" },
+    { d: "M90,84 q-4,26 -3,46", delay: ".12s" },
+    { d: "M100,82 q0,28 0,48",  delay: ".24s" },
+    { d: "M110,84 q4,26 3,46",  delay: ".36s" },
+    { d: "M122,88 q6,24 4,42",  delay: ".48s" },
+  ];
+  const mm = mood === "dead" ? "frown" : mood;
+  let mouth;
+  if (mm === "grin") mouth = <path d="M85,172 h30 a15,15 0 0 1 -30,0 Z" fill={c} />;
+  else if (mm === "smile") mouth = <path d="M90,175 q10,10 20,0" fill="none" stroke={c} strokeWidth="7" strokeLinecap="round" />;
+  else if (mm === "frown") mouth = <path d="M88,182 q12,-12 24,0" fill="none" stroke={c} strokeWidth="7" strokeLinecap="round" />;
+  else mouth = <rect x="89" y="174" width="22" height="7" rx="3.5" fill={c} />;
+  let eyes;
+  if (mood === "dead") {
+    const xEye = (cx) => (
+      <g key={cx}>
+        <line x1={cx - 6} y1="158" x2={cx + 6} y2="170" stroke={c} strokeWidth="4" strokeLinecap="round" />
+        <line x1={cx - 6} y1="170" x2={cx + 6} y2="158" stroke={c} strokeWidth="4" strokeLinecap="round" />
+      </g>
+    );
+    eyes = <g>{xEye(76)}{xEye(124)}</g>;
+  } else {
+    eyes = <g className="spx-eyes"><circle cx="76" cy="164" r="6" fill={c} /><circle cx="124" cy="164" r="6" fill={c} /></g>;
+  }
+  return (
+    <svg width={size} height={size} viewBox="0 0 200 200" style={{ display: "block", overflow: "visible" }} role="img" aria-label="mascot">
+      <g className={bob ? "spx-inner" : undefined}>
+        <path d="M36,134 A64,64 0 0 1 164,134" fill="none" stroke={c} strokeWidth="11" strokeLinecap="round" />
+        <path d="M44,130 A31,31 0 0 0 44,192 Z" fill={c} />
+        <path d="M156,130 A31,31 0 0 1 156,192 Z" fill={c} />
+        {bangs.map((b, i) => (
+          <path key={i} className={equalize ? "spx-hair" : undefined} style={{ animationDelay: b.delay }} d={b.d} fill="none" stroke={c} strokeWidth="7" strokeLinecap="round" />
+        ))}
+        {eyes}
+        {mouth}
+      </g>
+    </svg>
+  );
+}
+
 function Spinner({ label = "loading…", size = 52 }) {
   return (
     <div className="spx-loader" style={{ padding: "28px 0" }}>
@@ -3221,6 +3290,70 @@ export default function SoundboardDemo() {
         })()}
 
         {/* ---------------- LISTS overview ---------------- */}
+        {view.name === "statsDetail" && (() => {
+          const numericAvg = reviews.length ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : 0;
+          const tier = tierForAvg(numericAvg);
+          const ranked = [...reviews].sort((a, b) => b.rating - a.rating).slice(0, 10);
+          // Community bar omitted in v1: no community rating data available yet
+          // (COMMUNITY_REVIEWS is empty). To re-enable, compute the average of
+          // community scores for the albums in `reviews` and render a bar here.
+          return (
+            <div>
+              <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 12.5, marginBottom: 22, cursor: "pointer" }} onClick={() => setView({ name: "profile" })}>
+                <ChevronLeft size={14} /> back
+              </div>
+
+              <div className="ui-sans" style={{ fontSize: 12, letterSpacing: "0.12em", fontWeight: 700, color: MUTE, textTransform: "uppercase", marginBottom: 6 }}>Your rating stats</div>
+              <div className="ui-sans" style={{ fontSize: 30, fontWeight: 800, letterSpacing: "-0.02em", marginBottom: 20 }}>How you rate</div>
+
+              {reviews.length === 0 ? (
+                <div className="ui-sans" style={{ color: MUTE, fontSize: 14, padding: "20px 0" }}>
+                  rate some albums and your stats will show up here.
+                </div>
+              ) : (
+                <>
+                  {/* Personality card */}
+                  <div style={{ textAlign: "center", background: BG === "#ffffff" || BG === "#fff" ? "#f6f9ff" : LINE, border: `1px solid ${LINE}`, borderRadius: 18, padding: "26px 24px 28px" }}>
+                    <div style={{ width: 140, height: 140, margin: "0 auto 4px" }}>
+                      <Mascot mood={tier.face} size={140} equalize={tier.face === "grin" || tier.face === "smile"} bob />
+                    </div>
+                    <div className="ui-sans" style={{ fontSize: 12, letterSpacing: "0.12em", fontWeight: 700, color: BLUE, textTransform: "uppercase" }}>{tier.title}</div>
+                    <div className="ui-sans" style={{ fontSize: 60, fontWeight: 800, letterSpacing: "-0.03em", lineHeight: 1, margin: "8px 0 4px" }}>{numericAvg.toFixed(1)}</div>
+                    <div className="ui-sans" style={{ fontSize: 14, color: MUTE }}>{tier.blurb}</div>
+                  </div>
+
+                  {/* Highest rated */}
+                  <div className="ui-sans" style={{ fontSize: 12, letterSpacing: "0.12em", fontWeight: 700, color: MUTE, textTransform: "uppercase", margin: "34px 0 10px" }}>Your highest rated</div>
+                  <div>
+                    {ranked.map((r, i) => {
+                      const album = fetchedAlbums[r.albumId] || albumById(r.albumId);
+                      return (
+                        <div key={r.id || r.albumId} onClick={() => openAlbum(r.albumId)} style={{ display: "flex", alignItems: "center", gap: 13, padding: "10px 0", borderBottom: `1px solid ${LINE}`, cursor: "pointer" }}>
+                          <span className="ui-sans" style={{ width: 16, fontSize: 15, fontWeight: 800, color: MUTE, flexShrink: 0 }}>{i + 1}</span>
+                          <div style={{ width: 42, height: 42, flexShrink: 0 }}>
+                            <AlbumCover album={album} size={42} />
+                          </div>
+                          <div className="ui-sans" style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 15, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{album.title}</div>
+                            <div style={{ fontSize: 13, color: MUTE }}>{album.artist || album.artistName}</div>
+                          </div>
+                          <div style={{ width: 44, height: 44, flexShrink: 0 }}>
+                            <Mascot mood={moodForScore(r.rating)} size={44} equalize={r.rating >= 8} />
+                          </div>
+                          <span className="ui-sans" style={{ fontSize: 16, fontWeight: 800, color: r.rating >= 5 ? BLUE : MUTE, width: 32, textAlign: "right", flexShrink: 0 }}>{r.rating.toFixed(1)}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="ui-sans" style={{ textAlign: "center", fontSize: 14, fontWeight: 600, marginTop: 18, cursor: "pointer", color: BLUE }} onClick={() => setView({ name: "reviewsList", username: profile.username, userId: profile.id, reviews: reviews, isOwn: true, from: { name: "statsDetail" } })}>
+                    see all {reviews.length} reviews &rarr;
+                  </div>
+                </>
+              )}
+            </div>
+          );
+        })()}
+
         {view.name === "mixes" && (
           <div>
             {/* YOUR ALBUM MIXES */}
@@ -3651,7 +3784,7 @@ export default function SoundboardDemo() {
                     <Stat label="following" value={profileStats.following} onClick={() => setShowFollowList({ kind: "following", userId: authUser?.id, username: profile.username })} />
                     <Stat label="listened" value={listenedCount} onClick={() => setView({ name: "albumList", filter: "listened" })} />
                     <Stat label="reviews" value={reviews.length} onClick={() => setView({ name: "reviewsList", username: profile.username, userId: profile.id, reviews: reviews, isOwn: true, from: view })} />
-                    <Stat label="avg rating" value={avgRating} />
+                    <Stat label="avg rating" value={avgRating} highlight={reviews.length > 0} onClick={reviews.length > 0 ? () => setView({ name: "statsDetail" }) : undefined} />
                   </div>
                 )}
               </div>
@@ -3793,7 +3926,7 @@ export default function SoundboardDemo() {
                 <Stat label="following" value={profileStats.following} onClick={() => setShowFollowList({ kind: "following", userId: authUser?.id, username: profile.username })} />
                 <Stat label="listened" value={listenedCount} onClick={() => setView({ name: "albumList", filter: "listened" })} />
                 <Stat label="reviews" value={reviews.length} onClick={() => setView({ name: "reviewsList", username: profile.username, userId: profile.id, reviews: reviews, isOwn: true, from: view })} />
-                <Stat label="avg rating" value={avgRating} />
+                <Stat label="avg rating" value={avgRating} highlight={reviews.length > 0} onClick={reviews.length > 0 ? () => setView({ name: "statsDetail" }) : undefined} />
               </div>
             )}
 
@@ -4017,8 +4150,8 @@ export default function SoundboardDemo() {
   );
 }
 
-function Stat({ label, value, onClick }) {
-  const { MUTE, INK } = useTheme();
+function Stat({ label, value, onClick, highlight }) {
+  const { MUTE, INK, BLUE } = useTheme();
   return (
     <div
       onClick={onClick}
@@ -4033,7 +4166,7 @@ function Stat({ label, value, onClick }) {
         userSelect: "none",
       }}
     >
-      <div style={{ fontSize: 18, fontWeight: 600, lineHeight: 1.2 }}>{value}</div>
+      <div style={{ fontSize: 18, fontWeight: 600, lineHeight: 1.2, color: highlight ? BLUE : INK, textDecoration: highlight ? "underline" : "none", textUnderlineOffset: 3 }}>{value}</div>
       <div style={{ fontSize: 10, color: MUTE, textTransform: "uppercase", letterSpacing: "0.04em", marginTop: 4, lineHeight: 1.2 }}>{label}</div>
     </div>
   );
