@@ -384,6 +384,77 @@ const STATS_TIERS = [
   { min: 1.6, face: "dead",    title: "Jude Jury and Executioner",    blurb: "You know you can show a little mercy, right?" },
   { min: 0,   face: "dead",    title: "Miss Misery",                  blurb: "there's really no hope for you" },
 ];
+function StatsMascot({ mood = "neutral", size = 140, motion = "none", color }) {
+  const { BLUE } = useTheme();
+  const B = color || BLUE;
+  const isHero = motion === "bob";
+  const ex1 = 74, ex2 = 126, ey = 175;
+
+  const band = <path d="M28,138 A72,72 0 0 1 172,138" stroke={B} strokeWidth="11" strokeLinecap="round" fill="none" />;
+  const cups = <><path d="M37,134 A33,33 0 0 0 37,200 Z" fill={B} /><path d="M163,134 A33,33 0 0 1 163,200 Z" fill={B} /></>;
+  const bangs = ["M57,111 C55,124 55,140 58,153","M72,109 C71,124 72,140 76,154","M87,109 C88,124 91,139 95,152","M103,110 C103,124 107,138 114,149"]
+    .map((d, i) => <path key={i} d={d} stroke={B} strokeWidth="7" strokeLinecap="round" fill="none" />);
+
+  let eyes;
+  if (mood === "dead") {
+    const xe = (cx) => (
+      <g key={cx}>
+        <line x1={cx - 6} y1={ey - 6} x2={cx + 6} y2={ey + 6} stroke={B} strokeWidth="4" strokeLinecap="round" />
+        <line x1={cx - 6} y1={ey + 6} x2={cx + 6} y2={ey - 6} stroke={B} strokeWidth="4" strokeLinecap="round" />
+      </g>
+    );
+    eyes = <g>{xe(ex1)}{xe(ex2)}</g>;
+  } else {
+    const blinkStyle = isHero ? { transformBox: "fill-box", transformOrigin: "center", animation: "spx-blink 4s ease-in-out infinite" } : undefined;
+    eyes = <g style={blinkStyle}><circle cx={ex1} cy={ey} r="6" fill={B} /><circle cx={ex2} cy={ey} r="6" fill={B} /></g>;
+  }
+
+  const mm = mood === "dead" ? "frown" : mood;
+  let mouth;
+  if (mm === "grin") mouth = <path d="M85,183 h30 a15,15 0 0 1 -30,0 Z" fill={B} />;
+  else if (mm === "smile") mouth = <path d="M90,186 q10,10 20,0" stroke={B} strokeWidth="7" strokeLinecap="round" fill="none" />;
+  else if (mm === "frown") mouth = <path d="M88,193 q12,-12 24,0" stroke={B} strokeWidth="7" strokeLinecap="round" fill="none" />;
+  else mouth = <rect x="89" y="185" width="22" height="7" rx="3.5" fill={B} />;
+
+  const bobStyle = isHero ? { transformBox: "fill-box", transformOrigin: "center", animation: "spx-bob 1.5s ease-in-out infinite" } : undefined;
+
+  // Floating music notes — hero only (motion bob + size >= 100)
+  const showNotes = isHero && size >= 100;
+  const noteGlyph = (
+    <>
+      <rect x="3" y="-11" width="2" height="17" fill={B} />
+      <path d="M4.4,-11 q4,1.6 2.8,6.6" stroke={B} strokeWidth="2" fill="none" strokeLinecap="round" />
+      <ellipse cx="1" cy="6" rx="4" ry="3" fill={B} transform="rotate(-18 1 6)" />
+    </>
+  );
+  const beamGlyph = (
+    <>
+      <rect x="0.5" y="-11" width="2" height="16" fill={B} /><rect x="11.5" y="-11" width="2" height="16" fill={B} />
+      <rect x="0.5" y="-11" width="13" height="3.6" fill={B} />
+      <ellipse cx="-1" cy="5" rx="3.6" ry="2.8" fill={B} transform="rotate(-18 -1 5)" />
+      <ellipse cx="10" cy="5" rx="3.6" ry="2.8" fill={B} transform="rotate(-18 10 5)" />
+    </>
+  );
+  const fx = (cx, cy, sz, delay, glyph, k) => (
+    <g key={k} transform={`translate(${cx},${cy}) scale(${sz})`}>
+      <g style={{ transformBox: "fill-box", transformOrigin: "center", animation: `spx-note 10s ease-in-out ${delay}s infinite` }}>{glyph}</g>
+    </g>
+  );
+  const notes = showNotes ? [
+    fx(-16, 52, 1.3, 0, noteGlyph, "n1"),
+    fx(214, 50, 1.2, 2.5, beamGlyph, "n2"),
+    fx(-12, 136, 1.3, 5, noteGlyph, "n3"),
+    fx(210, 132, 1.2, 7.5, beamGlyph, "n4"),
+  ] : null;
+
+  return (
+    <svg width={size} height={size} viewBox="0 0 200 200" style={{ display: "block", overflow: "visible" }} role="img" aria-label="Spindex">
+      <g style={bobStyle}>{band}{cups}{bangs}{eyes}{mouth}</g>
+      {notes}
+    </svg>
+  );
+}
+
 function tierForAvg(avg) { return STATS_TIERS.find((t) => avg >= t.min) || STATS_TIERS[STATS_TIERS.length - 1]; }
 function moodForScore(s) { return s >= 8.7 ? "grin" : s >= 6.9 ? "smile" : s >= 5 ? "neutral" : (s < 2 ? "dead" : "frown"); }
 
@@ -2063,6 +2134,7 @@ export default function SoundboardDemo() {
         @keyframes spx-bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
         @keyframes spx-blink { 0%,90%,100% { transform: scaleY(1); } 95% { transform: scaleY(.12); } }
         @keyframes spx-eq { 0%,100% { transform: scaleY(.55); } 50% { transform: scaleY(1); } }
+        @keyframes spx-note { 0% { opacity: 0; transform: translate(0,8px) scale(.6); } 16% { opacity: .85; } 42% { opacity: .85; } 60% { opacity: 0; transform: translate(0,-20px) scale(1.05); } 100% { opacity: 0; transform: translate(0,-20px) scale(1.05); } }
         @media (prefers-reduced-motion: reduce) { .spx-inner, .spx-eyes, .spx-hair { animation: none; } }
         .sb-input { font-family: inherit; border: 1px solid ${LINE}; background: ${BG}; padding: 9px 12px; font-size: 13px; outline: none; color: ${INK}; border-radius: 0; width: 100%; }
         .sb-input:focus { border-color: ${BLUE}; }
@@ -3332,7 +3404,7 @@ export default function SoundboardDemo() {
                   {/* Personality card */}
                   <div style={{ textAlign: "center", background: darkMode ? "#171d2e" : "#f6f9ff", border: `1px solid ${darkMode ? "#242c42" : "#e7effe"}`, borderRadius: 0, padding: "26px 24px 28px" }}>
                     <div style={{ width: 140, height: 140, margin: "0 auto 4px" }}>
-                      <Mascot mood={tier.face} size={140} equalize={tier.face === "grin" || tier.face === "smile"} bob />
+                      <StatsMascot mood={tier.face} size={140} motion="bob" />
                     </div>
                     <div className="ui-sans" style={{ fontSize: 12, letterSpacing: "0.12em", fontWeight: 700, color: BLUE, textTransform: "uppercase" }}>{tier.title}</div>
                     <div className="ui-sans" style={{ fontSize: 60, fontWeight: 800, letterSpacing: "-0.03em", lineHeight: 1, margin: "8px 0 4px" }}>{numericAvg.toFixed(1)}</div>
@@ -3369,7 +3441,7 @@ export default function SoundboardDemo() {
                             <div style={{ fontSize: 13, color: MUTE }}>{album.artist || album.artistName}</div>
                           </div>
                           <div style={{ width: 44, height: 44, flexShrink: 0 }}>
-                            <Mascot mood={moodForScore(r.rating)} size={44} equalize={r.rating >= 8} />
+                            <StatsMascot mood={moodForScore(r.rating)} size={44} />
                           </div>
                           <span className="ui-sans" style={{ fontSize: 16, fontWeight: 800, color: r.rating >= 5 ? BLUE : MUTE, width: 32, textAlign: "right", flexShrink: 0 }}>{r.rating.toFixed(1)}</span>
                         </div>
