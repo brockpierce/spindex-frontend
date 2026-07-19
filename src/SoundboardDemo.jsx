@@ -4420,14 +4420,14 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
   if (loading) return <div style={{ display: "flex", justifyContent: "center" }}><Spinner label="loading…" /></div>;
 
   const aotdAlbum = aotd ? (fetchedAlbums[aotd.albumId] || albumById(aotd.albumId) || aotd.album) : null;
-  const LABEL_STYLE = { fontSize: 11, letterSpacing: ".06em", fontWeight: 700, color: MUTE, marginBottom: 14 };
+  const LABEL_STYLE = { fontSize: 13, letterSpacing: 0, fontWeight: 400, color: MUTE, marginBottom: 14 };
   const DIVIDER = <div style={{ height: 1, background: "#eee", margin: "32px 0" }} />;
   const ACCENT = BLUE;
 
   return (
     <div style={{ maxWidth: 900, margin: "0 auto", textAlign: "left" }}>
       <div className="ui-sans" style={{ fontSize: 20, fontWeight: 400 }}>news</div>
-      <div className="ui-sans" style={{ fontSize: 13, color: MUTE, marginTop: 4, marginBottom: 24 }}>recent posts from the editorial team</div>
+      <div className="ui-sans" style={{ fontSize: 14, color: MUTE, marginTop: 4, marginBottom: 24 }}>recent posts from the editorial team</div>
 
       {/* ── ALBUM OF THE DAY ── */}
       <div style={{ border: `1px solid ${LINE}`, padding: 16, marginBottom: 14 }}>
