@@ -4438,16 +4438,18 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
   if (loading) return <div style={{ display: "flex", justifyContent: "center" }}><Spinner label="loading…" /></div>;
 
   const aotdAlbum = aotd ? (fetchedAlbums[aotd.albumId] || albumById(aotd.albumId) || aotd.album) : null;
-  const LABEL_STYLE = { fontSize: 12, letterSpacing: ".12em", fontWeight: 700, color: "#9a9a9a", textTransform: "uppercase", marginBottom: 14 };
+  const LABEL_STYLE = { fontSize: 11, letterSpacing: ".06em", fontWeight: 700, color: MUTE, marginBottom: 14 };
   const DIVIDER = <div style={{ height: 1, background: "#eee", margin: "32px 0" }} />;
-  const ACCENT = "#2f6ae0";
+  const ACCENT = BLUE;
 
   return (
     <div style={{ maxWidth: 900, margin: "0 auto" }}>
+      <div className="ui-sans" style={{ fontSize: 24, fontWeight: 800, color: INK, letterSpacing: "-0.01em" }}>news</div>
+      <div className="ui-sans" style={{ fontSize: 13, color: MUTE, marginTop: 4, marginBottom: 24 }}>recent posts from the editorial team</div>
 
       {/* ── ALBUM OF THE DAY ── */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-        <div style={LABEL_STYLE}>Album of the Day</div>
+        <div style={LABEL_STYLE}>album of the day · today</div>
         {isAdmin && (
           <div style={{ display: "flex", gap: 8 }}>
             <button className="sb-btn" style={{ fontSize: 11 }} onClick={() => {
@@ -4480,28 +4482,23 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
       )}
 
       {aotd && aotdAlbum ? (
-        <div style={{ display: "flex", gap: 24 }}>
+        <div style={{ display: "flex", gap: 14 }}>
           <div style={{ flexShrink: 0, cursor: "pointer" }} onClick={() => openAlbum(aotd.albumId)}>
             {aotdAlbum.coverArtUrl
-              ? <img src={aotdAlbum.coverArtUrl} alt="" style={{ width: 172, height: 172, borderRadius: 0, objectFit: "cover" }} />
-              : <div style={{ width: 172, height: 172, borderRadius: 0, background: "#eee", display: "flex", alignItems: "center", justifyContent: "center" }}><span style={{ fontSize: 11, color: "#9a9a9a" }}>no cover</span></div>}
+              ? <img src={aotdAlbum.coverArtUrl} alt="" style={{ width: 84, height: 84, borderRadius: 0, objectFit: "cover" }} />
+              : <div style={{ width: 84, height: 84, borderRadius: 0, background: LINE, display: "flex", alignItems: "center", justifyContent: "center" }}><span style={{ fontSize: 10, color: MUTE }}>no cover</span></div>}
           </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 12, letterSpacing: ".1em", fontWeight: 700, color: ACCENT, textTransform: "uppercase" }}>
-              {(() => { const d = new Date(aotd.date); return "Today · " + d.toLocaleDateString("en-US", { month: "short", day: "numeric" }); })()}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="ui-sans" style={{ fontSize: 20, fontWeight: 800, color: BLUE, lineHeight: 1, letterSpacing: "-0.01em" }}>{aotd.staffRating}/10</div>
+            <div className="ui-sans" style={{ fontSize: 14, fontWeight: 800, marginTop: 6 }}>{aotdAlbum.title} <span style={{ fontWeight: 400, color: MUTE }}>{aotdAlbum.artist || aotdAlbum.artistName} · {aotdAlbum.year || aotdAlbum.releaseYear}</span></div>
+            <p className="ui-sans" style={{ fontSize: 13.5, lineHeight: 1.5, color: "#333", margin: "6px 0 0" }}>{aotd.pullQuote}</p>
+            <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${LINE}` }}>
+              <span className="ui-sans" style={{ fontSize: 14, fontWeight: 600, color: BLUE, cursor: "pointer" }} onClick={() => setView({ name: "editorialReview", aotd: aotd, album: aotdAlbum, from: { name: "home", tab: "news" } })}>read the full review →</span>
             </div>
-            <div className="ui-sans" style={{ fontSize: 27, fontWeight: 800, letterSpacing: "-.02em", margin: "6px 0 2px", lineHeight: 1.15 }}>{aotdAlbum.title}</div>
-            <div className="ui-sans" style={{ fontSize: 15, color: "#8a8a8a", marginBottom: 12 }}>{aotdAlbum.artist || aotdAlbum.artistName} · {aotdAlbum.year || aotdAlbum.releaseYear}</div>
-            <p className="ui-sans" style={{ fontSize: 15.5, lineHeight: 1.55, color: "#333", margin: "0 0 16px" }}>{aotd.pullQuote}</p>
-            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-              <span className="ui-sans" style={{ fontSize: 15, fontWeight: 800, color: ACCENT, background: "#f0f4fe", borderRadius: 0, padding: "5px 11px" }}>{aotd.staffRating} / 10</span>
-              <span className="ui-sans" style={{ fontSize: 14, fontWeight: 400, color: ACCENT, cursor: "pointer" }} onClick={() => setView({ name: "editorialReview", aotd: aotd, album: aotdAlbum, from: { name: "home", tab: "news" } })}>read the full review →</span>
-            </div>
-
           </div>
         </div>
       ) : (
-        !showAotdForm && <div className="ui-sans" style={{ color: "#9a9a9a", fontSize: 13 }}>no album of the day yet.{isAdmin ? " Click + new to add one." : ""}</div>
+        !showAotdForm && <div className="ui-sans" style={{ color: MUTE, fontSize: 13 }}>no album of the day yet.{isAdmin ? " Click + new to add one." : ""}</div>
       )}
 
       {DIVIDER}
