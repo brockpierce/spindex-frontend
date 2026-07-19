@@ -437,7 +437,7 @@ function StatsMascot({ mood = "neutral", size = 140, motion = "none", color }) {
   );
   const fx = (cx, cy, sz, delay, glyph, k) => (
     <g key={k} transform={`translate(${cx},${cy}) scale(${sz})`}>
-      <g style={{ transformBox: "fill-box", transformOrigin: "center", animation: `spx-note 10s ease-in-out ${delay}s infinite` }}>{glyph}</g>
+      <g style={{ transformBox: "fill-box", transformOrigin: "center", animation: `spx-note 10s ease-in-out ${delay}s infinite backwards` }}>{glyph}</g>
     </g>
   );
   const notes = showNotes ? [
