@@ -632,6 +632,8 @@ function AlbumCover({ album, size = 92, listened = false }) {
         <img
           src={coverUrl}
           alt=""
+          loading="lazy"
+          decoding="async"
           onError={() => setImgFailed(true)}
           style={{ width: size, height: size, borderRadius: radius, objectFit: "cover", display: "block" }}
         />
