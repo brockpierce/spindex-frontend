@@ -3145,14 +3145,7 @@ export default function SoundboardDemo() {
                         onClick={() => setView({ name: "albumMixDetail", id: m.id, mix: m, from: { name: "tagResults", tag } })}
                         style={{ display: "flex", alignItems: "center", gap: 12, border: `1px solid ${LINE}`, borderRadius: 0, padding: "12px 14px", cursor: "pointer" }}
                       >
-                        <div style={{ display: "flex" }}>
-                          {(m.albums || []).slice(0, 3).map((a, i) => (
-                            <div key={a.albumId} style={{ marginLeft: i === 0 ? 0 : -16, zIndex: 3 - i, border: `1px solid ${BG}`, borderRadius: 0 }}>
-                              <AlbumCover album={fetchedAlbums[a.albumId] || albumById(a.albumId)} size={38} />
-                            </div>
-                          ))}
-                          {(m.albums || []).length === 0 && <ListMusic size={32} color={LINE} strokeWidth={1.4} />}
-                        </div>
+                        <MixCoverStack albums={m.albums || []} fetchedAlbums={fetchedAlbums} albumById={albumById} size={56} />
                         <div className="ui-sans" style={{ flex: 1 }}>
                           <div style={{ fontSize: 13.5, fontWeight: 400 }}>{m.title}</div>
                           <div style={{ fontSize: 11.5, color: MUTE, marginTop: 2 }}>
@@ -3503,14 +3496,7 @@ export default function SoundboardDemo() {
                   onClick={() => setView({ name: "albumMixDetail", id: m.id })}
                   style={{ border: `1px solid ${LINE}`, borderRadius: 0, padding: "16px 18px", cursor: "pointer", display: "flex", gap: 14, alignItems: "center" }}
                 >
-                  <div style={{ display: "flex" }}>
-                    {m.albums.slice(0, 3).map((a, i) => (
-                      <div key={a.albumId} style={{ marginLeft: i === 0 ? 0 : -20, zIndex: 3 - i, border: `1px solid ${BG}`, borderRadius: 0 }}>
-                        <AlbumCover album={fetchedAlbums[a.albumId] || albumById(a.albumId)} size={44} />
-                      </div>
-                    ))}
-                    {m.albums.length === 0 && <ListMusic size={36} color={LINE} strokeWidth={1.4} />}
-                  </div>
+                  <MixCoverStack albums={m.albums} fetchedAlbums={fetchedAlbums} albumById={albumById} size={64} />
                   <div style={{ flex: 1 }} className="ui-sans">
                     <div style={{ fontSize: 14.5, fontWeight: 400, display: "flex", alignItems: "center", gap: 7 }}>
                       {m.title}
@@ -3566,14 +3552,7 @@ export default function SoundboardDemo() {
                   key={m.id}
                   style={{ border: `1px solid ${LINE}`, borderRadius: 0, padding: "16px 18px", display: "flex", gap: 14, alignItems: "center" }}
                 >
-                  <div onClick={() => setView({ name: "albumMixDetail", id: m.id })} style={{ display: "flex", cursor: "pointer" }}>
-                    {m.albums.slice(0, 3).map((a, i) => (
-                      <div key={a.albumId} style={{ marginLeft: i === 0 ? 0 : -20, zIndex: 3 - i, border: `1px solid ${BG}`, borderRadius: 0 }}>
-                        <AlbumCover album={fetchedAlbums[a.albumId] || albumById(a.albumId)} size={44} />
-                      </div>
-                    ))}
-                    {m.albums.length === 0 && <ListMusic size={36} color={LINE} strokeWidth={1.4} />}
-                  </div>
+                  <div onClick={() => setView({ name: "albumMixDetail", id: m.id })} style={{ cursor: "pointer" }}><MixCoverStack albums={m.albums} fetchedAlbums={fetchedAlbums} albumById={albumById} size={64} /></div>
                   <div style={{ flex: 1, cursor: "pointer" }} className="ui-sans" onClick={() => setView({ name: "albumMixDetail", id: m.id })}>
                     <div style={{ fontSize: 14.5, fontWeight: 400 }}>{m.title}</div>
                     <div style={{ fontSize: 11.5, color: MUTE, marginTop: 2 }}>by @{m.owner}</div>
@@ -4197,14 +4176,7 @@ export default function SoundboardDemo() {
                 <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                   {albumMixes.filter((m) => m.isPublic !== false).map((m) => (
                     <div key={m.id} onClick={() => setView({ name: "albumMixDetail", id: m.id })} style={{ display: "flex", alignItems: "center", gap: 12, border: `1px solid ${LINE}`, borderRadius: 0, padding: "12px 14px", cursor: "pointer" }}>
-                      <div style={{ display: "flex" }}>
-                        {m.albums.slice(0, 3).map((a, i) => (
-                          <div key={a.albumId} style={{ marginLeft: i === 0 ? 0 : -16, zIndex: 3 - i, border: `1px solid ${BG}`, borderRadius: 0 }}>
-                            <AlbumCover album={fetchedAlbums[a.albumId] || albumById(a.albumId)} size={38} />
-                          </div>
-                        ))}
-                        {m.albums.length === 0 && <ListMusic size={32} color={LINE} strokeWidth={1.4} />}
-                      </div>
+                      <MixCoverStack albums={m.albums} fetchedAlbums={fetchedAlbums} albumById={albumById} size={56} />
                       <div className="ui-sans" style={{ flex: 1 }}>
                         <div style={{ fontSize: 13.5, fontWeight: 400 }}>{m.title}</div>
                         <div style={{ fontSize: 11, color: MUTE, marginTop: 2 }}>{m.albums.length} album{m.albums.length !== 1 ? "s" : ""}</div>
@@ -5260,14 +5232,7 @@ function ShareMixModal({ albumMixes, songMixes, onSubmit, onClose }) {
                   onMouseEnter={(e) => e.currentTarget.style.borderColor = BLUE}
                   onMouseLeave={(e) => e.currentTarget.style.borderColor = LINE}
                 >
-                  <div style={{ display: "flex" }}>
-                    {(m.albums || []).slice(0, 3).map((a, i) => (
-                      <div key={a.albumId} style={{ marginLeft: i === 0 ? 0 : -12, zIndex: 3 - i, border: "1px solid " + BG, borderRadius: 0 }}>
-                        <AlbumCover album={albumById(a.albumId)} size={34} />
-                      </div>
-                    ))}
-                    {(m.albums || []).length === 0 && <ListMusic size={34} color={LINE} strokeWidth={1.4} />}
-                  </div>
+                  <MixCoverStack albums={m.albums || []} albumById={albumById} size={50} />
                   <div className="ui-sans">
                     <div style={{ fontSize: 13.5, fontWeight: 400, color: INK }}>{m.title}</div>
                     <div style={{ fontSize: 11.5, color: MUTE }}>{(m.albums || []).length} albums</div>
@@ -5280,13 +5245,7 @@ function ShareMixModal({ albumMixes, songMixes, onSubmit, onClose }) {
           /* Step 2: add caption and post */
           <>
             <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", border: "1px solid " + LINE, borderRadius: 0, marginBottom: 14 }}>
-              <div style={{ display: "flex" }}>
-                {(selectedMix.albums || []).slice(0, 3).map((a, i) => (
-                  <div key={a.albumId} style={{ marginLeft: i === 0 ? 0 : -12, zIndex: 3 - i, border: "1px solid " + BG, borderRadius: 0 }}>
-                    <AlbumCover album={albumById(a.albumId)} size={34} />
-                  </div>
-                ))}
-              </div>
+              <MixCoverStack albums={selectedMix.albums || []} albumById={albumById} size={50} />
               <div className="ui-sans" style={{ flex: 1 }}>
                 <div style={{ fontSize: 13.5, fontWeight: 400, color: INK }}>{selectedMix.title}</div>
                 <div style={{ fontSize: 11.5, color: MUTE }}>{(selectedMix.albums || []).length} albums</div>
