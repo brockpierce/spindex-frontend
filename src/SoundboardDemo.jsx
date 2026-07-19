@@ -2273,7 +2273,7 @@ export default function SoundboardDemo() {
               const isEveryone = homeTab === "everyone";
               const displayItems = isEveryone ? publicFeedItems : feed;
               const headerText = isEveryone ? "everyone" : "feed";
-              const subheaderText = isEveryone ? "recent posts from anyone on spindex" : "posts from people you follow";
+              const subheaderText = isEveryone ? "recent posts from anyone on spindex" : "recent posts from people you follow";
               return (
               userSearchQuery.trim() ? (
                 <div>
@@ -2323,9 +2323,9 @@ export default function SoundboardDemo() {
                             {[
                               /* QOTD temporarily hidden */
                               // { label: "QOTD", desc: "answer today's question", action: () => { setShowPlusMenu(false); setShowQotdModal(true); } },
-                              { label: "Post a thought", desc: "share what's on your mind", action: () => { setShowPlusMenu(false); setShowTextPostModal(true); } },
-                              { label: "Post a review", desc: "review an album", action: () => { setShowPlusMenu(false); setShowQuickReviewModal(true); } },
-                              { label: "Share a mix", desc: "post one of your mixes", action: () => { setShowPlusMenu(false); setShowShareMixModal(true); } },
+                              { label: "write a thought", desc: "share what's on your mind", action: () => { setShowPlusMenu(false); setShowTextPostModal(true); } },
+                              { label: "rate an album", desc: "post a review with a score", action: () => { setShowPlusMenu(false); setShowQuickReviewModal(true); } },
+                              { label: "share a mix", desc: "feature a set of albums", action: () => { setShowPlusMenu(false); setShowShareMixModal(true); } },
                             ].map((opt) => (
                               <button key={opt.label} onClick={opt.action} style={{ display: "block", width: "100%", textAlign: "left", padding: "11px 14px", background: "none", border: "none", cursor: "pointer", borderBottom: `1px solid ${LINE}` }}
                                 onMouseEnter={(e) => e.currentTarget.style.background = LINE}
@@ -2421,24 +2421,38 @@ export default function SoundboardDemo() {
                             </div>
                             <div className="ui-sans" style={{ fontSize: 14, color: INK, lineHeight: 1.6, marginBottom: 10, textAlign: "left" }}>{c.text}</div>
                             {c.id && (
-                              <>
-                                <ReactionBar
-                                  reactions={reviewReactions[c.id] || { heart: [], frown: [] }}
-                                  onReact={(kind) => toggleReaction(c.id, kind)}
-                                  currentUsername={profile.username}
-                                />
-                                <ReviewComments
-                                  reviewId={c.id}
-                                  comments={reviewComments[c.id] || []}
-                                  onAdd={addComment}
-                                  onReply={addReply}
-                                  currentUsername={profile.username}
-                                  reviewOwnerUsername={c.username}
-                                  reviewReactions={reviewReactions}
-                                  onReact={toggleReaction}
-                                  onLoadReactions={loadCommentReactions}
-                                />
-                              </>
+                              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 14, paddingTop: 14, paddingBottom: 0, borderTop: `1px solid ${LINE}` }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+                                  <ReactionBar
+                                    reactions={reviewReactions[c.id]}
+                                    onReact={(kind) => toggleReaction(c.id, kind)}
+                                    currentUsername={profile.username}
+                                    inline={true}
+                                  />
+                                  <button
+                                    onClick={() => setExpandedComments((prev) => ({ ...prev, [c.id]: !prev[c.id] }))}
+                                    style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 5, color: expandedComments[c.id] ? BLUE : MUTE, padding: 0 }}
+                                  >
+                                    <MessageCircle size={16} strokeWidth={1.8} />
+                                    {(reviewComments[c.id] || []).length > 0 && (
+                                      <span style={{ fontSize: 13, fontWeight: 400 }}>{countAllComments(reviewComments[c.id] || [])}</span>
+                                    )}
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                            {c.id && expandedComments[c.id] && (
+                              <ReviewComments
+                                reviewId={c.id}
+                                comments={reviewComments[c.id] || []}
+                                onAdd={addComment}
+                                onReply={addReply}
+                                currentUsername={profile.username}
+                                reviewOwnerUsername={c.username}
+                                reviewReactions={reviewReactions}
+                                onReact={toggleReaction}
+                                onLoadReactions={loadCommentReactions}
+                              />
                             )}
                           </div>
                         );
@@ -4081,7 +4095,7 @@ export default function SoundboardDemo() {
                       style={{ width: favSize, height: favSize, border: `1.5px dashed ${LINE}`, borderRadius: 0, display: "flex", alignItems: "center", justifyContent: "center", color: MUTE, cursor: "pointer" }}
                       title="Add a favorite album"
                     >
-                      <Plus size={isMobile ? 15 : 18} strokeWidth={1.5} />
+                      <Plus size={isMobile ? 14 : 16} strokeWidth={1.5} />
                     </div>
                   );
                 })}
