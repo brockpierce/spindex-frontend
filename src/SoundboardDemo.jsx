@@ -2452,6 +2452,7 @@ export default function SoundboardDemo() {
                                 reviewReactions={reviewReactions}
                                 onReact={toggleReaction}
                                 onLoadReactions={loadCommentReactions}
+                                startOpen={true}
                               />
                             )}
                           </div>
