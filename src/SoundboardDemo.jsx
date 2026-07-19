@@ -1708,7 +1708,7 @@ export default function SoundboardDemo() {
           items.filter((i) => i.itemType === "sharemix" && i.mixId).forEach((i) => {
             apiFetch(BACKEND_URL + "/api/mixes/" + i.mixId)
               .then((r) => r.json())
-              .then((d) => { if (d.mix) setAlbumMixes((prev) => prev.find((m) => m.id === d.mix.id) ? prev : [...prev, d.mix]); })
+              .then((d) => { if (d.mix) setFeedMixes((prev) => ({ ...prev, [d.mix.id]: d.mix })); })
               .catch(() => {});
           });
           // Prefetch album data for all feed items so covers show immediately
@@ -1888,6 +1888,7 @@ export default function SoundboardDemo() {
   const [viewedUserReviews, setViewedUserReviews] = useState([]);
   const [viewedUserFavorites, setViewedUserFavorites] = useState([]);
   const [viewedUserMixes, setViewedUserMixes] = useState([]);
+  const [feedMixes, setFeedMixes] = useState({}); // mixId -> mix, for feed sharemix cards only
   const [conversations, setConversations] = useState([]);
   const [dmUnreadCount, setDmUnreadCount] = useState(0);
   const [activeConversation, setActiveConversation] = useState(null);
@@ -2369,7 +2370,7 @@ export default function SoundboardDemo() {
                     {displayItems.map((c, i) => {
                       if (c.itemType === "sharemix") {
                         const allMixes = [...albumMixes, ...savedAlbumMixes, ...songMixes, ...savedSongMixes, ...ALL_USERS.flatMap((u) => [...(u.albumMixes || []), ...(u.songMixes || [])])];
-                        const mix = allMixes.find((m) => m.id === c.mixId);
+                        const mix = allMixes.find((m) => m.id === c.mixId) || feedMixes[c.mixId];
                         if (!mix) return null; // mix not loaded yet
                         const mixAlbums = (mix.albums || []).slice(0, 4);
                         const artistNames = [...new Set(mixAlbums.map((a) => { const al = fetchedAlbums[a.albumId] || albumById(a.albumId); return al ? (al.artist || al.artistName) : null; }).filter(Boolean))].slice(0, 3);
@@ -2601,7 +2602,7 @@ export default function SoundboardDemo() {
 
             {/* ---- NEWS TAB ---- */}
             {homeTab === "news" && (() => {
-              return <NewsTab openAlbum={openAlbum} fetchedAlbums={fetchedAlbums} albumById={albumById} setFetchedAlbums={setFetchedAlbums} isAdmin={profile.username === ADMIN_USERNAME} albumMixes={albumMixes} setView={setView} />;
+              return <NewsTab openAlbum={openAlbum} fetchedAlbums={fetchedAlbums} albumById={albumById} setFetchedAlbums={setFetchedAlbums} isAdmin={profile.username === ADMIN_USERNAME} albumMixes={albumMixes} setView={setView} feedMixes={feedMixes} />;
             })()}
           </div>
         )}
