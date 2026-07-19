@@ -4443,7 +4443,7 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
   const ACCENT = BLUE;
 
   return (
-    <div style={{ maxWidth: 900, margin: "0 auto" }}>
+    <div style={{ maxWidth: 900, margin: "0 auto", textAlign: "left" }}>
       <div className="ui-sans" style={{ fontSize: 24, fontWeight: 800, color: INK, letterSpacing: "-0.01em" }}>news</div>
       <div className="ui-sans" style={{ fontSize: 13, color: MUTE, marginTop: 4, marginBottom: 24 }}>recent posts from the editorial team</div>
 
