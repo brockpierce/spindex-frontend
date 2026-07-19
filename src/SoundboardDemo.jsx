@@ -4515,12 +4515,7 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
         return (
           <div onClick={() => setView && setView({ name: "albumMixDetail", id: mix.id, mix })}
             style={{ display: "flex", alignItems: "center", gap: 14, cursor: "pointer" }}>
-            <div style={{ display: "flex", flexShrink: 0 }}>
-              {covers.map((album, i) => album && album.coverArtUrl
-                ? <img key={i} src={album.coverArtUrl && album.coverArtUrl.replace("http://", "https://")} alt="" style={{ width: 46, height: 46, borderRadius: 0, objectFit: "cover", marginLeft: i === 0 ? 0 : -14, zIndex: 3-i, position: "relative" }} />
-                : <div key={i} style={{ width: 46, height: 46, borderRadius: 0, background: LINE, marginLeft: i === 0 ? 0 : -14, zIndex: 3-i, position: "relative" }} />
-              )}
-            </div>
+            <MixCoverStack albums={mix.albums} fetchedAlbums={fetchedAlbums} albumById={albumById} size={64} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div className="ui-sans" style={{ fontSize: 14, fontWeight: 800 }}>{mix.title}</div>
               <div className="ui-sans" style={{ fontSize: 13, color: MUTE }}>curated by @brock · {(mix.albums || []).length} albums</div>
