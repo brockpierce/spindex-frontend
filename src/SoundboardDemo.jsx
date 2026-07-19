@@ -590,7 +590,10 @@ function RatingBlocks({ value, onChange, size = 14 }) {
 
 function AlbumCover({ album, size = 92, listened = false }) {
   const { BLUE } = useTheme();
-  const coverUrl = album?.coverArtUrl && album.coverArtUrl !== "none" ? album.coverArtUrl : null;
+  const rawUrl = album?.coverArtUrl && album.coverArtUrl !== "none" ? album.coverArtUrl : null;
+  const [imgFailed, setImgFailed] = useState(false);
+  useEffect(() => { setImgFailed(false); }, [rawUrl]);
+  const coverUrl = imgFailed ? null : rawUrl;
   const radius = 0; // squared per redesign
   const offset = Math.round(size * 0.06);
   const pill = listened ? (
@@ -628,7 +631,8 @@ function AlbumCover({ album, size = 92, listened = false }) {
       <div style={{ position: "relative", width: size, height: size, flexShrink: 0 }}>
         <img
           src={coverUrl}
-          alt={album.title}
+          alt=""
+          onError={() => setImgFailed(true)}
           style={{ width: size, height: size, borderRadius: radius, objectFit: "cover", display: "block" }}
         />
         {pill}
