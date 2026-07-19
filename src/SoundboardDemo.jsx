@@ -590,7 +590,7 @@ function RatingBlocks({ value, onChange, size = 14 }) {
 
 function AlbumCover({ album, size = 92, listened = false }) {
   const { BLUE } = useTheme();
-  const rawUrl = album?.coverArtUrl && album.coverArtUrl !== "none" ? album.coverArtUrl : null;
+  const rawUrl = album?.coverArtUrl && album.coverArtUrl !== "none" ? album.coverArtUrl.replace("http://", "https://") : null;
   const [imgFailed, setImgFailed] = useState(false);
   useEffect(() => { setImgFailed(false); }, [rawUrl]);
   const coverUrl = imgFailed ? null : rawUrl;
