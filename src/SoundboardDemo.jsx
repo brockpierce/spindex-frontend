@@ -384,6 +384,22 @@ const STATS_TIERS = [
   { min: 1.6, face: "dead",    title: "Jude Jury and Executioner",    blurb: "You know you can show a little mercy, right?" },
   { min: 0,   face: "dead",    title: "Miss Misery",                  blurb: "there's really no hope for you" },
 ];
+function MixCoverStack({ albums = [], fetchedAlbums = {}, albumById, size = 80 }) {
+  const covers = albums.slice(0, 3);
+  const cardSize = Math.round(size * 0.7);      // each cover ~70% of the box
+  const offset = Math.round(size * 0.125);      // diagonal step ~12.5% of box
+  return (
+    <div style={{ position: "relative", width: size, height: size, flexShrink: 0 }}>
+      {covers.map((a, idx) => (
+        <div key={a.albumId} style={{ position: "absolute", left: idx * offset, top: idx * offset, zIndex: 3 - idx, borderRadius: 0, overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,0.15)", width: cardSize, height: cardSize }}>
+          <AlbumCover album={(fetchedAlbums[a.albumId] || (albumById && albumById(a.albumId)))} size={cardSize} />
+        </div>
+      ))}
+      {covers.length === 0 && <div style={{ width: cardSize, height: cardSize, background: "#ddd", borderRadius: 0 }} />}
+    </div>
+  );
+}
+
 function StatsMascot({ mood = "neutral", size = 140, motion = "none", color }) {
   const { BLUE } = useTheme();
   const B = color || BLUE;
@@ -2952,14 +2968,7 @@ export default function SoundboardDemo() {
                         onClick={() => setView({ name: "albumMixDetail", id: m.id, mix: { ...m, owner: user.username }, from: view })}
                         style={{ border: `1px solid ${LINE}`, borderRadius: 0, padding: "16px 18px", cursor: "pointer", display: "flex", gap: 14, alignItems: "center" }}
                       >
-                        <div style={{ display: "flex" }}>
-                          {m.albums.slice(0, 3).map((a, i) => (
-                            <div key={a.albumId} style={{ marginLeft: i === 0 ? 0 : -20, zIndex: 3 - i, border: `1px solid ${BG}`, borderRadius: 0 }}>
-                              <AlbumCover album={fetchedAlbums[a.albumId] || albumById(a.albumId)} size={44} />
-                            </div>
-                          ))}
-                          {m.albums.length === 0 && <ListMusic size={36} color={LINE} strokeWidth={1.4} />}
-                        </div>
+                        <MixCoverStack albums={m.albums} fetchedAlbums={fetchedAlbums} albumById={albumById} size={64} />
                         <div style={{ flex: 1 }} className="ui-sans">
                           <div style={{ fontSize: 14.5, fontWeight: 400 }}>{m.title}</div>
                           {m.description && <div style={{ fontSize: 12.5, color: MUTE, marginTop: 2 }}>{m.description}</div>}
