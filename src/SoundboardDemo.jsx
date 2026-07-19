@@ -934,6 +934,10 @@ export default function SoundboardDemo() {
         })
         .catch(() => {});
       // Load album mixes from backend
+apiFetch(`${BACKEND_URL}/api/mixes/saved`)
+        .then((r) => r.json())
+        .then((data) => { if (data.mixes) setSavedAlbumMixes(data.mixes); })
+        .catch(() => {});
       apiFetch(`${BACKEND_URL}/api/mixes`)
         .then((r) => r.json())
         .then((data) => {
@@ -1351,8 +1355,15 @@ export default function SoundboardDemo() {
     );
   }
 
+  function saveAlbumMix(mix) {
+    if (!mix || !mix.id) return;
+    setSavedAlbumMixes((prev) => prev.find((m) => m.id === mix.id) ? prev : [...prev, mix]);
+    apiFetch(`${BACKEND_URL}/api/mixes/${mix.id}/save`, { method: "POST" }).catch(() => {});
+    flash("Saved to your mixes");
+  }
   function unsaveAlbumMix(mixId) {
     setSavedAlbumMixes((prev) => prev.filter((m) => m.id !== mixId));
+    apiFetch(`${BACKEND_URL}/api/mixes/${mixId}/save`, { method: "DELETE" }).catch(() => {});
     flash("Removed from saved album mixes");
   }
 
@@ -3671,7 +3682,23 @@ export default function SoundboardDemo() {
                   <span style={{ color: MUTE, fontSize: 11.5 }}>{mix.isPublic === false ? "only you can see this on your profile" : "visible on your profile"}</span>
                 </div>
               )}
-              {!isOwn && <div className="ui-sans" style={{ fontSize: 12, color: MUTE, marginTop: 3 }}>by @{mix.owner}</div>}
+              {!isOwn && (
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 6 }}>
+                  <div className="ui-sans" style={{ fontSize: 12, color: MUTE }}>by @{mix.owner}</div>
+                  {(() => {
+                    const isSaved = savedAlbumMixes.some((m) => m.id === mix.id);
+                    return (
+                      <button
+                        className="sb-btn"
+                        onClick={() => isSaved ? unsaveAlbumMix(mix.id) : saveAlbumMix(mix)}
+                        style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, ...(isSaved ? { background: BLUE, color: "#fff", borderColor: BLUE } : {}) }}
+                      >
+                        {isSaved ? <><Check size={13} /> saved</> : <><Plus size={13} /> save mix</>}
+                      </button>
+                    );
+                  })()}
+                </div>
+              )}
               {mix.description && <div className="ui-sans" style={{ fontSize: 13.5, color: MUTE, marginTop: 4 }}>{mix.description}</div>}
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: "26px 16px", marginTop: 24 }}>
                 {mix.albums.map((a, idx) => {
