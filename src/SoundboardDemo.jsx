@@ -1708,7 +1708,18 @@ export default function SoundboardDemo() {
           items.filter((i) => i.itemType === "sharemix" && i.mixId).forEach((i) => {
             apiFetch(BACKEND_URL + "/api/mixes/" + i.mixId)
               .then((r) => r.json())
-              .then((d) => { if (d.mix) setFeedMixes((prev) => ({ ...prev, [d.mix.id]: d.mix })); })
+              .then((d) => {
+              if (d.mix) {
+                setFeedMixes((prev) => ({ ...prev, [d.mix.id]: d.mix }));
+                (d.mix.albums || []).forEach((a) => {
+                  if (!a.albumId) return;
+                  apiFetch(BACKEND_URL + "/api/albums/" + a.albumId)
+                    .then((r) => r.json())
+                    .then((ad) => { if (ad.album) { const al = ad.album; setFetchedAlbums((prev) => ({ ...prev, [al.id]: { ...al, artist: al.artistName || "", year: al.releaseYear || null } })); } })
+                    .catch(() => {});
+                });
+              }
+            })
               .catch(() => {});
           });
           // Prefetch album data for all feed items so covers show immediately
