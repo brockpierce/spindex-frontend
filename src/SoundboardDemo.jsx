@@ -3681,16 +3681,18 @@ export default function SoundboardDemo() {
                       key={a.albumId}
                       style={{ position: "relative", cursor: isOwn ? "grab" : "default" }}
                       draggable={isOwn}
-                      onDragStart={(e) => { e.dataTransfer.setData("fromIdx", idx); e.currentTarget.style.opacity = "0.5"; }}
-                      onDragEnd={(e) => { e.currentTarget.style.opacity = "1"; }}
-                      onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.outline = "1px solid #3d6ef0"; }}
-                      onDragLeave={(e) => { e.currentTarget.style.outline = "none"; }}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        e.currentTarget.style.outline = "none";
-                        const fromIdx = parseInt(e.dataTransfer.getData("fromIdx"));
-                        if (fromIdx !== idx) reorderAlbumMix(mix.id, fromIdx, idx);
-                      }}
+                      {...(isOwn ? {
+                        onDragStart: (e) => { e.dataTransfer.setData("fromIdx", idx); e.currentTarget.style.opacity = "0.5"; },
+                        onDragEnd: (e) => { e.currentTarget.style.opacity = "1"; },
+                        onDragOver: (e) => { e.preventDefault(); e.currentTarget.style.outline = "1px solid #3d6ef0"; },
+                        onDragLeave: (e) => { e.currentTarget.style.outline = "none"; },
+                        onDrop: (e) => {
+                          e.preventDefault();
+                          e.currentTarget.style.outline = "none";
+                          const fromIdx = parseInt(e.dataTransfer.getData("fromIdx"));
+                          if (fromIdx !== idx) reorderAlbumMix(mix.id, fromIdx, idx);
+                        },
+                      } : {})}
                     >
                       <div className="sb-cover-wrap" onClick={() => openAlbum(a.albumId, album, { name: "albumMixDetail", id: mix.id, from: view.from })}>
                         <AlbumCover album={album} size={150} listened={listenStatus[a.albumId] === "listened"} />
