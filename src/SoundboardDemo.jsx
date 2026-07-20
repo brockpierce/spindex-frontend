@@ -874,7 +874,7 @@ export default function SoundboardDemo() {
             text: r.reviewText || "",
             favTrack: r.favTrack || "",
             leastFavTrack: r.leastFavTrack || "",
-            date: r.createdAt ? new Date(r.createdAt).toISOString().slice(0, 10) : "",
+            date: r.createdAt ? new Date(r.createdAt).toISOString() : "",
             username: authUser.username,
           }));
           setReviews(mapped);
@@ -956,7 +956,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                 : "",
               reviewId: n.referenceId,
               rawDate: n.createdAt || "",
-              date: n.createdAt ? new Date(n.createdAt).toISOString().slice(0, 10) : "",
+              date: n.createdAt ? new Date(n.createdAt).toISOString() : "",
               read: n.read,
             }));
             setNotifications(mapped);
@@ -985,7 +985,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                 : n.type === "reaction" ? "reacted to your review"
                 : "",
               reviewId: n.referenceId,
-              date: n.createdAt ? new Date(n.createdAt).toISOString().slice(0, 10) : "",
+              date: n.createdAt ? new Date(n.createdAt).toISOString() : "",
               read: n.read,
             }));
             setNotifications(mapped);
@@ -1188,7 +1188,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
       .then((data) => {
         if (data.review) {
           // Update with real ID + real date from server
-          const realDate = data.review.createdAt ? new Date(data.review.createdAt).toISOString().slice(0, 10) : originalDate;
+          const realDate = data.review.createdAt ? new Date(data.review.createdAt).toISOString() : originalDate;
           setReviews((prev) => prev.map((r) =>
             r.albumId === albumId ? { ...r, id: data.review.id, date: realDate } : r
           ));
@@ -1932,7 +1932,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
         .then((data) => {
           if (data.review) {
             const r = data.review;
-            const item = { id: r.id, itemType: "review", albumId: r.albumId, username: r.username, rating: r.rating, text: r.reviewText || "", date: r.createdAt ? new Date(r.createdAt).toISOString().slice(0, 10) : "" };
+            const item = { id: r.id, itemType: "review", albumId: r.albumId, username: r.username, rating: r.rating, text: r.reviewText || "", date: r.createdAt ? new Date(r.createdAt).toISOString() : "" };
             setThreadReview(item);
             setView({ name: "thread", reviewId, from: from || view });
             loadInteractions([reviewId]);
@@ -2026,7 +2026,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
               if (revData && revData.reviews) {
                 const mapped = revData.reviews.map((r) => ({
                   id: r.id, albumId: r.albumId, rating: r.rating,
-                  text: r.reviewText || "", date: r.createdAt ? new Date(r.createdAt).toISOString().slice(0, 10) : "",
+                  text: r.reviewText || "", date: r.createdAt ? new Date(r.createdAt).toISOString() : "",
                 }));
                 setViewedUserReviews(mapped);
                 mapped.forEach((r) => {
@@ -6132,7 +6132,7 @@ function AlbumCommunitySection({ albumId, albumTab, setAlbumTab, openAlbum, revi
           rating: r.rating,
           text: r.reviewText || "",
           username: r.username || r.user?.username || "unknown",
-          date: r.createdAt ? new Date(r.createdAt).toISOString().slice(0, 10) : "",
+          date: r.createdAt ? new Date(r.createdAt).toISOString() : "",
         }));
         // Newest first
         mapped.sort((a, b) => (a.date < b.date ? 1 : -1));
