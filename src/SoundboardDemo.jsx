@@ -3430,7 +3430,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                 <ChevronLeft size={14} /> back
               </div>
 
-              <div className="ui-sans" style={{ fontSize: 12, letterSpacing: "0.12em", fontWeight: 700, color: MUTE, textTransform: "uppercase", marginBottom: 6 }}>{statsIsOwn ? "your rating stats" : "rating stats"}</div>
+              <div className="ui-sans" style={{ fontSize: 12, letterSpacing: "0.12em", fontWeight: 700, color: MUTE, marginBottom: 6 }}>{statsIsOwn ? "your rating stats" : "rating stats"}</div>
               <div className="ui-sans" style={{ fontSize: 20, fontWeight: 400, marginBottom: 20 }}>{statsIsOwn ? "how you rate" : `how ${statsName} rates`}</div>
 
               {statsReviews.length === 0 ? (
@@ -3464,7 +3464,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                   )}
 
                   {/* Highest rated */}
-                  <div className="ui-sans" style={{ fontSize: 12, letterSpacing: "0.12em", fontWeight: 700, color: MUTE, textTransform: "uppercase", margin: "34px 0 10px" }}>{statsIsOwn ? "your highest rated" : "highest rated"}</div>
+                  <div className="ui-sans" style={{ fontSize: 12, letterSpacing: "0.12em", fontWeight: 700, color: MUTE, margin: "34px 0 10px" }}>{statsIsOwn ? "your highest rated" : "highest rated"}</div>
                   <div>
                     {ranked.map((r, i) => {
                       const album = fetchedAlbums[r.albumId] || albumById(r.albumId);
