@@ -2941,7 +2941,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                       <Stat label="following" value={user.followingCount || 0} onClick={() => setShowFollowList({ kind: "following", userId: user.id, username: user.username })} />
                       <Stat label="reviews" value={userReviews.length} onClick={() => setView({ name: "reviewsList", username: user.username, userId: user.id, reviews: userReviews, from: view })} />
                       <Stat label="listened" value={viewedUserListenedCount} onClick={() => setView({ name: "listenedList", username: user.username, userId: user.id, listenedIds: viewedUserQueue, from: view })} />
-                      <Stat label="avg rating" value={userAvgRating} onClick={userReviews.length > 0 ? () => setView({ name: "statsDetail", reviews: userReviews, displayName: user.displayName || user.username, isOwn: false, from: view }) : undefined} />
+                      <Stat label="stats" value={<EqualizerIcon />} onClick={userReviews.length > 0 ? () => setView({ name: "statsDetail", reviews: userReviews, displayName: user.displayName || user.username, isOwn: false, from: view }) : undefined} />
                     </div>
                   )}
                 </div>
@@ -2953,7 +2953,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                   <Stat label="following" value={user.followingCount || 0} onClick={() => setShowFollowList({ kind: "following", userId: user.id, username: user.username })} />
                   <Stat label="reviews" value={userReviews.length} />
                   <Stat label="listened" value={viewedUserListenedCount} />
-                  <Stat label="avg rating" value={userAvgRating} onClick={userReviews.length > 0 ? () => setView({ name: "statsDetail", reviews: userReviews, displayName: user.displayName || user.username, isOwn: false, from: view }) : undefined} />
+                  <Stat label="stats" value={<EqualizerIcon />} onClick={userReviews.length > 0 ? () => setView({ name: "statsDetail", reviews: userReviews, displayName: user.displayName || user.username, isOwn: false, from: view }) : undefined} />
                 </div>
               )}
 
@@ -3929,7 +3929,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                     <Stat label="following" value={profileStats.following} onClick={() => setShowFollowList({ kind: "following", userId: authUser?.id, username: profile.username })} />
                     <Stat label="listened" value={listenedCount} onClick={() => setView({ name: "albumList", filter: "listened" })} />
                     <Stat label="reviews" value={reviews.length} onClick={() => setView({ name: "reviewsList", username: profile.username, userId: profile.id, reviews: reviews, isOwn: true, from: view })} />
-                    <Stat label="avg rating" value={avgRating} onClick={reviews.length > 0 ? () => setView({ name: "statsDetail" }) : undefined} />
+                    <Stat label="stats" value={<EqualizerIcon />} onClick={reviews.length > 0 ? () => setView({ name: "statsDetail" }) : undefined} />
                   </div>
                 )}
               </div>
@@ -4071,7 +4071,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                 <Stat label="following" value={profileStats.following} onClick={() => setShowFollowList({ kind: "following", userId: authUser?.id, username: profile.username })} />
                 <Stat label="listened" value={listenedCount} onClick={() => setView({ name: "albumList", filter: "listened" })} />
                 <Stat label="reviews" value={reviews.length} onClick={() => setView({ name: "reviewsList", username: profile.username, userId: profile.id, reviews: reviews, isOwn: true, from: view })} />
-                <Stat label="avg rating" value={avgRating} onClick={reviews.length > 0 ? () => setView({ name: "statsDetail" }) : undefined} />
+                <Stat label="stats" value={<EqualizerIcon />} onClick={reviews.length > 0 ? () => setView({ name: "statsDetail" }) : undefined} />
               </div>
             )}
 
@@ -4285,6 +4285,17 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
     </div>
     </AvatarContext.Provider>
     </ThemeContext.Provider>
+  );
+}
+
+function EqualizerIcon({ size = 24 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 34 34" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" aria-hidden="true">
+      <line x1="6" y1="11" x2="6" y2="23" />
+      <line x1="13" y1="5" x2="13" y2="29" />
+      <line x1="20" y1="9" x2="20" y2="25" />
+      <line x1="27" y1="14" x2="27" y2="20" />
+    </svg>
   );
 }
 
