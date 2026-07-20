@@ -4288,7 +4288,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
   );
 }
 
-function EqualizerIcon({ size = 24 }) {
+function EqualizerIcon({ size = 20 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 34 34" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" aria-hidden="true">
       <line x1="6" y1="11" x2="6" y2="23" />
@@ -4315,7 +4315,7 @@ function Stat({ label, value, onClick, highlight }) {
         userSelect: "none",
       }}
     >
-      <div style={{ fontSize: 18, fontWeight: 400, lineHeight: 1.2, color: highlight ? BLUE : INK, textDecoration: highlight ? "underline" : "none", textUnderlineOffset: 3 }}>{value}</div>
+      <div style={{ fontSize: 18, fontWeight: 400, lineHeight: 1, height: 22, display: "flex", alignItems: "center", color: highlight ? BLUE : INK, textDecoration: highlight ? "underline" : "none", textUnderlineOffset: 3 }}>{value}</div>
       <div style={{ fontSize: 10, color: MUTE, textTransform: "uppercase", letterSpacing: "0.04em", marginTop: 4, lineHeight: 1.2 }}>{label}</div>
     </div>
   );
