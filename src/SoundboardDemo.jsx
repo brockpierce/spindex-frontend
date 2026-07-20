@@ -2233,7 +2233,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
         <QuickReviewModal onSubmit={submitQuickReview} onClose={() => setShowQuickReviewModal(false)} />
       )}
       {showTextPostModal && (
-        <TextPostModal onSubmit={(text) => {
+        <TextPostModal followState={followState} onSubmit={(text) => {
           const todayIso = new Date().toISOString().slice(0, 10);
           const tempId = "tp" + Date.now();
           const feedItem = { itemType: "textpost", id: tempId, username: profile.username, text, date: todayIso };
@@ -2257,7 +2257,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
         }} onClose={() => setShowTextPostModal(false)} />
       )}
       {showShareMixModal && (
-        <ShareMixModal albumMixes={albumMixes} songMixes={songMixes} onSubmit={submitMixShare} onClose={() => setShowShareMixModal(false)} />
+        <ShareMixModal albumMixes={albumMixes} songMixes={songMixes} followState={followState} onSubmit={submitMixShare} onClose={() => setShowShareMixModal(false)} />
       )}
 
       <div style={{ maxWidth: 920, margin: "0 auto", padding: "28px 16px 64px" }}>
@@ -3352,12 +3352,13 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
 
                   <div style={{ marginTop: 18, textAlign: isMobile ? "center" : "left" }}>
                     <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 9 }}>your review</div>
-                    <textarea
+                    <MentionInput
                       className="sb-textarea"
                       rows={4}
                       placeholder="what stood out to you on this one?"
                       value={draftText}
-                      onChange={(e) => setDraftText(e.target.value)}
+                      onChange={setDraftText}
+                      followState={followState}
                     />
                     <div style={{ display: "flex", gap: 12, marginTop: 12 }}>
                       <div style={{ flex: 1 }}>
@@ -5232,7 +5233,7 @@ function AdminAlbumForm({ onAdded }) {
   );
 }
 
-function TextPostModal({ onSubmit, onClose }) {
+function TextPostModal({ onSubmit, onClose, followState }) {
   const { BLUE, INK, LINE, MUTE, BG } = useTheme();
   const [text, setText] = useState("");
 
@@ -5243,13 +5244,13 @@ function TextPostModal({ onSubmit, onClose }) {
           <div className="ui-sans" style={{ fontSize: 15, fontWeight: 400 }}>post a thought</div>
           <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: MUTE, padding: 0 }}><X size={16} /></button>
         </div>
-        <textarea
+        <MentionInput
           className="sb-textarea ui-sans"
           rows={4}
           placeholder="what's on your mind?"
           value={text}
-          onChange={(e) => setText(e.target.value)}
-          autoFocus
+          onChange={setText}
+          followState={followState}
           style={{ width: "100%", marginBottom: 14 }}
         />
         <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
@@ -5352,7 +5353,7 @@ function QuickReviewModal({ onSubmit, onClose }) {
   );
 }
 
-function ShareMixModal({ albumMixes, songMixes, onSubmit, onClose }) {
+function ShareMixModal({ albumMixes, songMixes, onSubmit, onClose, followState }) {
   const { BLUE, INK, LINE, MUTE, BG } = useTheme();
   const [tab, setTab] = useState("album");
   const [caption, setCaption] = useState("");
@@ -5405,11 +5406,12 @@ function ShareMixModal({ albumMixes, songMixes, onSubmit, onClose }) {
               </div>
               <button onClick={() => setSelectedMix(null)} style={{ background: "none", border: "none", cursor: "pointer", color: MUTE, fontSize: 11, padding: 0 }}>change</button>
             </div>
-            <textarea
+            <MentionInput
               className="sb-textarea ui-sans"
               placeholder="add a caption... (optional)"
               value={caption}
-              onChange={(e) => setCaption(e.target.value)}
+              onChange={setCaption}
+              followState={followState}
               rows={3}
               style={{ width: "100%", marginBottom: 14, fontSize: 13 }}
               autoFocus
@@ -5447,6 +5449,49 @@ function CommentText({ text }) {
 }
 
 // Input with @mention autocomplete
+function MentionInput({ value, onChange, placeholder, className, style, rows = 4, followState = {}, onKeyDown }) {
+  const { BLUE, INK, LINE, MUTE, BG } = useTheme();
+  const [mentionQuery, setMentionQuery] = React.useState(null);
+  const [mentionStart, setMentionStart] = React.useState(0);
+  const mentionResults = React.useMemo(() => {
+    if (mentionQuery === null) return [];
+    const q = mentionQuery.toLowerCase();
+    return ALL_USERS
+      .filter((u) => u.username.toLowerCase().includes(q) || (u.displayName || "").toLowerCase().includes(q))
+      .sort((a, b) => (followState[b.username] ? 1 : 0) - (followState[a.username] ? 1 : 0))
+      .slice(0, 6);
+  }, [mentionQuery, followState]);
+  function handleChange(e) {
+    const val = e.target.value;
+    onChange(val);
+    const cursor = e.target.selectionStart;
+    const before = val.slice(0, cursor);
+    const match = before.match(/@([\w.]*)$/);
+    if (match) { setMentionQuery(match[1]); setMentionStart(cursor - match[0].length); }
+    else setMentionQuery(null);
+  }
+  function insertMention(username) {
+    const after = value.slice(mentionStart + (mentionQuery !== null ? mentionQuery.length + 1 : 0));
+    onChange(value.slice(0, mentionStart) + "@" + username + " " + after);
+    setMentionQuery(null);
+  }
+  return (
+    <div style={{ position: "relative" }}>
+      <textarea className={className} style={style} rows={rows} placeholder={placeholder} value={value} onChange={handleChange} onKeyDown={(e) => { if (e.key === "Escape") setMentionQuery(null); if (onKeyDown) onKeyDown(e); }} />
+      {mentionQuery !== null && mentionResults.length > 0 && (
+        <div style={{ position: "absolute", top: "100%", left: 0, zIndex: 40, background: BG, border: "1px solid " + LINE, borderRadius: 0, marginTop: 2, minWidth: 200, maxHeight: 220, overflowY: "auto", boxShadow: "0 4px 12px rgba(0,0,0,0.12)" }}>
+          {mentionResults.map((u) => (
+            <div key={u.username} onMouseDown={(e) => { e.preventDefault(); insertMention(u.username); }} className="ui-sans" style={{ padding: "8px 12px", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, fontSize: 13 }} onMouseEnter={(e) => e.currentTarget.style.background = LINE} onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>
+              <Avatar username={u.username} size={20} />
+              <div><div style={{ fontWeight: 600 }}>{u.displayName}</div><div style={{ fontSize: 11, color: MUTE }}>@{(u.username || "").toLowerCase()}</div></div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function CommentInput({ placeholder, onSubmit, currentUsername, initialValue = "" }) {
   const { BLUE, INK, LINE, MUTE, BG } = useTheme();
   const [text, setText] = useState(initialValue);
