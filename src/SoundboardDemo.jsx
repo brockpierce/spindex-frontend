@@ -36,13 +36,7 @@ function apiFetch(url, options = {}) {
 }
 
 function nowTimestamp() {
-  const d = new Date();
-  const date = d.toISOString().slice(0, 10);
-  let h = d.getHours(), m = d.getMinutes();
-  const ampm = h >= 12 ? "pm" : "am";
-  h = h % 12 || 12;
-  const mins = m.toString().padStart(2, "0");
-  return `${date} · ${h}:${mins}${ampm}`;
+  return new Date().toISOString();
 }
 
 // ---------------------------------------------------------------------------
@@ -2745,9 +2739,9 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
               </div>
               <div style={{ border: "1px solid " + LINE, borderRadius: 0, padding: "14px 16px", marginBottom: 4 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-                  <Avatar username={rev.username} size={26} />
+                  <div onClick={() => openUserProfile(rev.username)} style={{ cursor: "pointer", display: "flex" }}><Avatar username={rev.username} size={26} /></div>
                   <span className="ui-sans" style={{ fontSize: 13, fontWeight: 600, cursor: "pointer" }} onClick={() => openUserProfile(rev.username)}>@{(rev.username || "").toLowerCase()}</span>
-                  <span className="ui-sans" style={{ fontSize: 11, color: MUTE, marginLeft: "auto" }}>{rev.date}</span>
+                  <span className="ui-sans" style={{ fontSize: 11, color: MUTE, marginLeft: "auto" }}>{relativeDate(rev.date)}</span>
                 </div>
                 <div onClick={() => openAlbum(rev.albumId)} style={{ display: "flex", gap: 14, cursor: "pointer", marginBottom: 12 }}>
                   <AlbumCover album={album} size={88} listened={listenStatus[rev.albumId] === "listened"} />
@@ -3005,7 +2999,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                     const album = fetchedAlbums[r.albumId] || albumById(r.albumId) || { id: r.albumId, title: "Loading...", artist: "", artistName: "", year: null };
                     return (
                       <div key={i} onClick={() => openAlbum(r.albumId, album)} style={{ display: "flex", gap: 14, cursor: "pointer", position: "relative" }}>
-                        <div className="ui-sans" style={{ position: "absolute", top: 0, right: 0, fontSize: 11, color: MUTE }}>{r.date}</div>
+                        <div className="ui-sans" style={{ position: "absolute", top: 0, right: 0, fontSize: 11, color: MUTE }}>{relativeDate(r.date)}</div>
                         <AlbumCover album={album} size={88} />
                         <div className="ui-sans" style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
                           <div style={{ fontSize: 20, fontWeight: 700, color: BLUE, letterSpacing: "-0.01em", lineHeight: 1.1, textAlign: "left" }}>{r.rating}/10</div>
@@ -3407,7 +3401,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                 </div>
               </div>
 
-              <ListenedByFriends albumId={album.id} />
+              <ListenedByFriends albumId={album.id} onOpenProfile={openUserProfile} />
               <AlbumCommunitySection albumId={album.id} albumTab={albumTab} setAlbumTab={setAlbumTab} openAlbum={openAlbum} reviewComments={reviewComments} onAddComment={addComment} onAddReply={addReply} currentUsername={profile.username} reviewReactions={reviewReactions} onReact={toggleReaction} />
             </div>
           );
@@ -4273,7 +4267,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                   return (
                     <div key={r.id} onClick={() => openAlbum(r.albumId)} style={{ display: "flex", gap: 14, cursor: "pointer", width: "100%", maxWidth: isMobile ? 340 : "100%", position: "relative" }}>
                       <div className="ui-sans" style={{ position: "absolute", top: 0, right: 0, display: "flex", alignItems: "center", gap: 8 }}>
-                        <span style={{ fontSize: 11, color: MUTE }}>{r.date}</span>
+                        <span style={{ fontSize: 11, color: MUTE }}>{relativeDate(r.date)}</span>
                         <button
                           onClick={(e) => { e.stopPropagation(); deleteReview(r.albumId); }}
                           title="Delete review"
@@ -6086,7 +6080,7 @@ function Avatar({ username, size = 30 }) {
   );
 }
 
-function ListenedByFriends({ albumId }) {
+function ListenedByFriends({ albumId, onOpenProfile }) {
   const { BLUE, INK, MUTE } = useTheme();
   const [entries, setEntries] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
@@ -6107,7 +6101,7 @@ function ListenedByFriends({ albumId }) {
       ) : (
         <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
           {entries.map((e) => (
-            <div key={e.username} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+            <div key={e.username} onClick={() => onOpenProfile && onOpenProfile(e.username)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, cursor: onOpenProfile ? "pointer" : "default" }}>
               <Avatar username={e.username} size={42} />
               <span className="ui-sans" style={{ fontSize: 12, fontWeight: 700, color: BLUE }}>{e.rating}/10</span>
             </div>
@@ -6183,7 +6177,7 @@ function AlbumCommunitySection({ albumId, albumTab, setAlbumTab, openAlbum, revi
                 <div style={{ flex: 1 }} className="ui-sans">
                   <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
                     <span style={{ fontSize: 13, fontWeight: 600 }}>@{(r.username || "").toLowerCase()}</span>
-                    <span style={{ fontSize: 11, color: MUTE }}>{r.date}</span>
+                    <span style={{ fontSize: 11, color: MUTE }}>{relativeDate(r.date)}</span>
                   </div>
                   <div style={{ fontSize: 13, color: INK, marginTop: 4, lineHeight: 1.6 }}>{r.text}</div>
                 </div>
