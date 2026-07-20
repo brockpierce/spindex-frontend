@@ -3415,9 +3415,12 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
 
         {/* ---------------- LISTS overview ---------------- */}
         {view.name === "statsDetail" && (() => {
-          const numericAvg = reviews.length ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : 0;
+          const statsReviews = view.reviews || reviews;
+          const statsIsOwn = view.isOwn !== false;
+          const statsName = view.displayName || "";
+          const numericAvg = statsReviews.length ? statsReviews.reduce((s, r) => s + r.rating, 0) / statsReviews.length : 0;
           const tier = tierForAvg(numericAvg);
-          const ranked = [...reviews].sort((a, b) => b.rating - a.rating).slice(0, 10);
+          const ranked = [...statsReviews].sort((a, b) => b.rating - a.rating).slice(0, 10);
           // Community bar omitted in v1: no community rating data available yet
           // (COMMUNITY_REVIEWS is empty). To re-enable, compute the average of
           // community scores for the albums in `reviews` and render a bar here.
@@ -3427,12 +3430,12 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                 <ChevronLeft size={14} /> back
               </div>
 
-              <div className="ui-sans" style={{ fontSize: 12, letterSpacing: "0.12em", fontWeight: 700, color: MUTE, textTransform: "uppercase", marginBottom: 6 }}>Your rating stats</div>
-              <div className="ui-sans" style={{ fontSize: 30, fontWeight: 800, letterSpacing: "-0.02em", marginBottom: 20 }}>how you rate</div>
+              <div className="ui-sans" style={{ fontSize: 12, letterSpacing: "0.12em", fontWeight: 700, color: MUTE, textTransform: "uppercase", marginBottom: 6 }}>{statsIsOwn ? "your rating stats" : "rating stats"}</div>
+              <div className="ui-sans" style={{ fontSize: 20, fontWeight: 400, marginBottom: 20 }}>{statsIsOwn ? "how you rate" : `how ${statsName} rates`}</div>
 
-              {reviews.length === 0 ? (
+              {statsReviews.length === 0 ? (
                 <div className="ui-sans" style={{ color: MUTE, fontSize: 14, padding: "20px 0" }}>
-                  rate some albums and your stats will show up here.
+                  {statsIsOwn ? "rate some albums and your stats will show up here." : "no ratings yet."}
                 </div>
               ) : (
                 <>
@@ -3443,7 +3446,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                     </div>
                     <div className="ui-sans" style={{ fontSize: 12, letterSpacing: "0.12em", fontWeight: 700, color: BLUE, textTransform: "uppercase" }}>{tier.title}</div>
                     <div className="ui-sans" style={{ fontSize: 60, fontWeight: 800, letterSpacing: "-0.03em", lineHeight: 1, margin: "8px 0 4px" }}>{numericAvg.toFixed(1)}</div>
-                    <div className="ui-sans" style={{ fontSize: 14, color: MUTE }}>{tier.blurb}</div>
+                    <div className="ui-sans" style={{ fontSize: 14, color: MUTE }}>{statsIsOwn ? tier.blurb : (tier.blurbThird || tier.blurb)}</div>
                   </div>
 
                   {siteCommunityAvg !== null && (
@@ -3455,13 +3458,13 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                       </div>
                       <div className="ui-sans" style={{ display: "flex", justifyContent: "space-between", fontSize: 12, fontWeight: 400, color: MUTE, margin: "9px 2px 0" }}>
                         <span style={{ color: BLUE }}>community avg {siteCommunityAvg.toFixed(1)}</span>
-                        <span style={{ color: INK }}>you {numericAvg.toFixed(1)}</span>
+                        <span style={{ color: INK }}>{statsIsOwn ? "you" : statsName} {numericAvg.toFixed(1)}</span>
                       </div>
                     </>
                   )}
 
                   {/* Highest rated */}
-                  <div className="ui-sans" style={{ fontSize: 12, letterSpacing: "0.12em", fontWeight: 700, color: MUTE, textTransform: "uppercase", margin: "34px 0 10px" }}>Your highest rated</div>
+                  <div className="ui-sans" style={{ fontSize: 12, letterSpacing: "0.12em", fontWeight: 700, color: MUTE, textTransform: "uppercase", margin: "34px 0 10px" }}>{statsIsOwn ? "your highest rated" : "highest rated"}</div>
                   <div>
                     {ranked.map((r, i) => {
                       const album = fetchedAlbums[r.albumId] || albumById(r.albumId);
