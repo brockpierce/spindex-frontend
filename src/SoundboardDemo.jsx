@@ -3424,6 +3424,120 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
           // Community bar omitted in v1: no community rating data available yet
           // (COMMUNITY_REVIEWS is empty). To re-enable, compute the average of
           // community scores for the albums in `reviews` and render a bar here.
+
+          // ===== OTHER USER'S STATS — comparison layout =====
+          if (!statsIsOwn) {
+            const yourByAlbum = new Map(reviews.map((r) => [r.albumId, r.rating]));
+            const yourAvgNum = reviews.length ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : 0;
+            const shared = statsReviews
+              .filter((r) => yourByAlbum.has(r.albumId))
+              .map((r) => ({ albumId: r.albumId, them: r.rating, you: yourByAlbum.get(r.albumId) }));
+            const meanDiff = shared.length ? shared.reduce((s, x) => s + Math.abs(x.you - x.them), 0) / shared.length : 0;
+            const match = shared.length ? Math.round(Math.max(0, 100 - meanDiff * 11)) : null;
+            const gap = numericAvg - yourAvgNum;
+            const gapStr = (gap >= 0 ? "+" : "") + gap.toFixed(1);
+            const morePos = shared.filter((s) => s.them > s.you).length;
+            const moreCrit = shared.filter((s) => s.them < s.you).length;
+            const leanUp = morePos >= moreCrit;
+            const leanPct = shared.length ? Math.round((leanUp ? morePos : moreCrit) / shared.length * 100) : 0;
+            const leanLabel = leanUp ? "more positive than you" : "more critical than you";
+            const HERO_TINT = darkMode ? "#171d2e" : "#f6f8fd";
+            const CELL = `1px solid ${LINE}`;
+
+            return (
+              <div>
+                <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 12.5, marginBottom: 22, cursor: "pointer" }} onClick={() => setView(view.from || { name: "profile" })}>
+                  <ChevronLeft size={14} /> back
+                </div>
+
+                <div style={{ border: `1px solid ${LINE}` }}>
+                  {/* Header: round avatar + eyebrow + title */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 16, padding: 22, borderBottom: `1px solid ${INK}` }}>
+                    <Avatar username={(view.username) || statsName} size={56} />
+                    <div>
+                      <div className="ui-sans" style={{ fontSize: 11, letterSpacing: "0.14em", fontWeight: 700, color: MUTE }}>rating stats</div>
+                      <div className="ui-sans" style={{ fontSize: 24, fontWeight: 800, letterSpacing: "-0.02em", marginTop: 3 }}>how {statsName} rates</div>
+                    </div>
+                  </div>
+
+                  {/* Hero: left-aligned mascot + tier/score/blurb */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 18, padding: 22, background: HERO_TINT, borderBottom: `1px solid ${LINE}` }}>
+                    <div style={{ width: 104, height: 104, flexShrink: 0 }}>
+                      <StatsMascot mood={tier.face} size={104} motion="bob" />
+                    </div>
+                    <div style={{ paddingLeft: 14 }}>
+                      <div className="ui-sans" style={{ fontSize: 11, letterSpacing: "0.12em", fontWeight: 700, color: BLUE }}>{tier.title}</div>
+                      <div className="ui-sans" style={{ fontSize: 46, fontWeight: 800, letterSpacing: "-0.03em", lineHeight: 1, margin: "6px 0 4px" }}>{numericAvg.toFixed(1)}</div>
+                      <div className="ui-sans" style={{ fontSize: 14, color: MUTE }}>{tier.blurbThird || tier.blurb}</div>
+                    </div>
+                  </div>
+
+                  {/* 2x2 comparison grid */}
+                  {shared.length > 0 ? (
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
+                      <div style={{ padding: 18, borderBottom: CELL, borderRight: CELL }}>
+                        <div className="ui-sans" style={{ fontSize: 30, fontWeight: 800, letterSpacing: "-0.02em", color: BLUE }}>{match}%</div>
+                        <div className="ui-sans" style={{ fontSize: 12, color: MUTE, marginTop: 3 }}>taste match with you</div>
+                      </div>
+                      <div style={{ padding: 18, borderBottom: CELL }}>
+                        <div className="ui-sans" style={{ fontSize: 30, fontWeight: 800, letterSpacing: "-0.02em" }}>{shared.length}</div>
+                        <div className="ui-sans" style={{ fontSize: 12, color: MUTE, marginTop: 3 }}>albums you've both rated</div>
+                      </div>
+                      <div style={{ padding: 18, borderRight: CELL }}>
+                        <div className="ui-sans" style={{ fontSize: 30, fontWeight: 800, letterSpacing: "-0.02em" }}>{gapStr}</div>
+                        <div className="ui-sans" style={{ fontSize: 12, color: MUTE, marginTop: 3 }}>they rate vs. you</div>
+                      </div>
+                      <div style={{ padding: 18 }}>
+                        <div className="ui-sans" style={{ fontSize: 30, fontWeight: 800, letterSpacing: "-0.02em" }}>{leanPct}%</div>
+                        <div className="ui-sans" style={{ fontSize: 12, color: MUTE, marginTop: 3 }}>{leanLabel}</div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="ui-sans" style={{ padding: 22, fontSize: 13, color: MUTE, borderBottom: CELL }}>no albums in common yet — rate some of the same albums to compare.</div>
+                  )}
+
+                  {/* Compare bar: you + them + community */}
+                  <div style={{ padding: "20px 22px" }}>
+                    <div className="ui-sans" style={{ fontSize: 12, fontWeight: 600, color: MUTE, marginBottom: 10 }}>you vs. {statsName}</div>
+                    <div style={{ position: "relative", height: 10, background: LINE }}>
+                      {siteCommunityAvg !== null && <div style={{ position: "absolute", top: "50%", left: `${(siteCommunityAvg / 10 * 100)}%`, transform: "translate(-50%,-50%)", width: 2, height: 20, background: "#bcbcbc" }} />}
+                      <div style={{ position: "absolute", top: "50%", left: `${(yourAvgNum / 10 * 100)}%`, transform: "translate(-50%,-50%)", width: 14, height: 14, border: "2px solid #fff", background: "#9a9a9a" }} />
+                      <div style={{ position: "absolute", top: "50%", left: `${(numericAvg / 10 * 100)}%`, transform: "translate(-50%,-50%)", width: 14, height: 14, border: "2px solid #fff", background: BLUE }} />
+                    </div>
+                    <div className="ui-sans" style={{ display: "flex", gap: 16, marginTop: 12, fontSize: 12, fontWeight: 600, flexWrap: "wrap" }}>
+                      <span style={{ color: "#9a9a9a" }}>● you {yourAvgNum.toFixed(1)}</span>
+                      <span style={{ color: BLUE }}>● {statsName} {numericAvg.toFixed(1)}</span>
+                      {siteCommunityAvg !== null && <span style={{ color: "#bcbcbc" }}>▎ community {siteCommunityAvg.toFixed(1)}</span>}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Their highest rated, with your chip */}
+                <div style={{ padding: "18px 0 8px" }}>
+                  <div className="ui-sans" style={{ fontSize: 12, letterSpacing: "0.12em", fontWeight: 700, color: MUTE, margin: "0 0 8px" }}>their highest rated</div>
+                  {ranked.map((r, i) => {
+                    const album = fetchedAlbums[r.albumId] || albumById(r.albumId);
+                    const yourScore = yourByAlbum.get(r.albumId);
+                    return (
+                      <div key={r.id || r.albumId} onClick={() => openAlbum(r.albumId)} style={{ display: "flex", alignItems: "center", gap: 12, padding: "9px 0", borderBottom: `1px solid ${LINE}`, cursor: "pointer" }}>
+                        <span className="ui-sans" style={{ width: 14, fontSize: 14, fontWeight: 800, color: "#c9c9c9", flexShrink: 0 }}>{i + 1}</span>
+                        <div style={{ width: 38, height: 38, flexShrink: 0 }}>
+                          <AlbumCover album={album} size={38} />
+                        </div>
+                        <div className="ui-sans" style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 14, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{album.title}</div>
+                          <div style={{ fontSize: 12, color: MUTE }}>{album.artist || album.artistName}</div>
+                        </div>
+                        {yourScore !== undefined && <span className="ui-sans" style={{ fontSize: 11, fontWeight: 700, color: MUTE, background: darkMode ? "#242c42" : "#f2f2f3", padding: "3px 8px", flexShrink: 0 }}>you {yourScore.toFixed(1)}</span>}
+                        <span className="ui-sans" style={{ fontSize: 15, fontWeight: 800, color: BLUE, width: 34, textAlign: "right", flexShrink: 0 }}>{r.rating.toFixed(1)}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          }
+
           return (
             <div>
               <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 12.5, marginBottom: 22, cursor: "pointer" }} onClick={() => setView({ name: "profile" })}>
