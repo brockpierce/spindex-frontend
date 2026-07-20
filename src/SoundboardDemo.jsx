@@ -1711,7 +1711,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
             mixId: item.mixId || null,
             mixType: item.mixType || null,
             caption: item.caption || "",
-            date: item.date ? new Date(item.date).toISOString().slice(0, 10) : "",
+            date: item.date ? new Date(item.date).toISOString() : "",
           }));
           setRealFeedItems(items);
           // Load reactions + comments for each feed item
@@ -1760,7 +1760,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
             mixId: item.mixId || null,
             mixType: item.mixType || null,
             caption: item.caption || "",
-            date: item.date ? new Date(item.date).toISOString().slice(0, 10) : "",
+            date: item.date ? new Date(item.date).toISOString() : "",
           }));
           setPublicFeedItems(items);
           // Load reactions + comments for each public feed item
