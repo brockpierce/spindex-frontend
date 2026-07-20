@@ -2941,7 +2941,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                       <Stat label="following" value={user.followingCount || 0} onClick={() => setShowFollowList({ kind: "following", userId: user.id, username: user.username })} />
                       <Stat label="reviews" value={userReviews.length} onClick={() => setView({ name: "reviewsList", username: user.username, userId: user.id, reviews: userReviews, from: view })} />
                       <Stat label="listened" value={viewedUserListenedCount} onClick={() => setView({ name: "listenedList", username: user.username, userId: user.id, listenedIds: viewedUserQueue, from: view })} />
-                      <Stat label="avg rating" value={userAvgRating} />
+                      <Stat label="avg rating" value={userAvgRating} onClick={userReviews.length > 0 ? () => setView({ name: "statsDetail", reviews: userReviews, displayName: user.displayName || user.username, isOwn: false, from: view }) : undefined} />
                     </div>
                   )}
                 </div>
@@ -2953,7 +2953,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                   <Stat label="following" value={user.followingCount || 0} onClick={() => setShowFollowList({ kind: "following", userId: user.id, username: user.username })} />
                   <Stat label="reviews" value={userReviews.length} />
                   <Stat label="listened" value={viewedUserListenedCount} />
-                  <Stat label="avg rating" value={userAvgRating} />
+                  <Stat label="avg rating" value={userAvgRating} onClick={userReviews.length > 0 ? () => setView({ name: "statsDetail", reviews: userReviews, displayName: user.displayName || user.username, isOwn: false, from: view }) : undefined} />
                 </div>
               )}
 
