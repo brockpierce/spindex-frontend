@@ -3018,6 +3018,49 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                 </div>
               )}
 
+              {user.profileTheme === "web2003" && (() => {
+                const MOOD_EMOTICONS = { chill: "8)", flirty: ";)", happy: ":)", angry: ">:(", sad: ":(", bored: "-_-", hyper: "^_^" };
+                const rows = [
+                  { label: "Age", value: user.age },
+                  { label: "Town", value: user.town },
+                  { label: "Country", value: user.country },
+                  { label: "Interests", value: user.interests },
+                ];
+                return (
+                  <div style={{ display: "flex", gap: 28, alignItems: "flex-start", flexWrap: "wrap", marginTop: 20 }}>
+                    <div className="pf-infobox" style={{ maxWidth: 420, flex: "1 1 340px" }}>
+                      <div className="pf-infobox-head">{(user.displayName || user.username)}'s Info</div>
+                      {rows.map((r) => (
+                        <div className="pf-inforow" key={r.label}>
+                          <b>{r.label}</b>
+                          <span>{r.value || <span style={{ color: "#9aa" }}>—</span>}</span>
+                        </div>
+                      ))}
+                      <div className="pf-inforow">
+                        <b>Mood</b>
+                        <span className="pf-mood-emoticon">{user.mood ? (MOOD_EMOTICONS[user.mood] || "") : <span style={{ color: "#9aa" }}>—</span>}</span>
+                      </div>
+                    </div>
+                    {viewedUserFavorites.length > 0 && (
+                      <div className="pf-infobox" style={{ flex: "1 1 340px", minWidth: 300 }}>
+                        <div className="pf-infobox-head">{(user.displayName || user.username)}'s Top 3 Albums</div>
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, padding: 12 }}>
+                          {viewedUserFavorites.slice(0, 3).map((fid) => {
+                            const album = fetchedAlbums[fid] || albumById(fid);
+                            return (
+                              <div key={fid} onClick={() => openAlbum(fid)} className="sb-cover-wrap" style={{ cursor: "pointer" }}>
+                                <div className="pf-card" style={{ lineHeight: 0 }}><AlbumCover album={album} size={150} /></div>
+                                <div style={{ fontSize: 11, fontWeight: 700, color: (user.accentColor || BLUE), textAlign: "center", marginTop: 6 }}>{album.title}</div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+
               {/* TOP 3 ALBUMS — viewed user's favorites */}
               {viewedUserFavorites.length > 0 && (
                 <div style={{ marginTop: 26 }}>
