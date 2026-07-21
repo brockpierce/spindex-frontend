@@ -742,6 +742,11 @@ export default function SoundboardDemo() {
   function chooseAccent(hex) {
     setCustomAccent(hex);
     try { localStorage.setItem("spindex_accent", hex); } catch (e) {}
+    apiFetch(`${BACKEND_URL}/api/users/profile`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ accentColor: hex }),
+    }).catch(() => {});
   }
   const [darkMode, setDarkMode] = useState(false);
   const [isMobile, setIsMobile] = useState(() => typeof window !== "undefined" && window.innerWidth < 600);
