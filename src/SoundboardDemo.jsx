@@ -2447,7 +2447,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                                 </button>
                               )}
                             </div>
-                            <div className="ui-sans" style={{ fontSize: 14, color: INK, lineHeight: 1.6, marginBottom: 10, textAlign: "left" }}>{c.text}</div>
+                            <div className="ui-sans" style={{ fontSize: 14, color: INK, lineHeight: 1.6, marginBottom: 10, textAlign: "left" }}><CommentText text={c.text} onOpenProfile={openUserProfile} /></div>
                             {c.id && (
                               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 14, paddingTop: 14, paddingBottom: 0, borderTop: `1px solid ${LINE}` }}>
                                 <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
@@ -2559,7 +2559,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                                 <span style={{ fontSize: 14, fontWeight: 700 }}>{album.title}</span>
                                 <span style={{ fontSize: 13, color: MUTE, marginLeft: 6, cursor: "pointer" }} onClick={(e) => { e.stopPropagation(); openArtist(album.artist || album.artistName); }}>{album.artist || album.artistName}</span>
                               </div>
-                              {c.text && <div style={{ fontSize: 13.5, color: INK, marginTop: 3, lineHeight: 1.5, textAlign: "left" }}>{c.text}</div>}
+                              {c.text && <div style={{ fontSize: 13.5, color: INK, marginTop: 3, lineHeight: 1.5, textAlign: "left" }}><CommentText text={c.text} onOpenProfile={openUserProfile} /></div>}
                             </div>
                           </div>
                           {c.id && (
@@ -2751,7 +2751,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                       <span style={{ fontSize: 14, fontWeight: 700 }}>{album.title}</span>
                       <span style={{ fontSize: 13, color: MUTE, marginLeft: 6 }}>{album.artist || album.artistName}</span>
                     </div>
-                    {rev.text && <div style={{ fontSize: 13.5, color: INK, marginTop: 6, lineHeight: 1.5 }}>{rev.text}</div>}
+                    {rev.text && <div style={{ fontSize: 13.5, color: INK, marginTop: 6, lineHeight: 1.5 }}><CommentText text={rev.text} onOpenProfile={openUserProfile} /></div>}
                   </div>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: 10, borderTop: "1px solid " + LINE }}>
@@ -3007,7 +3007,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                             <span style={{ fontSize: 14, fontWeight: 700 }}>{album.title}</span>
                             <span style={{ fontSize: 13, color: MUTE, marginLeft: 6, cursor: "pointer" }} onClick={(e) => { e.stopPropagation(); openArtist(album.artist || album.artistName); }}>{album.artist || album.artistName}</span>
                           </div>
-                          {r.text && <div style={{ fontSize: 13.5, color: INK, marginTop: 6, lineHeight: 1.5, textAlign: "left" }}>{r.text}</div>}
+                          {r.text && <div style={{ fontSize: 13.5, color: INK, marginTop: 6, lineHeight: 1.5, textAlign: "left" }}><CommentText text={r.text} onOpenProfile={openUserProfile} /></div>}
                         </div>
                       </div>
                     );
@@ -4285,7 +4285,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                           <span style={{ fontSize: 14, fontWeight: 700 }}>{album.title}</span>
                           <span style={{ fontSize: 13, color: MUTE, marginLeft: 6, cursor: "pointer" }} onClick={(e) => { e.stopPropagation(); openArtist(album.artist || album.artistName); }}>{album.artist || album.artistName}</span>
                         </div>
-                        {r.text && <div style={{ fontSize: 13.5, color: INK, marginTop: 6, lineHeight: 1.5, textAlign: "left" }}>{r.text}</div>}
+                        {r.text && <div style={{ fontSize: 13.5, color: INK, marginTop: 6, lineHeight: 1.5, textAlign: "left" }}><CommentText text={r.text} onOpenProfile={openUserProfile} /></div>}
                         {(r.favTrack || r.leastFavTrack) && (
                           <div style={{ fontSize: 11.5, color: MUTE, marginTop: 8, display: "flex", gap: 14, flexWrap: "wrap", textAlign: "left" }}>
                             {r.favTrack && <span>♡ {r.favTrack}</span>}
@@ -5434,14 +5434,14 @@ function ShareMixModal({ albumMixes, songMixes, onSubmit, onClose, followState }
 // pages. Owners see an input that adds tags on Enter/comma; everyone sees
 // clickable tag pills that navigate to tag results.
 // Renders @mentions in comment text as styled blue spans
-function CommentText({ text }) {
+function CommentText({ text, onOpenProfile }) {
   const { BLUE } = useTheme();
-  const parts = text.split(/(@[\w.]+)/g);
+  const parts = (text || "").split(/(@[\w.]+)/g);
   return (
     <span>
       {parts.map((part, i) =>
         part.startsWith("@")
-          ? <span key={i} style={{ color: BLUE, fontWeight: 600 }}>{part}</span>
+          ? <span key={i} onClick={onOpenProfile ? (e) => { e.stopPropagation(); onOpenProfile(part.slice(1).toLowerCase()); } : undefined} style={{ color: BLUE, fontWeight: 600, cursor: onOpenProfile ? "pointer" : "default" }}>{part}</span>
           : <span key={i}>{part}</span>
       )}
     </span>
