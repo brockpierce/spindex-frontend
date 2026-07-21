@@ -4120,45 +4120,53 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                 <div style={{ borderTop: `1px solid ${LINE}`, marginTop: 20, paddingTop: 18 }}>
                   <div style={{ fontSize: 13.5, fontWeight: 400, marginBottom: 14 }}>theme</div>
 
-                  {true && (
+                  {true && (() => {
+                    const isPreset = Object.values(ACCENTS).some((a) => a.value.toLowerCase() === BLUE.toLowerCase());
+                    const isCustom = !isPreset;
+                    return (
                     <>
-                      <div style={{ fontSize: 11, color: MUTE, marginBottom: 8 }}>accent color</div>
-                      <div style={{ display: "flex", gap: 10, marginBottom: 14, alignItems: "center", flexWrap: "wrap" }}>
-                        {Object.entries(ACCENTS).map(([key, a]) => (
-                          <button
-                            key={key}
-                            onClick={() => chooseAccent(a.value)}
-                            title={a.name}
-                            aria-label={`Use ${a.name} accent`}
-                            style={{
-                              width: 30,
-                              height: 30,
-                              borderRadius: 0,
-                              background: a.value,
-                              border: BLUE.toLowerCase() === a.value.toLowerCase() ? `1px solid ${INK}` : `1px solid transparent`,
-                              padding: 0,
-                              cursor: "pointer",
-                              boxShadow: BLUE.toLowerCase() === a.value.toLowerCase() ? `0 0 0 2px ${BG}` : "none",
-                            }}
-                          />
-                        ))}
-                        <label style={{ display: "inline-flex", alignItems: "center", gap: 8, cursor: "pointer", marginLeft: 4 }}>
-                          <span style={{ position: "relative", width: 30, height: 30, display: "inline-block", overflow: "hidden", border: `1px solid ${LINE}` }}>
-                            <span style={{ position: "absolute", inset: 0, background: BLUE }} />
-                            <input
-                              type="color"
-                              value={BLUE}
-                              onChange={(e) => chooseAccent(e.target.value)}
-                              style={{ position: "absolute", top: -6, left: -6, width: 44, height: 44, border: "none", padding: 0, cursor: "pointer", opacity: 0 }}
-                              aria-label="Pick a custom accent color"
+                      <div style={{ fontSize: 13, fontWeight: 600, color: "#6b6b74", marginBottom: 12, letterSpacing: "0.01em" }}>accent color</div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 18 }}>
+                        {Object.entries(ACCENTS).map(([key, a]) => {
+                          const on = BLUE.toLowerCase() === a.value.toLowerCase();
+                          return (
+                            <button
+                              key={key}
+                              onClick={() => chooseAccent(a.value)}
+                              title={a.name}
+                              aria-label={`Use ${a.name} accent`}
+                              style={{
+                                width: 34, height: 34, background: a.value, cursor: "pointer", padding: 0,
+                                border: on ? `2px solid ${INK}` : "1px solid rgba(0,0,0,.12)",
+                                outline: on ? "2px solid #fff" : "none", outlineOffset: -4,
+                                boxShadow: on ? `0 0 0 1px ${INK}` : "none",
+                              }}
                             />
-                          </span>
-                          <span style={{ fontSize: 12, color: MUTE }}>custom</span>
+                          );
+                        })}
+                        <label
+                          title="Pick a custom color"
+                          style={{
+                            position: "relative", width: 34, height: 34, cursor: "pointer",
+                            display: "inline-flex", alignItems: "center", justifyContent: "center",
+                            background: isCustom ? BLUE : "#fff", color: isCustom ? "#fff" : "#6b6b74",
+                            border: isCustom ? `2px solid ${INK}` : "1px dashed #b8b8bf", boxSizing: "border-box",
+                          }}
+                        >
+                          <span style={{ fontSize: 16, lineHeight: 1 }}>+</span>
+                          <input
+                            type="color"
+                            value={BLUE}
+                            onChange={(e) => chooseAccent(e.target.value)}
+                            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0, cursor: "pointer", border: "none", padding: 0 }}
+                            aria-label="Pick a custom accent color"
+                          />
                         </label>
+                        <span style={{ fontSize: 14, color: "#8a8a92", marginLeft: 4 }}>custom</span>
                       </div>
-                      <div style={{ fontSize: 11, color: MUTE, marginBottom: 18, cursor: "pointer", textDecoration: "underline" }} onClick={() => chooseAccent(ACCENTS.blue.value)}>reset to navy</div>
                     </>
-                  )}
+                    );
+                  })()}
 
                   <div style={{ fontSize: 11, color: MUTE, marginBottom: 8 }}>appearance</div>
                   <div style={{ display: "flex", border: `1px solid ${INK}`, borderRadius: 0, overflow: "hidden", width: 200 }}>
