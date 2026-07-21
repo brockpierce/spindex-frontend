@@ -2976,15 +2976,16 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                     <div className="pf-name" style={user.profileTheme ? { textAlign: "left" } : { fontSize: isMobile ? 24 : 30, fontWeight: 700, lineHeight: 1.15, letterSpacing: "-0.01em", textAlign: "left" }}>{user.displayName || user.username}</div>
                     <div className="pf-handle" style={user.profileTheme ? { textAlign: "left", marginTop: 3 } : { fontSize: isMobile ? 14 : 16, color: MUTE, marginTop: 3, textAlign: "left" }}>@{(user.username || "").toLowerCase()}</div>
                     {user.bio && <div className="pf-tagline" style={user.profileTheme === "web2003" ? { marginTop: 10, maxWidth: 480, textAlign: "left", fontStyle: "italic", fontWeight: 700 } : user.profileTheme ? { marginTop: 10, maxWidth: 480, textAlign: "left" } : { fontSize: isMobile ? 14 : 15, color: MUTE, marginTop: 10, maxWidth: 480, lineHeight: 1.5, textAlign: "left" }}>{user.profileTheme === "web2003" ? `"${user.bio}"` : (!isMobile && user.bio.length > 30 ? user.bio.slice(0, 30) + "…" : user.bio)}</div>}
+                    {user.profileTheme === "web2003" && (
+                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
+                        <button className="pf-friendbtn" onClick={() => toggleFollow(user.username)} style={{ cursor: "pointer" }}>★ {followState[user.username] ? "friends" : "add to friends"}</button>
+                        <button className="pf-friendbtn" onClick={() => startConversationWith(user.username)} style={{ cursor: "pointer" }}>✉ send message</button>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", alignItems: "flex-end", flexShrink: 0, gap: 16 }}>
-                  {user.profileTheme === "web2003" ? (
-                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
-                      <button className="pf-friendbtn" onClick={() => toggleFollow(user.username)} style={{ cursor: "pointer" }}>★ {followState[user.username] ? "friends" : "add to friends"}</button>
-                      <button className="pf-friendbtn" onClick={() => startConversationWith(user.username)} style={{ cursor: "pointer" }}>✉ send message</button>
-                    </div>
-                  ) : (
+                  {user.profileTheme !== "web2003" && (
                     <>
                   <button onClick={() => startConversationWith(user.username)} style={{ background: "none", border: "none", cursor: "pointer", color: MUTE, padding: 4, display: "flex", alignItems: "center" }} title="message"><MessageCircle size={18} strokeWidth={1.8} /></button>
                   <button
