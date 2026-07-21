@@ -808,6 +808,17 @@ export default function SoundboardDemo() {
   const [profileStats, setProfileStats] = useState({ followers: 0, following: 0 });
   const [showFollowList, setShowFollowList] = useState(null); // null | { kind: "followers" | "following", userId, username }
 
+  // Persist a profile theme / info field to the backend (optimistic)
+  function saveProfileField(fields) {
+    setProfile((prev) => ({ ...prev, ...fields }));
+    apiFetch(`${BACKEND_URL}/api/users/profile`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(fields),
+    }).catch(() => {});
+  }
+  function saveProfileTheme(theme) { saveProfileField({ profileTheme: theme }); }
+
   // Load real follower/following counts when logged in
   useEffect(() => {
     if (!authUser) return;
@@ -819,6 +830,15 @@ export default function SoundboardDemo() {
             followers: data.user.followerCount || 0,
             following: data.user.followingCount || 0,
           });
+          setProfile((prev) => ({
+            ...prev,
+            profileTheme: data.user.profileTheme || null,
+            age: data.user.age || null,
+            town: data.user.town || null,
+            country: data.user.country || null,
+            mood: data.user.mood || null,
+            interests: data.user.interests || null,
+          }));
         }
       })
       .catch(() => {});
@@ -4165,6 +4185,23 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                     </>
                     );
                   })()}
+
+                  <div style={{ marginTop: 22 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: "#6b6b74", marginBottom: 10, letterSpacing: "0.01em" }}>profile theme</div>
+                    <select
+                      value={profile.profileTheme || ""}
+                      onChange={(e) => saveProfileTheme(e.target.value)}
+                      style={{ fontFamily: "inherit", fontSize: 14, padding: "8px 12px", border: `1px solid ${LINE}`, background: BG, color: INK, cursor: "pointer", borderRadius: 0, minWidth: 160 }}
+                    >
+                      <option value="">default</option>
+                      <option value="web2003">web2003</option>
+                      <option value="terminal">terminal</option>
+                      <option value="geocities">netscape</option>
+                      <option value="cutesy">angel</option>
+                      <option value="elegant">lover</option>
+                    </select>
+                    <div style={{ fontSize: 11, color: MUTE, marginTop: 8 }}>how your profile looks to visitors</div>
+                  </div>
 
                 </div>
               </div>
