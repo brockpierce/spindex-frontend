@@ -4148,7 +4148,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                   )}
                 </div>
               );
-            })()
+            })()}
 
             {showSettings && (
               <div style={{ marginTop: 18, border: `1px solid ${LINE}`, borderRadius: 0, padding: 18 }} className="ui-sans">
