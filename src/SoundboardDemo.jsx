@@ -4102,6 +4102,16 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
               </div>
             </div>
 
+            {isMobile && profile.profileTheme === "web2003" && (
+              <div style={{ display: "flex", gap: 16, padding: "16px 0", borderBottom: `2px groove ${BLUE}`, overflowX: "auto", justifyContent: "center", alignItems: "flex-start" }}>
+                <Stat label="followers" value={profileStats.followers} onClick={() => setShowFollowList({ kind: "followers", userId: authUser?.id, username: profile.username })} />
+                <Stat label="following" value={profileStats.following} onClick={() => setShowFollowList({ kind: "following", userId: authUser?.id, username: profile.username })} />
+                <Stat label="listened" value={listenLoaded ? listenedCount : (cachedCounts.listened ?? listenedCount)} onClick={() => setView({ name: "albumList", filter: "listened" })} />
+                <Stat label="reviews" value={reviewsLoaded ? reviews.length : (cachedCounts.reviews ?? reviews.length)} onClick={() => setView({ name: "reviewsList", username: profile.username, userId: profile.id, reviews: reviews, isOwn: true, from: view })} />
+                <Stat label="stats" value={<EqualizerIcon />} onClick={reviews.length > 0 ? () => setView({ name: "statsDetail" }) : undefined} />
+              </div>
+            )}
+
             {profile.profileTheme === "web2003" && (() => {
               const MOOD_EMOTICONS = { chill: "8)", flirty: ";)", happy: ":)", angry: ">:(", sad: ":(", bored: "-_-", hyper: "^_^" };
               const MOODS = ["chill", "flirty", "happy", "angry", "sad", "bored", "hyper"];
@@ -4306,7 +4316,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
               </div>
             )}
 
-            {isMobile && (
+            {isMobile && profile.profileTheme !== "web2003" && (
               <div style={{ display: "flex", gap: 16, padding: "20px 0", borderBottom: `1px solid ${LINE}`, overflowX: "auto", justifyContent: "center", alignItems: "flex-start" }}>
                 <Stat label="followers" value={profileStats.followers} onClick={() => setShowFollowList({ kind: "followers", userId: authUser?.id, username: profile.username })} />
                 <Stat label="following" value={profileStats.following} onClick={() => setShowFollowList({ kind: "following", userId: authUser?.id, username: profile.username })} />
