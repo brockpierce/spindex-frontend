@@ -4065,10 +4065,10 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                   <img
                     src={avatarUrl}
                     alt=""
-                    style={{ width: isMobile ? 88 : 120, height: isMobile ? 88 : 120, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }}
+                    style={{ width: isMobile ? 88 : 120, height: isMobile ? 88 : 120, borderRadius: profile.profileTheme === "web2003" ? 0 : "50%", border: profile.profileTheme === "web2003" ? `3px ridge ${BLUE}` : "none", objectFit: "cover", flexShrink: 0 }}
                   />
                 ) : (
-                  <div style={{ width: isMobile ? 88 : 120, height: isMobile ? 88 : 120, borderRadius: "50%", background: BLUE, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <div style={{ width: isMobile ? 88 : 120, height: isMobile ? 88 : 120, borderRadius: profile.profileTheme === "web2003" ? 0 : "50%", border: profile.profileTheme === "web2003" ? `3px ridge ${BLUE}` : "none", background: BLUE, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                     <User color="#fff" size={isMobile ? 36 : 48} />
                   </div>
                 )}
@@ -4081,8 +4081,10 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
               <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", alignItems: "flex-end", flexShrink: 0, gap: 16 }}>
                 <button
                   onClick={openSettings}
-                  className="sb-btn"
-                  style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}
+                  className={profile.profileTheme === "web2003" ? "pf-settings" : "sb-btn"}
+                  style={profile.profileTheme === "web2003"
+                    ? { display: "flex", alignItems: "center", gap: 6, flexShrink: 0, border: "2px outset #cfd8e6", background: "#e8edf5", color: BLUE, fontWeight: 700, padding: "8px 14px", cursor: "pointer", borderRadius: 0, fontFamily: "inherit" }
+                    : { display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}
                   title="Edit profile"
                   aria-label="Edit profile"
                 >
@@ -4164,7 +4166,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                       const album = fetchedAlbums[id] || albumById(id);
                       return (
                         <div key={id} onClick={() => openAlbum(id)} className="sb-cover-wrap" style={{ cursor: "pointer" }}>
-                          <AlbumCover album={album} size={90} />
+                          <div className="pf-card" style={{ lineHeight: 0 }}><AlbumCover album={album} size={90} /></div>
                           <div style={{ fontSize: 11, fontWeight: 700, color: BLUE, textAlign: "center", marginTop: 6 }}>{album.title}</div>
                         </div>
                       );

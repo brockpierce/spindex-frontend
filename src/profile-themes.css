@@ -69,27 +69,27 @@
   text-transform: var(--pf-btn-transform, none);
 }
 
-.pf-stat-num   { font-family: var(--pf-stat-font, inherit); font-size: var(--pf-stat-size, 30px); font-weight: var(--pf-stat-weight, 400); letter-spacing: var(--pf-stat-ls, normal); color: var(--pf-stat-color, #141414); }
-.pf-stat-label { font-family: var(--pf-stat-font, inherit); font-size: 12px; letter-spacing: var(--pf-statlabel-ls, 1px); text-transform: var(--pf-statlabel-transform, uppercase); color: var(--pf-statlabel-color, #9a9a9a); }
+.pf[data-theme] .pf-stat-num   { font-family: var(--pf-stat-font, inherit) !important; font-size: var(--pf-stat-size, 30px) !important; font-weight: var(--pf-stat-weight, 400) !important; letter-spacing: var(--pf-stat-ls, normal) !important; color: var(--pf-stat-color, #141414) !important; }
+.pf[data-theme] .pf-stat-label { font-family: var(--pf-stat-font, inherit) !important; font-size: 12px !important; letter-spacing: var(--pf-statlabel-ls, 1px) !important; text-transform: var(--pf-statlabel-transform, uppercase) !important; color: var(--pf-statlabel-color, #9a9a9a) !important; }
 
 .pf-divider { border: 0; border-top: var(--pf-divider, 1px solid #e4e4e4); margin: 34px 0; }
 
 /* section headers ------------------------------------------------ */
 .pf-section-wrap { text-align: var(--pf-section-align, center); margin-bottom: 24px; }
-.pf-section {
-  font-family: var(--pf-section-font, inherit);
-  color: var(--pf-section-color, #9a9a9a);
-  font-size: var(--pf-section-size, 14px);
-  font-weight: var(--pf-section-weight, 400);
-  font-style: var(--pf-section-style, normal);
-  letter-spacing: var(--pf-section-ls, 2.5px);
-  text-transform: var(--pf-section-transform, uppercase);
-  text-decoration: var(--pf-section-decoration, none);
-  display: var(--pf-section-display, inline);
-  background: var(--pf-section-bg, transparent);
-  padding: var(--pf-section-pad, 0);
-  border-radius: var(--pf-section-radius, 0);
-  border-bottom: var(--pf-section-border, none);
+.pf[data-theme] .pf-section {
+  font-family: var(--pf-section-font, inherit) !important;
+  color: var(--pf-section-color, #9a9a9a) !important;
+  font-size: var(--pf-section-size, 14px) !important;
+  font-weight: var(--pf-section-weight, 400) !important;
+  font-style: var(--pf-section-style, normal) !important;
+  letter-spacing: var(--pf-section-ls, 2.5px) !important;
+  text-transform: var(--pf-section-transform, uppercase) !important;
+  text-decoration: var(--pf-section-decoration, none) !important;
+  display: var(--pf-section-display, inline) !important;
+  background: var(--pf-section-bg, transparent) !important;
+  padding: var(--pf-section-pad, 0) !important;
+  border-radius: var(--pf-section-radius, 0) !important;
+  border-bottom: var(--pf-section-border, none) !important;
 }
 /* fleuron / prefix + suffix ornaments */
 .pf-section::before { content: var(--pf-section-prefix, ""); }
