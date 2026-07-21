@@ -1,0 +1,234 @@
+/* ============================================================
+   PROFILE THEME PRESETS
+   ------------------------------------------------------------
+   Five opt-in profile skins. All of them keep the same three
+   invariants so browsing between users never feels jarring:
+     • white page background
+     • ONE accent color — navy (#22406e)
+     • the same page layout / structure
+   Only typography, borders, density and small era flourishes
+   change per theme.
+
+   The "Clean" default is intentionally NOT included here —
+   keep your current site styles as the default. Apply a preset
+   by setting a data-theme on the profile root:
+
+     <div class="pf" data-theme="web2003"> … </div>
+
+   Supported values:
+     web2003 · terminal · geocities · cutesy · elegant
+
+   Fonts: elegant needs the Google Fonts <link> in your <head>:
+   <link rel="stylesheet"
+     href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,400&family=Pinyon+Script&display=swap">
+   ============================================================ */
+
+:root { --pf-navy: #22406e; --pf-navy-dk: #16294a; }
+
+/* ---- base component hooks (theme vars fill these in) -------- */
+.pf {
+  background: #fff;
+  color: var(--pf-text, #141414);
+  font-family: var(--pf-body, 'Helvetica Neue', Helvetica, Arial, sans-serif);
+  font-size: var(--pf-body-size, 15px);
+}
+.pf a { color: var(--pf-navy); }
+.pf a:hover { color: var(--pf-navy-dk); }
+
+.pf-name {
+  font-family: var(--pf-name-font, inherit);
+  font-size: var(--pf-name-size, 46px);
+  font-weight: var(--pf-name-weight, 400);
+  font-style: var(--pf-name-style, normal);
+  letter-spacing: var(--pf-name-ls, -0.5px);
+  color: var(--pf-name-color, #141414);
+  line-height: 1.05;
+}
+.pf-handle  { color: var(--pf-handle-color, #9a9a9a); font-size: var(--pf-handle-size, 19px); font-style: var(--pf-handle-style, normal); }
+.pf-tagline { color: var(--pf-tagline-color, #7a7a7a); font-size: var(--pf-tagline-size, 17px); font-style: var(--pf-tagline-style, normal); }
+
+.pf-avatar {
+  width: 150px; height: 150px; flex: none; overflow: hidden;
+  
+  border-radius: var(--pf-avatar-radius, 50%);
+  border: var(--pf-avatar-border, none);
+  transform: var(--pf-avatar-transform, none);
+  box-sizing: border-box;
+}
+
+.pf-settings {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 11px 18px; cursor: pointer; font-size: 14px;
+  font-family: inherit;
+  border: var(--pf-btn-border, 1px solid #d5d5d5);
+  border-radius: var(--pf-btn-radius, 4px);
+  background: var(--pf-btn-bg, #fff);
+  color: var(--pf-btn-color, #333);
+  font-weight: var(--pf-btn-weight, 400);
+  font-style: var(--pf-btn-style, normal);
+  text-transform: var(--pf-btn-transform, none);
+}
+
+.pf-stat-num   { font-family: var(--pf-stat-font, inherit); font-size: var(--pf-stat-size, 30px); font-weight: var(--pf-stat-weight, 400); letter-spacing: var(--pf-stat-ls, normal); color: var(--pf-stat-color, #141414); }
+.pf-stat-label { font-family: var(--pf-stat-font, inherit); font-size: 12px; letter-spacing: var(--pf-statlabel-ls, 1px); text-transform: var(--pf-statlabel-transform, uppercase); color: var(--pf-statlabel-color, #9a9a9a); }
+
+.pf-divider { border: 0; border-top: var(--pf-divider, 1px solid #e4e4e4); margin: 34px 0; }
+
+/* section headers ------------------------------------------------ */
+.pf-section-wrap { text-align: var(--pf-section-align, center); margin-bottom: 24px; }
+.pf-section {
+  font-family: var(--pf-section-font, inherit);
+  color: var(--pf-section-color, #9a9a9a);
+  font-size: var(--pf-section-size, 14px);
+  font-weight: var(--pf-section-weight, 400);
+  font-style: var(--pf-section-style, normal);
+  letter-spacing: var(--pf-section-ls, 2.5px);
+  text-transform: var(--pf-section-transform, uppercase);
+  text-decoration: var(--pf-section-decoration, none);
+  display: var(--pf-section-display, inline);
+  background: var(--pf-section-bg, transparent);
+  padding: var(--pf-section-pad, 0);
+  border-radius: var(--pf-section-radius, 0);
+  border-bottom: var(--pf-section-border, none);
+}
+/* fleuron / prefix + suffix ornaments */
+.pf-section::before { content: var(--pf-section-prefix, ""); }
+.pf-section::after  { content: var(--pf-section-suffix, ""); }
+
+/* cards --------------------------------------------------------- */
+.pf-card {
+  border: var(--pf-card-border, none);
+  border-radius: var(--pf-card-radius, 3px);
+  overflow: hidden;
+  
+}
+.pf-card-title {
+  font-size: var(--pf-cardtitle-size, 18px);
+  font-weight: var(--pf-cardtitle-weight, 400);
+  font-style: var(--pf-cardtitle-style, normal);
+  text-transform: var(--pf-cardtitle-transform, none);
+  text-align: var(--pf-cardtitle-align, center);
+  color: var(--pf-cardtitle-color, #141414);
+  margin-top: 12px;
+}
+.pf-score { font-family: var(--pf-score-font, inherit); font-size: 22px; font-weight: var(--pf-score-weight, 400); color: var(--pf-navy); }
+
+/* theme-specific extra blocks are hidden unless their theme is on.
+   !important so an element's own layout display (flex/grid/inline-block)
+   can't accidentally reveal it under the wrong theme. */
+.pf-extra { display: none !important; }
+
+/* ============================================================
+   2003 WEB  — Verdana, ridge borders, navy title bars
+   ============================================================ */
+.pf[data-theme="web2003"] {
+  --pf-text: #222; --pf-body: Verdana, Geneva, Tahoma, sans-serif; --pf-body-size: 13px;
+  --pf-name-font: 'Helvetica Neue', Helvetica, Arial, sans-serif; --pf-name-size: 30px; --pf-name-weight: 700; --pf-name-ls: 0; --pf-name-color: var(--pf-navy);
+  --pf-handle-color: #666; --pf-handle-size: 12px;
+  --pf-tagline-color: #333; --pf-tagline-size: 12px;
+  --pf-avatar-radius: 0; --pf-avatar-border: 3px ridge var(--pf-navy);
+  --pf-btn-border: 2px outset #cfd8e6; --pf-btn-radius: 0; --pf-btn-bg: #e8edf5; --pf-btn-color: var(--pf-navy); --pf-btn-weight: 700;
+  --pf-stat-size: 20px; --pf-stat-weight: 700; --pf-stat-color: var(--pf-navy);
+  --pf-statlabel-color: #666; --pf-statlabel-ls: 0;
+  --pf-divider: 2px groove var(--pf-navy);
+  --pf-section-align: left; --pf-section-color: #fff; --pf-section-size: 12px; --pf-section-weight: 700; --pf-section-ls: 0.5px; --pf-section-transform: none; --pf-section-display: inline-block; --pf-section-bg: var(--pf-navy); --pf-section-pad: 4px 12px;
+  --pf-card-border: 2px ridge var(--pf-navy); --pf-card-radius: 0;
+  --pf-cardtitle-size: 12px; --pf-cardtitle-weight: 700; --pf-cardtitle-color: var(--pf-navy);
+  --pf-score-weight: 700;
+}
+.pf[data-theme="web2003"] .pf-web2003 { display: block !important; }   /* info box + friend actions */
+
+/* MySpace-style info table (see README for markup) */
+.pf-infobox { border: 1px solid #b7c4dd; font-family: Verdana, Geneva, Tahoma, sans-serif; font-size: 13px; }
+.pf-infobox-head { background: var(--pf-navy); color: #fff; font-weight: 700; font-size: 14px; padding: 6px 12px; }
+.pf-inforow { display: grid; grid-template-columns: 100px 1fr; gap: 10px; padding: 8px 12px; background: #eef1f8; border-top: 1px solid #fff; align-items: center; }
+.pf-inforow b { color: var(--pf-navy); }
+.pf-friendbtn { border: 2px outset #cfd8e6; background: #e8edf5; color: var(--pf-navy); font-weight: 700; font-size: 12px; padding: 4px 10px; }
+.pf-mood-emoticon { font-family: 'Courier New', monospace; font-weight: 700; color: var(--pf-navy); font-size: 15px; }
+.pf-mood-select { border: 2px inset #cfd8e6; background: #fff; color: var(--pf-navy); font-weight: 700; font-family: inherit; font-size: 13px; padding: 2px 6px; cursor: pointer; }
+
+/* ============================================================
+   TERMINAL  — monospace, dashed rules, blinking cursor
+   ============================================================ */
+.pf[data-theme="terminal"] {
+  --pf-text: #1b1b1b; --pf-body: 'SFMono-Regular', Menlo, Consolas, 'Courier New', monospace; --pf-body-size: 14px;
+  --pf-name-size: 34px; --pf-name-weight: 700; --pf-name-ls: -0.5px; --pf-name-color: var(--pf-navy);
+  --pf-handle-color: #7a7a7a; --pf-handle-size: 15px;
+  --pf-tagline-color: #444; --pf-tagline-size: 14px;
+  --pf-avatar-radius: 0; --pf-avatar-border: 1px solid var(--pf-navy);
+  --pf-btn-border: 1px solid var(--pf-navy); --pf-btn-radius: 0; --pf-btn-bg: #fff; --pf-btn-color: var(--pf-navy);
+  --pf-stat-size: 26px; --pf-stat-weight: 700; --pf-stat-color: var(--pf-navy);
+  --pf-statlabel-color: #7a7a7a; --pf-statlabel-transform: lowercase;
+  --pf-divider: 1px dashed var(--pf-navy);
+  --pf-section-align: left; --pf-section-color: var(--pf-navy); --pf-section-size: 15px; --pf-section-weight: 700; --pf-section-ls: 0.5px; --pf-section-transform: lowercase; --pf-section-prefix: "// ";
+  --pf-card-border: 1px solid var(--pf-navy); --pf-card-radius: 0;
+  --pf-cardtitle-size: 13px; --pf-cardtitle-align: left; --pf-cardtitle-color: #1b1b1b;
+  --pf-score-weight: 700;
+}
+.pf[data-theme="terminal"] .pf-terminal { display: block !important; }
+.pf[data-theme="terminal"] .pf-cursor { display: inline-block !important; }
+.pf-cursor { width: 0.55em; height: 1em; background: var(--pf-navy); transform: translateY(2px); animation: pf-blink 1.1s step-end infinite; }
+.pf-loginline { font-size: 12.5px; color: #9a9a9a; }
+@keyframes pf-blink { 0%,49% { opacity: 1 } 50%,100% { opacity: 0 } }
+
+/* ============================================================
+   GEOCITIES  — Times, ✦ starred underlined rules, double borders
+   ============================================================ */
+.pf[data-theme="geocities"] {
+  --pf-text: #1c1c1c; --pf-body: 'Times New Roman', Times, serif;
+  --pf-name-size: 38px; --pf-name-weight: 300; --pf-name-ls: normal; --pf-name-color: var(--pf-navy);
+  --pf-handle-color: var(--pf-navy); --pf-handle-size: 14px;
+  --pf-tagline-color: #333; --pf-tagline-size: 15px; --pf-tagline-style: italic;
+  --pf-avatar-radius: 0; --pf-avatar-border: 4px double var(--pf-navy);
+  --pf-btn-border: 2px outset #cccccc; --pf-btn-radius: 0; --pf-btn-bg: #e9e9e9; --pf-btn-color: #222;
+  --pf-stat-size: 24px; --pf-stat-weight: 700; --pf-stat-color: var(--pf-navy);
+  --pf-statlabel-color: #555;
+  --pf-divider: 3px double var(--pf-navy);
+  --pf-section-align: center; --pf-section-color: var(--pf-navy); --pf-section-size: 17px; --pf-section-weight: 700; --pf-section-ls: 1px; --pf-section-transform: uppercase; --pf-section-decoration: underline; --pf-section-display: block; --pf-section-prefix: "\2726  "; --pf-section-suffix: "  \2726";
+  --pf-card-border: 3px double var(--pf-navy); --pf-card-radius: 0;
+  --pf-cardtitle-size: 15px; --pf-cardtitle-weight: 700; --pf-cardtitle-color: var(--pf-navy);
+  --pf-score-weight: 700;
+}
+.pf[data-theme="geocities"] .pf-handle,
+.pf[data-theme="geocities"] .pf-card-title { text-decoration: underline; }
+.pf[data-theme="geocities"] .pf-geocities { display: block !important; }
+
+/* ============================================================
+   CUTESY  — rounded type, dotted borders, pill chips, ♡ ✿
+   ============================================================ */
+.pf[data-theme="cutesy"] {
+  --pf-text: #2a2a2a; --pf-body: 'Comic Sans MS', 'Comic Sans', 'Trebuchet MS', cursive;
+  --pf-name-size: 40px; --pf-name-weight: 700; --pf-name-ls: 0.5px; --pf-name-color: var(--pf-navy);
+  --pf-handle-color: var(--pf-navy); --pf-handle-size: 14px;
+  --pf-tagline-color: #555; --pf-tagline-size: 15px;
+  --pf-avatar-radius: 50%; --pf-avatar-border: 4px dotted var(--pf-navy);
+  --pf-btn-border: 2px dotted var(--pf-navy); --pf-btn-radius: 20px; --pf-btn-bg: #fff; --pf-btn-color: var(--pf-navy); --pf-btn-weight: 700;
+  --pf-stat-size: 28px; --pf-stat-weight: 700; --pf-stat-color: var(--pf-navy);
+  --pf-statlabel-color: var(--pf-navy); --pf-statlabel-transform: lowercase;
+  --pf-divider: 3px dotted var(--pf-navy);
+  --pf-section-align: center; --pf-section-color: var(--pf-navy); --pf-section-size: 15px; --pf-section-weight: 700; --pf-section-ls: 0.5px; --pf-section-transform: none; --pf-section-display: inline-block; --pf-section-bg: #eef1f8; --pf-section-pad: 5px 18px; --pf-section-radius: 20px; --pf-section-prefix: "\2661  "; --pf-section-suffix: "  \2661";
+  --pf-card-border: 3px solid #eef1f8; --pf-card-radius: 16px;
+  --pf-cardtitle-size: 16px; --pf-cardtitle-weight: 700; --pf-cardtitle-color: var(--pf-navy);
+  --pf-score-weight: 700;
+}
+.pf[data-theme="cutesy"] .pf-handle { background: #eef1f8; padding: 4px 12px; border-radius: 14px; font-weight: 700; }
+.pf[data-theme="cutesy"] .pf-cutesy { display: block !important; }
+
+/* ============================================================
+   ELEGANT  — Pinyon Script display over Cormorant Garamond
+   ============================================================ */
+.pf[data-theme="elegant"] {
+  --pf-text: #1c1c1c; --pf-body: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; --pf-body-size: 16px;
+  --pf-name-font: 'Pinyon Script', cursive; --pf-name-size: 68px; --pf-name-weight: 400; --pf-name-ls: normal; --pf-name-color: var(--pf-navy);
+  --pf-handle-color: #9a9a9a; --pf-handle-size: 18px; --pf-handle-style: italic;
+  --pf-tagline-color: #666; --pf-tagline-size: 18px; --pf-tagline-style: italic;
+  --pf-avatar-radius: 50%; --pf-avatar-border: 1px solid #cdd4e0;
+  --pf-btn-border: 1px solid var(--pf-navy); --pf-btn-radius: 0; --pf-btn-bg: #fff; --pf-btn-color: var(--pf-navy);
+  --pf-stat-font: 'Cormorant Garamond', Georgia, serif; --pf-stat-size: 36px; --pf-stat-weight: 300; --pf-stat-ls: 0.5px; --pf-stat-color: #1c1c1c;
+  --pf-statlabel-color: #9a9a9a; --pf-statlabel-ls: 2px;
+  --pf-divider: 1px solid #cdd4e0;
+  --pf-section-align: center; --pf-section-font: 'Pinyon Script', cursive; --pf-section-color: var(--pf-navy); --pf-section-size: 36px; --pf-section-weight: 400; --pf-section-ls: 0; --pf-section-transform: lowercase; --pf-section-display: block; --pf-section-prefix: "\2767  "; --pf-section-suffix: "  \2619";
+  --pf-card-border: 1px solid #dcdcdc; --pf-card-radius: 2px;
+  --pf-cardtitle-size: 19px; --pf-cardtitle-style: italic; --pf-cardtitle-color: #1c1c1c;
+  --pf-score-font: 'Times New Roman', Times, serif; --pf-score-weight: 400;
+}
