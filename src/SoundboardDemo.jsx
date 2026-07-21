@@ -2430,7 +2430,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                                 </button>
                               </div>
                             )}
-                            {c.id && expandedComments[c.id] && <ReviewComments reviewId={c.id} comments={reviewComments[c.id] || []} onAdd={addComment} onReply={addReply} currentUsername={profile.username} reviewOwnerUsername={c.username} onDelete={deleteComment} onLoadReactions={loadCommentReactions} onOpenProfile={openUserProfile} startOpen={true} />}
+                            {c.id && expandedComments[c.id] && <ReviewComments followingUsers={followingUsers} reviewId={c.id} comments={reviewComments[c.id] || []} onAdd={addComment} onReply={addReply} currentUsername={profile.username} reviewOwnerUsername={c.username} onDelete={deleteComment} onLoadReactions={loadCommentReactions} onOpenProfile={openUserProfile} startOpen={true} />}
                           </div>
                         );
                       }
@@ -2768,11 +2768,11 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                   {(reviewComments[rev.id] || []).length === 0
                     ? <div className="ui-sans" style={{ fontSize: 13, color: MUTE }}>no comments yet.</div>
                     : (reviewComments[rev.id] || []).map((comment) => (
-                        <CommentNode key={comment.id} comment={comment} depth={0} reviewId={rev.id} onReply={addReply} currentUsername={profile.username} reviewReactions={reviewReactions} onReact={toggleReaction} />
+                        <CommentNode key={comment.id} comment={comment} depth={0} reviewId={rev.id} onReply={addReply} currentUsername={profile.username} reviewReactions={reviewReactions} onReact={toggleReaction} followingUsers={followingUsers} />
                       ))
                   }
                 </div>
-                <CommentInput placeholder="Write a comment..." currentUsername={profile.username} onSubmit={(text) => addComment(rev.id, text, rev.username)} />
+                <CommentInput placeholder="Write a comment..." currentUsername={profile.username} followingUsers={followingUsers} onSubmit={(text) => addComment(rev.id, text, rev.username)} />
               </div>
             </div>
           );
@@ -5513,19 +5513,33 @@ function MentionInput({ value, onChange, placeholder, className, style, rows = 4
   );
 }
 
-function CommentInput({ placeholder, onSubmit, currentUsername, initialValue = "" }) {
+function CommentInput({ placeholder, onSubmit, currentUsername, initialValue = "", followingUsers = [] }) {
   const { BLUE, INK, LINE, MUTE, BG } = useTheme();
   const [text, setText] = useState(initialValue);
   const [mentionQuery, setMentionQuery] = useState(null);
   const [mentionStart, setMentionStart] = useState(0);
 
+  const [liveResults, setLiveResults] = useState([]);
+  useEffect(() => {
+    if (mentionQuery === null || mentionQuery.length < 1) { setLiveResults([]); return; }
+    const q = mentionQuery.toLowerCase();
+    const followMatches = (followingUsers || []).filter((u) => u.username.toLowerCase().includes(q) || (u.displayName || "").toLowerCase().includes(q));
+    if (followMatches.length > 0) { setLiveResults([]); return; }
+    const timer = setTimeout(() => {
+      apiFetch(`${BACKEND_URL}/api/users?search=${encodeURIComponent(mentionQuery)}`)
+        .then((r) => r.json())
+        .then((data) => setLiveResults(data.users || []))
+        .catch(() => setLiveResults([]));
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [mentionQuery, followingUsers]);
   const mentionResults = useMemo(() => {
     if (mentionQuery === null) return [];
-    return ALL_USERS.filter((u) =>
-      u.username.toLowerCase().includes(mentionQuery.toLowerCase()) ||
-      u.displayName.toLowerCase().includes(mentionQuery.toLowerCase())
-    ).slice(0, 5);
-  }, [mentionQuery]);
+    const q = mentionQuery.toLowerCase();
+    const followMatches = (followingUsers || []).filter((u) => u.username.toLowerCase().includes(q) || (u.displayName || "").toLowerCase().includes(q));
+    if (followMatches.length > 0) return followMatches.slice(0, 5);
+    return liveResults.slice(0, 5);
+  }, [mentionQuery, followingUsers, liveResults]);
 
   function handleChange(e) {
     const val = e.target.value;
@@ -5584,7 +5598,7 @@ function CommentInput({ placeholder, onSubmit, currentUsername, initialValue = "
 }
 
 // Renders a single comment node with its nested replies, recursively
-function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername, reviewReactions = {}, onReact, onOpenProfile }) {
+function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername, reviewReactions = {}, onReact, onOpenProfile, followingUsers = [] }) {
   const { BLUE, INK, LINE, MUTE } = useTheme();
   const [replying, setReplying] = useState(false);
   const avatarSize = 32;
@@ -5641,7 +5655,7 @@ function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername, r
 
       {(comment.replies || []).map((reply) => (
         <div key={reply.id} style={{ marginTop: 16 }}>
-          <CommentNode comment={reply} depth={depth + 1} reviewId={reviewId} onReply={onReply} currentUsername={currentUsername} reviewReactions={reviewReactions} onReact={onReact} onOpenProfile={onOpenProfile} />
+          <CommentNode comment={reply} depth={depth + 1} reviewId={reviewId} onReply={onReply} currentUsername={currentUsername} reviewReactions={reviewReactions} onReact={onReact} onOpenProfile={onOpenProfile} followingUsers={followingUsers} />
         </div>
       ))}
 
@@ -5651,6 +5665,7 @@ function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername, r
             placeholder={"reply to @" + comment.username + "..."}
             initialValue={"@" + comment.username + " "}
             currentUsername={currentUsername}
+            followingUsers={followingUsers}
             onSubmit={(text) => { onReply(reviewId, comment.id, comment.username, text); setReplying(false); }}
           />
         </div>
@@ -5668,7 +5683,7 @@ function countAllComments(comments) {
   return comments.reduce((s, c) => s + 1 + countReplies(c), 0);
 }
 
-function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUsername, reviewOwnerUsername, reviewReactions = {}, onReact, onLoadReactions, onOpenProfile, startOpen = false }) {
+function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUsername, reviewOwnerUsername, reviewReactions = {}, onReact, onLoadReactions, onOpenProfile, startOpen = false, followingUsers = [] }) {
   const { BLUE, INK, LINE, MUTE, BG } = useTheme();
   const [open, setOpen] = useState(startOpen);
   const total = countAllComments(comments);
@@ -5711,7 +5726,7 @@ function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUserna
           {comments.length > 0 && (
             <div style={{ maxHeight: 360, overflowY: "auto", padding: "20px 16px 6px", display: "flex", flexDirection: "column", gap: 22 }}>
               {comments.map((c) => (
-                <CommentNode key={c.id} comment={c} depth={0} reviewId={reviewId} onReply={onReply} currentUsername={currentUsername} reviewReactions={reviewReactions} onReact={onReact} onOpenProfile={onOpenProfile} />
+                <CommentNode key={c.id} comment={c} depth={0} reviewId={reviewId} onReply={onReply} currentUsername={currentUsername} reviewReactions={reviewReactions} onReact={onReact} onOpenProfile={onOpenProfile} followingUsers={followingUsers} />
               ))}
             </div>
           )}
@@ -5719,6 +5734,7 @@ function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUserna
             <CommentInput
               placeholder="Write a comment..."
               currentUsername={currentUsername}
+              followingUsers={followingUsers}
               onSubmit={(text) => onAdd(reviewId, text, reviewOwnerUsername)}
             />
           </div>
