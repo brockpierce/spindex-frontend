@@ -4226,7 +4226,9 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
             )}
 
             <div style={{ marginTop: 26 }}>
-              <div style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14, textAlign: "center", fontWeight: 400 }}>top 3 albums</div>
+              <div className={profile.profileTheme ? "pf-section-wrap" : ""} style={profile.profileTheme ? { marginBottom: 14 } : {}}>
+                <span className={profile.profileTheme ? "pf-section" : ""} style={profile.profileTheme ? {} : { fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, textAlign: "center", fontWeight: 400, display: "block", marginBottom: 14 }}>top 3 albums</span>
+              </div>
               <div style={{ display: "flex", gap: isMobile ? 20 : 28, justifyContent: "center" }}>
                 {favorites.map((id) => {
                   const album = fetchedAlbums[id] || albumById(id);
@@ -4465,8 +4467,8 @@ function Stat({ label, value, onClick, highlight }) {
         userSelect: "none",
       }}
     >
-      <div style={{ fontSize: 18, fontWeight: 400, lineHeight: 1, height: 22, display: "flex", alignItems: "center", color: highlight ? BLUE : INK, textDecoration: highlight ? "underline" : "none", textUnderlineOffset: 3 }}>{value}</div>
-      <div style={{ fontSize: 10, color: MUTE, textTransform: "uppercase", letterSpacing: "0.04em", marginTop: 4, lineHeight: 1.2 }}>{label}</div>
+      <div className="pf-stat-num" style={{ fontSize: 18, fontWeight: 400, lineHeight: 1, height: 22, display: "flex", alignItems: "center", color: highlight ? BLUE : INK, textDecoration: highlight ? "underline" : "none", textUnderlineOffset: 3 }}>{value}</div>
+      <div className="pf-stat-label" style={{ fontSize: 10, color: MUTE, textTransform: "uppercase", letterSpacing: "0.04em", marginTop: 4, lineHeight: 1.2 }}>{label}</div>
     </div>
   );
 }
