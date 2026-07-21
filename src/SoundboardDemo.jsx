@@ -2979,6 +2979,13 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                   </div>
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", alignItems: "flex-end", flexShrink: 0, gap: 16 }}>
+                  {user.profileTheme === "web2003" ? (
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
+                      <button className="pf-friendbtn" onClick={() => toggleFollow(user.username)} style={{ cursor: "pointer" }}>★ {followState[user.username] ? "friends" : "add to friends"}</button>
+                      <button className="pf-friendbtn" onClick={() => startConversationWith(user.username)} style={{ cursor: "pointer" }}>✉ send message</button>
+                    </div>
+                  ) : (
+                    <>
                   <button onClick={() => startConversationWith(user.username)} style={{ background: "none", border: "none", cursor: "pointer", color: MUTE, padding: 4, display: "flex", alignItems: "center" }} title="message"><MessageCircle size={18} strokeWidth={1.8} /></button>
                   <button
                     className="sb-btn"
@@ -2987,6 +2994,8 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                   >
                     {followState[user.username] ? "following" : "follow"}
                   </button>
+                    </>
+                  )}
                   {!isMobile && (
                     <div style={{ display: "flex", gap: 32, alignItems: "flex-start", flexShrink: 0, marginRight: 24 }}>
                       <Stat label="followers" value={user.followerCount || 0} onClick={() => setShowFollowList({ kind: "followers", userId: user.id, username: user.username })} />
