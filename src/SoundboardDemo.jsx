@@ -699,7 +699,11 @@ export default function SoundboardDemo() {
   const [view, setView] = useState({ name: "home" });
   const [homeTab, setHomeTab] = useState("everyone");
   const [activeInterviewId, setActiveInterviewId] = useState(null);
-  const [profile, setProfile] = useState(PROFILE);
+  const [profile, setProfile] = useState(() => {
+    let cachedTheme = null;
+    try { cachedTheme = localStorage.getItem("spindex_profile_theme") || null; } catch (e) {}
+    return { ...PROFILE, profileTheme: cachedTheme };
+  });
   const [showSettings, setShowSettings] = useState(false);
   const [draftDisplayName, setDraftDisplayName] = useState(PROFILE.displayName);
   const [draftUsername, setDraftUsername] = useState(PROFILE.username);
@@ -811,6 +815,9 @@ export default function SoundboardDemo() {
   // Persist a profile theme / info field to the backend (optimistic)
   function saveProfileField(fields) {
     setProfile((prev) => ({ ...prev, ...fields }));
+    if (fields.profileTheme !== undefined) {
+      try { localStorage.setItem("spindex_profile_theme", fields.profileTheme || ""); } catch (e) {}
+    }
     apiFetch(`${BACKEND_URL}/api/users/profile`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -830,6 +837,7 @@ export default function SoundboardDemo() {
             followers: data.user.followerCount || 0,
             following: data.user.followingCount || 0,
           });
+          try { localStorage.setItem("spindex_profile_theme", data.user.profileTheme || ""); } catch (e) {}
           setProfile((prev) => ({
             ...prev,
             profileTheme: data.user.profileTheme || null,
