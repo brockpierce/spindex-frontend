@@ -811,7 +811,16 @@ export default function SoundboardDemo() {
   const [toast, setToast] = useState(null);
   const [fetchedAlbums, setFetchedAlbums] = useState({});
   const [userAvatarCache, setUserAvatarCache] = useState({});
-  const [profileStats, setProfileStats] = useState({ followers: 0, following: 0 });
+  const [profileStats, setProfileStats] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("spindex_stats") || "") || { followers: 0, following: 0 }; }
+    catch (e) { return { followers: 0, following: 0 }; }
+  });
+  const [cachedCounts, setCachedCounts] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("spindex_counts") || "") || { listened: null, reviews: null }; }
+    catch (e) { return { listened: null, reviews: null }; }
+  });
+  const [reviewsLoaded, setReviewsLoaded] = useState(false);
+  const [listenLoaded, setListenLoaded] = useState(false);
   const [showFollowList, setShowFollowList] = useState(null); // null | { kind: "followers" | "following", userId, username }
 
   // Persist a profile theme / info field to the backend (optimistic)
@@ -835,10 +844,9 @@ export default function SoundboardDemo() {
       .then((r) => r.json())
       .then((data) => {
         if (data.user) {
-          setProfileStats({
-            followers: data.user.followerCount || 0,
-            following: data.user.followingCount || 0,
-          });
+          const realStats = { followers: data.user.followerCount || 0, following: data.user.followingCount || 0 };
+          setProfileStats(realStats);
+          try { localStorage.setItem("spindex_stats", JSON.stringify(realStats)); } catch (e) {}
           try { localStorage.setItem("spindex_profile_theme", data.user.profileTheme || ""); } catch (e) {}
           setProfile((prev) => ({
             ...prev,
@@ -885,6 +893,8 @@ export default function SoundboardDemo() {
       .then((data) => {
         if (data.listenStatus) {
           setListenStatus(data.listenStatus);
+          setListenLoaded(true);
+          setCachedCounts((prev) => { const lc = Object.values(data.listenStatus).filter((s) => s === "listened").length; const nc = { ...prev, listened: lc }; try { localStorage.setItem("spindex_counts", JSON.stringify(nc)); } catch (e) {} return nc; });
           // Prefetch album data for each listened/queued album
           Object.keys(data.listenStatus).forEach((id) => {
             apiFetch(`${BACKEND_URL}/api/albums/${id}`)
@@ -916,6 +926,8 @@ export default function SoundboardDemo() {
             username: authUser.username,
           }));
           setReviews(mapped);
+          setReviewsLoaded(true);
+          setCachedCounts((prev) => { const nc = { ...prev, reviews: mapped.length }; try { localStorage.setItem("spindex_counts", JSON.stringify(nc)); } catch (e) {} return nc; });
           // Prefetch album data for each review
           mapped.forEach((r) => {
             apiFetch(`${BACKEND_URL}/api/albums/${r.albumId}`)
@@ -4080,8 +4092,8 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                   <div style={{ display: "flex", gap: 32, alignItems: "flex-start", flexShrink: 0, marginRight: 24 }}>
                     <Stat label="followers" value={profileStats.followers} onClick={() => setShowFollowList({ kind: "followers", userId: authUser?.id, username: profile.username })} />
                     <Stat label="following" value={profileStats.following} onClick={() => setShowFollowList({ kind: "following", userId: authUser?.id, username: profile.username })} />
-                    <Stat label="listened" value={listenedCount} onClick={() => setView({ name: "albumList", filter: "listened" })} />
-                    <Stat label="reviews" value={reviews.length} onClick={() => setView({ name: "reviewsList", username: profile.username, userId: profile.id, reviews: reviews, isOwn: true, from: view })} />
+                    <Stat label="listened" value={listenLoaded ? listenedCount : (cachedCounts.listened ?? listenedCount)} onClick={() => setView({ name: "albumList", filter: "listened" })} />
+                    <Stat label="reviews" value={reviewsLoaded ? reviews.length : (cachedCounts.reviews ?? reviews.length)} onClick={() => setView({ name: "reviewsList", username: profile.username, userId: profile.id, reviews: reviews, isOwn: true, from: view })} />
                     <Stat label="stats" value={<EqualizerIcon />} onClick={reviews.length > 0 ? () => setView({ name: "statsDetail" }) : undefined} />
                   </div>
                 )}
@@ -4283,8 +4295,8 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
               <div style={{ display: "flex", gap: 16, padding: "20px 0", borderBottom: `1px solid ${LINE}`, overflowX: "auto", justifyContent: "center", alignItems: "flex-start" }}>
                 <Stat label="followers" value={profileStats.followers} onClick={() => setShowFollowList({ kind: "followers", userId: authUser?.id, username: profile.username })} />
                 <Stat label="following" value={profileStats.following} onClick={() => setShowFollowList({ kind: "following", userId: authUser?.id, username: profile.username })} />
-                <Stat label="listened" value={listenedCount} onClick={() => setView({ name: "albumList", filter: "listened" })} />
-                <Stat label="reviews" value={reviews.length} onClick={() => setView({ name: "reviewsList", username: profile.username, userId: profile.id, reviews: reviews, isOwn: true, from: view })} />
+                <Stat label="listened" value={listenLoaded ? listenedCount : (cachedCounts.listened ?? listenedCount)} onClick={() => setView({ name: "albumList", filter: "listened" })} />
+                <Stat label="reviews" value={reviewsLoaded ? reviews.length : (cachedCounts.reviews ?? reviews.length)} onClick={() => setView({ name: "reviewsList", username: profile.username, userId: profile.id, reviews: reviews, isOwn: true, from: view })} />
                 <Stat label="stats" value={<EqualizerIcon />} onClick={reviews.length > 0 ? () => setView({ name: "statsDetail" }) : undefined} />
               </div>
             )}
