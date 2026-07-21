@@ -3444,7 +3444,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
             const CELL = `1px solid ${LINE}`;
 
             return (
-              <div>
+              <div style={{ textAlign: "left" }}>
                 <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 12.5, marginBottom: 22, cursor: "pointer" }} onClick={() => setView(view.from || { name: "profile" })}>
                   <ChevronLeft size={14} /> back
                 </div>
