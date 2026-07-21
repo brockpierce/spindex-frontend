@@ -2233,7 +2233,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
         <QuickReviewModal onSubmit={submitQuickReview} onClose={() => setShowQuickReviewModal(false)} />
       )}
       {showTextPostModal && (
-        <TextPostModal followState={followState} onSubmit={(text) => {
+        <TextPostModal followingUsers={followingUsers} onSubmit={(text) => {
           const todayIso = new Date().toISOString().slice(0, 10);
           const tempId = "tp" + Date.now();
           const feedItem = { itemType: "textpost", id: tempId, username: profile.username, text, date: todayIso };
@@ -2257,7 +2257,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
         }} onClose={() => setShowTextPostModal(false)} />
       )}
       {showShareMixModal && (
-        <ShareMixModal albumMixes={albumMixes} songMixes={songMixes} followState={followState} onSubmit={submitMixShare} onClose={() => setShowShareMixModal(false)} />
+        <ShareMixModal albumMixes={albumMixes} songMixes={songMixes} followingUsers={followingUsers} onSubmit={submitMixShare} onClose={() => setShowShareMixModal(false)} />
       )}
 
       <div style={{ maxWidth: 920, margin: "0 auto", padding: "28px 16px 64px" }}>
@@ -3358,7 +3358,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                       placeholder="what stood out to you on this one?"
                       value={draftText}
                       onChange={setDraftText}
-                      followState={followState}
+                      followingUsers={followingUsers}
                     />
                     <div style={{ display: "flex", gap: 12, marginTop: 12 }}>
                       <div style={{ flex: 1 }}>
@@ -5233,7 +5233,7 @@ function AdminAlbumForm({ onAdded }) {
   );
 }
 
-function TextPostModal({ onSubmit, onClose, followState }) {
+function TextPostModal({ onSubmit, onClose, followingUsers }) {
   const { BLUE, INK, LINE, MUTE, BG } = useTheme();
   const [text, setText] = useState("");
 
@@ -5250,7 +5250,7 @@ function TextPostModal({ onSubmit, onClose, followState }) {
           placeholder="what's on your mind?"
           value={text}
           onChange={setText}
-          followState={followState}
+          followingUsers={followingUsers}
           style={{ width: "100%", marginBottom: 14 }}
         />
         <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
@@ -5353,7 +5353,7 @@ function QuickReviewModal({ onSubmit, onClose }) {
   );
 }
 
-function ShareMixModal({ albumMixes, songMixes, onSubmit, onClose, followState }) {
+function ShareMixModal({ albumMixes, songMixes, onSubmit, onClose, followingUsers }) {
   const { BLUE, INK, LINE, MUTE, BG } = useTheme();
   const [tab, setTab] = useState("album");
   const [caption, setCaption] = useState("");
@@ -5411,7 +5411,7 @@ function ShareMixModal({ albumMixes, songMixes, onSubmit, onClose, followState }
               placeholder="add a caption... (optional)"
               value={caption}
               onChange={setCaption}
-              followState={followState}
+              followingUsers={followingUsers}
               rows={3}
               style={{ width: "100%", marginBottom: 14, fontSize: 13 }}
               autoFocus
@@ -5449,18 +5449,32 @@ function CommentText({ text, onOpenProfile }) {
 }
 
 // Input with @mention autocomplete
-function MentionInput({ value, onChange, placeholder, className, style, rows = 4, followState = {}, onKeyDown }) {
+function MentionInput({ value, onChange, placeholder, className, style, rows = 4, followingUsers = [], onKeyDown }) {
   const { BLUE, INK, LINE, MUTE, BG } = useTheme();
   const [mentionQuery, setMentionQuery] = React.useState(null);
   const [mentionStart, setMentionStart] = React.useState(0);
+  const [liveResults, setLiveResults] = React.useState([]);
+  React.useEffect(() => {
+    if (mentionQuery === null || mentionQuery.length < 1) { setLiveResults([]); return; }
+    const q = mentionQuery.toLowerCase();
+    const followMatches = (followingUsers || []).filter((u) => u.username.toLowerCase().includes(q) || (u.displayName || "").toLowerCase().includes(q));
+    if (followMatches.length > 0) { setLiveResults([]); return; }
+    const timer = setTimeout(() => {
+      apiFetch(`${BACKEND_URL}/api/users?search=${encodeURIComponent(mentionQuery)}`)
+        .then((r) => r.json())
+        .then((data) => setLiveResults(data.users || []))
+        .catch(() => setLiveResults([]));
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [mentionQuery, followingUsers]);
+
   const mentionResults = React.useMemo(() => {
     if (mentionQuery === null) return [];
     const q = mentionQuery.toLowerCase();
-    return ALL_USERS
-      .filter((u) => u.username.toLowerCase().includes(q) || (u.displayName || "").toLowerCase().includes(q))
-      .sort((a, b) => (followState[b.username] ? 1 : 0) - (followState[a.username] ? 1 : 0))
-      .slice(0, 6);
-  }, [mentionQuery, followState]);
+    const followMatches = (followingUsers || []).filter((u) => u.username.toLowerCase().includes(q) || (u.displayName || "").toLowerCase().includes(q));
+    if (followMatches.length > 0) return followMatches.slice(0, 6);
+    return liveResults.slice(0, 6);
+  }, [mentionQuery, followingUsers, liveResults]);
   function handleChange(e) {
     const val = e.target.value;
     onChange(val);
