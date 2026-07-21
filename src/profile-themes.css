@@ -100,8 +100,10 @@
   border: var(--pf-card-border, none);
   border-radius: var(--pf-card-radius, 3px);
   overflow: hidden;
-  
+  width: 100%;
+  aspect-ratio: 1;
 }
+.pf-card img, .pf-card > div, .pf-card canvas { width: 100% !important; height: 100% !important; object-fit: cover !important; display: block; }
 .pf-card-title {
   font-size: var(--pf-cardtitle-size, 18px);
   font-weight: var(--pf-cardtitle-weight, 400);

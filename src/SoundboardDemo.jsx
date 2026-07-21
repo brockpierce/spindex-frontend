@@ -4166,7 +4166,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                       const album = fetchedAlbums[id] || albumById(id);
                       return (
                         <div key={id} onClick={() => openAlbum(id)} className="sb-cover-wrap" style={{ cursor: "pointer" }}>
-                          <div className="pf-card" style={{ lineHeight: 0, display: "inline-block" }}><AlbumCover album={album} size={90} /></div>
+                          <div className="pf-card" style={{ lineHeight: 0 }}><AlbumCover album={album} size={150} /></div>
                           <div style={{ fontSize: 11, fontWeight: 700, color: BLUE, textAlign: "center", marginTop: 6 }}>{album.title}</div>
                         </div>
                       );
