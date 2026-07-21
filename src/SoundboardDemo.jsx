@@ -4089,7 +4089,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
             </div>
 
             {profile.profileTheme === "web2003" && (() => {
-              const MOOD_EMOTICONS = { chill: ":-)", flirty: ";-)", happy: ":-D", angry: ">:-(", sad: ":'-(", bored: ":-|", hyper: "\\o/" };
+              const MOOD_EMOTICONS = { chill: "8)", flirty: ";)", happy: ":)", angry: ">:(", sad: ":(", bored: "-_-", hyper: "^_^" };
               const MOODS = ["chill", "flirty", "happy", "angry", "sad", "bored", "hyper"];
               const rows = [
                 { key: "age", label: "Age", value: profile.age },
