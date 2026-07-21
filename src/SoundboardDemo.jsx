@@ -3062,7 +3062,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
               })()}
 
               {/* TOP 3 ALBUMS — viewed user's favorites */}
-              {viewedUserFavorites.length > 0 && (
+              {viewedUserFavorites.length > 0 && user.profileTheme !== "web2003" && (
                 <div style={{ marginTop: 26 }}>
                   <div style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14, textAlign: "center", fontWeight: 400 }}>top 3 albums</div>
                   <div style={{ display: "flex", gap: isMobile ? 20 : 28, justifyContent: "center" }}>
