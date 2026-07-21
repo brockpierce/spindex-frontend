@@ -925,6 +925,7 @@ export default function SoundboardDemo() {
             const map = {};
             data.users.forEach((u) => { map[u.username] = true; });
             setFollowState((prev) => ({ ...prev, ...map }));
+            setFollowingUsers(data.users);
           }
         })
         .catch(() => {});
