@@ -3454,7 +3454,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                   <div style={{ display: "flex", alignItems: "center", gap: 16, padding: 22, borderBottom: `1px solid ${INK}` }}>
                     <Avatar username={(view.username) || statsName} size={56} />
                     <div>
-                      <div className="ui-sans" style={{ fontSize: 11, letterSpacing: "0.14em", fontWeight: 700, color: MUTE }}>rating stats</div>
+                      <div className="ui-sans" style={{ fontSize: 11, letterSpacing: "0.14em", fontWeight: 400, color: MUTE }}>rating stats</div>
                       <div className="ui-sans" style={{ fontSize: 24, fontWeight: 800, letterSpacing: "-0.02em", marginTop: 3 }}>how {statsName} rates</div>
                     </div>
                   </div>
@@ -3466,7 +3466,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                     </div>
                     <div style={{ paddingLeft: 14 }}>
                       <div className="ui-sans" style={{ fontSize: 11, letterSpacing: "0.12em", fontWeight: 700, color: BLUE }}>{tier.title}</div>
-                      <div className="ui-sans" style={{ fontSize: 46, fontWeight: 800, letterSpacing: "-0.03em", lineHeight: 1, margin: "6px 0 4px" }}>{numericAvg.toFixed(1)}</div>
+                      <div className="ui-sans" style={{ fontSize: 46, fontWeight: 800, letterSpacing: "-0.03em", lineHeight: 1, margin: "6px 0 4px" }}>{numericAvg.toFixed(1)}<span style={{ fontSize: 14, fontWeight: 400, color: MUTE, marginLeft: 4, letterSpacing: 0 }}>/avg</span></div>
                       <div className="ui-sans" style={{ fontSize: 14, color: MUTE }}>{tier.blurbThird || tier.blurb}</div>
                     </div>
                   </div>
@@ -3513,7 +3513,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
 
                 {/* Their highest rated, with your chip */}
                 <div style={{ padding: "18px 0 8px" }}>
-                  <div className="ui-sans" style={{ fontSize: 12, letterSpacing: "0.12em", fontWeight: 700, color: MUTE, margin: "0 0 8px" }}>their highest rated</div>
+                  <div className="ui-sans" style={{ fontSize: 12, letterSpacing: "0.12em", fontWeight: 400, color: MUTE, margin: "0 0 8px" }}>their highest rated</div>
                   {ranked.map((r, i) => {
                     const album = fetchedAlbums[r.albumId] || albumById(r.albumId);
                     const yourScore = yourByAlbum.get(r.albumId);
@@ -3543,7 +3543,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                 <ChevronLeft size={14} /> back
               </div>
 
-              <div className="ui-sans" style={{ fontSize: 12, letterSpacing: "0.12em", fontWeight: 700, color: MUTE, marginBottom: 6 }}>{statsIsOwn ? "your rating stats" : "rating stats"}</div>
+              <div className="ui-sans" style={{ fontSize: 12, letterSpacing: "0.12em", fontWeight: 400, color: MUTE, marginBottom: 6 }}>{statsIsOwn ? "your rating stats" : "rating stats"}</div>
               <div className="ui-sans" style={{ fontSize: 20, fontWeight: 400, marginBottom: 20 }}>{statsIsOwn ? "how you rate" : `how ${statsName} rates`}</div>
 
               {statsReviews.length === 0 ? (
@@ -3558,7 +3558,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                       <StatsMascot mood={tier.face} size={140} motion="bob" />
                     </div>
                     <div className="ui-sans" style={{ fontSize: 12, letterSpacing: "0.12em", fontWeight: 700, color: BLUE, textTransform: "uppercase" }}>{tier.title}</div>
-                    <div className="ui-sans" style={{ fontSize: 60, fontWeight: 800, letterSpacing: "-0.03em", lineHeight: 1, margin: "8px 0 4px" }}>{numericAvg.toFixed(1)}</div>
+                    <div className="ui-sans" style={{ fontSize: 60, fontWeight: 800, letterSpacing: "-0.03em", lineHeight: 1, margin: "8px 0 4px" }}>{numericAvg.toFixed(1)}<span style={{ fontSize: 17, fontWeight: 400, color: MUTE, marginLeft: 5, letterSpacing: 0 }}>/avg</span></div>
                     <div className="ui-sans" style={{ fontSize: 14, color: MUTE }}>{statsIsOwn ? tier.blurb : (tier.blurbThird || tier.blurb)}</div>
                   </div>
 
@@ -3577,7 +3577,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                   )}
 
                   {/* Highest rated */}
-                  <div className="ui-sans" style={{ fontSize: 12, letterSpacing: "0.12em", fontWeight: 700, color: MUTE, margin: "34px 0 10px" }}>{statsIsOwn ? "your highest rated" : "highest rated"}</div>
+                  <div className="ui-sans" style={{ fontSize: 12, letterSpacing: "0.12em", fontWeight: 400, color: MUTE, margin: "34px 0 10px" }}>{statsIsOwn ? "your highest rated" : "highest rated"}</div>
                   <div>
                     {ranked.map((r, i) => {
                       const album = fetchedAlbums[r.albumId] || albumById(r.albumId);
