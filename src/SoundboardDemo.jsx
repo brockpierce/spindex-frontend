@@ -3081,28 +3081,6 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                 </div>
               )}
 
-              {viewedUserMixes.length > 0 && (
-                <div style={{ marginTop: 30 }}>
-                  <div style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14, textAlign: isMobile ? "center" : "left", fontWeight: 400 }} className="ui-sans">mixes</div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                    {viewedUserMixes.map((m) => (
-                      <div
-                        key={m.id}
-                        onClick={() => setView({ name: "albumMixDetail", id: m.id, mix: { ...m, owner: user.username }, from: view })}
-                        style={{ border: `1px solid ${LINE}`, borderRadius: 0, padding: "16px 18px", cursor: "pointer", display: "flex", gap: 14, alignItems: "center" }}
-                      >
-                        <MixCoverStack albums={m.albums} fetchedAlbums={fetchedAlbums} albumById={albumById} size={64} />
-                        <div style={{ flex: 1 }} className="ui-sans">
-                          <div style={{ fontSize: 14.5, fontWeight: 400 }}>{m.title}</div>
-                          {m.description && <div style={{ fontSize: 12.5, color: MUTE, marginTop: 2 }}>{m.description}</div>}
-                          <div style={{ fontSize: 11, color: MUTE, marginTop: 4 }}>{m.albums.length} album{m.albums.length !== 1 ? "s" : ""}</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
               <div style={{ marginTop: 30 }}>
                 <div style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14, textAlign: isMobile ? "center" : "left", fontWeight: 400 }} className="ui-sans">reviews</div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -3153,6 +3131,28 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                         </div>
                       );
                     })}
+                  </div>
+                </div>
+              )}
+
+              {viewedUserMixes.length > 0 && (
+                <div style={{ marginTop: 30 }}>
+                  <div style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14, textAlign: isMobile ? "center" : "left", fontWeight: 400 }} className="ui-sans">mixes</div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                    {viewedUserMixes.map((m) => (
+                      <div
+                        key={m.id}
+                        onClick={() => setView({ name: "albumMixDetail", id: m.id, mix: { ...m, owner: user.username }, from: view })}
+                        style={{ border: `1px solid ${LINE}`, borderRadius: 0, padding: "16px 18px", cursor: "pointer", display: "flex", gap: 14, alignItems: "center" }}
+                      >
+                        <MixCoverStack albums={m.albums} fetchedAlbums={fetchedAlbums} albumById={albumById} size={64} />
+                        <div style={{ flex: 1 }} className="ui-sans">
+                          <div style={{ fontSize: 14.5, fontWeight: 400 }}>{m.title}</div>
+                          {m.description && <div style={{ fontSize: 12.5, color: MUTE, marginTop: 2 }}>{m.description}</div>}
+                          <div style={{ fontSize: 11, color: MUTE, marginTop: 4 }}>{m.albums.length} album{m.albums.length !== 1 ? "s" : ""}</div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
