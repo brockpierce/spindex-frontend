@@ -35,7 +35,7 @@
 .pf a { color: var(--pf-navy); }
 .pf a:hover { color: var(--pf-navy-dk); }
 
-.pf[data-theme] .pf-name {
+.pf[data-theme]:not([data-theme=""]) .pf-name {
   font-family: var(--pf-name-font, inherit) !important;
   font-size: var(--pf-name-size, 46px) !important;
   font-weight: var(--pf-name-weight, 400) !important;
@@ -44,8 +44,8 @@
   color: var(--pf-name-color, #141414) !important;
   line-height: 1.05;
 }
-.pf[data-theme] .pf-handle  { color: var(--pf-handle-color, #9a9a9a) !important; font-size: var(--pf-handle-size, 19px) !important; font-style: var(--pf-handle-style, normal) !important; }
-.pf[data-theme] .pf-tagline { color: var(--pf-tagline-color, #7a7a7a) !important; font-size: var(--pf-tagline-size, 17px) !important; font-style: var(--pf-tagline-style, normal) !important; }
+.pf[data-theme]:not([data-theme=""]) .pf-handle  { color: var(--pf-handle-color, #9a9a9a) !important; font-size: var(--pf-handle-size, 19px) !important; font-style: var(--pf-handle-style, normal) !important; }
+.pf[data-theme]:not([data-theme=""]) .pf-tagline { color: var(--pf-tagline-color, #7a7a7a) !important; font-size: var(--pf-tagline-size, 17px) !important; font-style: var(--pf-tagline-style, normal) !important; }
 
 .pf-avatar {
   width: 150px; height: 150px; flex: none; overflow: hidden;
@@ -69,14 +69,14 @@
   text-transform: var(--pf-btn-transform, none);
 }
 
-.pf[data-theme] .pf-stat-num   { font-family: var(--pf-stat-font, inherit) !important; font-size: var(--pf-stat-size, 30px) !important; font-weight: var(--pf-stat-weight, 400) !important; letter-spacing: var(--pf-stat-ls, normal) !important; color: var(--pf-stat-color, #141414) !important; }
-.pf[data-theme] .pf-stat-label { font-family: var(--pf-stat-font, inherit) !important; font-size: 12px !important; letter-spacing: var(--pf-statlabel-ls, 1px) !important; text-transform: var(--pf-statlabel-transform, uppercase) !important; color: var(--pf-statlabel-color, #9a9a9a) !important; }
+.pf[data-theme]:not([data-theme=""]) .pf-stat-num   { font-family: var(--pf-stat-font, inherit) !important; font-size: var(--pf-stat-size, 30px) !important; font-weight: var(--pf-stat-weight, 400) !important; letter-spacing: var(--pf-stat-ls, normal) !important; color: var(--pf-stat-color, #141414) !important; }
+.pf[data-theme]:not([data-theme=""]) .pf-stat-label { font-family: var(--pf-stat-font, inherit) !important; font-size: 12px !important; letter-spacing: var(--pf-statlabel-ls, 1px) !important; text-transform: var(--pf-statlabel-transform, uppercase) !important; color: var(--pf-statlabel-color, #9a9a9a) !important; }
 
 .pf-divider { border: 0; border-top: var(--pf-divider, 1px solid #e4e4e4); margin: 34px 0; }
 
 /* section headers ------------------------------------------------ */
 .pf-section-wrap { text-align: var(--pf-section-align, center); margin-bottom: 24px; }
-.pf[data-theme] .pf-section {
+.pf[data-theme]:not([data-theme=""]) .pf-section {
   font-family: var(--pf-section-font, inherit) !important;
   color: var(--pf-section-color, #9a9a9a) !important;
   font-size: var(--pf-section-size, 14px) !important;
