@@ -771,6 +771,7 @@ export default function SoundboardDemo() {
   ]);
   const [userSearchQuery, setUserSearchQuery] = useState("");
   const [peopleSearchFocused, setPeopleSearchFocused] = useState(false);
+  const [followingUsers, setFollowingUsers] = useState([]);
   const [followState, setFollowState] = useState(() => {
     const map = {};
     ALL_USERS.forEach((u) => (map[u.username] = u.isFollowing));
