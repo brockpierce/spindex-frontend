@@ -4146,10 +4146,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                         {MOODS.map((m) => <option key={m} value={m}>{m}</option>)}
                       </select>
                     ) : (
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
-                        <span>{profile.mood || <span style={{ color: "#9aa" }}>—</span>}</span>
-                        {profile.mood && <span className="pf-mood-emoticon">{MOOD_EMOTICONS[profile.mood] || ""}</span>}
-                      </span>
+                      <span className="pf-mood-emoticon">{profile.mood ? (MOOD_EMOTICONS[profile.mood] || "") : <span style={{ color: "#9aa" }}>—</span>}</span>
                     )}
                   </div>
                   {infoEditMode && (
