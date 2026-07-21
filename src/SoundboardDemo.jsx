@@ -4117,9 +4117,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                   <button className="sb-btn" onClick={() => setShowSettings(false)}>cancel</button>
                 </div>
 
-                <div style={{ borderTop: `1px solid ${LINE}`, marginTop: 20, paddingTop: 18 }}>
-                  <div style={{ fontSize: 13.5, fontWeight: 400, marginBottom: 14 }}>theme</div>
-
+                <div style={{ borderTop: `1px solid ${LINE}`, marginTop: 20, paddingTop: 18, textAlign: "left" }}>
                   {true && (() => {
                     const isPreset = Object.values(ACCENTS).some((a) => a.value.toLowerCase() === BLUE.toLowerCase());
                     const isCustom = !isPreset;
@@ -4168,42 +4166,6 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                     );
                   })()}
 
-                  <div style={{ fontSize: 11, color: MUTE, marginBottom: 8 }}>appearance</div>
-                  <div style={{ display: "flex", border: `1px solid ${INK}`, borderRadius: 0, overflow: "hidden", width: 200 }}>
-                    <button
-                      onClick={() => setDarkMode(false)}
-                      style={{
-                        flex: 1,
-                        padding: "7px 0",
-                        fontFamily: "inherit",
-                        fontSize: 12,
-                        fontWeight: 500,
-                        cursor: "pointer",
-                        border: "none",
-                        background: !darkMode ? INK : "transparent",
-                        color: !darkMode ? BG : INK,
-                      }}
-                    >
-                      light
-                    </button>
-                    <button
-                      onClick={() => setDarkMode(true)}
-                      style={{
-                        flex: 1,
-                        padding: "7px 0",
-                        fontFamily: "inherit",
-                        fontSize: 12,
-                        fontWeight: 500,
-                        cursor: "pointer",
-                        border: "none",
-                        borderLeft: `1px solid ${INK}`,
-                        background: darkMode ? INK : "transparent",
-                        color: darkMode ? BG : INK,
-                      }}
-                    >
-                      dark
-                    </button>
-                  </div>
                 </div>
               </div>
             )}
