@@ -3786,16 +3786,19 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                 )}
               </div>
               {isOwn && (
-                <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, fontSize: 12.5 }}>
-                  <span style={{ color: MUTE }}>{mix.isPublic === false ? "Private" : "Public"}</span>
+                <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 14, marginTop: 8 }}>
                   <button
+                    role="switch"
+                    aria-checked={mix.isPublic !== false}
                     onClick={() => setMixPublic(mix.id, mix.isPublic === false)}
+                    onKeyDown={(e) => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); setMixPublic(mix.id, mix.isPublic === false); } }}
                     title={mix.isPublic === false ? "Make public" : "Make private"}
-                    style={{ position: "relative", width: 38, height: 22, borderRadius: 0, border: "none", cursor: "pointer", padding: 0, background: mix.isPublic === false ? LINE : BLUE, transition: "background 0.15s" }}
+                    style={{ position: "relative", width: 52, height: 30, borderRadius: 6, background: mix.isPublic === false ? LINE : BLUE, border: "none", cursor: "pointer", padding: 3, transition: "background 0.18s", display: "inline-flex", flexShrink: 0 }}
                   >
-                    <span style={{ position: "absolute", top: 2, left: mix.isPublic === false ? 2 : 18, width: 18, height: 18, borderRadius: "50%", background: "#fff", transition: "left 0.15s" }} />
+                    <span style={{ display: "block", width: 24, height: 24, borderRadius: 4, background: "#fff", boxShadow: "0 1px 2px rgba(0,0,0,0.25)", transform: mix.isPublic === false ? "translateX(0)" : "translateX(22px)", transition: "transform 0.18s" }} />
                   </button>
-                  <span style={{ color: MUTE, fontSize: 11.5 }}>{mix.isPublic === false ? "only you can see this on your profile" : "visible on your profile"}</span>
+                  <span style={{ fontSize: 15, fontWeight: 600, color: mix.isPublic === false ? MUTE : BLUE, minWidth: 56 }}>{mix.isPublic === false ? "Private" : "Public"}</span>
+                  <span style={{ fontSize: 15, fontWeight: 400, color: MUTE }}>{mix.isPublic === false ? "only you can see this list" : "visible on your profile"}</span>
                 </div>
               )}
               {!isOwn && (
