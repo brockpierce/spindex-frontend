@@ -4118,7 +4118,8 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                 setInfoEditMode(false);
               };
               return (
-                <div className="pf-infobox" style={{ marginTop: 20, maxWidth: 420 }}>
+                <div style={{ display: "flex", gap: 28, alignItems: "flex-start", flexWrap: "wrap", marginTop: 20 }}>
+                <div className="pf-infobox" style={{ maxWidth: 420, flex: "1 1 340px" }}>
                   <div className="pf-infobox-head" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                     <span>{profile.displayName}'s Info</span>
                     {!infoEditMode && <Pencil size={13} color="#fff" strokeWidth={2} style={{ cursor: "pointer" }} onClick={startEditing} />}
@@ -4155,6 +4156,21 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                       <button className="pf-friendbtn" onClick={() => setInfoEditMode(false)} style={{ cursor: "pointer" }}>cancel</button>
                     </div>
                   )}
+                </div>
+                <div className="pf-infobox" style={{ flex: "1 1 340px", minWidth: 300 }}>
+                  <div className="pf-infobox-head">{profile.displayName}'s Top 3 Albums</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, padding: 12 }}>
+                    {favorites.map((id) => {
+                      const album = fetchedAlbums[id] || albumById(id);
+                      return (
+                        <div key={id} onClick={() => openAlbum(id)} className="sb-cover-wrap" style={{ cursor: "pointer" }}>
+                          <AlbumCover album={album} size={90} />
+                          <div style={{ fontSize: 11, fontWeight: 700, color: BLUE, textAlign: "center", marginTop: 6 }}>{album.title}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
                 </div>
               );
             })()}
@@ -4298,7 +4314,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
               </div>
             )}
 
-            <div style={{ marginTop: 26 }}>
+            <div style={{ marginTop: 26, display: profile.profileTheme === "web2003" ? "none" : "block" }}>
               <div className={profile.profileTheme ? "pf-section-wrap" : ""} style={profile.profileTheme ? { marginBottom: 14 } : {}}>
                 <span className={profile.profileTheme ? "pf-section" : ""} style={profile.profileTheme ? {} : { fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, textAlign: "center", fontWeight: 400, display: "block", marginBottom: 14 }}>top 3 albums</span>
               </div>
