@@ -2965,7 +2965,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
           const userReviews = [...viewedUserReviews].sort((a, b) => (a.date !== b.date ? (a.date < b.date ? 1 : -1) : (a.id < b.id ? 1 : -1)));
           const userAvgRating = userReviews.length ? (userReviews.reduce((s, r) => s + r.rating, 0) / userReviews.length).toFixed(1) : "--";
           return (
-            <div>
+            <div className="pf" data-theme={user.profileTheme || ""} style={{ "--pf-navy": user.accentColor || BLUE }}>
               <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 12.5, marginBottom: 22, cursor: "pointer" }} onClick={() => setView({ name: "home" })}>
                 <ChevronLeft size={14} /> back
               </div>
@@ -2973,9 +2973,9 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                 <div style={{ display: "flex", alignItems: "center", gap: isMobile ? 18 : 24, flex: 1, minWidth: 0 }}>
                   <Avatar username={user.username} size={isMobile ? 88 : 120} />
                   <div className="ui-sans" style={{ textAlign: "left", minWidth: 0 }}>
-                    <div style={{ fontSize: isMobile ? 24 : 30, fontWeight: 700, lineHeight: 1.15, letterSpacing: "-0.01em", textAlign: "left" }}>{user.displayName || user.username}</div>
-                    <div style={{ fontSize: isMobile ? 14 : 16, color: MUTE, marginTop: 3, textAlign: "left" }}>@{(user.username || "").toLowerCase()}</div>
-                    {user.bio && <div style={{ fontSize: isMobile ? 14 : 15, color: MUTE, marginTop: 10, maxWidth: 480, lineHeight: 1.5, textAlign: "left" }}>{!isMobile && user.bio.length > 30 ? user.bio.slice(0, 30) + "…" : user.bio}</div>}
+                    <div className="pf-name" style={user.profileTheme ? { textAlign: "left" } : { fontSize: isMobile ? 24 : 30, fontWeight: 700, lineHeight: 1.15, letterSpacing: "-0.01em", textAlign: "left" }}>{user.displayName || user.username}</div>
+                    <div className="pf-handle" style={user.profileTheme ? { textAlign: "left", marginTop: 3 } : { fontSize: isMobile ? 14 : 16, color: MUTE, marginTop: 3, textAlign: "left" }}>@{(user.username || "").toLowerCase()}</div>
+                    {user.bio && <div className="pf-tagline" style={user.profileTheme === "web2003" ? { marginTop: 10, maxWidth: 480, textAlign: "left", fontStyle: "italic", fontWeight: 700 } : user.profileTheme ? { marginTop: 10, maxWidth: 480, textAlign: "left" } : { fontSize: isMobile ? 14 : 15, color: MUTE, marginTop: 10, maxWidth: 480, lineHeight: 1.5, textAlign: "left" }}>{user.profileTheme === "web2003" ? `"${user.bio}"` : (!isMobile && user.bio.length > 30 ? user.bio.slice(0, 30) + "…" : user.bio)}</div>}
                   </div>
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", alignItems: "flex-end", flexShrink: 0, gap: 16 }}>
