@@ -128,7 +128,7 @@
   --pf-tagline-color: #333; --pf-tagline-size: 12px;
   --pf-avatar-radius: 0; --pf-avatar-border: 3px ridge var(--pf-navy);
   --pf-btn-border: 2px outset #cfd8e6; --pf-btn-radius: 0; --pf-btn-bg: #e8edf5; --pf-btn-color: var(--pf-navy); --pf-btn-weight: 700;
-  --pf-stat-size: 20px; --pf-stat-weight: 700; --pf-stat-color: var(--pf-navy);
+  --pf-stat-font: Verdana, Geneva, Tahoma, sans-serif; --pf-stat-size: 20px; --pf-stat-weight: 700; --pf-stat-color: var(--pf-navy);
   --pf-statlabel-color: #666; --pf-statlabel-ls: 0;
   --pf-divider: 2px groove var(--pf-navy);
   --pf-section-align: left; --pf-section-color: #fff; --pf-section-size: 12px; --pf-section-weight: 700; --pf-section-ls: 0.5px; --pf-section-transform: none; --pf-section-display: inline-block; --pf-section-bg: var(--pf-navy); --pf-section-pad: 4px 12px;
@@ -141,7 +141,7 @@
 /* MySpace-style info table (see README for markup) */
 .pf-infobox { border: 1px solid #b7c4dd; font-family: Verdana, Geneva, Tahoma, sans-serif; font-size: 13px; }
 .pf-infobox-head { background: var(--pf-navy); color: #fff; font-weight: 700; font-size: 14px; padding: 6px 12px; }
-.pf-inforow { display: grid; grid-template-columns: 100px 1fr; gap: 10px; padding: 8px 12px; background: #eef1f8; border-top: 1px solid #fff; align-items: center; text-align: left; }
+.pf-inforow { display: grid; grid-template-columns: 100px 1fr; gap: 10px; padding: 4px 12px; background: #eef1f8; border-top: 1px solid #fff; align-items: center; text-align: left; }
 .pf-inforow b { color: var(--pf-navy); }
 .pf-friendbtn { border: 2px outset #cfd8e6; background: #e8edf5; color: var(--pf-navy); font-weight: 700; font-size: 12px; padding: 4px 10px; }
 .pf-mood-emoticon { font-family: 'Courier New', monospace; font-weight: 700; color: var(--pf-navy); font-size: 15px; }
