@@ -794,6 +794,8 @@ export default function SoundboardDemo() {
   const [albumMixes, setAlbumMixes] = useState(INITIAL_ALBUM_MIXES);
   const [siteCommunityAvg, setSiteCommunityAvg] = useState(null);
   const [editingMixTitle, setEditingMixTitle] = useState(null);
+  const [editingInfo, setEditingInfo] = useState(null);
+  const [infoDraft, setInfoDraft] = useState("");
   const [savedAlbumMixes, setSavedAlbumMixes] = useState(INITIAL_SAVED_ALBUM_MIXES);
   const [songMixes, setSongMixes] = useState(INITIAL_SONG_MIXES);
   const [savedSongMixes, setSavedSongMixes] = useState(INITIAL_SAVED_SONG_MIXES);
@@ -4085,6 +4087,59 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                 )}
               </div>
             </div>
+
+            {profile.profileTheme === "web2003" && (() => {
+              const MOOD_EMOTICONS = { chill: ":-)", flirty: ";-)", happy: ":-D", angry: ">:-(", sad: ":'-(", bored: ":-|", hyper: "\\o/" };
+              const MOODS = ["chill", "flirty", "happy", "angry", "sad", "bored", "hyper"];
+              const rows = [
+                { key: "age", label: "Age", value: profile.age },
+                { key: "town", label: "Town", value: profile.town },
+                { key: "country", label: "Country", value: profile.country },
+                { key: "interests", label: "Interests", value: profile.interests },
+              ];
+              const startEdit = (key, val) => { setEditingInfo(key); setInfoDraft(val || ""); };
+              const commit = (key) => { saveProfileField({ [key]: infoDraft.trim() }); setEditingInfo(null); };
+              return (
+                <div className="pf-infobox" style={{ marginTop: 20, maxWidth: 420 }}>
+                  <div className="pf-infobox-head">{profile.displayName}'s Info</div>
+                  {rows.map((r) => (
+                    <div className="pf-inforow" key={r.key}>
+                      <b>{r.label}</b>
+                      {editingInfo === r.key ? (
+                        <input
+                          autoFocus
+                          className="pf-mood-select"
+                          value={infoDraft}
+                          onChange={(e) => setInfoDraft(e.target.value)}
+                          onBlur={() => commit(r.key)}
+                          onKeyDown={(e) => { if (e.key === "Enter") commit(r.key); if (e.key === "Escape") setEditingInfo(null); }}
+                          style={{ width: "90%" }}
+                        />
+                      ) : (
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                          <span>{r.value || <span style={{ color: "#9aa" }}>—</span>}</span>
+                          <Pencil size={12} color="#7a8aaa" strokeWidth={1.8} style={{ cursor: "pointer" }} onClick={() => startEdit(r.key, r.value)} />
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                  <div className="pf-inforow">
+                    <b>Mood</b>
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
+                      <select
+                        className="pf-mood-select"
+                        value={profile.mood || ""}
+                        onChange={(e) => saveProfileField({ mood: e.target.value })}
+                      >
+                        <option value="">—</option>
+                        {MOODS.map((m) => <option key={m} value={m}>{m}</option>)}
+                      </select>
+                      {profile.mood && <span className="pf-mood-emoticon">{MOOD_EMOTICONS[profile.mood] || ""}</span>}
+                    </span>
+                  </div>
+                </div>
+              );
+            })()}
 
             {showSettings && (
               <div style={{ marginTop: 18, border: `1px solid ${LINE}`, borderRadius: 0, padding: 18 }} className="ui-sans">
