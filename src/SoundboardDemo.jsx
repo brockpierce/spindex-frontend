@@ -4036,7 +4036,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
 
         {/* ---------------- PROFILE ---------------- */}
         {view.name === "profile" && (
-          <div>
+          <div className="pf" data-theme={profile.profileTheme || ""} style={{ "--pf-navy": BLUE }}>
             <div style={{ display: "flex", gap: isMobile ? 18 : 24, alignItems: isMobile ? "center" : "stretch", justifyContent: "space-between", paddingBottom: 22, borderBottom: `1px solid ${INK}` }}>
               <div style={{ display: "flex", gap: isMobile ? 18 : 24, alignItems: "center", flex: 1, minWidth: 0 }}>
                 {avatarUrl ? (
@@ -4051,9 +4051,9 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                   </div>
                 )}
                 <div className="ui-sans" style={{ textAlign: "left", minWidth: 0, display: "flex", flexDirection: "column", gap: 6 }}>
-                  <div style={{ fontSize: isMobile ? 24 : 30, fontWeight: 400, lineHeight: 1.15, letterSpacing: "-0.01em", textAlign: "left" }}>{profile.displayName}</div>
-                  <div style={{ fontSize: isMobile ? 14 : 16, color: MUTE, textAlign: "left" }}>@{(profile.username || "").toLowerCase()}</div>
-                  {profile.bio && <div style={{ fontSize: isMobile ? 14 : 15, color: MUTE, maxWidth: 480, lineHeight: 1.5, textAlign: "left" }}>{!isMobile && profile.bio.length > 30 ? profile.bio.slice(0, 30) + "…" : profile.bio}</div>}
+                  <div className="pf-name" style={profile.profileTheme ? { textAlign: "left" } : { fontSize: isMobile ? 24 : 30, fontWeight: 400, lineHeight: 1.15, letterSpacing: "-0.01em", textAlign: "left" }}>{profile.displayName}</div>
+                  <div className="pf-handle" style={profile.profileTheme ? { textAlign: "left" } : { fontSize: isMobile ? 14 : 16, color: MUTE, textAlign: "left" }}>@{(profile.username || "").toLowerCase()}</div>
+                  {profile.bio && <div className="pf-tagline" style={profile.profileTheme ? { maxWidth: 480, textAlign: "left" } : { fontSize: isMobile ? 14 : 15, color: MUTE, maxWidth: 480, lineHeight: 1.5, textAlign: "left" }}>{!isMobile && profile.bio.length > 30 ? profile.bio.slice(0, 30) + "…" : profile.bio}</div>}
                 </div>
               </div>
               <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", alignItems: "flex-end", flexShrink: 0, gap: 16 }}>
