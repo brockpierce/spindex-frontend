@@ -221,7 +221,7 @@
    ============================================================ */
 .pf[data-theme="elegant"] {
   --pf-text: #1c1c1c; --pf-body: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; --pf-body-size: 16px;
-  --pf-name-font: 'Pinyon Script', cursive; --pf-name-size: 68px; --pf-name-weight: 400; --pf-name-ls: normal; --pf-name-color: var(--pf-navy);
+  --pf-name-font: 'Pinyon Script', cursive; --pf-name-size: 52px; --pf-name-weight: 400; --pf-name-ls: normal; --pf-name-color: var(--pf-navy);
   --pf-handle-color: #9a9a9a; --pf-handle-size: 18px; --pf-handle-style: italic;
   --pf-tagline-color: #666; --pf-tagline-size: 18px; --pf-tagline-style: italic;
   --pf-avatar-radius: 50%; --pf-avatar-border: 1px solid #cdd4e0;
@@ -235,8 +235,16 @@
   --pf-score-font: 'Times New Roman', Times, serif; --pf-score-weight: 400;
 }
 
-/* Mobile: shrink web2003 stats so all 5 fit without horizontal overflow */
+
+.pf[data-theme="elegant"] .pf-stat-num { line-height: 1.1 !important; }
+.pf[data-theme="elegant"] .pf-stat-label { margin-top: 2px !important; }
+
+
+/* Under a theme, don't let .ui-sans force Helvetica — inherit the theme body font */
+.pf[data-theme]:not([data-theme=""]) .ui-sans { font-family: var(--pf-body, inherit) !important; }
+
+/* Mobile: shrink themed stats so all 5 fit without horizontal overflow */
 @media (max-width: 600px) {
-  .pf[data-theme="web2003"] .pf-stat-num { font-size: 15px !important; }
-  .pf[data-theme="web2003"] .pf-stat-label { font-size: 9px !important; letter-spacing: 0 !important; }
+  .pf[data-theme]:not([data-theme=""]) .pf-stat-num { font-size: 15px !important; }
+  .pf[data-theme]:not([data-theme=""]) .pf-stat-label { font-size: 9px !important; letter-spacing: 0 !important; }
 }
