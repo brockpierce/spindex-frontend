@@ -847,6 +847,49 @@ export default function SoundboardDemo() {
   }
   function saveProfileTheme(theme) { saveProfileField({ profileTheme: theme }); }
 
+  function loadGuestbook(username) {
+    setGuestbookLoading(true);
+    apiFetch(`${BACKEND_URL}/api/guestbook/${username}`)
+      .then((r) => r.json())
+      .then((data) => { setGuestbookEntries(data.entries || []); })
+      .catch(() => {})
+      .finally(() => setGuestbookLoading(false));
+  }
+  function signGuestbook(username) {
+    const msg = guestbookDraft.trim();
+    if (!msg || guestbookSigning) return;
+    setGuestbookSigning(true);
+    apiFetch(`${BACKEND_URL}/api/guestbook/${username}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: msg }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.entry) {
+          setGuestbookEntries((prev) => [data.entry, ...prev]);
+          setGuestbookDraft("");
+        }
+      })
+      .catch(() => {})
+      .finally(() => setGuestbookSigning(false));
+  }
+  function deleteGuestbookEntry(id) {
+    apiFetch(`${BACKEND_URL}/api/guestbook/${id}`, { method: "DELETE" })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.ok) setGuestbookEntries((prev) => prev.filter((e) => e.id !== id));
+      })
+      .catch(() => {});
+  }
+
+  // guestbook load effect
+  useEffect(() => {
+    if (view.name === "guestbook" && view.username) {
+      loadGuestbook(view.username);
+    }
+  }, [view.name, view.username]);
+
   // Load real follower/following counts when logged in
   useEffect(() => {
     if (!authUser) return;
@@ -1986,6 +2029,10 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
   const [showAllOwnReviews, setShowAllOwnReviews] = useState(false);
   const [showAllUserReviews, setShowAllUserReviews] = useState(false);
   const [showFavPicker, setShowFavPicker] = useState(false);
+  const [guestbookEntries, setGuestbookEntries] = useState([]);
+  const [guestbookDraft, setGuestbookDraft] = useState("");
+  const [guestbookLoading, setGuestbookLoading] = useState(false);
+  const [guestbookSigning, setGuestbookSigning] = useState(false);
   const [albumListSort, setAlbumListSort] = useState("date");
 
   function openThread(reviewId, from) {
@@ -2688,6 +2735,73 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
         )}
 
         {/* ---------------- TERMS ---------------- */}
+        {view.name === "guestbook" && (() => {
+          const canSign = !!authUser;
+          return (
+            <div style={{ maxWidth: 640, margin: "0 auto", fontFamily: "'Times New Roman', Times, serif", color: "#1a1a2e" }}>
+              <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 12.5, marginBottom: 22, cursor: "pointer", fontFamily: "'Times New Roman', serif" }} onClick={() => setView(view.from || { name: "profile" })}>
+                <ChevronLeft size={14} /> back
+              </div>
+
+              <div style={{ textAlign: "center", border: "4px double #22406e", padding: "18px 16px", marginBottom: 22, background: "#f7f4ee" }}>
+                <div style={{ fontSize: 30, fontWeight: 700, color: "#22406e", letterSpacing: "0.5px" }}>✧ {view.displayName || view.username}'s Guestbook ✧</div>
+                <div style={{ fontSize: 15, marginTop: 6, fontStyle: "italic" }}>~ sign the book &amp; leave your mark ~</div>
+                <div style={{ fontSize: 13, marginTop: 8, color: "#555" }}>[ {guestbookEntries.length} {guestbookEntries.length === 1 ? "entry" : "entries"} ]</div>
+              </div>
+
+              {canSign ? (
+                <div style={{ border: "2px ridge #22406e", padding: 16, marginBottom: 24, background: "#fffef9" }}>
+                  <div style={{ fontWeight: 700, fontSize: 17, marginBottom: 10, color: "#22406e" }}>✎ Sign the Guestbook!</div>
+                  <textarea
+                    value={guestbookDraft}
+                    onChange={(e) => setGuestbookDraft(e.target.value)}
+                    maxLength={500}
+                    placeholder="leave a message..."
+                    style={{ width: "100%", minHeight: 70, fontFamily: "'Times New Roman', serif", fontSize: 15, padding: 10, border: "2px inset #b0b8c8", boxSizing: "border-box", resize: "vertical", background: "#fff" }}
+                  />
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8 }}>
+                    <span style={{ fontSize: 12, color: "#888" }}>{guestbookDraft.length}/500</span>
+                    <button
+                      onClick={() => signGuestbook(view.username)}
+                      disabled={guestbookSigning || !guestbookDraft.trim()}
+                      style={{ fontFamily: "'Times New Roman', serif", fontSize: 15, fontWeight: 700, color: "#22406e", background: "#e8edf5", border: "2px outset #cfd8e6", padding: "6px 18px", cursor: guestbookDraft.trim() ? "pointer" : "default", opacity: guestbookDraft.trim() ? 1 : 0.5 }}
+                    >
+                      Sign it! ✍
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ textAlign: "center", marginBottom: 24, fontStyle: "italic", color: "#555" }}>Log in to sign the guestbook.</div>
+              )}
+
+              {guestbookLoading ? (
+                <div style={{ textAlign: "center", padding: 20, color: "#888" }}>loading entries...</div>
+              ) : guestbookEntries.length === 0 ? (
+                <div style={{ textAlign: "center", padding: 30, fontStyle: "italic", color: "#777", border: "2px dotted #b0b8c8" }}>
+                  No entries yet. Be the first to sign! ✨
+                </div>
+              ) : (
+                <div>
+                  {guestbookEntries.map((e, i) => (
+                    <div key={e.id} style={{ borderTop: i === 0 ? "3px double #22406e" : "none", borderBottom: "3px double #22406e", padding: "14px 6px", position: "relative" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 4 }}>
+                        <span style={{ fontWeight: 700, fontSize: 16, color: "#22406e", cursor: "pointer", textDecoration: "underline" }} onClick={() => openUserProfile(e.authorUsername)}>{e.authorName}</span>
+                        <span style={{ fontSize: 12, color: "#888" }}>{new Date(e.createdAt).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}</span>
+                      </div>
+                      <div style={{ fontSize: 15, lineHeight: 1.5, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{e.message}</div>
+                      {view.isOwn && (
+                        <div onClick={() => deleteGuestbookEntry(e.id)} style={{ fontSize: 12, color: "#a44", cursor: "pointer", marginTop: 6, textDecoration: "underline" }}>delete</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div style={{ textAlign: "center", marginTop: 24, fontSize: 12, color: "#999", fontStyle: "italic" }}>~ thanks for visiting ~</div>
+            </div>
+          );
+        })()}
+
         {view.name === "terms" && (
           <TermsScreen onBack={() => setView({ name: "home" })} inline />
         )}
@@ -2977,6 +3091,9 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
           const userAvgRating = userReviews.length ? (userReviews.reduce((s, r) => s + r.rating, 0) / userReviews.length).toFixed(1) : "--";
           return (
             <div className="pf" data-theme={user.profileTheme || ""} style={{ "--pf-navy": user.accentColor || BLUE }}>
+              {user.profileTheme === "geocities" && (
+                <div style={{ textAlign: "center", marginBottom: 18, fontFamily: "'Times New Roman', serif", fontWeight: 700, fontSize: 16, color: user.accentColor || BLUE, cursor: "pointer", textDecoration: "underline" }} onClick={() => setView({ name: "guestbook", username: user.username, displayName: user.displayName || user.username, isOwn: false, from: view })}>✎ Sign My Guestbook! ✎</div>
+              )}
               {user.profileTheme === "terminal" && (
                 <div className="pf-loginline" style={{ marginBottom: 18, textAlign: "left" }}>
                   $ ./profile --user {user.username}<span className="pf-cursor"></span>
@@ -3174,15 +3291,6 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                       </div>
                     ))}
                   </div>
-                </div>
-              )}
-              {user.profileTheme === "geocities" && (
-                <div className="pf-geocities" style={{ textAlign: "center", marginTop: 44, paddingTop: 24, borderTop: "3px double #22406e", fontFamily: "'Times New Roman', serif", lineHeight: 2.2 }}>
-                  <div style={{ fontWeight: 700 }}>✎ Sign My Guestbook! ✎</div>
-                  <div>« Prev — Random Site — Next »</div>
-                  <div>✉ Email Me!</div>
-                  <div style={{ fontSize: 13, color: "#555" }}>You are visitor #01337</div>
-                  <div style={{ fontSize: 13, color: "#555" }}>★ Best viewed in Netscape Navigator ★</div>
                 </div>
               )}
             </div>
@@ -4146,6 +4254,9 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
         {/* ---------------- PROFILE ---------------- */}
         {view.name === "profile" && (
           <div className="pf" data-theme={profile.profileTheme || ""} style={{ "--pf-navy": BLUE }}>
+            {profile.profileTheme === "geocities" && (
+              <div style={{ textAlign: "center", marginBottom: 18, fontFamily: "'Times New Roman', serif", fontWeight: 700, fontSize: 16, color: BLUE, cursor: "pointer", textDecoration: "underline" }} onClick={() => setView({ name: "guestbook", username: profile.username, displayName: profile.displayName, isOwn: true, from: view })}>✎ Sign My Guestbook! ✎</div>
+            )}
             {profile.profileTheme === "terminal" && (
               <div className="pf-loginline" style={{ marginBottom: 18, textAlign: "left" }}>
                 $ ./profile --user {profile.username}<span className="pf-cursor"></span>
@@ -4654,15 +4765,6 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                 </div>
               ) : null;
             })()}
-            {profile.profileTheme === "geocities" && (
-              <div className="pf-geocities" style={{ textAlign: "center", marginTop: 44, paddingTop: 24, borderTop: "3px double #22406e", fontFamily: "'Times New Roman', serif", lineHeight: 2.2 }}>
-                <div style={{ fontWeight: 700 }}>✎ Sign My Guestbook! ✎</div>
-                <div>« Prev — Random Site — Next »</div>
-                <div>✉ Email Me!</div>
-                <div style={{ fontSize: 13, color: "#555" }}>You are visitor #01337</div>
-                <div style={{ fontSize: 13, color: "#555" }}>★ Best viewed in Netscape Navigator ★</div>
-              </div>
-            )}
           </div>
         )}
       </div>
