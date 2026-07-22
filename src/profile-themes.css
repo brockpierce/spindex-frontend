@@ -186,7 +186,7 @@
   --pf-stat-size: 24px; --pf-stat-weight: 700; --pf-stat-color: var(--pf-navy);
   --pf-statlabel-color: #555;
   --pf-divider: 3px double var(--pf-navy);
-  --pf-section-align: center; --pf-section-color: var(--pf-navy); --pf-section-size: 17px; --pf-section-weight: 700; --pf-section-ls: 1px; --pf-section-transform: uppercase; --pf-section-decoration: underline; --pf-section-display: block; --pf-section-prefix: "\2726  "; --pf-section-suffix: "  \2726";
+  --pf-section-align: center; --pf-section-color: var(--pf-navy); --pf-section-size: 15px; --pf-section-weight: 700; --pf-section-ls: 1px; --pf-section-transform: uppercase; --pf-section-decoration: underline; --pf-section-display: block; --pf-section-prefix: "\2726  "; --pf-section-suffix: "  \2726";
   --pf-card-border: 3px double var(--pf-navy); --pf-card-radius: 0;
   --pf-cardtitle-size: 15px; --pf-cardtitle-weight: 700; --pf-cardtitle-color: var(--pf-navy);
   --pf-score-weight: 700;
@@ -229,7 +229,7 @@
   --pf-stat-font: 'Cormorant Garamond', Georgia, serif; --pf-stat-size: 26px; --pf-stat-weight: 400; --pf-stat-ls: 0.5px; --pf-stat-color: #1c1c1c;
   --pf-statlabel-color: #9a9a9a; --pf-statlabel-ls: 2px;
   --pf-divider: 1px solid #cdd4e0;
-  --pf-section-align: center; --pf-section-font: 'Pinyon Script', cursive; --pf-section-color: var(--pf-navy); --pf-section-size: 30px; --pf-section-weight: 400; --pf-section-ls: 0; --pf-section-transform: lowercase; --pf-section-display: block; --pf-section-prefix: "\2767  "; --pf-section-suffix: "  \2619";
+  --pf-section-align: center; --pf-section-font: 'Pinyon Script', cursive; --pf-section-color: var(--pf-navy); --pf-section-size: 25px; --pf-section-weight: 400; --pf-section-ls: 0; --pf-section-transform: lowercase; --pf-section-display: block; --pf-section-prefix: "\2767  "; --pf-section-suffix: "  \2619";
   --pf-card-border: 1px solid #dcdcdc; --pf-card-radius: 2px;
   --pf-cardtitle-size: 16px; --pf-cardtitle-style: italic; --pf-cardtitle-color: #1c1c1c;
   --pf-score-font: 'Times New Roman', Times, serif; --pf-score-weight: 400;
@@ -242,6 +242,10 @@
 
 /* Under a theme, don't let .ui-sans force Helvetica — inherit the theme body font */
 .pf[data-theme]:not([data-theme=""]) .ui-sans { font-family: var(--pf-body, inherit) !important; }
+
+
+/* Prevent stat numbers bleeding onto labels across themes */
+.pf[data-theme]:not([data-theme=""]) .pf-stat-num { line-height: 1.15 !important; height: auto !important; margin-bottom: 3px !important; }
 
 /* Mobile: shrink themed stats so all 5 fit without horizontal overflow */
 @media (max-width: 600px) {
