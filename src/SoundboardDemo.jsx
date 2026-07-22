@@ -4123,10 +4123,10 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                   <img
                     src={avatarUrl}
                     alt=""
-                    style={{ width: isMobile ? 88 : 120, height: isMobile ? 88 : 120, borderRadius: profile.profileTheme === "web2003" ? 0 : "50%", border: profile.profileTheme === "web2003" ? `3px ridge ${BLUE}` : "none", objectFit: "cover", flexShrink: 0 }}
+                    className={profile.profileTheme ? "pf-avatar" : ""} style={{ width: isMobile ? 88 : 120, height: isMobile ? 88 : 120, borderRadius: profile.profileTheme ? undefined : "50%", objectFit: "cover", flexShrink: 0 }}
                   />
                 ) : (
-                  <div style={{ width: isMobile ? 88 : 120, height: isMobile ? 88 : 120, borderRadius: profile.profileTheme === "web2003" ? 0 : "50%", border: profile.profileTheme === "web2003" ? `3px ridge ${BLUE}` : "none", background: BLUE, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <div className={profile.profileTheme ? "pf-avatar" : ""} style={{ width: isMobile ? 88 : 120, height: isMobile ? 88 : 120, borderRadius: profile.profileTheme ? undefined : "50%", background: BLUE, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                     <User color="#fff" size={isMobile ? 36 : 48} />
                   </div>
                 )}
