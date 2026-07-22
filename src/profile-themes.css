@@ -253,14 +253,7 @@
 
 /* Mobile: shrink themed stats so all 5 fit without horizontal overflow */
 @media (max-width: 600px) {
-  .pf[data-theme="web2003"] .pf-stat-num { font-size: 16px !important; }
-  .pf[data-theme="web2003"] .pf-stat-label { font-size: 9px !important; letter-spacing: 0 !important; }
-  .pf[data-theme="terminal"] .pf-stat-num,
-  .pf[data-theme="geocities"] .pf-stat-num,
-  .pf[data-theme="cutesy"] .pf-stat-num,
-  .pf[data-theme="elegant"] .pf-stat-num { font-size: 18px !important; }
-  .pf[data-theme="terminal"] .pf-stat-label,
-  .pf[data-theme="geocities"] .pf-stat-label,
-  .pf[data-theme="cutesy"] .pf-stat-label,
-  .pf[data-theme="elegant"] .pf-stat-label { font-size: 9px !important; letter-spacing: 0 !important; }
+  .pf[data-theme]:not([data-theme=""]) .pf-stat-num { font-size: 15px !important; min-height: 20px !important; }
+  .pf[data-theme]:not([data-theme=""]) .pf-stat-label { font-size: 8.5px !important; letter-spacing: 0 !important; }
+  .pf[data-theme="web2003"] .pf-stat-num { font-size: 14px !important; }
 }
