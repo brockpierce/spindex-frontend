@@ -2744,20 +2744,20 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
               </div>
 
               <div style={{ textAlign: "center", border: "4px double #22406e", padding: "18px 16px", marginBottom: 22, background: "#f7f4ee" }}>
-                <div style={{ fontSize: 30, fontWeight: 700, color: "#22406e", letterSpacing: "0.5px" }}>✧ {view.displayName || view.username}'s Guestbook ✧</div>
+                <div style={{ fontSize: 30, fontWeight: 700, color: "#22406e", letterSpacing: "0.5px" }}>*~*~* {view.displayName || view.username}'s Guestbook *~*~*</div>
                 <div style={{ fontSize: 15, marginTop: 6, fontStyle: "italic" }}>~ sign the book &amp; leave your mark ~</div>
                 <div style={{ fontSize: 13, marginTop: 8, color: "#555" }}>[ {guestbookEntries.length} {guestbookEntries.length === 1 ? "entry" : "entries"} ]</div>
               </div>
 
               {canSign ? (
                 <div style={{ border: "2px ridge #22406e", padding: 16, marginBottom: 24, background: "#fffef9" }}>
-                  <div style={{ fontWeight: 700, fontSize: 17, marginBottom: 10, color: "#22406e" }}>✎ Sign the Guestbook!</div>
+                  <div style={{ fontWeight: 700, fontSize: 17, marginBottom: 10, color: "#22406e" }}>>> Sign the Guestbook! <<</div>
                   <textarea
                     value={guestbookDraft}
                     onChange={(e) => setGuestbookDraft(e.target.value)}
                     maxLength={500}
                     placeholder="leave a message..."
-                    style={{ width: "100%", minHeight: 70, fontFamily: "'Times New Roman', serif", fontSize: 15, padding: 10, border: "2px inset #b0b8c8", boxSizing: "border-box", resize: "vertical", background: "#fff" }}
+                    style={{ width: "100%", minHeight: 70, fontFamily: "'Times New Roman', serif", fontSize: 15, padding: 10, border: "2px inset #b0b8c8", boxSizing: "border-box", resize: "vertical", background: "#fff", color: "#1a1a2e" }}
                   />
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8 }}>
                     <span style={{ fontSize: 12, color: "#888" }}>{guestbookDraft.length}/500</span>
@@ -2766,7 +2766,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                       disabled={guestbookSigning || !guestbookDraft.trim()}
                       style={{ fontFamily: "'Times New Roman', serif", fontSize: 15, fontWeight: 700, color: "#22406e", background: "#e8edf5", border: "2px outset #cfd8e6", padding: "6px 18px", cursor: guestbookDraft.trim() ? "pointer" : "default", opacity: guestbookDraft.trim() ? 1 : 0.5 }}
                     >
-                      Sign it! ✍
+                      Sign it!  [ &gt;&gt; ]
                     </button>
                   </div>
                 </div>
@@ -2778,7 +2778,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                 <div style={{ textAlign: "center", padding: 20, color: "#888" }}>loading entries...</div>
               ) : guestbookEntries.length === 0 ? (
                 <div style={{ textAlign: "center", padding: 30, fontStyle: "italic", color: "#777", border: "2px dotted #b0b8c8" }}>
-                  No entries yet. Be the first to sign! ✨
+                  No entries yet. Be the first to sign!  =)
                 </div>
               ) : (
                 <div>
