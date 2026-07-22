@@ -3082,13 +3082,17 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
               {viewedUserFavorites.length > 0 && user.profileTheme !== "web2003" && (
                 <div style={{ marginTop: 26 }}>
                   <div style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14, textAlign: "center", fontWeight: 400 }}>top 3 albums</div>
-                  <div style={{ display: "flex", gap: isMobile ? 20 : 28, justifyContent: "center" }}>
+                  <div style={{ display: "flex", gap: isMobile ? 20 : 28, justifyContent: user.profileTheme === "terminal" ? "flex-start" : "center" }}>
                     {viewedUserFavorites.map((fid) => {
                       const fAlbum = fetchedAlbums[fid] || albumById(fid);
                       const favSize = isMobile ? 96 : 180;
                       return (
-                        <div key={fid} onClick={() => openAlbum(fid)} className="sb-cover-wrap" style={{ textAlign: "center", maxWidth: favSize }}>
-                          <AlbumCover album={fAlbum} size={favSize} />
+                        <div key={fid} onClick={() => openAlbum(fid)} className="sb-cover-wrap" style={{ textAlign: user.profileTheme === "terminal" ? "left" : "center", maxWidth: favSize }}>
+                          {user.profileTheme === "terminal" ? (
+                            <div className="pf-card" style={{ display: "inline-block", lineHeight: 0 }}><AlbumCover album={fAlbum} size={favSize} /></div>
+                          ) : (
+                            <AlbumCover album={fAlbum} size={favSize} />
+                          )}
                           <div className="ui-sans" style={{ fontSize: isMobile ? 11.5 : 13, fontWeight: 400, marginTop: 8 }}>{fAlbum.title}</div>
                         </div>
                       );
@@ -4442,7 +4446,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
               <div className={profile.profileTheme ? "pf-section-wrap" : ""} style={profile.profileTheme ? { marginBottom: 14 } : {}}>
                 <span className={profile.profileTheme ? "pf-section" : ""} style={profile.profileTheme ? {} : { fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, textAlign: "center", fontWeight: 400, display: "block", marginBottom: 14 }}>top 3 albums</span>
               </div>
-              <div style={{ display: "flex", gap: isMobile ? 20 : 28, justifyContent: "center" }}>
+              <div style={{ display: "flex", gap: isMobile ? 20 : 28, justifyContent: profile.profileTheme === "terminal" ? "flex-start" : "center" }}>
                 {favorites.map((id) => {
                   const album = fetchedAlbums[id] || albumById(id);
                   if (!fetchedAlbums[id] && album.title === "Unknown Album") {
@@ -4460,7 +4464,11 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                   return (
                     <div key={id} style={{ textAlign: "center", maxWidth: favSize, position: "relative" }}>
                       <div onClick={() => openAlbum(id)} className="sb-cover-wrap">
-                        <AlbumCover album={album} size={favSize} />
+                        {profile.profileTheme === "terminal" ? (
+                          <div className="pf-card" style={{ display: "inline-block", lineHeight: 0 }}><AlbumCover album={album} size={favSize} /></div>
+                        ) : (
+                          <AlbumCover album={album} size={favSize} />
+                        )}
                       </div>
                       <div
                         onClick={(e) => { e.stopPropagation(); toggleFavorite(id); }}
