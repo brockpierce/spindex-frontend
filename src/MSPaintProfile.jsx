@@ -107,7 +107,7 @@ export default function MSPaintProfile({
     };
 
     const onDown = (e) => {
-      if (lockedRef.current) return;
+      if (lockedRef.current || !isOwn) return;
       const p = pos(e); const t2 = toolRef.current;
       if (t2 === "fill") { flood(Math.round(p.x), Math.round(p.y), colorRef.current); setDirty(true); return; }
       if (t2 === "text") { const s = window.prompt("Text:"); if (s) { ctx.fillStyle = colorRef.current;
@@ -165,7 +165,7 @@ export default function MSPaintProfile({
   });
 
   const toolName = { pencil: "Pencil", spray: "Airbrush", text: "Text", fill: "Fill With Color", eyedrop: "Pick Color" }[tool];
-  const statusMsg = locked ? "\uD83D\uDD12 Locked \u00b7 unlock to draw on the background" : `${toolName} \u00b7 draw on the background`;
+  const statusMsg = !isOwn ? ("viewing @" + username) : (locked ? "\uD83D\uDD12 Locked \u00b7 unlock to draw on the background" : (toolName + " \u00b7 draw on the background"));
 
   const btnSize = isMobile ? 38 : 34;
 
@@ -255,10 +255,12 @@ export default function MSPaintProfile({
 
         {/* body: toolbar + canvas */}
         <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", background: "#c0c0c0" }}>
-          {/* toolbar */}
+          {/* toolbar (owner only — visitors see art read-only) */}
+          {isOwn && (
           <div style={{ display: "flex", flexDirection: isMobile ? "row" : "column", gap: isMobile ? 4 : 6, padding: 5, background: "#c0c0c0", overflowX: isMobile ? "auto" : "visible", alignItems: "flex-start" }}>
             <ToolButtons />
           </div>
+          )}
 
           {/* canvas + content */}
           <div style={{ flex: 1, position: "relative", minWidth: 0 }}>

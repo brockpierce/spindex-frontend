@@ -3124,6 +3124,33 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
           );
           const userReviews = [...viewedUserReviews].sort((a, b) => (a.date !== b.date ? (a.date < b.date ? 1 : -1) : (a.id < b.id ? 1 : -1)));
           const userAvgRating = userReviews.length ? (userReviews.reduce((s, r) => s + r.rating, 0) / userReviews.length).toFixed(1) : "--";
+          if (user.profileTheme === "mspaint") {
+            return (
+              <MSPaintProfile
+                displayName={user.displayName || user.username}
+                username={user.username}
+                bio={user.bio}
+                accentColor={user.accentColor}
+                isOwn={false}
+                isMobile={isMobile}
+                stats={{ followers: user.followerCount || 0, following: user.followingCount || 0, listened: viewedUserListenedCount, reviews: userReviews.length }}
+                albums={viewedUserFavorites.map((id) => { const a = fetchedAlbums[id] || albumById(id); return { id, title: a ? a.title : "", album: a }; })}
+                reviews={userReviews.slice(0, 3).map((r) => { const a = fetchedAlbums[r.albumId] || albumById(r.albumId); return { score: r.rating, albumTitle: a ? a.title : "", artist: a ? (a.artist || a.artistName || "") : "", body: r.text || "", albumId: r.albumId, album: a, favoriteTrack: r.favoriteTrack || "", renderCover: (size) => { const u = a && a.coverArtUrl && a.coverArtUrl !== "none" ? a.coverArtUrl.replace("http://", "https://") : null; return u ? <img src={u} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /> : <div style={{ width: "100%", height: "100%", background: "#0a3a8a" }} />; } }; })}
+                initialDrawing={user.profileDrawing}
+                onOpenAlbum={(id) => openAlbum(id)}
+                onOpenReview={(r) => openAlbum(r.albumId)}
+                onStatClick={(label) => {
+                  if (label === "followers") setShowFollowList({ kind: "followers", userId: user.id, username: user.username });
+                  else if (label === "following") setShowFollowList({ kind: "following", userId: user.id, username: user.username });
+                  else if (label === "listened") setView({ name: "listenedList", username: user.username, userId: user.id, listenedIds: viewedUserQueue, from: view });
+                  else if (label === "reviews") setView({ name: "reviewsList", username: user.username, userId: user.id, reviews: userReviews, from: view });
+                }}
+                renderAvatar={(size) => <Avatar username={user.username} size={size} />}
+                renderAlbumCover={(alb) => { const u = alb.album && alb.album.coverArtUrl && alb.album.coverArtUrl !== "none" ? alb.album.coverArtUrl.replace("http://", "https://") : null; return u ? <img src={u} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /> : <div style={{ width: "100%", height: "100%", background: "#0a3a8a" }} />; }}
+                backButton={<div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 6, color: "#fff", fontSize: 12.5, cursor: "pointer" }} onClick={() => setView({ name: "home" })}><ChevronLeft size={14} /> back</div>}
+              />
+            );
+          }
           return (
             <div className="pf" data-theme={user.profileTheme || ""} style={{ "--pf-navy": user.accentColor || BLUE }}>
               {user.profileTheme === "geocities" && (
