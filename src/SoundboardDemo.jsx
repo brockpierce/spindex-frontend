@@ -4369,7 +4369,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                     <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 6 }}>
                       {[
                         { name: "White", value: "" },
-                        { name: "Cream", value: "#f5f1e8" },
+                        { name: "Cream", value: "#f7f4ee" },
                         { name: "Soft Gray", value: "#eceef1" },
                         { name: "Baby Pink", value: "#fbeef2" },
                       ].map((bg) => {
@@ -4392,7 +4392,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                         );
                       })}
                       <span style={{ fontSize: 14, color: "#8a8a92", marginLeft: 4 }}>
-                        {({ "": "White", "#f5f1e8": "Cream", "#eceef1": "Soft Gray", "#fbeef2": "Baby Pink" })[profile.pageBackground || ""] || "White"}
+                        {({ "": "White", "#f7f4ee": "Cream", "#eceef1": "Soft Gray", "#fbeef2": "Baby Pink" })[profile.pageBackground || ""] || "White"}
                       </span>
                     </div>
                   </div>
