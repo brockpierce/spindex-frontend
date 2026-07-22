@@ -199,7 +199,7 @@
    CUTESY  — rounded type, dotted borders, pill chips, ♡ ✿
    ============================================================ */
 .pf[data-theme="cutesy"] {
-  --pf-text: #2a2a2a; --pf-body: 'Comic Sans MS', 'Comic Sans', 'Trebuchet MS', cursive;
+  --pf-text: #2a2a2a; --pf-body: 'Comic Sans MS', 'Comic Neue', 'Comic Sans', 'Trebuchet MS', cursive;
   --pf-name-size: 40px; --pf-name-weight: 700; --pf-name-ls: 0.5px; --pf-name-color: var(--pf-navy);
   --pf-handle-color: var(--pf-navy); --pf-handle-size: 14px;
   --pf-tagline-color: #555; --pf-tagline-size: 15px;
