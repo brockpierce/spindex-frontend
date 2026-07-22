@@ -3176,6 +3176,15 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                   </div>
                 </div>
               )}
+              {user.profileTheme === "geocities" && (
+                <div className="pf-geocities" style={{ textAlign: "center", marginTop: 44, paddingTop: 24, borderTop: "3px double #22406e", fontFamily: "'Times New Roman', serif", lineHeight: 2.2 }}>
+                  <div style={{ fontWeight: 700 }}>✎ Sign My Guestbook! ✎</div>
+                  <div>« Prev — Random Site — Next »</div>
+                  <div>✉ Email Me!</div>
+                  <div style={{ fontSize: 13, color: "#555" }}>You are visitor #01337</div>
+                  <div style={{ fontSize: 13, color: "#555" }}>★ Best viewed in Netscape Navigator ★</div>
+                </div>
+              )}
             </div>
           );
         })()}
@@ -4645,6 +4654,15 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                 </div>
               ) : null;
             })()}
+            {profile.profileTheme === "geocities" && (
+              <div className="pf-geocities" style={{ textAlign: "center", marginTop: 44, paddingTop: 24, borderTop: "3px double #22406e", fontFamily: "'Times New Roman', serif", lineHeight: 2.2 }}>
+                <div style={{ fontWeight: 700 }}>✎ Sign My Guestbook! ✎</div>
+                <div>« Prev — Random Site — Next »</div>
+                <div>✉ Email Me!</div>
+                <div style={{ fontSize: 13, color: "#555" }}>You are visitor #01337</div>
+                <div style={{ fontSize: 13, color: "#555" }}>★ Best viewed in Netscape Navigator ★</div>
+              </div>
+            )}
           </div>
         )}
       </div>
