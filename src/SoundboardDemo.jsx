@@ -2977,6 +2977,11 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
           const userAvgRating = userReviews.length ? (userReviews.reduce((s, r) => s + r.rating, 0) / userReviews.length).toFixed(1) : "--";
           return (
             <div className="pf" data-theme={user.profileTheme || ""} style={{ "--pf-navy": user.accentColor || BLUE }}>
+              {user.profileTheme === "terminal" && (
+                <div className="pf-loginline" style={{ marginBottom: 18 }}>
+                  $ ./profile --user {user.username}<span className="pf-cursor"></span>
+                </div>
+              )}
               <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 12.5, marginBottom: 22, cursor: "pointer" }} onClick={() => setView({ name: "home" })}>
                 <ChevronLeft size={14} /> back
               </div>
@@ -4128,6 +4133,11 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
         {/* ---------------- PROFILE ---------------- */}
         {view.name === "profile" && (
           <div className="pf" data-theme={profile.profileTheme || ""} style={{ "--pf-navy": BLUE }}>
+            {profile.profileTheme === "terminal" && (
+              <div className="pf-loginline" style={{ marginBottom: 18 }}>
+                $ ./profile --user {profile.username}<span className="pf-cursor"></span>
+              </div>
+            )}
             <div style={{ display: "flex", gap: isMobile ? 18 : 24, alignItems: isMobile ? "center" : "stretch", justifyContent: "space-between", paddingBottom: 22, borderBottom: `1px solid ${INK}` }}>
               <div style={{ display: "flex", gap: isMobile ? 18 : 24, alignItems: "center", flex: 1, minWidth: 0 }}>
                 {avatarUrl ? (
