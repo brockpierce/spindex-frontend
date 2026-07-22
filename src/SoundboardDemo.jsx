@@ -2744,7 +2744,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
               </div>
 
               <div style={{ textAlign: "center", border: "4px double #22406e", padding: "18px 16px", marginBottom: 22, background: "#f7f4ee" }}>
-                <div style={{ fontSize: 30, fontWeight: 700, color: "#22406e", letterSpacing: "0.5px" }}>*~*~* {view.displayName || view.username}'s Guestbook *~*~*</div>
+                <div style={{ fontSize: isMobile ? 21 : 30, fontWeight: 700, color: "#22406e", letterSpacing: "0.5px", lineHeight: 1.25 }}>*~*~* {view.displayName || view.username}'s Guestbook *~*~*</div>
                 <div style={{ fontSize: 15, marginTop: 6, fontStyle: "italic" }}>~ sign the book &amp; leave your mark ~</div>
                 <div style={{ fontSize: 13, marginTop: 8, color: "#555" }}>[ {guestbookEntries.length} {guestbookEntries.length === 1 ? "entry" : "entries"} ]</div>
               </div>
@@ -3205,7 +3205,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                       const favSize = isMobile ? 96 : 180;
                       return (
                         <div key={fid} onClick={() => openAlbum(fid)} className="sb-cover-wrap" style={{ textAlign: user.profileTheme === "terminal" ? "left" : "center", maxWidth: favSize }}>
-                          {user.profileTheme === "terminal" ? (
+                          {(user.profileTheme === "terminal" || user.profileTheme === "geocities") ? (
                             <div className="pf-card" style={{ display: "inline-block", lineHeight: 0 }}><AlbumCover album={fAlbum} size={favSize} /></div>
                           ) : (
                             <AlbumCover album={fAlbum} size={favSize} />
@@ -4584,7 +4584,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                   return (
                     <div key={id} style={{ textAlign: "center", maxWidth: favSize, position: "relative" }}>
                       <div onClick={() => openAlbum(id)} className="sb-cover-wrap">
-                        {profile.profileTheme === "terminal" ? (
+                        {(profile.profileTheme === "terminal" || profile.profileTheme === "geocities") ? (
                           <div className="pf-card" style={{ display: "inline-block", lineHeight: 0 }}><AlbumCover album={album} size={favSize} /></div>
                         ) : (
                           <AlbumCover album={album} size={favSize} />
