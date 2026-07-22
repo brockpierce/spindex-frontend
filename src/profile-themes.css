@@ -1,3 +1,9 @@
+@font-face {
+  font-family: "MSPain";
+  src: url("/fonts/MS_PAIN.ttf") format("truetype");
+  font-display: swap;
+}
+
 /* ============================================================
    PROFILE THEME PRESETS
    ------------------------------------------------------------

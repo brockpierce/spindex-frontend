@@ -4544,6 +4544,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                       <option value="geocities">netscape</option>
                       <option value="cutesy">angel</option>
                       <option value="elegant">lover</option>
+                      <option value="mspaint">ms paint</option>
                     </select>
                     <div style={{ fontSize: 11, color: MUTE, marginTop: 8 }}>how your profile looks to visitors</div>
                   </div>
