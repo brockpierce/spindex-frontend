@@ -301,11 +301,13 @@ export default function MSPaintProfile({
 
                 {/* top 3 albums */}
                 <SectionBar stars>{displayName}'s top 3 albums</SectionBar>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: isMobile ? 10 : 14 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3,minmax(0,1fr))", gap: isMobile ? 10 : 14, maxWidth: "100%" }}>
                   {(albums || []).map((alb, i) => (
                     <div key={i} style={{ pointerEvents: "auto", cursor: "pointer" }} onClick={() => onOpenAlbum && onOpenAlbum(alb.id)}>
-                      <div style={{ ...sunken, padding: 3, aspectRatio: "1" }}>
-                        {renderAlbumCover ? renderAlbumCover(alb) : (alb.src ? <img src={alb.src} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ width: "100%", height: "100%", background: "#0a3a8a" }} />)}
+                      <div style={{ ...sunken, padding: 3, aspectRatio: "1", overflow: "hidden", minWidth: 0 }}>
+                        <div style={{ width: "100%", height: "100%", overflow: "hidden", display: "flex" }}>
+                          {renderAlbumCover ? renderAlbumCover(alb) : (alb.src ? <img src={alb.src} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ width: "100%", height: "100%", background: "#0a3a8a" }} />)}
+                        </div>
                       </div>
                       <div style={{ fontSize: 15, color: "#0000c0", textAlign: "center", marginTop: 6 }}>{alb.title}</div>
                     </div>
