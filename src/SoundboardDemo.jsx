@@ -911,6 +911,7 @@ export default function SoundboardDemo() {
             ...prev,
             profileTheme: data.user.profileTheme || null,
             pageBackground: data.user.pageBackground || null,
+            profileDrawing: data.user.profileDrawing || null,
             age: data.user.age || null,
             town: data.user.town || null,
             country: data.user.country || null,
@@ -4264,12 +4265,18 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
             isMobile={isMobile}
             stats={{ followers: profileStats.followers, following: profileStats.following, listened: listenLoaded ? listenedCount : (cachedCounts.listened ?? listenedCount), reviews: reviewsLoaded ? reviews.length : (cachedCounts.reviews ?? reviews.length) }}
             albums={favorites.map((id) => { const a = fetchedAlbums[id] || albumById(id); return { id, title: a ? a.title : "", album: a }; })}
-            reviews={reviews.slice(0, 3).map((r) => { const a = fetchedAlbums[r.albumId] || albumById(r.albumId); return { score: r.rating, albumTitle: a ? a.title : "", artist: a ? (a.artist || a.artistName || "") : "", body: r.text || r.reviewText || "", albumId: r.albumId, album: a, favoriteTrack: r.favoriteTrack || "" }; })}
+            reviews={reviews.slice(0, 3).map((r) => { const a = fetchedAlbums[r.albumId] || albumById(r.albumId); return { score: r.rating, albumTitle: a ? a.title : "", artist: a ? (a.artist || a.artistName || "") : "", body: r.text || r.reviewText || r.body || "", albumId: r.albumId, album: a, favoriteTrack: r.favoriteTrack || "", renderCover: (size) => a ? <AlbumCover album={a} size={size} /> : null }; })}
             initialDrawing={profile.profileDrawing}
             onSaveDrawing={(dataUrl) => { saveProfileField({ profileDrawing: dataUrl }); flash("Drawing saved"); }}
             onOpenSettings={openSettings}
             onOpenAlbum={(id) => openAlbum(id)}
             onOpenReview={(r) => openAlbum(r.albumId)}
+            onStatClick={(label) => {
+              if (label === "followers") setShowFollowList({ kind: "followers", userId: authUser?.id, username: profile.username });
+              else if (label === "following") setShowFollowList({ kind: "following", userId: authUser?.id, username: profile.username });
+              else if (label === "listened") setView({ name: "albumList", filter: "listened" });
+              else if (label === "reviews") setView({ name: "reviewsList", username: profile.username, userId: profile.id, reviews: reviews, isOwn: true, from: view });
+            }}
             renderAvatar={(size) => avatarUrl ? <img src={avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ width: "100%", height: "100%", background: "#0a3a8a", display: "flex", alignItems: "center", justifyContent: "center" }}><User color="#fff" size={size / 2} /></div>}
             renderAlbumCover={(alb) => alb.album ? <AlbumCover album={alb.album} size={200} /> : <div style={{ width: "100%", height: "100%", background: "#0a3a8a" }} />}
           />

@@ -29,7 +29,7 @@ export default function MSPaintProfile({
   stats, albums, reviews, isOwn, isMobile,
   initialDrawing, onSaveDrawing,
   onOpenSettings, onOpenAlbum, onOpenReview, onOpenUser,
-  renderAvatar, renderAlbumCover, backButton,
+  renderAvatar, renderAlbumCover, backButton, onStatClick,
 }) {
   const nameColor = accentColor || "#d6006e";
   const [tool, setTool] = useState("pencil");
@@ -292,7 +292,7 @@ export default function MSPaintProfile({
                 {/* stats */}
                 <div style={{ display: "flex", flexWrap: "nowrap", justifyContent: "center", gap: 6, marginTop: 18 }}>
                   {statChips.map((s, i) => (
-                    <div key={i} style={{ flex: isMobile ? "1 1 0" : "0 0 auto", minWidth: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 2, padding: isMobile ? "6px 4px" : "8px 16px", background: s.bg, border: "2px solid #000", boxShadow: "2px 2px 0 rgba(0,0,0,.35)" }}>
+                    <div key={i} onClick={() => onStatClick && onStatClick(s.label)} style={{ flex: isMobile ? "1 1 0" : "0 0 auto", minWidth: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 2, padding: isMobile ? "6px 4px" : "8px 16px", background: s.bg, border: "2px solid #000", boxShadow: "2px 2px 0 rgba(0,0,0,.35)", pointerEvents: "auto", cursor: "pointer" }}>
                       <div style={{ fontSize: isMobile ? 20 : 22, color: "#000" }}>{s.n}</div>
                       <div style={{ fontSize: 11, color: "#000" }}>{s.label}</div>
                     </div>
