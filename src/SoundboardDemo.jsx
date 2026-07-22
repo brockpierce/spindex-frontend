@@ -4130,7 +4130,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                     <User color="#fff" size={isMobile ? 36 : 48} />
                   </div>
                 )}
-                <div className="ui-sans" style={{ textAlign: "left", minWidth: 0, display: "flex", flexDirection: "column", gap: 6 }}>
+                <div className="ui-sans" style={{ textAlign: "left", minWidth: 0, display: "flex", flexDirection: "column", gap: profile.profileTheme ? 0 : 6 }}>
                   <div className="pf-name" style={profile.profileTheme ? { textAlign: "left" } : { fontSize: isMobile ? 24 : 30, fontWeight: 400, lineHeight: 1.15, letterSpacing: "-0.01em", textAlign: "left" }}>{profile.displayName}</div>
                   <div className="pf-handle" style={profile.profileTheme ? { textAlign: "left" } : { fontSize: isMobile ? 14 : 16, color: MUTE, textAlign: "left" }}>@{(profile.username || "").toLowerCase()}</div>
                   {profile.bio && <div className="pf-tagline" style={profile.profileTheme === "web2003" ? { maxWidth: 480, textAlign: "left", fontStyle: "italic", fontWeight: 700 } : profile.profileTheme ? { maxWidth: 480, textAlign: "left" } : { fontSize: isMobile ? 14 : 15, color: MUTE, maxWidth: 480, lineHeight: 1.5, textAlign: "left" }}>{profile.profileTheme === "web2003" ? `"${profile.bio}"` : (!isMobile && profile.bio.length > 30 ? profile.bio.slice(0, 30) + "…" : profile.bio)}</div>}
