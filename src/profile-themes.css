@@ -247,6 +247,10 @@
 /* Prevent stat numbers bleeding onto labels across themes */
 .pf[data-theme]:not([data-theme=""]) .pf-stat-num { line-height: 1.15 !important; height: auto !important; margin-bottom: 3px !important; }
 
+
+/* Push the bio down slightly from the username on all themes */
+.pf[data-theme]:not([data-theme=""]) .pf-tagline { margin-top: 8px !important; }
+
 /* Mobile: shrink themed stats so all 5 fit without horizontal overflow */
 @media (max-width: 600px) {
   .pf[data-theme="web2003"] .pf-stat-num { font-size: 16px !important; }
