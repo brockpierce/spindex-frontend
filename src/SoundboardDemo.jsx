@@ -2978,7 +2978,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
           return (
             <div className="pf" data-theme={user.profileTheme || ""} style={{ "--pf-navy": user.accentColor || BLUE }}>
               {user.profileTheme === "terminal" && (
-                <div className="pf-loginline" style={{ marginBottom: 18 }}>
+                <div className="pf-loginline" style={{ marginBottom: 18, textAlign: "left" }}>
                   $ ./profile --user {user.username}<span className="pf-cursor"></span>
                 </div>
               )}
@@ -2989,7 +2989,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                 <div style={{ display: "flex", alignItems: "center", gap: isMobile ? 18 : 24, flex: 1, minWidth: 0 }}>
                   <Avatar username={user.username} size={isMobile ? 88 : 120} />
                   <div className="ui-sans" style={{ textAlign: "left", minWidth: 0 }}>
-                    <div className="pf-name" style={user.profileTheme ? { textAlign: "left" } : { fontSize: isMobile ? 24 : 30, fontWeight: 700, lineHeight: 1.15, letterSpacing: "-0.01em", textAlign: "left" }}>{user.displayName || user.username}</div>
+                    <div className="pf-name" style={user.profileTheme ? { textAlign: "left" } : { fontSize: isMobile ? 24 : 30, fontWeight: 700, lineHeight: 1.15, letterSpacing: "-0.01em", textAlign: "left" }}>{user.displayName || user.username}{user.profileTheme === "terminal" && <span className="pf-cursor" style={{ marginLeft: 6 }}></span>}</div>
                     <div className="pf-handle" style={user.profileTheme ? { textAlign: "left", marginTop: 3 } : { fontSize: isMobile ? 14 : 16, color: MUTE, marginTop: 3, textAlign: "left" }}>@{(user.username || "").toLowerCase()}</div>
                     {user.bio && <div className="pf-tagline" style={user.profileTheme === "web2003" ? { marginTop: 10, maxWidth: 480, textAlign: "left", fontStyle: "italic", fontWeight: 700 } : user.profileTheme ? { marginTop: 10, maxWidth: 480, textAlign: "left" } : { fontSize: isMobile ? 14 : 15, color: MUTE, marginTop: 10, maxWidth: 480, lineHeight: 1.5, textAlign: "left" }}>{user.profileTheme === "web2003" ? `"${user.bio}"` : (!isMobile && user.bio.length > 30 ? user.bio.slice(0, 30) + "…" : user.bio)}</div>}
                     {user.profileTheme === "web2003" && (
@@ -4134,7 +4134,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
         {view.name === "profile" && (
           <div className="pf" data-theme={profile.profileTheme || ""} style={{ "--pf-navy": BLUE }}>
             {profile.profileTheme === "terminal" && (
-              <div className="pf-loginline" style={{ marginBottom: 18 }}>
+              <div className="pf-loginline" style={{ marginBottom: 18, textAlign: "left" }}>
                 $ ./profile --user {profile.username}<span className="pf-cursor"></span>
               </div>
             )}
@@ -4152,7 +4152,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                   </div>
                 )}
                 <div className="ui-sans" style={{ textAlign: "left", minWidth: 0, display: "flex", flexDirection: "column", gap: profile.profileTheme ? 0 : 6, lineHeight: profile.profileTheme ? 1.1 : "inherit" }}>
-                  <div className="pf-name" style={profile.profileTheme ? { textAlign: "left" } : { fontSize: isMobile ? 24 : 30, fontWeight: 400, lineHeight: 1.15, letterSpacing: "-0.01em", textAlign: "left" }}>{profile.displayName}</div>
+                  <div className="pf-name" style={profile.profileTheme ? { textAlign: "left" } : { fontSize: isMobile ? 24 : 30, fontWeight: 400, lineHeight: 1.15, letterSpacing: "-0.01em", textAlign: "left" }}>{profile.displayName}{profile.profileTheme === "terminal" && <span className="pf-cursor" style={{ marginLeft: 6 }}></span>}</div>
                   <div className="pf-handle" style={profile.profileTheme ? { textAlign: "left" } : { fontSize: isMobile ? 14 : 16, color: MUTE, textAlign: "left" }}>@{(profile.username || "").toLowerCase()}</div>
                   {profile.bio && <div className="pf-tagline" style={profile.profileTheme === "web2003" ? { maxWidth: 480, textAlign: "left", fontStyle: "italic", fontWeight: 700 } : profile.profileTheme ? { maxWidth: 480, textAlign: "left" } : { fontSize: isMobile ? 14 : 15, color: MUTE, maxWidth: 480, lineHeight: 1.5, textAlign: "left" }}>{profile.profileTheme === "web2003" ? `"${profile.bio}"` : (!isMobile && profile.bio.length > 30 ? profile.bio.slice(0, 30) + "…" : profile.bio)}</div>}
                 </div>
