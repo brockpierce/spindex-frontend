@@ -2751,7 +2751,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
 
               {canSign ? (
                 <div style={{ border: "2px ridge #22406e", padding: 16, marginBottom: 24, background: "#fffef9" }}>
-                  <div style={{ fontWeight: 700, fontSize: 17, marginBottom: 10, color: "#22406e" }}>>> Sign the Guestbook! <<</div>
+                  <div style={{ fontWeight: 700, fontSize: 17, marginBottom: 10, color: "#22406e" }}>{"~~ Sign the Guestbook! ~~"}</div>
                   <textarea
                     value={guestbookDraft}
                     onChange={(e) => setGuestbookDraft(e.target.value)}
@@ -2766,7 +2766,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                       disabled={guestbookSigning || !guestbookDraft.trim()}
                       style={{ fontFamily: "'Times New Roman', serif", fontSize: 15, fontWeight: 700, color: "#22406e", background: "#e8edf5", border: "2px outset #cfd8e6", padding: "6px 18px", cursor: guestbookDraft.trim() ? "pointer" : "default", opacity: guestbookDraft.trim() ? 1 : 0.5 }}
                     >
-                      Sign it!  [ &gt;&gt; ]
+                      {"Sign it!  [ >> ]"}
                     </button>
                   </div>
                 </div>
