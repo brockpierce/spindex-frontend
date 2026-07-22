@@ -203,7 +203,7 @@
   --pf-name-size: 40px; --pf-name-weight: 700; --pf-name-ls: 0.5px; --pf-name-color: var(--pf-navy);
   --pf-handle-color: var(--pf-navy); --pf-handle-size: 14px;
   --pf-tagline-color: #555; --pf-tagline-size: 15px;
-  --pf-avatar-radius: 50%; --pf-avatar-border: 4px dotted var(--pf-navy);
+  --pf-avatar-radius: 50%; --pf-avatar-border: 3px dotted var(--pf-navy);
   --pf-btn-border: 2px dotted var(--pf-navy); --pf-btn-radius: 20px; --pf-btn-bg: #fff; --pf-btn-color: var(--pf-navy); --pf-btn-weight: 700;
   --pf-stat-size: 28px; --pf-stat-weight: 700; --pf-stat-color: var(--pf-navy);
   --pf-statlabel-color: var(--pf-navy); --pf-statlabel-transform: lowercase;
@@ -257,6 +257,6 @@
   .pf[data-theme]:not([data-theme=""]) .pf-stat-label { font-size: 9px !important; letter-spacing: 0 !important; }
   .pf[data-theme="web2003"] .pf-stat-num { font-size: 15px !important; }
   .pf[data-theme="cutesy"] .pf-stat-num,
-  .pf[data-theme="elegant"] .pf-stat-num { font-size: 21px !important; }
+  .pf[data-theme="elegant"] .pf-stat-num { font-size: 24px !important; }
   .pf[data-theme]:not([data-theme=""]) .pf-stats { gap: 11px !important; }
 }
