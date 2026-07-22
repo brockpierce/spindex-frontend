@@ -226,8 +226,8 @@ export default function MSPaintProfile({
   ];
 
   return (
-    <div style={{ background: "#008080", padding: isMobile ? 8 : 22, fontFamily: '"MSPain","Trebuchet MS",Tahoma,sans-serif' }}>
-      <div style={{ maxWidth: 1000, margin: "0 auto", border: isMobile ? "2px solid" : "3px solid", borderColor: "#ffffff #404040 #404040 #ffffff", background: "#c0c0c0", boxShadow: isMobile ? "2px 2px 0 rgba(0,0,0,.4)" : "3px 3px 0 rgba(0,0,0,.5)" }}>
+    <div style={{ background: "#008080", padding: isMobile ? 8 : 22, fontFamily: '"MSPain","Trebuchet MS",Tahoma,sans-serif', boxShadow: "0 0 0 100vmax #008080", clipPath: "inset(0 -100vmax)", overflowX: "hidden" }}>
+      <div style={{ maxWidth: 1000, width: "100%", margin: "0 auto", border: isMobile ? "2px solid" : "3px solid", borderColor: "#ffffff #404040 #404040 #ffffff", background: "#c0c0c0", boxShadow: isMobile ? "2px 2px 0 rgba(0,0,0,.4)" : "3px 3px 0 rgba(0,0,0,.5)", boxSizing: "border-box", overflow: "hidden" }}>
 
         {/* title bar */}
         <div style={{ background: "linear-gradient(90deg,#000080,#1084d0)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "3px 5px", fontSize: 15 }}>
@@ -290,7 +290,7 @@ export default function MSPaintProfile({
                 </div>
 
                 {/* stats */}
-                <div style={{ display: "flex", flexWrap: "nowrap", justifyContent: "center", gap: 6, marginTop: 18 }}>
+                <div style={{ display: "flex", flexWrap: "nowrap", justifyContent: "center", gap: 6, marginTop: 18, maxWidth: "100%" }}>
                   {statChips.map((s, i) => (
                     <div key={i} onClick={() => onStatClick && onStatClick(s.label)} style={{ flex: isMobile ? "1 1 0" : "0 0 auto", minWidth: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 2, padding: isMobile ? "6px 4px" : "8px 16px", background: s.bg, border: "2px solid #000", boxShadow: "2px 2px 0 rgba(0,0,0,.35)", pointerEvents: "auto", cursor: "pointer" }}>
                       <div style={{ fontSize: isMobile ? 20 : 22, color: "#000" }}>{s.n}</div>
