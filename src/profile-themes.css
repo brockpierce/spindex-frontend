@@ -208,12 +208,12 @@
   --pf-stat-size: 28px; --pf-stat-weight: 700; --pf-stat-color: var(--pf-navy);
   --pf-statlabel-color: var(--pf-navy); --pf-statlabel-transform: lowercase;
   --pf-divider: 3px dotted var(--pf-navy);
-  --pf-section-align: center; --pf-section-color: var(--pf-navy); --pf-section-size: 15px; --pf-section-weight: 700; --pf-section-ls: 0.5px; --pf-section-transform: none; --pf-section-display: inline-block; --pf-section-bg: #eef1f8; --pf-section-pad: 5px 18px; --pf-section-radius: 20px; --pf-section-prefix: "\2661  "; --pf-section-suffix: "  \2661";
+  --pf-section-align: center; --pf-section-color: var(--pf-navy); --pf-section-size: 15px; --pf-section-weight: 700; --pf-section-ls: 0.5px; --pf-section-transform: none; --pf-section-display: block; --pf-section-prefix: "\2661  "; --pf-section-suffix: "  \2661";
   --pf-card-border: 3px solid #eef1f8; --pf-card-radius: 16px;
   --pf-cardtitle-size: 16px; --pf-cardtitle-weight: 700; --pf-cardtitle-color: var(--pf-navy);
   --pf-score-weight: 700;
 }
-.pf[data-theme="cutesy"] .pf-handle { background: #eef1f8; padding: 4px 12px; border-radius: 14px; font-weight: 700; }
+.pf[data-theme="cutesy"] .pf-handle { font-weight: 700; }
 .pf[data-theme="cutesy"] .pf-cutesy { display: block !important; }
 
 /* ============================================================
@@ -245,7 +245,7 @@
 
 
 /* Prevent stat numbers bleeding onto labels across themes */
-.pf[data-theme]:not([data-theme=""]) .pf-stat-num { line-height: 1.15 !important; height: auto !important; margin-bottom: 3px !important; }
+.pf[data-theme]:not([data-theme=""]) .pf-stat-num { line-height: 1 !important; height: auto !important; min-height: 32px !important; display: flex !important; align-items: flex-end !important; margin-bottom: 4px !important; }
 
 
 /* Push the bio down slightly from the username on all themes */
