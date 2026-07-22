@@ -3052,7 +3052,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                     {viewedUserFavorites.length > 0 && (
                       <div className="pf-infobox" style={{ flex: "1 1 340px", minWidth: 300 }}>
                         <div className="pf-infobox-head">{(user.displayName || user.username)}'s Top 3 Albums</div>
-                        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, padding: 12 }}>
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, padding: 12, background: "#eef1f8" }}>
                           {viewedUserFavorites.slice(0, 3).map((fid) => {
                             const album = fetchedAlbums[fid] || albumById(fid);
                             return (
@@ -4236,7 +4236,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                 </div>
                 <div className="pf-infobox" style={{ flex: "1 1 340px", minWidth: 300 }}>
                   <div className="pf-infobox-head">{profile.displayName}'s Top 3 Albums</div>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, padding: 12 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, padding: 12, background: "#eef1f8" }}>
                     {favorites.map((id) => {
                       const album = fetchedAlbums[id] || albumById(id);
                       return (
