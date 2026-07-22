@@ -859,6 +859,10 @@ export default function SoundboardDemo() {
           try { localStorage.setItem("spindex_stats", JSON.stringify(realStats)); } catch (e) {}
           try { localStorage.setItem("spindex_profile_theme", data.user.profileTheme || ""); } catch (e) {}
           try { localStorage.setItem("spindex_page_bg", data.user.pageBackground || ""); } catch (e) {}
+          if (data.user.accentColor) {
+            setCustomAccent(data.user.accentColor);
+            try { localStorage.setItem("spindex_accent", data.user.accentColor); } catch (e) {}
+          }
           setProfile((prev) => ({
             ...prev,
             profileTheme: data.user.profileTheme || null,
