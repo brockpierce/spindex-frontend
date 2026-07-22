@@ -27,7 +27,7 @@
 
 /* ---- base component hooks (theme vars fill these in) -------- */
 .pf {
-  background: #fff;
+  background: transparent;
   color: var(--pf-text, #141414);
   font-family: var(--pf-body, 'Helvetica Neue', Helvetica, Arial, sans-serif);
   font-size: var(--pf-body-size, 15px);
