@@ -4265,7 +4265,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
             isMobile={isMobile}
             stats={{ followers: profileStats.followers, following: profileStats.following, listened: listenLoaded ? listenedCount : (cachedCounts.listened ?? listenedCount), reviews: reviewsLoaded ? reviews.length : (cachedCounts.reviews ?? reviews.length) }}
             albums={favorites.map((id) => { const a = fetchedAlbums[id] || albumById(id); return { id, title: a ? a.title : "", album: a }; })}
-            reviews={reviews.slice(0, 3).map((r) => { const a = fetchedAlbums[r.albumId] || albumById(r.albumId); return { score: r.rating, albumTitle: a ? a.title : "", artist: a ? (a.artist || a.artistName || "") : "", body: r.text || r.reviewText || r.body || "", albumId: r.albumId, album: a, favoriteTrack: r.favoriteTrack || "", renderCover: (size) => a ? <AlbumCover album={a} size={size} /> : null }; })}
+            reviews={reviews.slice(0, 3).map((r) => { const a = fetchedAlbums[r.albumId] || albumById(r.albumId); return { score: r.rating, albumTitle: a ? a.title : "", artist: a ? (a.artist || a.artistName || "") : "", body: r.text || r.reviewText || r.body || "", albumId: r.albumId, album: a, favoriteTrack: r.favoriteTrack || "", renderCover: (size) => { const u = a && a.coverArtUrl && a.coverArtUrl !== "none" ? a.coverArtUrl.replace("http://", "https://") : null; return u ? <img src={u} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /> : <div style={{ width: "100%", height: "100%", background: "#0a3a8a" }} />; } }; })}
             initialDrawing={profile.profileDrawing}
             onSaveDrawing={(dataUrl) => { saveProfileField({ profileDrawing: dataUrl }); flash("Drawing saved"); }}
             onOpenSettings={openSettings}
@@ -4278,7 +4278,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
               else if (label === "reviews") setView({ name: "reviewsList", username: profile.username, userId: profile.id, reviews: reviews, isOwn: true, from: view });
             }}
             renderAvatar={(size) => avatarUrl ? <img src={avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ width: "100%", height: "100%", background: "#0a3a8a", display: "flex", alignItems: "center", justifyContent: "center" }}><User color="#fff" size={size / 2} /></div>}
-            renderAlbumCover={(alb) => alb.album ? <AlbumCover album={alb.album} size={200} /> : <div style={{ width: "100%", height: "100%", background: "#0a3a8a" }} />}
+            renderAlbumCover={(alb) => { const u = alb.album && alb.album.coverArtUrl && alb.album.coverArtUrl !== "none" ? alb.album.coverArtUrl.replace("http://", "https://") : null; return u ? <img src={u} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /> : <div style={{ width: "100%", height: "100%", background: "#0a3a8a" }} />; }}
           />
         )}
         {view.name === "profile" && profile.profileTheme !== "mspaint" && (
