@@ -2349,8 +2349,6 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                 <option value="web2003">web2003</option>
                 <option value="terminal">terminal</option>
                 <option value="geocities">netscape</option>
-                <option value="cutesy">angel</option>
-                <option value="elegant">lover</option>
                 <option value="mspaint">paint</option>
               </select>
               <div style={{ fontSize: 13, fontWeight: 600, color: "#000", marginBottom: 8 }}>accent color <span style={{ fontWeight: 400, fontSize: 11 }}>(display name)</span></div>
@@ -4631,8 +4629,6 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                       <option value="web2003">web2003</option>
                       <option value="terminal">terminal</option>
                       <option value="geocities">netscape</option>
-                      <option value="cutesy">angel</option>
-                      <option value="elegant">lover</option>
                       <option value="mspaint">paint</option>
                     </select>
                     <div style={{ fontSize: 11, color: MUTE, marginTop: 8 }}>how your profile looks to visitors</div>
