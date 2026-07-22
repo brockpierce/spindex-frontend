@@ -256,5 +256,7 @@
   .pf[data-theme]:not([data-theme=""]) .pf-stat-num { font-size: 17px !important; min-height: 22px !important; }
   .pf[data-theme]:not([data-theme=""]) .pf-stat-label { font-size: 9px !important; letter-spacing: 0 !important; }
   .pf[data-theme="web2003"] .pf-stat-num { font-size: 15px !important; }
-  .pf[data-theme]:not([data-theme=""]) .pf-stats { gap: 12px !important; }
+  .pf[data-theme="cutesy"] .pf-stat-num,
+  .pf[data-theme="elegant"] .pf-stat-num { font-size: 21px !important; }
+  .pf[data-theme]:not([data-theme=""]) .pf-stats { gap: 11px !important; }
 }
