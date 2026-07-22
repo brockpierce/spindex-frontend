@@ -2335,6 +2335,39 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
         </div>
       </div>
 
+      {showSettings && profile.profileTheme === "mspaint" && (
+        <div data-id="mspaint-settings-modal" onClick={() => setShowSettings(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.35)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 380, background: "#c0c0c0", border: "2px solid", borderColor: "#ffffff #404040 #404040 #ffffff", boxShadow: "3px 3px 0 rgba(0,0,0,.5)", fontFamily: "'MSPain','Trebuchet MS',sans-serif" }}>
+            <div style={{ background: "linear-gradient(90deg,#000080,#1084d0)", color: "#fff", padding: "4px 8px", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 15 }}>
+              <span>settings.exe</span>
+              <span onClick={() => setShowSettings(false)} style={{ cursor: "pointer", border: "2px solid", borderColor: "#ffffff #404040 #404040 #ffffff", background: "#c0c0c0", color: "#000", width: 18, height: 16, display: "inline-flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>{"\u00d7"}</span>
+            </div>
+            <div style={{ padding: 16 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: "#000", marginBottom: 8 }}>profile theme</div>
+              <select value={profile.profileTheme || ""} onChange={(e) => saveProfileTheme(e.target.value)} style={{ fontFamily: "inherit", fontSize: 15, padding: "6px 10px", border: "2px solid", borderColor: "#404040 #ffffff #ffffff #404040", background: "#fff", color: "#000", cursor: "pointer", width: "100%", marginBottom: 16 }}>
+                <option value="">default</option>
+                <option value="web2003">web2003</option>
+                <option value="terminal">terminal</option>
+                <option value="geocities">netscape</option>
+                <option value="cutesy">angel</option>
+                <option value="elegant">lover</option>
+                <option value="mspaint">ms paint</option>
+              </select>
+              <div style={{ fontSize: 13, fontWeight: 600, color: "#000", marginBottom: 8 }}>accent color <span style={{ fontWeight: 400, fontSize: 11 }}>(display name)</span></div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
+                {Object.entries(ACCENTS).map(([key, a]) => (
+                  <button key={key} onClick={() => chooseAccent(a.value)} title={a.name} style={{ width: 30, height: 30, background: a.value, cursor: "pointer", padding: 0, border: BLUE.toLowerCase() === a.value.toLowerCase() ? "2px solid #000" : "1px solid rgba(0,0,0,.2)" }} />
+                ))}
+                <label style={{ position: "relative", width: 30, height: 30, cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", background: "#fff", border: "1px dashed #808080" }}>
+                  <span style={{ fontSize: 16 }}>+</span>
+                  <input type="color" value={BLUE} onChange={(e) => chooseAccent(e.target.value)} style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer" }} />
+                </label>
+              </div>
+              <button onClick={() => setShowSettings(false)} style={{ fontFamily: "inherit", fontSize: 15, padding: "6px 16px", cursor: "pointer", border: "2px solid", borderColor: "#ffffff #404040 #404040 #ffffff", background: "#c0c0c0", color: "#000" }}>close</button>
+            </div>
+          </div>
+        </div>
+      )}
       {showFollowList && (
         <FollowListModal
           kind={showFollowList.kind}
