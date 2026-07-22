@@ -701,8 +701,10 @@ export default function SoundboardDemo() {
   const [activeInterviewId, setActiveInterviewId] = useState(null);
   const [profile, setProfile] = useState(() => {
     let cachedTheme = null;
+    let cachedBg = null;
     try { cachedTheme = localStorage.getItem("spindex_profile_theme") || null; } catch (e) {}
-    return { ...PROFILE, profileTheme: cachedTheme };
+    try { cachedBg = localStorage.getItem("spindex_page_bg") || null; } catch (e) {}
+    return { ...PROFILE, profileTheme: cachedTheme, pageBackground: cachedBg };
   });
   const [showSettings, setShowSettings] = useState(false);
   const [draftDisplayName, setDraftDisplayName] = useState(PROFILE.displayName);
@@ -834,6 +836,9 @@ export default function SoundboardDemo() {
     if (fields.profileTheme !== undefined) {
       try { localStorage.setItem("spindex_profile_theme", fields.profileTheme || ""); } catch (e) {}
     }
+    if (fields.pageBackground !== undefined) {
+      try { localStorage.setItem("spindex_page_bg", fields.pageBackground || ""); } catch (e) {}
+    }
     apiFetch(`${BACKEND_URL}/api/users/profile`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -853,9 +858,11 @@ export default function SoundboardDemo() {
           setProfileStats(realStats);
           try { localStorage.setItem("spindex_stats", JSON.stringify(realStats)); } catch (e) {}
           try { localStorage.setItem("spindex_profile_theme", data.user.profileTheme || ""); } catch (e) {}
+          try { localStorage.setItem("spindex_page_bg", data.user.pageBackground || ""); } catch (e) {}
           setProfile((prev) => ({
             ...prev,
             profileTheme: data.user.profileTheme || null,
+            pageBackground: data.user.pageBackground || null,
             age: data.user.age || null,
             town: data.user.town || null,
             country: data.user.country || null,
@@ -2318,7 +2325,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
         <ShareMixModal albumMixes={albumMixes} songMixes={songMixes} followingUsers={followingUsers} onSubmit={submitMixShare} onClose={() => setShowShareMixModal(false)} />
       )}
 
-      <div style={{ maxWidth: 920, margin: "0 auto", padding: "28px 16px 64px" }}>
+      <div style={{ maxWidth: 920, margin: "0 auto", padding: "28px 16px 64px", minHeight: "calc(100vh - 60px)", background: (view.name === "profile" ? (profile.pageBackground || "") : view.name === "userProfile" ? (viewedUser?.pageBackground || "") : "") || undefined, transition: "background 0.2s" }}>
         {/* TOAST */}
         {toast && (
           <div style={{ position: "sticky", top: 8, zIndex: 10, background: INK, color: BG, padding: "8px 14px", borderRadius: 0, fontSize: 12, marginBottom: 16, display: "inline-flex", alignItems: "center", gap: 6 }}>
@@ -4352,6 +4359,39 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                     </>
                     );
                   })()}
+
+                  <div style={{ marginTop: 22 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: "#6b6b74", marginBottom: 12, letterSpacing: "0.01em" }}>page background</div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 6 }}>
+                      {[
+                        { name: "White", value: "" },
+                        { name: "Cream", value: "#f5f1e8" },
+                        { name: "Soft Gray", value: "#eceef1" },
+                        { name: "Baby Pink", value: "#fbeef2" },
+                      ].map((bg) => {
+                        const cur = profile.pageBackground || "";
+                        const on = cur === bg.value;
+                        return (
+                          <button
+                            key={bg.name}
+                            onClick={() => saveProfileField({ pageBackground: bg.value })}
+                            title={bg.name}
+                            aria-label={bg.name}
+                            style={{
+                              width: 34, height: 34, borderRadius: "50%", cursor: "pointer", padding: 0,
+                              background: bg.value || "#ffffff",
+                              border: on ? `2px solid ${INK}` : "1px solid rgba(0,0,0,.15)",
+                              outline: on ? "2px solid #fff" : "none", outlineOffset: -4,
+                              boxShadow: on ? `0 0 0 1px ${INK}` : "none",
+                            }}
+                          />
+                        );
+                      })}
+                      <span style={{ fontSize: 14, color: "#8a8a92", marginLeft: 4 }}>
+                        {({ "": "White", "#f5f1e8": "Cream", "#eceef1": "Soft Gray", "#fbeef2": "Baby Pink" })[profile.pageBackground || ""] || "White"}
+                      </span>
+                    </div>
+                  </div>
 
                   <div style={{ marginTop: 22 }}>
                     <div style={{ fontSize: 13, fontWeight: 600, color: "#6b6b74", marginBottom: 10, letterSpacing: "0.01em" }}>profile theme</div>
