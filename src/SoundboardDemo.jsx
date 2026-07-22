@@ -2325,7 +2325,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
         <ShareMixModal albumMixes={albumMixes} songMixes={songMixes} followingUsers={followingUsers} onSubmit={submitMixShare} onClose={() => setShowShareMixModal(false)} />
       )}
 
-      <div style={{ maxWidth: 920, margin: "0 auto", padding: "28px 16px 64px", minHeight: "calc(100vh - 60px)", background: (view.name === "profile" ? (profile.pageBackground || "") : view.name === "userProfile" ? (viewedUser?.pageBackground || "") : "") || undefined, transition: "background 0.2s" }}>
+      <div style={{ maxWidth: 920, margin: "0 auto", padding: "28px 16px 64px", minHeight: "calc(100vh - 60px)", position: "relative", background: (view.name === "profile" ? (profile.pageBackground || "") : view.name === "userProfile" ? (viewedUser?.pageBackground || "") : "") || undefined, boxShadow: (view.name === "profile" ? (profile.pageBackground || "") : view.name === "userProfile" ? (viewedUser?.pageBackground || "") : "") ? `0 0 0 100vmax ${(view.name === "profile" ? profile.pageBackground : viewedUser?.pageBackground) || "transparent"}` : undefined, clipPath: (view.name === "profile" ? (profile.pageBackground || "") : view.name === "userProfile" ? (viewedUser?.pageBackground || "") : "") ? "inset(0 -100vmax)" : undefined, transition: "background 0.2s" }}>
         {/* TOAST */}
         {toast && (
           <div style={{ position: "sticky", top: 8, zIndex: 10, background: INK, color: BG, padding: "8px 14px", borderRadius: 0, fontSize: 12, marginBottom: 16, display: "inline-flex", alignItems: "center", gap: 6 }}>
