@@ -784,6 +784,7 @@ export default function SoundboardDemo() {
   const [showPlusMenu, setShowPlusMenu] = useState(false);
   const [showQotdModal, setShowQotdModal] = useState(false);
   const [showQuickReviewModal, setShowQuickReviewModal] = useState(false);
+  const [showSongReviewModal, setShowSongReviewModal] = useState(false);
   const [showTextPostModal, setShowTextPostModal] = useState(false);
   const [showShareMixModal, setShowShareMixModal] = useState(false);
   const [mixSharePosts, setMixSharePosts] = useState([
@@ -1821,6 +1822,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
             id: item.id,
             username: item.username,
             albumId: item.albumId,
+            songTitle: item.songTitle || "",
             rating: item.rating,
             text: item.text || "",
             mixId: item.mixId || null,
@@ -1870,6 +1872,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
             id: item.id,
             username: item.username,
             albumId: item.albumId,
+            songTitle: item.songTitle || "",
             rating: item.rating,
             text: item.text || "",
             mixId: item.mixId || null,
@@ -2379,6 +2382,29 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
       {showQotdModal && (
         <QotdModal question={TODAYS_QUESTION} onSubmit={submitQotdResponse} onClose={() => setShowQotdModal(false)} />
       )}
+      {showSongReviewModal && (
+        <SongReviewModal
+          onSubmit={(albumId, songTitle, rating, reviewText) => {
+            apiFetch(`${BACKEND_URL}/api/song-reviews`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ albumId, songTitle, rating: rating || null, reviewText }),
+            })
+              .then((r) => r.json())
+              .then((data) => {
+                if (data.songReview) {
+                  flash("Song review posted");
+                  setShowSongReviewModal(false);
+                  try { loadPublicFeed(); } catch (e) {}
+                } else {
+                  flash(data.error || "Could not post review");
+                }
+              })
+              .catch(() => flash("Could not post review"));
+          }}
+          onClose={() => setShowSongReviewModal(false)}
+        />
+      )}
       {showQuickReviewModal && (
         <QuickReviewModal onSubmit={submitQuickReview} onClose={() => setShowQuickReviewModal(false)} />
       )}
@@ -2503,6 +2529,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                               // { label: "QOTD", desc: "answer today's question", action: () => { setShowPlusMenu(false); setShowQotdModal(true); } },
                               { label: "write a thought", desc: "share what's on your mind", action: () => { setShowPlusMenu(false); setShowTextPostModal(true); } },
                               { label: "rate an album", desc: "post a review with a score", action: () => { setShowPlusMenu(false); setShowQuickReviewModal(true); } },
+                              { label: "review a song", desc: "review one track (writing required)", action: () => { setShowPlusMenu(false); setShowSongReviewModal(true); } },
                               { label: "share a mix", desc: "feature a set of albums", action: () => { setShowPlusMenu(false); setShowShareMixModal(true); } },
                             ].map((opt) => (
                               <button key={opt.label} onClick={opt.action} style={{ display: "block", width: "100%", textAlign: "left", padding: "11px 14px", background: "none", border: "none", cursor: "pointer", borderBottom: `1px solid ${LINE}` }}
@@ -5738,6 +5765,80 @@ function TextPostModal({ onSubmit, onClose, followingUsers }) {
             post
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function SongReviewModal({ onSubmit, onClose }) {
+  const { BLUE, INK, LINE, MUTE, BG } = useTheme();
+  const [pickedAlbum, setPickedAlbum] = React.useState(null);
+  const [songTitle, setSongTitle] = React.useState("");
+  const [rating, setRating] = React.useState(0);
+  const [text, setText] = React.useState("");
+  React.useEffect(() => { const fn = (e) => { if (e.key === "Escape") onClose(); }; window.addEventListener("keydown", fn); return () => window.removeEventListener("keydown", fn); }, [onClose]);
+
+  const canPost = pickedAlbum && songTitle.trim() && text.trim();
+
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: BG, border: `1px solid ${INK}`, borderRadius: 0, padding: 24, width: "100%", maxWidth: 420, maxHeight: "85vh", overflowY: "auto" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+          <div className="ui-sans" style={{ fontSize: 15, fontWeight: 400 }}>review a song</div>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: MUTE, padding: 0 }}><X size={16} /></button>
+        </div>
+
+        {!pickedAlbum ? (
+          <AlbumSearchPicker onPick={setPickedAlbum} onCancel={onClose} placeholder="search for the album this song is from..." />
+        ) : (
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, border: `1px solid ${LINE}`, borderRadius: 0, padding: "10px 12px", marginBottom: 18 }}>
+              <AlbumCover album={pickedAlbum} size={48} />
+              <div className="ui-sans" style={{ flex: 1 }}>
+                <div style={{ fontSize: 13.5, fontWeight: 400 }}>{pickedAlbum.title}</div>
+                <div style={{ fontSize: 11.5, color: MUTE }}>{pickedAlbum.artist} · {pickedAlbum.year}</div>
+              </div>
+              <button onClick={() => { setPickedAlbum(null); setSongTitle(""); setRating(0); setText(""); }} style={{ background: "none", border: "none", cursor: "pointer", color: MUTE, padding: 4 }}><X size={14} /></button>
+            </div>
+
+            <div style={{ marginBottom: 16 }}>
+              <div className="ui-sans" style={{ fontSize: 11, color: MUTE, marginBottom: 5 }}>song title <span style={{ color: BLUE }}>*</span></div>
+              <input
+                className="sb-input ui-sans"
+                style={{ width: "100%" }}
+                placeholder="which song?"
+                value={songTitle}
+                onChange={(e) => setSongTitle(e.target.value)}
+              />
+            </div>
+
+            <div style={{ marginBottom: 16 }}>
+              <div className="ui-sans" style={{ fontSize: 11, color: MUTE, marginBottom: 8 }}>your rating (optional)</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <RatingBlocks value={rating} onChange={setRating} size={18} />
+                <span className="ui-sans" style={{ fontSize: 13, fontWeight: 600, color: rating ? BLUE : MUTE }}>{rating ? `${rating}/10` : "—"}</span>
+              </div>
+            </div>
+
+            <div style={{ marginBottom: 16 }}>
+              <div className="ui-sans" style={{ fontSize: 11, color: MUTE, marginBottom: 6 }}>your review <span style={{ color: BLUE }}>*</span></div>
+              <textarea
+                className="sb-textarea ui-sans"
+                rows={4}
+                placeholder="what makes this song worth hearing?"
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                style={{ width: "100%" }}
+              />
+              <div className="ui-sans" style={{ fontSize: 10.5, color: MUTE, marginTop: 4 }}>a written review is required for song reviews</div>
+            </div>
+
+            <div style={{ display: "flex", gap: 8 }}>
+              <button className="sb-btn sb-btn-solid" disabled={!canPost} onClick={() => onSubmit(pickedAlbum.id, songTitle.trim(), rating, text.trim())}>post review</button>
+              <button className="sb-btn" onClick={onClose}>cancel</button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
