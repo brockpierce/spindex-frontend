@@ -2789,8 +2789,8 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                               {c.text && <div style={{ fontSize: 13.5, color: INK, marginTop: 3, lineHeight: 1.5, textAlign: "left" }}><CommentText text={c.text} onOpenProfile={openUserProfile} /></div>}
                               {(c.favTrack || c.leastFavTrack) && (
                                 <div className="ui-sans" style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 7 }}>
-                                  {c.favTrack && <span style={{ fontSize: 12, color: MUTE }}><span style={{ color: "#1c9c5b", fontWeight: 700 }}>+</span> {c.favTrack}</span>}
-                                  {c.leastFavTrack && <span style={{ fontSize: 12, color: MUTE }}><span style={{ color: "#c0392b", fontWeight: 700 }}>&minus;</span> {c.leastFavTrack}</span>}
+                                  {c.favTrack && <span style={{ fontSize: 12, color: MUTE }}>{"\u2661"} {c.favTrack}</span>}
+                                  {c.leastFavTrack && <span style={{ fontSize: 12, color: MUTE }}>{"\u2715"} {c.leastFavTrack}</span>}
                                 </div>
                               )}
                             </div>
@@ -3054,8 +3054,8 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                     {rev.text && <div style={{ fontSize: 13.5, color: INK, marginTop: 6, lineHeight: 1.5 }}><CommentText text={rev.text} onOpenProfile={openUserProfile} /></div>}
                     {(rev.favTrack || rev.leastFavTrack) && (
                       <div className="ui-sans" style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 7 }}>
-                        {rev.favTrack && <span style={{ fontSize: 12, color: MUTE }}><span style={{ color: "#1c9c5b", fontWeight: 700 }}>+</span> {rev.favTrack}</span>}
-                        {rev.leastFavTrack && <span style={{ fontSize: 12, color: MUTE }}><span style={{ color: "#c0392b", fontWeight: 700 }}>&minus;</span> {rev.leastFavTrack}</span>}
+                        {rev.favTrack && <span style={{ fontSize: 12, color: MUTE }}>{"\u2661"} {rev.favTrack}</span>}
+                        {rev.leastFavTrack && <span style={{ fontSize: 12, color: MUTE }}>{"\u2715"} {rev.leastFavTrack}</span>}
                       </div>
                     )}
                   </div>
