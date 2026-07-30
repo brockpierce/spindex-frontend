@@ -2456,7 +2456,11 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
               <div style={{ display: "flex", gap: 0, border: `1px solid ${INK}`, borderRadius: 0, overflow: "hidden", flexShrink: 0 }}>
                 <button onClick={() => { setHomeTab("everyone"); if (publicFeedItems.length === 0) loadPublicFeed(); }} style={{ padding: "7px 16px", fontFamily: "inherit", fontSize: 12, fontWeight: 500, cursor: "pointer", border: "none", background: homeTab === "everyone" ? INK : "transparent", color: homeTab === "everyone" ? BG : INK }}>everyone</button>
                 <button onClick={() => setHomeTab("feed")} style={{ padding: "7px 16px", fontFamily: "inherit", fontSize: 12, fontWeight: 500, cursor: "pointer", border: "none", borderLeft: `1px solid ${INK}`, background: homeTab === "feed" ? INK : "transparent", color: homeTab === "feed" ? BG : INK }}>feed</button>
+{false && (
+{false && (
                 <button onClick={() => setHomeTab("news")} style={{ padding: "7px 16px", fontFamily: "inherit", fontSize: 12, fontWeight: 500, cursor: "pointer", border: "none", borderLeft: `1px solid ${INK}`, background: homeTab === "news" ? INK : "transparent", color: homeTab === "news" ? BG : INK }}>news</button>
+                )}
+                )}
               </div>
               {(homeTab === "feed" || homeTab === "everyone") && (
                 <>
@@ -4951,8 +4955,12 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
 
       {/* FOOTER */}
       <div style={{ borderTop: `1px solid ${LINE}`, padding: "18px 24px", display: "flex", justifyContent: "center", gap: 20 }}>
+{false && (<>
+{false && (<>
         <span className="ui-sans" style={{ fontSize: 11, color: MUTE, cursor: "pointer" }} onClick={() => setView({ name: "terms" })}>terms of service</span>
         <span className="ui-sans" style={{ fontSize: 11, color: MUTE, cursor: "pointer" }} onClick={() => setView({ name: "terms" })}>privacy policy</span>
+        </>)}
+        </>)}
         <span className="ui-sans" style={{ fontSize: 11, color: MUTE }}>© {new Date().getFullYear()} Spindex</span>
       </div>
     </div>
@@ -7219,7 +7227,7 @@ function AuthScreen({ backendUrl, onAuthed }) {
             {loading ? "..." : mode === "login" ? "log in" : "create account"}
           </button>
 
-          {mode === "signup" && (
+{false && mode === "signup" && (
             <div style={{ fontSize: 11, color: MUTE, textAlign: "center", lineHeight: 1.6 }} className="ui-sans">
               by creating an account you agree to our{" "}
               <span style={{ color: BLUE, cursor: "pointer", textDecoration: "underline" }} onClick={() => setShowTerms(true)}>
@@ -7236,11 +7244,13 @@ function AuthScreen({ backendUrl, onAuthed }) {
           </span>
         </div>
 
+{false && (
         <div style={{ fontSize: 10.5, color: MUTE, textAlign: "center", marginTop: 24 }} className="ui-sans">
           <span style={{ cursor: "pointer", textDecoration: "underline" }} onClick={() => setShowTerms(true)}>terms of service</span>
           {" · "}
           <span style={{ cursor: "pointer", textDecoration: "underline" }} onClick={() => setShowTerms(true)}>privacy policy</span>
         </div>
+        )}
       </div>
     </div>
   );
