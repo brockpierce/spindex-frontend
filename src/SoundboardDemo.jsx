@@ -2608,7 +2608,53 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                         );
                       }
 
-                      if (c.itemType === "textpost") {
+                      if (c.itemType === "songReview") {
+                        const album = fetchedAlbums[c.albumId] || albumById(c.albumId);
+                        const coverUrl = album && album.coverArtUrl && album.coverArtUrl !== "none" ? album.coverArtUrl.replace("http://", "https://") : null;
+                        const artistName = album ? (album.artist || album.artistName || "") : "";
+                        const albumTitle = album ? album.title : "";
+                        const metaTail = artistName + (albumTitle ? " · " + albumTitle : "");
+                        return (
+                          <div key={i} style={{ border: `1px solid #dfe3e8`, borderRadius: 0, padding: "18px 22px 0" }}>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                <Avatar username={c.username} size={26} />
+                                <span className="ui-sans" style={{ fontSize: 15, fontWeight: 700, color: "#16181c", cursor: "pointer" }} onClick={() => openUserProfile(c.username)}>@{(c.username || "").toLowerCase()}</span>
+                              </div>
+                              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                <span className="ui-sans" style={{ fontSize: 14, fontWeight: 400, color: "#9aa0a8" }}>{relativeDate(c.date)}</span>
+                                {c.username === profile.username && (
+                                  <button onClick={(e) => { e.stopPropagation(); apiFetch(BACKEND_URL + "/api/song-reviews/" + c.id, { method: "DELETE" }).catch(() => {}); setRealFeedItems((prev) => prev.filter((p) => p.id !== c.id)); setPublicFeedItems((prev) => prev.filter((p) => p.id !== c.id)); }} style={{ background: "transparent", border: "none", padding: 2, cursor: "pointer", color: "#9aa0a8", display: "flex", alignItems: "center" }}><X size={14} /></button>
+                                )}
+                              </div>
+                            </div>
+                            <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: "16px 0 18px" }}>
+                              <div className="ui-sans" style={{ fontSize: isMobile ? 20 : 24, fontWeight: 500, color: "#16181c", lineHeight: 1.3, letterSpacing: "-0.015em" }}>{c.text}</div>
+                              <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 9, flexWrap: "wrap" }}>
+                                <div onClick={() => openAlbum(c.albumId)} style={{ width: 24, height: 24, flexShrink: 0, cursor: "pointer", overflow: "hidden", background: "#e7e9ec" }}>
+                                  {coverUrl ? <img src={coverUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /> : null}
+                                </div>
+                                <span style={{ fontSize: 15, fontWeight: 700, color: "#16181c" }}>{c.songTitle}</span>
+                                <span style={{ fontSize: 15, fontWeight: 400, color: "#9aa0a8" }}>{metaTail}</span>
+                                {c.rating ? <span style={{ width: 3, height: 3, borderRadius: "50%", background: "#c3c9d1", flexShrink: 0 }} /> : null}
+                                {c.rating ? <span style={{ fontSize: 15, fontWeight: 700, color: "#1c39bb" }}>{c.rating}/10</span> : null}
+                              </div>
+                            </div>
+                            {c.id && (
+                              <div style={{ display: "flex", alignItems: "center", gap: 20, padding: "12px 0 14px", borderTop: "1px solid #e6e8eb" }}>
+                                <ReactionBar reactions={reviewReactions[c.id]} onReact={(kind) => toggleReaction(c.id, kind)} currentUsername={profile.username} inline={true} />
+                                <button onClick={() => setExpandedComments((prev) => ({ ...prev, [c.id]: !prev[c.id] }))} style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 5, color: expandedComments[c.id] ? BLUE : MUTE, padding: 0 }}>
+                                  <MessageCircle size={16} strokeWidth={1.8} />
+                                  {countAllComments(reviewComments[c.id] || []) > 0 && <span style={{ fontSize: 13, fontWeight: 400 }}>{countAllComments(reviewComments[c.id] || [])}</span>}
+                                </button>
+                              </div>
+                            )}
+                            {c.id && expandedComments[c.id] && <ReviewComments followingUsers={followingUsers} reviewId={c.id} comments={reviewComments[c.id] || []} onAdd={addComment} onReply={addReply} currentUsername={profile.username} reviewOwnerUsername={c.username} onDelete={deleteComment} onLoadReactions={loadCommentReactions} onOpenProfile={openUserProfile} startOpen={true} />}
+                          </div>
+                        );
+                      }
+
+                                            if (c.itemType === "textpost") {
                         return (
                           <div key={i} style={{ border: `1px solid ${LINE}`, borderRadius: 0, padding: "14px 16px" }}>
                             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
