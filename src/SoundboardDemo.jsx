@@ -2480,7 +2480,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
               const isEveryone = homeTab === "everyone";
               const displayItems = isEveryone ? publicFeedItems : feed;
               const headerText = isEveryone ? "everyone" : "feed";
-              const subheaderText = isEveryone ? "recent posts from anyone on spindex" : "recent posts from people you follow";
+              const subheaderText = isEveryone ? "recent posts from anyone on noteblock" : "recent posts from people you follow";
               return (
               userSearchQuery.trim() ? (
                 <div>
@@ -4965,7 +4965,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
         <span className="ui-sans" style={{ fontSize: 11, color: MUTE, cursor: "pointer" }} onClick={() => setView({ name: "terms" })}>terms of service</span>
         <span className="ui-sans" style={{ fontSize: 11, color: MUTE, cursor: "pointer" }} onClick={() => setView({ name: "terms" })}>privacy policy</span>
         </>)}
-        <span className="ui-sans" style={{ fontSize: 11, color: MUTE }}>© {new Date().getFullYear()} Spindex</span>
+        <span className="ui-sans" style={{ fontSize: 11, color: MUTE }}>© {new Date().getFullYear()} noteblock</span>
       </div>
     </div>
     </AvatarContext.Provider>
