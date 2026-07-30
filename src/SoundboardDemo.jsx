@@ -4724,6 +4724,18 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                     <div style={{ fontSize: 11, color: MUTE, marginTop: 8 }}>how your profile looks to visitors</div>
                   </div>
 
+                  <div style={{ borderTop: `1px solid ${LINE}`, marginTop: 22, paddingTop: 18 }}>
+                    <button
+                      onClick={logout}
+                      className="ui-sans"
+                      style={{ fontFamily: "inherit", fontSize: 13, fontWeight: 500, padding: "9px 18px", background: "transparent", color: "#b23b3b", border: `1px solid #d9a0a0`, borderRadius: 0, cursor: "pointer" }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = "#fbeaea"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                    >
+                      log out
+                    </button>
+                  </div>
+
                   {false && (
                     <AdminAddAlbum apiFetch={apiFetch} backendUrl={BACKEND_URL} />
                   )}
