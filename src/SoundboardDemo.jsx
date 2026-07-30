@@ -7150,7 +7150,7 @@ function AuthScreen({ backendUrl, onAuthed }) {
 
       <div style={{ width: "100%", maxWidth: 360 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 9, justifyContent: "center", marginBottom: 28 }}>
-          <img src={LOGO_DATA_URI} alt="Spindex" style={{ height: 40, width: "auto" }} />
+          <img src="/spindex-logo.svg" alt="Spindex" style={{ height: 48, width: "auto" }} />
         </div>
 
         <div style={{ display: "flex", border: `1px solid ${INK}`, borderRadius: 0, marginBottom: 22, overflow: "hidden" }}>
