@@ -2529,7 +2529,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                               // { label: "QOTD", desc: "answer today's question", action: () => { setShowPlusMenu(false); setShowQotdModal(true); } },
                               { label: "write a thought", desc: "share what's on your mind", action: () => { setShowPlusMenu(false); setShowTextPostModal(true); } },
                               { label: "rate an album", desc: "post a review with a score", action: () => { setShowPlusMenu(false); setShowQuickReviewModal(true); } },
-                              { label: "review a song", desc: "review one track (writing required)", action: () => { setShowPlusMenu(false); setShowSongReviewModal(true); } },
+
                               { label: "share a mix", desc: "feature a set of albums", action: () => { setShowPlusMenu(false); setShowShareMixModal(true); } },
                             ].map((opt) => (
                               <button key={opt.label} onClick={opt.action} style={{ display: "block", width: "100%", textAlign: "left", padding: "11px 14px", background: "none", border: "none", cursor: "pointer", borderBottom: `1px solid ${LINE}` }}
@@ -2608,7 +2608,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                         );
                       }
 
-                      if (c.itemType === "songReview") {
+                      if (false && c.itemType === "songReview") {
                         const album = fetchedAlbums[c.albumId] || albumById(c.albumId);
                         const coverUrl = album && album.coverArtUrl && album.coverArtUrl !== "none" ? album.coverArtUrl.replace("http://", "https://") : null;
                         const artistName = album ? (album.artist || album.artistName || "") : "";
