@@ -1823,6 +1823,8 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
             username: item.username,
             albumId: item.albumId,
             songTitle: item.songTitle || "",
+            favTrack: item.favTrack || "",
+            leastFavTrack: item.leastFavTrack || "",
             rating: item.rating,
             text: item.text || "",
             mixId: item.mixId || null,
@@ -1873,6 +1875,8 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
             username: item.username,
             albumId: item.albumId,
             songTitle: item.songTitle || "",
+            favTrack: item.favTrack || "",
+            leastFavTrack: item.leastFavTrack || "",
             rating: item.rating,
             text: item.text || "",
             mixId: item.mixId || null,
@@ -2148,7 +2152,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
               if (revData && revData.reviews) {
                 const mapped = revData.reviews.map((r) => ({
                   id: r.id, albumId: r.albumId, rating: r.rating,
-                  text: r.reviewText || "", date: r.createdAt ? new Date(r.createdAt).toISOString() : "",
+                  text: r.reviewText || "", favTrack: r.favTrack || "", leastFavTrack: r.leastFavTrack || "", date: r.createdAt ? new Date(r.createdAt).toISOString() : "",
                 }));
                 setViewedUserReviews(mapped);
                 mapped.forEach((r) => {
@@ -2276,7 +2280,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
         .sb-cover-wrap:hover { opacity: 0.82; }
         .spx-loader { display: inline-flex; flex-direction: column; align-items: center; gap: 12px; --spx-color: ${BLUE}; }
         .spx-loader svg { display: block; overflow: visible; }
-        .spx-label { font-size: 13px; font-weight: 600; color: ${MUTE}; font-family: inherit; }
+        .spx-label { font-size: 13px; font-weight: 400; color: ${MUTE}; font-family: inherit; }
         .spx-inner { transform-box: fill-box; transform-origin: center; animation: spx-bob 1.5s ease-in-out infinite; }
         .spx-eyes { transform-box: fill-box; transform-origin: center; animation: spx-blink 4s ease-in-out infinite; }
         .spx-hair { transform-box: fill-box; transform-origin: center top; animation: spx-load 1.2s ease-in-out infinite; }
@@ -2783,6 +2787,12 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                                 <span style={{ fontSize: 13, color: MUTE, marginLeft: 6, cursor: "pointer" }} onClick={(e) => { e.stopPropagation(); openArtist(album.artist || album.artistName); }}>{album.artist || album.artistName}</span>
                               </div>
                               {c.text && <div style={{ fontSize: 13.5, color: INK, marginTop: 3, lineHeight: 1.5, textAlign: "left" }}><CommentText text={c.text} onOpenProfile={openUserProfile} /></div>}
+                              {(c.favTrack || c.leastFavTrack) && (
+                                <div className="ui-sans" style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 7 }}>
+                                  {c.favTrack && <span style={{ fontSize: 12, color: MUTE }}><span style={{ color: "#1c9c5b", fontWeight: 700 }}>+</span> {c.favTrack}</span>}
+                                  {c.leastFavTrack && <span style={{ fontSize: 12, color: MUTE }}><span style={{ color: "#c0392b", fontWeight: 700 }}>&minus;</span> {c.leastFavTrack}</span>}
+                                </div>
+                              )}
                             </div>
                           </div>
                           {c.id && (
