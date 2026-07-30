@@ -7097,6 +7097,45 @@ function AuthScreen({ backendUrl, onAuthed }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
+  const [resetCode, setResetCode] = useState("");
+  const [resetInfo, setResetInfo] = useState("");
+
+  async function forgotSubmit(e) {
+    e.preventDefault();
+    setError(""); setResetInfo(""); setLoading(true);
+    try {
+      const res = await fetch(`${backendUrl}/api/auth/forgot-password`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      await res.json().catch(() => ({}));
+      // Always proceed to reset screen (backend does not reveal if email exists)
+      setResetInfo("If an account exists for that email, a 6-digit code is on its way. Enter it below.");
+      setMode("reset");
+    } catch (err) {
+      setError("Could not reach the server. Try again.");
+    }
+    setLoading(false);
+  }
+
+  async function resetSubmit(e) {
+    e.preventDefault();
+    setError(""); setLoading(true);
+    try {
+      const res = await fetch(`${backendUrl}/api/auth/reset-password`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, code: resetCode.trim(), newPassword: password }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error || "Could not reset password."); setLoading(false); return; }
+      setResetInfo(""); setResetCode(""); setPassword("");
+      setError(""); setMode("login");
+      setResetInfo("Password updated. Log in with your new password.");
+    } catch (err) {
+      setError("Could not reach the server. Try again.");
+    }
+    setLoading(false);
+  }
 
   if (showTerms) {
     return <TermsScreen onBack={() => setShowTerms(false)} />;
@@ -7199,6 +7238,45 @@ function AuthScreen({ backendUrl, onAuthed }) {
           </button>
         </div>
 
+        {resetInfo && (mode === "login" || mode === "forgot" || mode === "reset") && (
+          <div style={{ fontSize: 12, color: "#1c6b3a", background: "#e9f7ee", borderRadius: 0, padding: "8px 10px", lineHeight: 1.5, marginBottom: 14 }} className="ui-sans">{resetInfo}</div>
+        )}
+
+        {mode === "forgot" && (
+          <form onSubmit={forgotSubmit} className="ui-sans" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <div style={{ fontSize: 13.5, fontWeight: 400, marginBottom: 4 }}>reset your password</div>
+            <div>
+              <div style={{ fontSize: 11, color: MUTE, marginBottom: 5 }}>email</div>
+              <input className="sb-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" required />
+            </div>
+            {error && <div style={{ fontSize: 12, color: "#A32D2D", background: "#FCEBEB", borderRadius: 0, padding: "8px 10px", lineHeight: 1.5 }}>{error}</div>}
+            <button type="submit" className="sb-btn sb-btn-solid" disabled={loading} style={{ marginTop: 4, padding: "10px 0" }}>{loading ? "..." : "send reset code"}</button>
+            <div style={{ fontSize: 11.5, color: MUTE, textAlign: "center", marginTop: 6 }}>
+              <span style={{ color: BLUE, cursor: "pointer", textDecoration: "underline" }} onClick={() => { setError(""); setMode("login"); }}>back to log in</span>
+            </div>
+          </form>
+        )}
+
+        {mode === "reset" && (
+          <form onSubmit={resetSubmit} className="ui-sans" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <div style={{ fontSize: 13.5, fontWeight: 400, marginBottom: 4 }}>enter your code</div>
+            <div>
+              <div style={{ fontSize: 11, color: MUTE, marginBottom: 5 }}>6-digit code</div>
+              <input className="sb-input" value={resetCode} onChange={(e) => setResetCode(e.target.value)} placeholder="123456" inputMode="numeric" maxLength={6} required />
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: MUTE, marginBottom: 5 }}>new password</div>
+              <input className="sb-input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="at least 8 characters" required minLength={8} />
+            </div>
+            {error && <div style={{ fontSize: 12, color: "#A32D2D", background: "#FCEBEB", borderRadius: 0, padding: "8px 10px", lineHeight: 1.5 }}>{error}</div>}
+            <button type="submit" className="sb-btn sb-btn-solid" disabled={loading} style={{ marginTop: 4, padding: "10px 0" }}>{loading ? "..." : "reset password"}</button>
+            <div style={{ fontSize: 11.5, color: MUTE, textAlign: "center", marginTop: 6 }}>
+              <span style={{ color: BLUE, cursor: "pointer", textDecoration: "underline" }} onClick={() => { setError(""); setResetInfo(""); setMode("login"); }}>back to log in</span>
+            </div>
+          </form>
+        )}
+
+        {(mode === "login" || mode === "signup") && (
         <form onSubmit={submit} className="ui-sans" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {mode === "signup" && (
             <>
@@ -7220,6 +7298,11 @@ function AuthScreen({ backendUrl, onAuthed }) {
             <div style={{ fontSize: 11, color: MUTE, marginBottom: 5 }}>password</div>
             <input className="sb-input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={mode === "signup" ? "at least 8 characters" : "••••••••"} required minLength={mode === "signup" ? 8 : undefined} />
           </div>
+          {mode === "login" && (
+            <div style={{ textAlign: "right", marginTop: -4 }}>
+              <span style={{ fontSize: 11, color: BLUE, cursor: "pointer", textDecoration: "underline" }} onClick={() => { setError(""); setResetInfo(""); setMode("forgot"); }}>forgot password?</span>
+            </div>
+          )}
 
           {error && (
             <div style={{ fontSize: 12, color: "#A32D2D", background: "#FCEBEB", borderRadius: 0, padding: "8px 10px", lineHeight: 1.5 }}>
@@ -7240,13 +7323,16 @@ function AuthScreen({ backendUrl, onAuthed }) {
             </div>
           )}
         </form>
+        )}
 
+        {(mode === "login" || mode === "signup") && (
         <div style={{ fontSize: 11.5, color: MUTE, textAlign: "center", marginTop: 18 }} className="ui-sans">
           {mode === "login" ? "new here? " : "already have an account? "}
           <span style={{ color: BLUE, cursor: "pointer", textDecoration: "underline" }} onClick={() => setMode(mode === "login" ? "signup" : "login")}>
             {mode === "login" ? "sign up" : "log in"}
           </span>
         </div>
+        )}
 
 {false && (
         <div style={{ fontSize: 10.5, color: MUTE, textAlign: "center", marginTop: 24 }} className="ui-sans">
