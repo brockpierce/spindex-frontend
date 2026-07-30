@@ -4171,9 +4171,9 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                     onClick={() => setMixPublic(mix.id, mix.isPublic === false)}
                     onKeyDown={(e) => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); setMixPublic(mix.id, mix.isPublic === false); } }}
                     title={mix.isPublic === false ? "Make public" : "Make private"}
-                    style={{ position: "relative", width: 52, height: 30, borderRadius: 6, background: mix.isPublic === false ? LINE : BLUE, border: "none", cursor: "pointer", padding: 3, transition: "background 0.18s", display: "inline-flex", flexShrink: 0 }}
+                    style={{ position: "relative", width: 26, height: 15, borderRadius: 4, background: mix.isPublic === false ? LINE : BLUE, border: "none", cursor: "pointer", padding: 2, transition: "background 0.18s", display: "inline-flex", flexShrink: 0 }}
                   >
-                    <span style={{ display: "block", width: 24, height: 24, borderRadius: 4, background: "#fff", boxShadow: "0 1px 2px rgba(0,0,0,0.25)", transform: mix.isPublic === false ? "translateX(0)" : "translateX(22px)", transition: "transform 0.18s" }} />
+                    <span style={{ display: "block", width: 11, height: 11, borderRadius: 3, background: "#fff", boxShadow: "0 1px 2px rgba(0,0,0,0.25)", transform: mix.isPublic === false ? "translateX(0)" : "translateX(11px)", transition: "transform 0.18s" }} />
                   </button>
                   <span style={{ fontSize: 15, fontWeight: 600, color: mix.isPublic === false ? MUTE : BLUE, minWidth: 56 }}>{mix.isPublic === false ? "Private" : "Public"}</span>
                   <span style={{ fontSize: 15, fontWeight: 400, color: MUTE }}>{mix.isPublic === false ? "only you can see this list" : "visible on your profile"}</span>
