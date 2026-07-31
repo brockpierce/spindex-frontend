@@ -7643,7 +7643,7 @@ function AuthScreen({ backendUrl, onAuthed, embedded }) {
         </div>
         )}
 
-{false && (
+{true && (
         <div style={{ fontSize: 10.5, color: MUTE, textAlign: "center", marginTop: 24 }} className="ui-sans">
           <span style={{ cursor: "pointer", textDecoration: "underline" }} onClick={() => setShowTerms(true)}>terms of service</span>
           {" · "}
