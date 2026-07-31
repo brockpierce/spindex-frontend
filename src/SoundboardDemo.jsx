@@ -3049,15 +3049,15 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                   {ev_album.coverArtUrl
                     ? <img src={ev_album.coverArtUrl} alt="" style={{ width: 200, height: 200, borderRadius: 0, objectFit: "cover", marginBottom: 24, boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }} />
                     : <div style={{ width: 200, height: 200, borderRadius: 0, background: "#eee", marginBottom: 24 }} />}
-                  <div className="ui-sans" style={{ fontSize: 11, letterSpacing: ".12em", fontWeight: 700, color: "#9a9a9a", textTransform: "uppercase", marginBottom: 10 }}>album of the day · {ev_aotd.date}</div>
+                  <div className="ui-sans" style={{ fontSize: 11, letterSpacing: ".12em", fontWeight: 700, color: "#9a9a9a", textTransform: "uppercase", marginBottom: 10 }}>album of the day · {fmtAotdDate(ev_aotd.date)}</div>
                   <div className="ui-sans" style={{ fontSize: 36, fontWeight: 800, letterSpacing: "-.02em", lineHeight: 1.1, marginBottom: 8 }}>{ev_album.title}</div>
                   <div className="ui-sans" style={{ fontSize: 16, color: "#8a8a8a", marginBottom: 20 }}>{ev_album.artist || ev_album.artistName} · {ev_album.year || ev_album.releaseYear}</div>
                   <span className="ui-sans" style={{ fontSize: 20, fontWeight: 800, color: "#2f6ae0", background: "#f0f4fe", borderRadius: 0, padding: "8px 18px" }}>{ev_aotd.staffRating} / 10</span>
                 </div>
               )}
               <div style={{ height: 1, background: "#eee", margin: "32px 0" }} />
-              <p className="ui-sans" style={{ fontSize: 17, lineHeight: 1.6, color: "#333", fontStyle: "italic", marginBottom: 28, fontWeight: 500 }}>"{ev_aotd.pullQuote}"</p>
-              <div className="ui-sans" style={{ fontSize: 15.5, lineHeight: 1.8, color: "#222", whiteSpace: "pre-line" }}>{ev_aotd.body}</div>
+              <p className="ui-sans" style={{ fontSize: 17, lineHeight: 1.6, color: "#333", fontStyle: "italic", marginBottom: 28, fontWeight: 500 }}>"{renderBold(ev_aotd.pullQuote)}"</p>
+              <div className="ui-sans" style={{ fontSize: 15.5, lineHeight: 1.8, color: "#222", whiteSpace: "pre-line" }}>{renderBold(ev_aotd.body)}</div>
               <div style={{ height: 1, background: "#eee", margin: "40px 0 24px" }} />
               <button className="sb-btn" onClick={() => openAlbum(ev_aotd.albumId)} style={{ fontSize: 13 }}>view album page →</button>
             </div>
@@ -5093,6 +5093,19 @@ function todayLocalISO() {
 // Parses the YYYY-MM-DD prefix as a string on purpose: building a Date from
 // a date-only value would be interpreted as UTC midnight and render as the
 // PREVIOUS day for anyone west of Greenwich.
+// Render **bold** spans in editorial copy. Splits on the marker pairs and
+// emits <strong> for those, plain text for everything else. Unmatched markers
+// are left as literal characters rather than swallowed.
+function renderBold(text) {
+  if (!text) return null;
+  return String(text).split(/(\*\*[^*]+\*\*)/g).map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
+      return <strong key={i}>{part.slice(2, -2)}</strong>;
+    }
+    return part;
+  });
+}
+
 function fmtAotdDate(d) {
   if (!d) return "";
   const m = String(d).match(/^(\d{4})-(\d{2})-(\d{2})/);
@@ -5122,6 +5135,7 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
   const [aotdRating, setAotdRating] = React.useState(8);
   const [aotdPullQuote, setAotdPullQuote] = React.useState("");
   const [aotdBody, setAotdBody] = React.useState("");
+  const aotdBodyRef = React.useRef(null);
   const [aotdDate, setAotdDate] = React.useState(todayLocalISO());
   const [aotdSaving, setAotdSaving] = React.useState(false);
 
@@ -5184,6 +5198,28 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
         });
       }
     } catch (e) {}
+  }
+
+  // Wrap the current selection in ** **. With no selection, drops empty
+  // markers and parks the cursor between them.
+  function aotdWrapBold() {
+    const el = aotdBodyRef.current;
+    if (!el) return;
+    const s = el.selectionStart, e = el.selectionEnd;
+    const sel = aotdBody.slice(s, e);
+    setAotdBody(aotdBody.slice(0, s) + "**" + sel + "**" + aotdBody.slice(e));
+    const pos = s + 2 + sel.length;
+    requestAnimationFrame(() => { el.focus(); el.setSelectionRange(pos, pos); });
+  }
+
+  // Insert a byline, cursor placed before the closing markers to type a name.
+  function aotdInsertByline() {
+    const el = aotdBodyRef.current;
+    const s = el ? el.selectionStart : aotdBody.length;
+    const snippet = "**review by **";
+    setAotdBody(aotdBody.slice(0, s) + snippet + aotdBody.slice(s));
+    const pos = s + snippet.length - 2;
+    requestAnimationFrame(() => { if (el) { el.focus(); el.setSelectionRange(pos, pos); } });
   }
 
   async function saveAotd() {
@@ -5280,7 +5316,11 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
             <input type="date" value={aotdDate} onChange={(e) => setAotdDate(e.target.value)} className="sb-input ui-sans" style={{ width: 140 }} />
           </div>
           <input className="sb-input ui-sans" placeholder="pull quote / editorial blurb (1-2 lines)" value={aotdPullQuote} onChange={(e) => setAotdPullQuote(e.target.value)} style={{ width: "100%", marginBottom: 8 }} />
-          <textarea className="sb-textarea ui-sans" placeholder="full review body..." value={aotdBody} onChange={(e) => setAotdBody(e.target.value)} rows={8} style={{ width: "100%", marginBottom: 12, fontSize: 13 }} />
+          <div style={{ display: "flex", gap: 6, marginBottom: 6 }}>
+            <button type="button" className="sb-btn" style={{ fontSize: 11, fontWeight: 700 }} onClick={aotdWrapBold}>B</button>
+            <button type="button" className="sb-btn" style={{ fontSize: 11 }} onClick={aotdInsertByline}>insert byline</button>
+          </div>
+          <textarea ref={aotdBodyRef} className="sb-textarea ui-sans" placeholder="full review body..." value={aotdBody} onChange={(e) => setAotdBody(e.target.value)} rows={8} style={{ width: "100%", marginBottom: 12, fontSize: 13 }} />
           <div style={{ display: "flex", gap: 8 }}>
             <button className="sb-btn sb-btn-solid" onClick={saveAotd} disabled={aotdSaving}>{aotdSaving ? "saving..." : "save"}</button>
             <button className="sb-btn" onClick={() => { setShowAotdForm(false); setEditingAotd(null); }}>cancel</button>
@@ -5298,7 +5338,7 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
           <div style={{ flex: 1, minWidth: 0 }}>
             <div className="ui-sans" style={{ fontSize: 20, fontWeight: 800, color: BLUE, lineHeight: 1, letterSpacing: "-0.01em" }}>{aotd.staffRating}/10</div>
             <div className="ui-sans" style={{ fontSize: 14, fontWeight: 800, marginTop: 6 }}>{aotdAlbum.title} <span style={{ fontWeight: 400, color: MUTE }}>{aotdAlbum.artist || aotdAlbum.artistName} · {aotdAlbum.year || aotdAlbum.releaseYear}</span></div>
-            <p className="ui-sans" style={{ fontSize: 13.5, lineHeight: 1.5, color: "#333", margin: "6px 0 0" }}>{aotd.pullQuote}</p>
+            <p className="ui-sans" style={{ fontSize: 13.5, lineHeight: 1.5, color: "#333", margin: "6px 0 0" }}>{renderBold(aotd.pullQuote)}</p>
             <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${LINE}` }}>
               <button className="sb-btn ui-sans" style={{ fontSize: 13, fontWeight: 400, cursor: "pointer", background: "transparent", color: BLUE, border: `1px solid ${BLUE}`, borderRadius: 0, padding: "10px 18px" }} onClick={() => openAlbum(aotd.albumId)}>join the conversation</button>
             </div>
