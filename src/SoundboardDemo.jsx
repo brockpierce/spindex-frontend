@@ -82,15 +82,99 @@ const INITIAL_NOTIFICATIONS = [];
 const INITIAL_REVIEW_REACTIONS = {};
 
 const QOTD_BANK = [
-  "what's the best album of the 90s?",
-  "what album would you want on a desert island?",
-  "what's the most underrated record of all time?",
-  "what album changed how you listen to music?",
-  "what's the best closing track on any album?",
-  "what album do you pretend to like more than you do?",
+  "favorite album of the 90s?",
+  "favorite album of the 60s?",
+  "favorite album of the 70s?",
+  "favorite album of the 80s?",
+  "favorite album of the 2000s?",
+  "favorite album of the 2010s?",
+  "most danceable album?",
+  "most depressing listen?",
+  "what's the happiest album?",
+  "best singer songwriter album?",
+  "favorite rock album?",
+  "favorite folk album?",
+  "favorite rap album?",
+  "favorite experimental record?",
+  "best sophomore record?",
+  "best debut album?",
+  "worst album ever?",
+  "most overrated album?",
+  "most underrated album?",
+  "overly hated album that's actually good?",
+  "guilty pleasure album?",
+  "album you would hate to listen to on a first date?",
+  "most romantic album?",
+  "sexiest album ever?",
+  "most relaxing album?",
+  "best workout album?",
+  "what album embodies cool?",
+  "best album to listen to while wearing sunglasses inside?",
+  "what album feels the most like you?",
+  "what album matches your current mood?",
+  "what album feels like your hometown?",
+  "what album feels like being 17?",
+  "best rainy day album?",
+  "best late night driving album?",
+  "best album for a long road trip?",
+  "great album with a terrible cover?",
+  "album everyone loves except you?",
+  "album everyone hates except you?",
+  "album you disliked at first but now love?",
+  "album that hasn't aged well?",
+  "album that aged better than expected?",
+  "best comeback album?",
+  "best final album?",
+  "best posthumous album?",
+  "best breakup album?",
+  "best concept album?",
+  "album that changed your brain chemistry?",
+  "album you wish you could hear for the first time again?",
+  "best album to play when you have the aux?",
+  "album you've listened to the most?",
+  "album with the best opening track?",
+  "album that reminds you of your childhood?",
+  "album that reminds you most of high school?",
+  "album that got you through a difficult period?",
+  "album you can only listen to in full?",
+  "album with the worst sequencing?",
+  "best live album?",
+  "album you'd recommend to almost anyone?",
+  "album you love but would never recommend?",
+  "album aliens should hear first?",
 ];
 
-const TODAYS_QUESTION = QOTD_BANK[0];
+// Seasonal questions, kept OUT of the rotation and pinned to a fixed MM-DD.
+// A 60-day cycle would otherwise surface "best winter album?" in July.
+const QOTD_SEASONAL = {
+  "10-15": "best fall album?",
+  "12-15": "best winter album?",
+};
+
+// Today's date in New York as YYYY-MM-DD. en-CA formats that way natively.
+// America/New_York rather than a fixed UTC-5 so rollover stays at local
+// midnight year round instead of drifting an hour during EDT.
+function qotdTodayNY() {
+  try {
+    return new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+  } catch (e) {
+    return new Date().toISOString().slice(0, 10);
+  }
+}
+
+// Pins 2026-07-31 to "album that changed your brain chemistry?" (index 46).
+const QOTD_OFFSET = 21;
+
+function qotdForToday() {
+  const ymd = qotdTodayNY();
+  const seasonal = QOTD_SEASONAL[ymd.slice(5)];
+  if (seasonal) return seasonal;
+  const parts = ymd.split("-").map(Number);
+  const dayNum = Math.floor(Date.UTC(parts[0], parts[1] - 1, parts[2]) / 86400000);
+  return QOTD_BANK[(dayNum + QOTD_OFFSET) % QOTD_BANK.length];
+}
+
+const TODAYS_QUESTION = qotdForToday();
 
 const INITIAL_QOTD_RESPONSES = [];
 
