@@ -3841,7 +3841,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
               </div>
 
               <ListenedByFriends albumId={album.id} onOpenProfile={openUserProfile} />
-              <AlbumCommunitySection albumId={album.id} albumTab={albumTab} setAlbumTab={setAlbumTab} openAlbum={openAlbum} reviewComments={reviewComments} onAddComment={addComment} onAddReply={addReply} currentUsername={profile.username} reviewReactions={reviewReactions} onReact={toggleReaction} />
+              <AlbumCommunitySection albumId={album.id} albumTab={albumTab} setAlbumTab={setAlbumTab} openAlbum={openAlbum} reviewComments={reviewComments} onAddComment={addComment} onAddReply={addReply} currentUsername={profile.username} reviewReactions={reviewReactions} onReact={toggleReaction} onOpenProfile={openUserProfile} />
             </div>
           );
         })()}
@@ -6971,7 +6971,7 @@ function ListenedByFriends({ albumId, onOpenProfile }) {
   );
 }
 
-function AlbumCommunitySection({ albumId, albumTab, setAlbumTab, openAlbum, reviewComments = {}, onAddComment, onAddReply, currentUsername, reviewReactions = {}, onReact }) {
+function AlbumCommunitySection({ albumId, albumTab, setAlbumTab, openAlbum, reviewComments = {}, onAddComment, onAddReply, currentUsername, reviewReactions = {}, onReact, onOpenProfile }) {
   const { BLUE, INK, LINE, MUTE } = useTheme();
   const mixes = COMMUNITY_ALBUM_MIXES.filter((l) => l.albumIds.includes(albumId));
 
@@ -7061,6 +7061,7 @@ function AlbumCommunitySection({ albumId, albumTab, setAlbumTab, openAlbum, revi
                   reviewOwnerUsername={r.username}
                   reviewReactions={reviewReactions}
                   onReact={onReact}
+                  onOpenProfile={onOpenProfile}
                 />
               )}
             </div>
