@@ -5155,6 +5155,28 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
       .catch(() => {});
   }, []);
 
+  // Re-read both AOTD endpoints. Called after any write so the current
+  // entry AND the archive list stay in sync without a page reload.
+  async function refreshAotd() {
+    try {
+      const r1 = await apiFetch(BACKEND_URL + "/api/news");
+      const d1 = await r1.json();
+      setAotd(d1.aotd || null);
+      if (d1.aotd && d1.aotd.album) {
+        const a = d1.aotd.album;
+        setFetchedAlbums((prev) => ({ ...prev, [a.id]: { ...a, artist: a.artistName || "", year: a.releaseYear || null } }));
+      }
+      const r2 = await apiFetch(BACKEND_URL + "/api/news/aotd");
+      const d2 = await r2.json();
+      if (d2.items) {
+        setAllAotd(d2.items);
+        d2.items.forEach((item) => {
+          if (item.album) setFetchedAlbums((prev) => ({ ...prev, [item.album.id]: { ...item.album, artist: item.album.artistName || "", year: item.album.releaseYear || null } }));
+        });
+      }
+    } catch (e) {}
+  }
+
   async function saveAotd() {
     if (!aotdAlbumPicked || !aotdPullQuote || !aotdBody) return;
     setAotdSaving(true);
@@ -5170,6 +5192,7 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
       setAotd(data.item);
       if (data.item.album) setFetchedAlbums((prev) => ({ ...prev, [data.item.album.id]: { ...data.item.album, artist: data.item.album.artistName || "", year: data.item.album.releaseYear || null } }));
     }
+    await refreshAotd();
     setShowAotdForm(false); setEditingAotd(null); setAotdAlbumPicked(null); setAotdPullQuote(""); setAotdBody(""); setAotdSaving(false);
   }
 
@@ -5191,7 +5214,7 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
   async function deleteAotd(id) {
     if (!window.confirm("Delete this album of the day?")) return;
     await apiFetch(BACKEND_URL + "/api/news/aotd/" + id, { method: "DELETE" });
-    setAotd(null);
+    await refreshAotd();
   }
 
   async function deleteInterview(id) {
