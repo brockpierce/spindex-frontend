@@ -5158,7 +5158,17 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
         if (data.featuredMixId) {
           apiFetch(BACKEND_URL + "/api/mixes/" + data.featuredMixId)
             .then((r) => r.json())
-            .then((d) => { if (d.mix) setFeaturedMix(d.mix); })
+            .then((d) => {
+              if (!d.mix) return;
+              setFeaturedMix(d.mix);
+              // Merge the mix's albums into the shared cache in ONE update so
+              // MixCoverStack can resolve covers for first-time visitors.
+              const merged = {};
+              (d.mix.albums || []).forEach((it) => {
+                if (it && it.album) merged[it.album.id] = { ...it.album, artist: it.album.artistName || "", year: it.album.releaseYear || null };
+              });
+              if (Object.keys(merged).length) setFetchedAlbums((prev) => ({ ...merged, ...prev }));
+            })
             .catch(() => {});
         }
         if (data.aotd && data.aotd.album) {
