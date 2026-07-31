@@ -5219,9 +5219,18 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
         {isAdmin && (
           <div style={{ display: "flex", gap: 8 }}>
             <button className="sb-btn" style={{ fontSize: 11 }} onClick={() => {
-              if (aotd) { setEditingAotd(aotd); setAotdAlbumPicked(aotdAlbum); setAotdRating(aotd.staffRating); setAotdPullQuote(aotd.pullQuote); setAotdBody(aotd.body); setAotdDate(aotd.date); }
+              if (aotd) { setEditingAotd(aotd); setAotdAlbumPicked(aotdAlbum); setAotdRating(aotd.staffRating); setAotdPullQuote(aotd.pullQuote); setAotdBody(aotd.body); setAotdDate(String(aotd.date || "").slice(0, 10)); }
               setShowAotdForm(true);
             }}>{aotd ? "edit" : "+ new"}</button>
+            {aotd && <button className="sb-btn" style={{ fontSize: 11 }} onClick={() => {
+              setEditingAotd(null);
+              setAotdAlbumPicked(null);
+              setAotdRating(8);
+              setAotdPullQuote("");
+              setAotdBody("");
+              setAotdDate(new Date().toISOString().slice(0, 10));
+              setShowAotdForm(true);
+            }}>+ new</button>}
             {aotd && <button className="sb-btn" style={{ fontSize: 11 }} onClick={() => deleteAotd(aotd.id)}>delete</button>}
           </div>
         )}

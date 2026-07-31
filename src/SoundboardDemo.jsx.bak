@@ -5388,8 +5388,9 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
                     <div className="ui-sans" style={{ flex: 1 }}>
                       <div style={{ fontSize: 14, fontWeight: 400, cursor: "pointer" }} onClick={() => openAlbum(item.albumId)}>{album.title}</div>
                       <div style={{ fontSize: 12, color: "#9a9a9a" }}>{album.artist || album.artistName} · <span style={{ color: ACCENT, fontWeight: 600 }}>{item.staffRating}/10</span></div>
+                      {item.body ? <span style={{ fontSize: 12, color: ACCENT, fontWeight: 600, cursor: "pointer" }} onClick={() => setView({ name: "editorialReview", aotd: item, album: album, from: { name: "home", tab: "news" } })}>read the full review →</span> : null}
                     </div>
-                    <div style={{ fontSize: 11, color: "#9a9a9a", flexShrink: 0 }}>{item.date}</div>
+                    <div style={{ fontSize: 11, color: "#9a9a9a", flexShrink: 0 }}>{fmtAotdDate(item.date)}</div>
                     {isAdmin && <button className="sb-btn" style={{ fontSize: 10 }} onClick={() => deleteAotd(item.id)}>×</button>}
                   </div>
                 );
