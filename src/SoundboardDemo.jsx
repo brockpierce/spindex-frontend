@@ -7465,8 +7465,6 @@ function AuthScreen({ backendUrl, onAuthed, embedded }) {
         fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
         color: INK,
         width: "100%",
-        display: "flex",
-        justifyContent: "center",
       } : {
         fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
         background: theme.BG,
@@ -7475,7 +7473,8 @@ function AuthScreen({ backendUrl, onAuthed, embedded }) {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        padding: 24,
+        padding: 16,
+        boxSizing: "border-box",
       }}
     >
       <style>{`
@@ -7489,7 +7488,7 @@ function AuthScreen({ backendUrl, onAuthed, embedded }) {
         .sb-input:focus { border-color: ${BLUE}; }
       `}</style>
 
-      <div style={{ width: "100%", maxWidth: 360, margin: "0 auto" }}>
+      <div style={{ width: "100%", maxWidth: 360, margin: "0 auto", boxSizing: "border-box" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 9, justifyContent: "center", marginBottom: 28 }}>
           <img src="/spindex-logo.svg" alt="Spindex" style={{ height: 48, width: "auto" }} />
         </div>
