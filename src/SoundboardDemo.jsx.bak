@@ -5193,6 +5193,29 @@ function renderBold(text) {
   });
 }
 
+// Today as YYYY-MM-DD in LOCAL time. Not toISOString(), which is UTC and
+// would allow a future date for anyone west of Greenwich in the evening.
+function nbTodayLocal() {
+  const d = new Date();
+  const p = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
+// Whole years old today from "YYYY-MM-DD". null if malformed or not a real
+// calendar date. Mirrors ageFromBirthday() in backend/routes/auth.js.
+function nbAgeFrom(b) {
+  const m = String(b || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return null;
+  const y = Number(m[1]), mo = Number(m[2]), day = Number(m[3]);
+  const dt = new Date(y, mo - 1, day);
+  if (dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== day) return null;
+  const now = new Date();
+  let age = now.getFullYear() - y;
+  const monthNow = now.getMonth() + 1;
+  if (monthNow < mo || (monthNow === mo && now.getDate() < day)) age -= 1;
+  return age;
+}
+
 function fmtAotdDate(d) {
   if (!d) return "";
   const m = String(d).match(/^(\d{4})-(\d{2})-(\d{2})/);
@@ -7549,6 +7572,7 @@ function AuthScreen({ backendUrl, onAuthed, embedded }) {
   const theme = useTheme();
   const { BLUE, INK, LINE, MUTE } = theme;
   const [mode, setMode] = useState("login"); // "login" | "signup"
+  const [birthday, setBirthday] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
@@ -7649,9 +7673,24 @@ function AuthScreen({ backendUrl, onAuthed, embedded }) {
     setError("");
     setLoading(true);
 
+    // Convenience only — auth.js enforces this server-side.
+    if (mode === "signup") {
+      const nbAge = nbAgeFrom(birthday);
+      if (nbAge === null || nbAge > 120) {
+        setError("Please enter a valid date of birth.");
+        setLoading(false);
+        return;
+      }
+      if (nbAge < 16) {
+        setError("You must be at least 16 to use noteblock.");
+        setLoading(false);
+        return;
+      }
+    }
+
     const endpoint = mode === "login" ? "/api/auth/login" : "/api/auth/signup";
     const body =
-      mode === "login" ? { email, password } : { email, password, username, displayName };
+      mode === "login" ? { email, password } : { email, password, username, displayName, birthday };
 
     try {
       const res = await fetch(`${backendUrl}${endpoint}`, {
@@ -7824,6 +7863,11 @@ function AuthScreen({ backendUrl, onAuthed, embedded }) {
               <div>
                 <div style={{ fontSize: 11, color: MUTE, marginBottom: 5 }}>username</div>
                 <input className="sb-input" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="@elliottsmith" required />
+              </div>
+              <div>
+                <div style={{ fontSize: 11, color: MUTE, marginBottom: 5 }}>date of birth</div>
+                <input className="sb-input" type="date" value={birthday} max={nbTodayLocal()} onChange={(e) => setBirthday(e.target.value)} required />
+                <div style={{ fontSize: 11, color: MUTE, marginTop: 4 }}>you must be at least 16 to use noteblock</div>
               </div>
             </>
           )}
