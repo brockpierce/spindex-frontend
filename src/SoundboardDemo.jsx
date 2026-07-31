@@ -7308,7 +7308,7 @@ function LandingPage({ onAuthed }) {
             </div>
           </div>
         </div>
-        <div style={{ background: NB.panel, padding: 44, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+        <div style={{ background: "#fff", padding: 44, display: "flex", flexDirection: "column", justifyContent: "center" }}>
           <AuthScreen backendUrl={BACKEND_URL} onAuthed={onAuthed} embedded />
         </div>
       </div>
