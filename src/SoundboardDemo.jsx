@@ -7464,8 +7464,9 @@ function AuthScreen({ backendUrl, onAuthed, embedded }) {
       style={embedded ? {
         fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
         color: INK,
-        width: 380,
-        maxWidth: "100%",
+        width: "100%",
+        display: "flex",
+        justifyContent: "center",
       } : {
         fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
         background: theme.BG,
