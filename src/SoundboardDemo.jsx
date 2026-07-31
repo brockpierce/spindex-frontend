@@ -7253,9 +7253,8 @@ function LandingPage({ onAuthed }) {
         </div>
         <div style={{ padding: "2px 0 18px" }}><NBCarousel tileSize={100} gap={9} duration={28} maskAt={10} /></div>
         <div style={{ padding: "0 22px 18px", flex: 1, display: "flex", flexDirection: "column", gap: 10 }}>
-          <ShowcaseFeature />
-          <ShowcaseThread avatars={avatars} />
           <ShowcaseCompact />
+          <ShowcaseThread avatars={avatars} />
         </div>
         <div style={{ background: NB.panel, borderTop: `1px solid ${NB.hair}`, padding: "20px 22px", display: "flex", flexDirection: "column", gap: 10 }}>
           <button onClick={() => setShowAuth(true)} style={{ width: "100%", minHeight: 44, padding: 18, background: NB.navy, color: "#fff", border: "none", fontSize: 17, fontFamily: "inherit", cursor: "pointer" }}>create account</button>
