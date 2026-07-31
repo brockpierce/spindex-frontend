@@ -7193,10 +7193,10 @@ function ShowcaseThread({ avatars }) {
         <span style={{ fontSize: 14, fontWeight: 600 }}>{t.posterHandle}</span>
         <span style={{ fontSize: 13, color: NB.faint, marginLeft: "auto" }}>{t.timeAgo}</span>
       </div>
-      <div style={{ fontSize: 15, lineHeight: 1.35 }}>{t.post}</div>
+      <div style={{ fontSize: 15, lineHeight: 1.35, textAlign: "left" }}>{t.post}</div>
       <div style={{ background: NB.panel, padding: "9px 10px", display: "flex", gap: 8, alignItems: "flex-start" }}>
         <NBAvatar url={avatars[t.replier]} size={20} />
-        <div style={{ fontSize: 13, color: "#4a4a48", lineHeight: 1.35 }}><b style={{ fontWeight: 700 }}>{t.replierHandle}</b> {t.reply}</div>
+        <div style={{ fontSize: 13, color: "#4a4a48", lineHeight: 1.35, textAlign: "left" }}><b style={{ fontWeight: 700 }}>{t.replierHandle}</b> {t.reply}</div>
       </div>
       <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
         <span style={{ fontSize: 13, color: NB.muted }}>{"\u2661"} {t.likes}</span>
