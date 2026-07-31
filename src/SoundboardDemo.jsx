@@ -3467,7 +3467,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
             </div>
             {artistLoading && <div style={{ display: "flex", justifyContent: "center" }}><Spinner label="loading albums…" /></div>}
             {!artistLoading && artistAlbums.length === 0 && (
-              <div className="ui-sans" style={{ color: MUTE, fontSize: 13 }}>no results yet — try again in a moment</div>
+              <div className="ui-sans" style={{ color: MUTE, fontSize: 13 }}>no results. we may still be finding it. try again in a moment.</div>
             )}
             <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(auto-fill, minmax(140px, 1fr))", gap: "20px 14px", justifyItems: isMobile ? "center" : "stretch" }}>
               {artistAlbums.map((album) => (
@@ -3661,7 +3661,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
             </div>
             {filtered.length === 0 && (
               <div className="ui-sans" style={{ padding: "40px 0", textAlign: "center", color: MUTE, fontSize: 13 }}>
-                No results for "{query}" yet — we may still be finding it. Try again in a moment, or <span style={{ textDecoration: "underline", cursor: "pointer", color: BLUE }} onClick={() => setQuery("")}>clear search</span>.
+                no results for "{query}". we may still be finding it. try again in a moment.
               </div>
             )}
 
@@ -5450,7 +5450,7 @@ function AlbumSearchPicker({ onPick, onCancel, placeholder = "search for the alb
           </div>
         ))}
         {query.trim().length >= 3 && !loading && results.length === 0 && (
-          <div className="ui-sans" style={{ fontSize: 12.5, color: MUTE, padding: "8px 4px" }}>no results for "{query}" yet — try again in a moment</div>
+          <div className="ui-sans" style={{ fontSize: 12.5, color: MUTE, padding: "8px 4px" }}>no results for "{query}". we may still be finding it. try again in a moment.</div>
         )}
       </div>
       <button className="sb-btn" onClick={onCancel} style={{ marginTop: 10, fontSize: 11 }}>cancel</button>
