@@ -7484,7 +7484,7 @@ function AuthScreen({ backendUrl, onAuthed, embedded }) {
         .sb-btn-solid { background: ${BLUE}; color: #fff; border-color: ${BLUE}; }
         .sb-btn-solid:hover { filter: brightness(0.85); }
         .sb-btn-solid:disabled { opacity: 0.5; cursor: default; }
-        .sb-input { font-family: inherit; border: 1px solid ${LINE}; background: ${theme.BG}; padding: 9px 12px; font-size: 13px; outline: none; color: ${INK}; border-radius: 0; width: 100%; }
+        .sb-input { font-family: inherit; border: 1px solid ${LINE}; background: ${theme.BG}; padding: 9px 12px; font-size: 13px; outline: none; color: ${INK}; border-radius: 0; width: 100%; box-sizing: border-box; }
         .sb-input:focus { border-color: ${BLUE}; }
       `}</style>
 
