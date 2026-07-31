@@ -7272,9 +7272,10 @@ function LandingPage({ onAuthed }) {
             <span onClick={() => setShowAuth(true)} style={{ fontSize: 15, color: NB.ink, textDecoration: "underline", cursor: "pointer" }}>sign up</span>
           </div>
         </div>
-        <div style={{ padding: "30px 22px 16px", display: "flex", flexDirection: "column", gap: 14 }}>
+        <div style={{ padding: "30px 22px 16px", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 14 }}>
+          <span style={{ fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontWeight: 400, fontSize: 22, letterSpacing: "-0.02em", color: "#111112" }}>noteblock</span>
           <h1 style={{ fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontWeight: 700, color: "#000000", fontSize: 34, lineHeight: 1.0, letterSpacing: "-0.03em", margin: 0 }}>keep track of<br/>every listen</h1>
-          <p style={{ fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontSize: 11, lineHeight: 1.4, color: NB.body, margin: 0, textAlign: "left", whiteSpace: "nowrap" }}>score albums, discover new music, and connect with new people</p>
+          <p style={{ fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontSize: 11, lineHeight: 1.4, color: NB.body, margin: 0, textAlign: "center", whiteSpace: "nowrap" }}>score albums, discover new music, and connect with new people</p>
         </div>
         <div style={{ padding: "2px 0 18px" }}><NBCarousel tileSize={100} gap={9} duration={28} maskAt={10} /></div>
         <div style={{ padding: "0 22px 18px", flex: 1, display: "flex", flexDirection: "column", gap: 10 }}>
@@ -7293,8 +7294,11 @@ function LandingPage({ onAuthed }) {
       <div style={{ display: "grid", gridTemplateColumns: "1.15fr 1fr", minHeight: 760, width: "100%", maxWidth: 1160, border: `1px solid ${NB.border}` }}>
         <div style={{ display: "flex", flexDirection: "column", borderRight: `1px solid ${NB.hair}`, overflow: "hidden" }}>
           <div style={{ padding: "44px 44px 0" }}>{wordmark(19)}</div>
-          <h1 style={{ padding: "40px 44px 0", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontWeight: 700, color: "#000000", fontSize: 64, lineHeight: 0.95, letterSpacing: "-0.035em", margin: 0 }}>keep track of<br/>every listen</h1>
-          <p style={{ padding: "18px 44px 0", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontSize: 15, lineHeight: 1.5, color: NB.body, margin: 0, textAlign: "center", whiteSpace: "nowrap" }}>score albums, discover new music, and connect with new people</p>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", padding: "40px 44px 0" }}>
+            <span style={{ fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontWeight: 400, fontSize: 36, letterSpacing: "-0.02em", color: "#111112" }}>noteblock</span>
+            <h1 style={{ fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontWeight: 700, color: "#000000", fontSize: 64, lineHeight: 0.95, letterSpacing: "-0.035em", margin: "18px 0 0" }}>keep track of<br/>every listen</h1>
+            <p style={{ fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontSize: 15, lineHeight: 1.5, color: NB.body, margin: "18px 0 0", textAlign: "center", whiteSpace: "nowrap" }}>score albums, discover new music, and connect with new people</p>
+          </div>
           <div style={{ padding: "28px 0 32px" }}><NBCarousel tileSize={104} gap={10} duration={34} maskAt={7} /></div>
           <div style={{ padding: "0 44px 44px", flex: 1, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             <ShowcaseFeature />
