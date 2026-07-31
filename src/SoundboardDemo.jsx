@@ -5800,6 +5800,38 @@ function drawNoteblockMark(ctx, cx, topY, scale, color) {
   ctx.restore();
 }
 
+let _nbLogoSvgText = null;
+
+// Loads public/spindex-logo.svg as an Image ready for drawImage, recoloured
+// to `color`. Resolves null on any failure so the caller can fall back.
+function loadNoteblockLogo(color) {
+  return new Promise((resolve) => {
+    const build = (text) => {
+      let svg = text;
+      // A viewBox-only SVG has no intrinsic size and draws as 0x0 on some
+      // browsers. Give it explicit dimensions from the viewBox.
+      if (!/<svg[^>]*\swidth=/.test(svg)) {
+        const vb = svg.match(/viewBox="([-\d.\s]+)"/);
+        if (vb) {
+          const p = vb[1].trim().split(/\s+/).map(Number);
+          if (p.length === 4) svg = svg.replace("<svg", `<svg width="${p[2]}" height="${p[3]}"`);
+        }
+      }
+      svg = svg.replace(/fill="(?!none)[^"]*"/g, `fill="${color}"`);
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => resolve(null);
+      // Data URL, not a file URL: canvas.toBlob() throws on a tainted canvas.
+      img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+    };
+    if (_nbLogoSvgText) { build(_nbLogoSvgText); return; }
+    fetch("/spindex-logo.svg")
+      .then((r) => r.text())
+      .then((t) => { _nbLogoSvgText = t; build(t); })
+      .catch(() => resolve(null));
+  });
+}
+
 function generateShareCardBlob({ kind, album, username, rating, reviewText, questionText, accentColor }) {
   return new Promise((resolve) => {
     const W = 1080, H = 1350; // 4:5, the safe aspect ratio for both feed and Stories crops
@@ -5813,15 +5845,20 @@ function generateShareCardBlob({ kind, album, username, rating, reviewText, ques
     const coverY = 180;
     const radius = 36;
 
-    function drawCard() {
+    function drawCard(logoImg) {
       // Background
       ctx.fillStyle = "#FFFFFF";
       ctx.fillRect(0, 0, W, H);
 
-      // noteblock mark, centred in the empty band above the cover.
-      // At 0.9 scale the artwork is ~173x121, sitting y 35-156 with the
-      // cover starting at 180.
-      drawNoteblockMark(ctx, W / 2, 35, 0.9, accentColor);
+      // noteblock mark, centred in the band above the cover (which starts
+      // at y 180). Real logo when it loaded, drawn paths as a fallback.
+      if (logoImg && logoImg.width) {
+        const markW = 200;
+        const markH = markW * (logoImg.height / logoImg.width);
+        ctx.drawImage(logoImg, (W - markW) / 2, 40, markW, markH);
+      } else {
+        drawNoteblockMark(ctx, W / 2, 35, 0.9, accentColor);
+      }
 
       // Album cover block (real image or placeholder)
       if (album._img) {
@@ -5880,20 +5917,25 @@ function generateShareCardBlob({ kind, album, username, rating, reviewText, ques
       canvas.toBlob((blob) => resolve(blob), "image/png");
     }
 
-    // Load real cover art if available, then draw
+    // Cover art and logo load in parallel; draw once both have settled.
+    // Neither rejects — both resolve null on failure — so the card always
+    // renders even if one asset is missing.
     const coverUrl = album && album.coverArtUrl && album.coverArtUrl !== "none"
       ? album.coverArtUrl : null;
 
-    if (coverUrl) {
+    const coverPromise = new Promise((res) => {
+      if (!coverUrl) { res(null); return; }
       const img = new Image();
       img.crossOrigin = "anonymous";
-      img.onload = () => { album._img = img; drawCard(); };
-      img.onerror = () => { album._img = null; drawCard(); };
+      img.onload = () => res(img);
+      img.onerror = () => res(null);
       img.src = coverUrl;
-    } else {
-      album._img = null;
-      drawCard();
-    }
+    });
+
+    Promise.all([coverPromise, loadNoteblockLogo(accentColor)]).then(([cover, logo]) => {
+      album._img = cover;
+      drawCard(logo);
+    });
   });
 }
 

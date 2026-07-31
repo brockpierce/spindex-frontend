@@ -5754,6 +5754,52 @@ function AlbumSearchPicker({ onPick, onCancel, placeholder = "search for the alb
 // Draws a shareable image card onto an offscreen canvas and resolves a PNG
 // blob. Uses the real album cover art when available, falls back to the
 // headphone placeholder.
+// Draws the noteblock headphone mark onto a canvas context. Coordinates are
+// lifted from the same 200x200 space as StatsMascot, so this matches the logo
+// used everywhere else. Artwork spans x 4-196, y 66-200 in that space.
+// cx = horizontal centre on the canvas, topY = top edge of the artwork.
+function drawNoteblockMark(ctx, cx, topY, scale, color) {
+  ctx.save();
+  ctx.translate(cx - 100 * scale, topY - 66 * scale);
+  ctx.scale(scale, scale);
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineCap = "round";
+
+  // headband
+  ctx.lineWidth = 11;
+  ctx.beginPath();
+  ctx.arc(100, 138, 72, Math.PI, 0, false);
+  ctx.stroke();
+
+  // ear cups — half discs, flat edge inward
+  ctx.beginPath();
+  ctx.arc(37, 167, 33, Math.PI / 2, Math.PI * 1.5, false);
+  ctx.closePath();
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(163, 167, 33, Math.PI * 1.5, Math.PI / 2, false);
+  ctx.closePath();
+  ctx.fill();
+
+  // hair
+  ctx.lineWidth = 7;
+  const bangs = [
+    [57, 111, 55, 124, 55, 140, 58, 153],
+    [72, 109, 71, 124, 72, 140, 76, 154],
+    [87, 109, 88, 124, 91, 139, 95, 152],
+    [103, 110, 103, 124, 107, 138, 114, 149],
+  ];
+  bangs.forEach((b) => {
+    ctx.beginPath();
+    ctx.moveTo(b[0], b[1]);
+    ctx.bezierCurveTo(b[2], b[3], b[4], b[5], b[6], b[7]);
+    ctx.stroke();
+  });
+
+  ctx.restore();
+}
+
 function generateShareCardBlob({ kind, album, username, rating, reviewText, questionText, accentColor }) {
   return new Promise((resolve) => {
     const W = 1080, H = 1350; // 4:5, the safe aspect ratio for both feed and Stories crops
@@ -5771,6 +5817,11 @@ function generateShareCardBlob({ kind, album, username, rating, reviewText, ques
       // Background
       ctx.fillStyle = "#FFFFFF";
       ctx.fillRect(0, 0, W, H);
+
+      // noteblock mark, centred in the empty band above the cover.
+      // At 0.9 scale the artwork is ~173x121, sitting y 35-156 with the
+      // cover starting at 180.
+      drawNoteblockMark(ctx, W / 2, 35, 0.9, accentColor);
 
       // Album cover block (real image or placeholder)
       if (album._img) {
@@ -5820,13 +5871,11 @@ function generateShareCardBlob({ kind, album, username, rating, reviewText, ques
         ctx.fillText(`review by @${(username || "").toLowerCase()}`, W / 2, coverY + coverSize + 330);
       }
 
-      // Username + wordmark footer
-      ctx.font = "600 34px Arial, sans-serif";
-      ctx.fillStyle = "#0A0A0A";
-      ctx.fillText(`@${(username || "").toLowerCase()}`, W / 2, H - 110);
-      ctx.font = "700 38px Arial, sans-serif";
+      // Footer
+      ctx.textAlign = "center";
+      ctx.font = "700 36px Arial, sans-serif";
       ctx.fillStyle = accentColor;
-      ctx.fillText("spindex", W / 2, H - 55);
+      ctx.fillText("www.mynoteblock.com", W / 2, H - 70);
 
       canvas.toBlob((blob) => resolve(blob), "image/png");
     }
