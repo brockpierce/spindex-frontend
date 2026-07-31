@@ -7202,6 +7202,12 @@ function AuthScreen({ backendUrl, onAuthed }) {
       });
       const data = await res.json();
       if (!res.ok) {
+        if (data.needsVerification) {
+          setResetInfo("Please verify your email. We sent a 6-digit code to your inbox.");
+          setMode("verify");
+          setLoading(false);
+          return;
+        }
         setError(data.error || "Something went wrong. Try again.");
         setLoading(false);
         return;
