@@ -2744,6 +2744,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                                 reviewReactions={reviewReactions}
                                 onReact={toggleReaction}
                                 onLoadReactions={loadCommentReactions}
+                                onOpenProfile={openUserProfile}
                                 startOpen={true}
                               />
                             )}
@@ -2792,6 +2793,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                                 reviewOwnerUsername={c.username}
                                 reviewReactions={reviewReactions}
                                 onReact={toggleReaction}
+                                onOpenProfile={openUserProfile}
                               />
                             )}
                           </div>
@@ -2864,6 +2866,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                               reviewOwnerUsername={c.username}
                               reviewReactions={reviewReactions}
                               onReact={toggleReaction}
+                              onOpenProfile={openUserProfile}
                               startOpen={true}
                             />
                           )}
