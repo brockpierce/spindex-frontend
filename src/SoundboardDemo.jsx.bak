@@ -1991,18 +1991,21 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
               .catch(() => {});
           });
           // Prefetch album data for all feed items so covers show immediately
+          // One batched request instead of one per album, and one state
+          // update instead of N. This loop was the main source of request
+          // pile-up on the backend.
           const uniqueAlbumIds = [...new Set(items.map((i) => i.albumId).filter(Boolean))];
-          uniqueAlbumIds.forEach((id) => {
-            apiFetch(`${BACKEND_URL}/api/albums/${id}`)
+          if (uniqueAlbumIds.length) {
+            apiFetch(`${BACKEND_URL}/api/albums/batch?ids=${uniqueAlbumIds.join(",")}`)
               .then((r) => r.json())
               .then((d) => {
-                if (d.album) {
-                  const a = d.album;
-                  setFetchedAlbums((prev) => ({ ...prev, [a.id]: { ...a, artist: a.artistName || "", year: a.releaseYear || null } }));
-                }
+                if (!d.albums) return;
+                const merged = {};
+                d.albums.forEach((a) => { merged[a.id] = { ...a, artist: a.artistName || "", year: a.releaseYear || null }; });
+                setFetchedAlbums((prev) => ({ ...prev, ...merged }));
               })
               .catch(() => {});
-          });
+          }
         }
       })
       .catch(() => {});
@@ -2036,18 +2039,21 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
           setPublicFeedItems(items);
           // Load reactions + comments for each public feed item
           loadInteractions(items.map((i) => i.id).filter(Boolean));
+          // One batched request instead of one per album, and one state
+          // update instead of N. This loop was the main source of request
+          // pile-up on the backend.
           const uniqueAlbumIds = [...new Set(items.map((i) => i.albumId).filter(Boolean))];
-          uniqueAlbumIds.forEach((id) => {
-            apiFetch(`${BACKEND_URL}/api/albums/${id}`)
+          if (uniqueAlbumIds.length) {
+            apiFetch(`${BACKEND_URL}/api/albums/batch?ids=${uniqueAlbumIds.join(",")}`)
               .then((r) => r.json())
               .then((d) => {
-                if (d.album) {
-                  const a = d.album;
-                  setFetchedAlbums((prev) => ({ ...prev, [a.id]: { ...a, artist: a.artistName || "", year: a.releaseYear || null } }));
-                }
+                if (!d.albums) return;
+                const merged = {};
+                d.albums.forEach((a) => { merged[a.id] = { ...a, artist: a.artistName || "", year: a.releaseYear || null }; });
+                setFetchedAlbums((prev) => ({ ...prev, ...merged }));
               })
               .catch(() => {});
-          });
+          }
         }
       })
       .catch(() => {})
