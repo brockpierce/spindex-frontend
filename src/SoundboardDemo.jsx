@@ -2215,7 +2215,10 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
       loadInteractions([reviewId]);
     } else {
       apiFetch(BACKEND_URL + "/api/reviews/" + reviewId)
-        .then((r) => r.json())
+        // A 404 here returns Express's default HTML error page, not JSON, so
+        // calling .json() on it rejects and skips the text post fallback
+        // below entirely. Hand a non-ok response through as an empty object.
+        .then((r) => (r.ok ? r.json() : {}))
         .then((data) => {
           if (data.review) {
             const r = data.review;

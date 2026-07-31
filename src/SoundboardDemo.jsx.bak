@@ -2228,6 +2228,25 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                 if (d.album) { const a = d.album; setFetchedAlbums((prev) => ({ ...prev, [a.id]: { ...a, artist: a.artistName || "", year: a.releaseYear || null } })); }
               }).catch(() => {});
             }
+          } else {
+            // Not a review — try a text post. Notification referenceIds point
+            // at whatever was commented on, and 56 of them are text posts.
+            apiFetch(BACKEND_URL + "/api/posts/" + reviewId)
+              .then((pr) => pr.json())
+              .then((pd) => {
+                if (!pd.post) return;
+                const p = pd.post;
+                setThreadReview({
+                  id: p.id,
+                  itemType: "textpost",
+                  username: p.username,
+                  text: p.text || "",
+                  date: p.date ? new Date(p.date).toISOString() : "",
+                });
+                setView({ name: "thread", reviewId, from: from || view });
+                loadInteractions([reviewId]);
+              })
+              .catch(() => {});
           }
         }).catch(() => {});
     }
@@ -3232,6 +3251,11 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                   <span className="ui-sans" style={{ fontSize: 13, fontWeight: 600, cursor: "pointer" }} onClick={() => openUserProfile(rev.username)}>@{(rev.username || "").toLowerCase()}</span>
                   <span className="ui-sans" style={{ fontSize: 11, color: MUTE, marginLeft: "auto" }}>{relativeDate(rev.date)}</span>
                 </div>
+                {rev.itemType === "textpost" ? (
+                  <div className="ui-sans" style={{ fontSize: 14, color: INK, lineHeight: 1.6, marginBottom: 12, textAlign: "left" }}>
+                    <CommentText text={rev.text} onOpenProfile={openUserProfile} />
+                  </div>
+                ) : (
                 <div onClick={() => openAlbum(rev.albumId)} style={{ display: "flex", gap: 14, cursor: "pointer", marginBottom: 12 }}>
                   <AlbumCover album={album} size={88} listened={listenStatus[rev.albumId] === "listened"} />
                   <div className="ui-sans" style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
@@ -3249,9 +3273,10 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                     )}
                   </div>
                 </div>
+                )}
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: 10, borderTop: "1px solid " + LINE }}>
                   <ReactionBar reactions={reviewReactions[rev.id] || { heart: [], frown: [] }} onReact={(kind) => toggleReaction(rev.id, kind)} currentUsername={profile.username} />
-                  <ShareButton kind="review" album={album} username={rev.username} rating={rev.rating} reviewText={rev.text} />
+                  {rev.itemType !== "textpost" && <ShareButton kind="review" album={album} username={rev.username} rating={rev.rating} reviewText={rev.text} />}
                 </div>
               </div>
               <div style={{ background: "#fafbfc", borderRadius: 0, border: "1px solid " + LINE, borderTop: "none", padding: "16px 16px 20px", textAlign: "left" }}>
