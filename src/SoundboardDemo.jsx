@@ -820,7 +820,7 @@ export default function SoundboardDemo() {
     // was rejected; a network error means the server was unreachable, and the
     // session should survive it. Retries cover a backend restart.
     const hasToken = !!getToken();
-    const MAX_ATTEMPTS = hasToken ? 5 : 0; // ~31s of backoff, or none if signed out
+    const MAX_ATTEMPTS = hasToken ? 3 : 0; // ~2.8s of backoff, or none if signed out
 
     async function checkAuth(attempt) {
       try {
@@ -840,7 +840,7 @@ export default function SoundboardDemo() {
         if (!cancelled) { setAuthUser(data.user || null); setAuthChecked(true); }
       } catch (err) {
         if (attempt < MAX_ATTEMPTS) {
-          const wait = 1000 * Math.pow(2, attempt);
+          const wait = 400 * Math.pow(2, attempt); // 400ms, 800ms, 1600ms
           setTimeout(() => { if (!cancelled) checkAuth(attempt + 1); }, wait);
           return;
         }
@@ -2412,7 +2412,32 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
   // already logged in -- show nothing rather than flashing the auth
   // screen and then immediately replacing it.
   if (!authChecked) {
-    return <div style={{ minHeight: 200 }} />;
+    // Was an empty div, which reads as a broken white page while the session
+    // check is in flight. Colour is hardcoded: this returns before `theme` is
+    // destructured below.
+    return (
+      <div style={{ minHeight: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: "90px 0" }}>
+        <style>{`@keyframes nbBoot { 0%,100% { opacity: .25 } 50% { opacity: 1 } }`}</style>
+        <div
+          role="img"
+          aria-label="loading"
+          style={{
+            width: 38,
+            height: 38,
+            backgroundColor: "#22348a",
+            WebkitMaskImage: "url(/spindex-logo.svg)",
+            maskImage: "url(/spindex-logo.svg)",
+            WebkitMaskRepeat: "no-repeat",
+            maskRepeat: "no-repeat",
+            WebkitMaskPosition: "center",
+            maskPosition: "center",
+            WebkitMaskSize: "contain",
+            maskSize: "contain",
+            animation: "nbBoot 1.2s ease-in-out infinite",
+          }}
+        />
+      </div>
+    );
   }
 
   const { BLUE, INK, LINE, MUTE, BG } = theme;

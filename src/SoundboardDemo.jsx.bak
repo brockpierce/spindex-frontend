@@ -5840,9 +5840,9 @@ function generateShareCardBlob({ kind, album, username, rating, reviewText, ques
     canvas.height = H;
     const ctx = canvas.getContext("2d");
 
-    const coverSize = 640;
+    const coverSize = 620;
     const coverX = (W - coverSize) / 2;
-    const coverY = 180;
+    const coverY = 215;
     const radius = 36;
 
     function drawCard(logoImg) {
@@ -5853,11 +5853,12 @@ function generateShareCardBlob({ kind, album, username, rating, reviewText, ques
       // noteblock mark, centred in the band above the cover (which starts
       // at y 180). Real logo when it loaded, drawn paths as a fallback.
       if (logoImg && logoImg.width) {
-        const markW = 200;
+        const markW = 135;
         const markH = markW * (logoImg.height / logoImg.width);
-        ctx.drawImage(logoImg, (W - markW) / 2, 40, markW, markH);
+        ctx.drawImage(logoImg, (W - markW) / 2, 42, markW, markH);
       } else {
-        drawNoteblockMark(ctx, W / 2, 35, 0.9, accentColor);
+        // 0.7 scale puts the drawn fallback at the same ~135px width.
+        drawNoteblockMark(ctx, W / 2, 42, 0.7, accentColor);
       }
 
       // Album cover block (real image or placeholder)
