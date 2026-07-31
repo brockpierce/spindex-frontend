@@ -2259,7 +2259,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
   if (!authUser) {
     return (
       <ThemeContext.Provider value={theme}>
-        <AuthScreen backendUrl={BACKEND_URL} onAuthed={setAuthUser} />
+        <LandingPage onAuthed={setAuthUser} />
       </ThemeContext.Provider>
     );
   }
@@ -7086,7 +7086,151 @@ function TermsScreen({ onBack, inline }) {
   );
 }
 
-function AuthScreen({ backendUrl, onAuthed }) {
+// ═══════════ LANDING PAGE (logged-out) — desktop 4a + mobile 3a ═══════════
+const LANDING_CAROUSEL_ALBUMS = [
+  { artist: "Lana Del Rey", album: "Ultraviolence", cover: "https://spindex-backend.onrender.com/api/albums/covers/9d9b3ac3-e630-4644-92c7-fb14d4d68d86" },
+  { artist: "Elliott Smith", album: "Figure 8", cover: "https://spindex-backend.onrender.com/api/albums/covers/2fd75c21-7a92-3bcc-b045-d5bab5c36d11" },
+  { artist: "Caroline Polachek", album: "Pang", cover: "https://spindex-backend.onrender.com/api/albums/covers/8c471a20-f7fe-4ccd-bfd8-045cde85ad18" },
+  { artist: "Prince", album: "Prince", cover: "https://spindex-backend.onrender.com/api/albums/covers/5436e902-e53d-3ab8-82b7-3b96a04d6f40" },
+  { artist: "LCD Soundsystem", album: "This Is Happening", cover: "https://spindex-backend.onrender.com/api/albums/covers/8898e5eb-48aa-4eea-8569-d3a2e9adaf02" },
+  { artist: "Alex G", album: "Beach Music", cover: "https://spindex-backend.onrender.com/api/albums/covers/53107a65-a488-45bc-9b91-0be0b10e94af" },
+  { artist: "Death Grips", album: "Bottomless Pit", cover: "https://spindex-backend.onrender.com/api/albums/covers/dd2012b3-3a21-4150-aff1-fcff86b409c9" },
+  { artist: "Sabrina Carpenter", album: "Man's Best Friend", cover: "https://spindex-backend.onrender.com/api/albums/covers/192a95dc-d993-4768-9f77-4496b6460400" },
+  { artist: "Fiona Apple", album: "Tidal", cover: "https://spindex-backend.onrender.com/api/albums/covers/82ba556e-99bf-380d-b9b5-5a97737f1cd1" },
+  { artist: "Charli XCX", album: "how i'm feeling now", cover: "https://spindex-backend.onrender.com/api/albums/covers/e6f8d52b-3b24-4546-b86d-99d79b0df209" },
+  { artist: "Silver Jews", album: "American Water", cover: "https://spindex-backend.onrender.com/api/albums/covers/ce88168e-fa3f-367f-9d94-d9ed2c8ea8bb" },
+  { artist: "Tyler, The Creator", album: "IGOR", cover: "https://spindex-backend.onrender.com/api/albums/covers/0f1b9e07-b38b-4bba-9794-55e0924d7177" },
+  { artist: "black midi", album: "Schlagenheim", cover: "https://spindex-backend.onrender.com/api/albums/covers/c65fb96b-08dc-44b4-b0ca-3576317b5513" },
+  { artist: "Audrey Hobert", album: "Who's the Clown?", cover: "https://spindex-backend.onrender.com/api/albums/covers/d2a139bb-26ec-4ee9-b277-ab5bcd0d1127" },
+  { artist: "Wilco", album: "Yankee Hotel Foxtrot", cover: "https://spindex-backend.onrender.com/api/albums/covers/95f2ba4b-2dd9-38d1-8158-a416a391489c" },
+  { artist: "Arthur Russell", album: "Calling Out of Context", cover: "https://spindex-backend.onrender.com/api/albums/covers/b9facad7-c75e-383f-aaf1-2c115fda9cee" },
+  { artist: "Third Eye Blind", album: "Third Eye Blind", cover: "https://spindex-backend.onrender.com/api/albums/covers/2ccf437c-9b4e-35f5-98d6-812b08c8ac43" },
+  { artist: "Addison Rae", album: "Addison", cover: "https://spindex-backend.onrender.com/api/albums/covers/f6a46f72-4ed2-4595-8698-045e334a6716" },
+  { artist: "Madvillain", album: "Madvillainy", cover: "https://spindex-backend.onrender.com/api/albums/covers/ab570ccb-b06b-3746-8147-4903163ba895" },
+  { artist: "The Smiths", album: "The Smiths", cover: "https://spindex-backend.onrender.com/api/albums/covers/91811b68-aa6e-35b3-a5e1-6a2733eb6ae9" },
+  { artist: "Aphex Twin", album: "Richard D. James Album", cover: "https://spindex-backend.onrender.com/api/albums/covers/84d79dbe-7ac1-3ebc-9b36-238ddfb8229c" },
+  { artist: "Norah Jones", album: "Come Away With Me", cover: "https://spindex-backend.onrender.com/api/albums/covers/6ccac9d2-22ed-33de-bd5d-f2aadcacf7f8" },
+  { artist: "Teenage Fanclub", album: "Bandwagonesque", cover: "https://spindex-backend.onrender.com/api/albums/covers/4119fd8b-9858-33c9-8256-fcc1570bc07f" },
+  { artist: "Nick Drake", album: "Pink Moon", cover: "https://spindex-backend.onrender.com/api/albums/covers/740ec10a-e887-38a6-a04d-fe2069c9e2a7" },
+  { artist: "Black Country, New Road", album: "Ants From Up There", cover: "https://spindex-backend.onrender.com/api/albums/covers/d622ed70-ccc3-4658-8a0a-b7a2d577c28d" },
+  { artist: "Weezer", album: "Pinkerton", cover: "https://spindex-backend.onrender.com/api/albums/covers/385f30e2-0483-355d-aded-23e66aa20f87" },
+];
+const LANDING_RATINGS = [
+  { handle: "@brock", cover: LANDING_CAROUSEL_ALBUMS[0].cover, album: "Ultraviolence", artist: "Lana Del Rey", score: "9.2", timeAgo: "2h" },
+  { handle: "@brock", cover: LANDING_CAROUSEL_ALBUMS[6].cover, album: "Bottomless Pit", artist: "Death Grips", score: "8.7", timeAgo: "5h" },
+  { handle: "@brock", cover: LANDING_CAROUSEL_ALBUMS[11].cover, album: "IGOR", artist: "Tyler, The Creator", score: "9.5", timeAgo: "1d" },
+];
+const NB = { ink:"#111112", body:"#5c5c59", muted:"#8a8a86", faint:"#b5b5b1", faint2:"#a5a5a1", hair:"#ececea", border:"#dededa", dashed:"#e2e2de", panel:"#f7f7f5", page:"#ffffff", navy:"#22348a", boxLoad:"#e6e6e2" };
+
+function NBCarousel({ tileSize, gap, duration, maskAt }) {
+  const doubled = [...LANDING_CAROUSEL_ALBUMS, ...LANDING_CAROUSEL_ALBUMS];
+  const mask = `linear-gradient(90deg, transparent, #000 ${maskAt}%, #000 ${100 - maskAt}%, transparent)`;
+  return (
+    <div style={{ width: "100%", overflow: "hidden", WebkitMaskImage: mask, maskImage: mask }}>
+      <div style={{ display: "flex", gap, width: "max-content", animation: `nb-marquee ${duration}s linear infinite` }}>
+        {doubled.map((a, i) => (
+          <div key={i} style={{ width: tileSize, height: tileSize, flex: "0 0 auto", background: NB.boxLoad }}>
+            <img src={a.cover} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function LandingPage({ onAuthed }) {
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 900;
+  const [showAuth, setShowAuth] = React.useState(false);
+
+  // Mobile: CTA routes to the full-page existing AuthScreen
+  if (isMobile && showAuth) {
+    return <AuthScreen backendUrl={BACKEND_URL} onAuthed={onAuthed} />;
+  }
+
+  const wordmark = (nameSize) => (
+    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+      <img src="/spindex-logo.svg" alt="" style={{ width: 26, height: 26, objectFit: "contain" }} />
+      <span style={{ fontSize: nameSize, fontWeight: 600, letterSpacing: "-0.01em", color: NB.ink }}>noteblock</span>
+    </div>
+  );
+
+  const marqueeStyle = <style>{`@keyframes nb-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } } @media (prefers-reduced-motion: reduce) { .nb-no-motion { animation: none !important; } }`}</style>;
+
+  if (isMobile) {
+    return (
+      <div style={{ fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", background: NB.page, minHeight: "100vh", display: "flex", flexDirection: "column", color: NB.ink }}>
+        {marqueeStyle}
+        <div style={{ padding: "20px 22px 0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          {wordmark(17)}
+          <span onClick={() => setShowAuth(true)} style={{ fontSize: 15, color: NB.ink, textDecoration: "underline", cursor: "pointer" }}>log in</span>
+        </div>
+        <div style={{ padding: "30px 22px 16px", display: "flex", flexDirection: "column", gap: 14 }}>
+          <h1 style={{ fontSize: 40, lineHeight: 0.98, letterSpacing: "-0.03em", margin: 0 }}>keep track of every listen</h1>
+          <p style={{ fontSize: 16, lineHeight: 1.45, color: NB.body, margin: 0 }}>score albums, discover new music, and connect with new people</p>
+        </div>
+        <div style={{ padding: "2px 0 18px" }}><NBCarousel tileSize={100} gap={9} duration={28} maskAt={10} /></div>
+        <div style={{ padding: "0 22px 18px", flex: 1, display: "flex", flexDirection: "column", gap: 10 }}>
+          {LANDING_RATINGS.map((r, i) => (
+            <div key={i} style={{ border: `1px solid ${NB.border}`, padding: 14, display: "flex", gap: 12, alignItems: "center" }}>
+              <div style={{ width: 56, height: 56, flex: "0 0 auto", background: NB.boxLoad }}><img src={r.cover} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /></div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13, color: NB.muted }}>{r.handle} rated</div>
+                <div style={{ fontSize: 15 }}><b style={{ fontWeight: 700 }}>{r.album}</b> · {r.artist}</div>
+              </div>
+              <div style={{ fontSize: 17, fontWeight: 700, color: NB.navy }}>{r.score}</div>
+            </div>
+          ))}
+          <div style={{ border: `1px dashed ${NB.dashed}`, flex: 1, minHeight: 34, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, color: NB.faint2 }}>214 more today</div>
+        </div>
+        <div style={{ background: NB.panel, borderTop: `1px solid ${NB.hair}`, padding: "20px 22px", display: "flex", flexDirection: "column", gap: 10 }}>
+          <button onClick={() => setShowAuth(true)} style={{ width: "100%", minHeight: 44, padding: 18, background: NB.navy, color: "#fff", border: "none", fontSize: 17, fontFamily: "inherit", cursor: "pointer" }}>create account</button>
+          <div style={{ fontSize: 14, color: NB.muted, textAlign: "center" }}>already have an account? <span onClick={() => setShowAuth(true)} style={{ color: NB.navy, textDecoration: "underline", cursor: "pointer" }}>log in</span></div>
+        </div>
+      </div>
+    );
+  }
+
+  // Desktop 4a
+  return (
+    <div style={{ fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", background: NB.page, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: NB.ink }}>
+      {marqueeStyle}
+      <div style={{ display: "grid", gridTemplateColumns: "1.15fr 1fr", minHeight: 760, width: "100%", maxWidth: 1160, border: `1px solid ${NB.border}` }}>
+        <div style={{ display: "flex", flexDirection: "column", borderRight: `1px solid ${NB.hair}`, overflow: "hidden" }}>
+          <div style={{ padding: "44px 44px 0" }}>{wordmark(19)}</div>
+          <h1 style={{ padding: "40px 44px 0", fontSize: 64, lineHeight: 0.95, letterSpacing: "-0.035em", margin: 0 }}>keep track of<br/>every listen</h1>
+          <p style={{ padding: "18px 44px 0", fontSize: 18, lineHeight: 1.5, color: NB.body, maxWidth: 420, margin: 0 }}>score albums, discover new music, and connect with new people</p>
+          <div style={{ padding: "28px 0 32px" }}><NBCarousel tileSize={104} gap={10} duration={34} maskAt={7} /></div>
+          <div style={{ padding: "0 44px 44px", flex: 1, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div style={{ border: `1px solid ${NB.border}`, padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                <span style={{ fontSize: 14, color: NB.muted }}>{LANDING_RATINGS[0].handle}</span>
+                <span style={{ fontSize: 13, color: NB.faint }}>{LANDING_RATINGS[0].timeAgo}</span>
+              </div>
+              <div style={{ width: "100%", aspectRatio: "1", background: NB.boxLoad }}><img src={LANDING_RATINGS[0].cover} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /></div>
+              <div style={{ fontSize: 22, fontWeight: 700, color: NB.navy }}>{LANDING_RATINGS[0].score}</div>
+              <div><div style={{ fontSize: 15, fontWeight: 700 }}>{LANDING_RATINGS[0].album}</div><div style={{ fontSize: 14, color: NB.muted }}>{LANDING_RATINGS[0].artist}</div></div>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {LANDING_RATINGS.slice(1, 3).map((r, i) => (
+                <div key={i} style={{ border: `1px solid ${NB.border}`, padding: 12, display: "flex", gap: 12, alignItems: "center" }}>
+                  <div style={{ width: 52, height: 52, flex: "0 0 auto", background: NB.boxLoad }}><img src={r.cover} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /></div>
+                  <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, color: NB.muted }}>{r.handle} rated</div><div style={{ fontSize: 15, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{r.album}</div></div>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: NB.navy }}>{r.score}</div>
+                </div>
+              ))}
+              <div style={{ border: `1px dashed ${NB.dashed}`, flex: 1, minHeight: 60, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, color: NB.faint2 }}>214 more today</div>
+            </div>
+          </div>
+        </div>
+        <div style={{ background: NB.panel, padding: 44, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+          <AuthScreen backendUrl={BACKEND_URL} onAuthed={onAuthed} embedded />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AuthScreen({ backendUrl, onAuthed, embedded }) {
   const theme = useTheme();
   const { BLUE, INK, LINE, MUTE } = theme;
   const [mode, setMode] = useState("login"); // "login" | "signup"
@@ -7231,7 +7375,11 @@ function AuthScreen({ backendUrl, onAuthed }) {
 
   return (
     <div
-      style={{
+      style={embedded ? {
+        fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
+        color: INK,
+        width: "100%",
+      } : {
         fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
         background: theme.BG,
         minHeight: "100vh",
