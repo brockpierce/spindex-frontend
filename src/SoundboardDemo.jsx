@@ -7488,7 +7488,7 @@ function AuthScreen({ backendUrl, onAuthed, embedded }) {
         .sb-input:focus { border-color: ${BLUE}; }
       `}</style>
 
-      <div style={{ width: "100%", maxWidth: 360 }}>
+      <div style={{ width: "100%", maxWidth: 360, margin: "0 auto" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 9, justifyContent: "center", marginBottom: 28 }}>
           <img src="/spindex-logo.svg" alt="Spindex" style={{ height: 48, width: "auto" }} />
         </div>
@@ -7590,11 +7590,11 @@ function AuthScreen({ backendUrl, onAuthed, embedded }) {
             <>
               <div>
                 <div style={{ fontSize: 11, color: MUTE, marginBottom: 5 }}>display name</div>
-                <input className="sb-input" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Jess Harlow" required />
+                <input className="sb-input" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="elliott smith" required />
               </div>
               <div>
                 <div style={{ fontSize: 11, color: MUTE, marginBottom: 5 }}>username</div>
-                <input className="sb-input" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="j.harlow" required />
+                <input className="sb-input" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="@elliottsmith" required />
               </div>
             </>
           )}
