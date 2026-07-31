@@ -2308,7 +2308,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
       {/* TOP NAV */}
       <div style={{ borderBottom: `1px solid ${INK}`, padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", overflowX: "hidden" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 9, cursor: "pointer" }} onClick={() => setView({ name: "home" })}>
-          <img src="/spindex-logo.svg" alt="Spindex" width={34} height={34} style={{ display: "block" }} />
+          <div aria-label="noteblock" style={{ width: 34, height: 34, backgroundColor: BLUE, WebkitMaskImage: "url(/spindex-logo.svg)", maskImage: "url(/spindex-logo.svg)", WebkitMaskRepeat: "no-repeat", maskRepeat: "no-repeat", WebkitMaskPosition: "center", maskPosition: "center", WebkitMaskSize: "contain", maskSize: "contain", display: "block" }} />
         </div>
         <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
           <div className={`sb-nav-item ${view.name === "home" ? "active" : ""}`} onClick={() => setView({ name: "home" })}>home</div>
@@ -7308,7 +7308,7 @@ function LandingPage({ onAuthed }) {
             </div>
           </div>
         </div>
-        <div style={{ background: "#fff", padding: 44, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+        <div style={{ background: "#fff", padding: 44, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
           <AuthScreen backendUrl={BACKEND_URL} onAuthed={onAuthed} embedded />
         </div>
       </div>
