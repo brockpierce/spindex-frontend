@@ -829,6 +829,12 @@ export default function SoundboardDemo() {
           if (!cancelled) { setAuthUser(null); setAuthChecked(true); }
           return;
         }
+        if (res.status === 429) {
+          // Rate limited. Retrying would spend more of the same budget and
+          // make it worse, so stop here.
+          if (!cancelled) { setAuthUser(null); setAuthChecked(true); }
+          return;
+        }
         if (!res.ok) throw new Error("HTTP " + res.status);
         const data = await res.json();
         if (!cancelled) { setAuthUser(data.user || null); setAuthChecked(true); }
