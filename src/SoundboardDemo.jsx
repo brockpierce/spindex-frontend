@@ -7099,6 +7099,7 @@ function AuthScreen({ backendUrl, onAuthed }) {
   const [showTerms, setShowTerms] = useState(false);
   const [resetCode, setResetCode] = useState("");
   const [resetInfo, setResetInfo] = useState("");
+  const [verifyCode, setVerifyCode] = useState("");
 
   async function forgotSubmit(e) {
     e.preventDefault();
@@ -7137,6 +7138,49 @@ function AuthScreen({ backendUrl, onAuthed }) {
     setLoading(false);
   }
 
+  async function verifySubmit(e) {
+    e.preventDefault();
+    setError(""); setLoading(true);
+    try {
+      const res = await fetch(`${backendUrl}/api/auth/verify-email`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, code: verifyCode.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error || "Could not verify."); setLoading(false); return; }
+      // Verified — now log in to get a fresh token
+      setResetInfo(""); setVerifyCode("");
+      const loginRes = await fetch(`${backendUrl}/api/auth/login`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const loginData = await loginRes.json();
+      if (loginRes.ok && loginData.token) {
+        setToken(loginData.token);
+        onAuthed(loginData.user);
+      } else {
+        setMode("login");
+        setResetInfo("Email verified. Log in to continue.");
+      }
+    } catch (err) {
+      setError("Could not reach the server. Try again.");
+    }
+    setLoading(false);
+  }
+
+  async function resendVerify() {
+    setError(""); setResetInfo("");
+    try {
+      await fetch(`${backendUrl}/api/auth/resend-verification`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      setResetInfo("A new code is on its way to your email.");
+    } catch (err) {
+      setError("Could not resend. Try again.");
+    }
+  }
+
   if (showTerms) {
     return <TermsScreen onBack={() => setShowTerms(false)} />;
   }
@@ -7159,6 +7203,12 @@ function AuthScreen({ backendUrl, onAuthed }) {
       const data = await res.json();
       if (!res.ok) {
         setError(data.error || "Something went wrong. Try again.");
+        setLoading(false);
+        return;
+      }
+      if (data.needsVerification) {
+        setResetInfo("We sent a 6-digit code to your email. Enter it to verify your account.");
+        setMode("verify");
         setLoading(false);
         return;
       }
@@ -7271,6 +7321,23 @@ function AuthScreen({ backendUrl, onAuthed }) {
             {error && <div style={{ fontSize: 12, color: "#A32D2D", background: "#FCEBEB", borderRadius: 0, padding: "8px 10px", lineHeight: 1.5 }}>{error}</div>}
             <button type="submit" className="sb-btn sb-btn-solid" disabled={loading} style={{ marginTop: 4, padding: "10px 0" }}>{loading ? "..." : "reset password"}</button>
             <div style={{ fontSize: 11.5, color: MUTE, textAlign: "center", marginTop: 6 }}>
+              <span style={{ color: BLUE, cursor: "pointer", textDecoration: "underline" }} onClick={() => { setError(""); setResetInfo(""); setMode("login"); }}>back to log in</span>
+            </div>
+          </form>
+        )}
+
+        {mode === "verify" && (
+          <form onSubmit={verifySubmit} className="ui-sans" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <div style={{ fontSize: 13.5, fontWeight: 400, marginBottom: 4 }}>verify your email</div>
+            <div>
+              <div style={{ fontSize: 11, color: MUTE, marginBottom: 5 }}>6-digit code</div>
+              <input className="sb-input" value={verifyCode} onChange={(e) => setVerifyCode(e.target.value)} placeholder="123456" inputMode="numeric" maxLength={6} required />
+            </div>
+            {error && <div style={{ fontSize: 12, color: "#A32D2D", background: "#FCEBEB", borderRadius: 0, padding: "8px 10px", lineHeight: 1.5 }}>{error}</div>}
+            <button type="submit" className="sb-btn sb-btn-solid" disabled={loading} style={{ marginTop: 4, padding: "10px 0" }}>{loading ? "..." : "verify"}</button>
+            <div style={{ fontSize: 11.5, color: MUTE, textAlign: "center", marginTop: 6 }}>
+              <span style={{ color: BLUE, cursor: "pointer", textDecoration: "underline" }} onClick={resendVerify}>resend code</span>
+              {"  \u00b7  "}
               <span style={{ color: BLUE, cursor: "pointer", textDecoration: "underline" }} onClick={() => { setError(""); setResetInfo(""); setMode("login"); }}>back to log in</span>
             </div>
           </form>
