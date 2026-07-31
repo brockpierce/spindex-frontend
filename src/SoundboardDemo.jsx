@@ -7117,7 +7117,7 @@ const LANDING_CAROUSEL_ALBUMS = [
 ];
 // Curated showcase: feature review + real thread + compact review.
 const SHOWCASE_FEATURE = { handle: "@babyspice666", cover: "https://spindex-backend.onrender.com/api/albums/covers/5cbcdd9f-4b7d-3b3c-b9f2-6b0e75971157", album: "Sound of Silver", artist: "LCD Soundsystem", score: "9/10", timeAgo: "3d" };
-const SHOWCASE_COMPACT = { handle: "@mairead", cover: "https://spindex-backend.onrender.com/api/albums/covers/461e255f-b56e-4788-b989-8ff610242b94", album: "Comedown Machine", artist: "The Strokes", score: "8/10", timeAgo: "1d" };
+const SHOWCASE_COMPACT = { handle: "@mairead", username: "mairead", cover: "https://spindex-backend.onrender.com/api/albums/covers/461e255f-b56e-4788-b989-8ff610242b94", album: "Comedown Machine", artist: "The Strokes", score: "8/10", timeAgo: "1d" };
 const SHOWCASE_THREAD = {
   poster: "brock", posterHandle: "@brock", timeAgo: "6h",
   post: "i need an album recommendation for the day i think",
@@ -7300,7 +7300,7 @@ function LandingPage({ onAuthed }) {
             <ShowcaseFeature />
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <ShowcaseThread avatars={avatars} />
-              <ShowcaseCompact />
+              <ShowcaseFeedReview avatars={avatars} />
             </div>
           </div>
         </div>
