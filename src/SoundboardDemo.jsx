@@ -815,11 +815,36 @@ export default function SoundboardDemo() {
   const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
-    apiFetch(`${BACKEND_URL}/api/auth/me`)
-      .then((res) => res.json())
-      .then((data) => setAuthUser(data.user || null))
-      .catch(() => setAuthUser(null))
-      .finally(() => setAuthChecked(true));
+    let cancelled = false;
+    // A failed request is NOT a logout. Only an explicit 401 means the token
+    // was rejected; a network error means the server was unreachable, and the
+    // session should survive it. Retries cover a backend restart.
+    const hasToken = !!getToken();
+    const MAX_ATTEMPTS = hasToken ? 5 : 0; // ~31s of backoff, or none if signed out
+
+    async function checkAuth(attempt) {
+      try {
+        const res = await apiFetch(`${BACKEND_URL}/api/auth/me`);
+        if (res.status === 401) {
+          if (!cancelled) { setAuthUser(null); setAuthChecked(true); }
+          return;
+        }
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const data = await res.json();
+        if (!cancelled) { setAuthUser(data.user || null); setAuthChecked(true); }
+      } catch (err) {
+        if (attempt < MAX_ATTEMPTS) {
+          const wait = 1000 * Math.pow(2, attempt);
+          setTimeout(() => { if (!cancelled) checkAuth(attempt + 1); }, wait);
+          return;
+        }
+        // Out of retries. Leave the token alone so a later reload can recover.
+        if (!cancelled) { setAuthUser(null); setAuthChecked(true); }
+      }
+    }
+
+    checkAuth(0);
+    return () => { cancelled = true; };
   }, []);
 
   const [view, setView] = useState({ name: "home" });

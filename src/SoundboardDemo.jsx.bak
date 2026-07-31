@@ -2829,6 +2829,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                                 onReact={toggleReaction}
                                 onLoadReactions={loadCommentReactions}
                                 onOpenProfile={openUserProfile}
+                                onDelete={deleteComment}
                                 startOpen={true}
                               />
                             )}
@@ -2878,6 +2879,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                                 reviewReactions={reviewReactions}
                                 onReact={toggleReaction}
                                 onOpenProfile={openUserProfile}
+                                onDelete={deleteComment}
                               />
                             )}
                           </div>
@@ -2951,6 +2953,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                               reviewReactions={reviewReactions}
                               onReact={toggleReaction}
                               onOpenProfile={openUserProfile}
+                              onDelete={deleteComment}
                               startOpen={true}
                             />
                           )}
@@ -6492,7 +6495,7 @@ function CommentInput({ placeholder, onSubmit, currentUsername, initialValue = "
 }
 
 // Renders a single comment node with its nested replies, recursively
-function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername, reviewReactions = {}, onReact, onOpenProfile, followingUsers = [] }) {
+function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername, reviewReactions = {}, onReact, onOpenProfile, onDelete, followingUsers = [] }) {
   const { BLUE, INK, LINE, MUTE } = useTheme();
   const [replying, setReplying] = useState(false);
   const avatarSize = 32;
@@ -6532,6 +6535,14 @@ function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername, r
             >
               {replying ? "cancel" : "Reply"}
             </button>
+            {onDelete && comment.username === currentUsername && (
+              <button
+                onClick={() => { if (window.confirm("Delete this comment?")) onDelete(comment.id, reviewId); }}
+                style={{ border: "none", background: "none", padding: 0, cursor: "pointer", font: "inherit", color: "#9aa0a6", fontSize: 13, fontWeight: 400 }}
+              >
+                delete
+              </button>
+            )}
             {comment.id && onReact && (
               <button
                 onClick={() => onReact(comment.id, "heart")}
@@ -6549,7 +6560,7 @@ function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername, r
 
       {(comment.replies || []).map((reply) => (
         <div key={reply.id} style={{ marginTop: 16 }}>
-          <CommentNode comment={reply} depth={depth + 1} reviewId={reviewId} onReply={onReply} currentUsername={currentUsername} reviewReactions={reviewReactions} onReact={onReact} onOpenProfile={onOpenProfile} followingUsers={followingUsers} />
+          <CommentNode comment={reply} depth={depth + 1} reviewId={reviewId} onReply={onReply} currentUsername={currentUsername} reviewReactions={reviewReactions} onReact={onReact} onOpenProfile={onOpenProfile} onDelete={onDelete} followingUsers={followingUsers} />
         </div>
       ))}
 
@@ -6577,7 +6588,7 @@ function countAllComments(comments) {
   return comments.reduce((s, c) => s + 1 + countReplies(c), 0);
 }
 
-function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUsername, reviewOwnerUsername, reviewReactions = {}, onReact, onLoadReactions, onOpenProfile, startOpen = false, followingUsers = [] }) {
+function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUsername, reviewOwnerUsername, reviewReactions = {}, onReact, onLoadReactions, onOpenProfile, onDelete, startOpen = false, followingUsers = [] }) {
   const { BLUE, INK, LINE, MUTE, BG } = useTheme();
   const [open, setOpen] = useState(startOpen);
   const total = countAllComments(comments);
@@ -6620,7 +6631,7 @@ function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUserna
           {comments.length > 0 && (
             <div style={{ maxHeight: 360, overflowY: "auto", padding: "20px 16px 6px", display: "flex", flexDirection: "column", gap: 22 }}>
               {comments.map((c) => (
-                <CommentNode key={c.id} comment={c} depth={0} reviewId={reviewId} onReply={onReply} currentUsername={currentUsername} reviewReactions={reviewReactions} onReact={onReact} onOpenProfile={onOpenProfile} followingUsers={followingUsers} />
+                <CommentNode key={c.id} comment={c} depth={0} reviewId={reviewId} onReply={onReply} currentUsername={currentUsername} reviewReactions={reviewReactions} onReact={onReact} onOpenProfile={onOpenProfile} onDelete={onDelete} followingUsers={followingUsers} />
               ))}
             </div>
           )}
