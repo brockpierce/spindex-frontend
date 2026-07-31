@@ -5080,6 +5080,15 @@ function AddToAlbumMixInline({ album, albumMixes, onAdd }) {
 // for auto-generated playlist art), or the plain headphone mark if the
 // mix has no tracks yet.
 
+// Today's date as YYYY-MM-DD in the LOCAL timezone. Deliberately not
+// toISOString(), which returns UTC and rolls over to tomorrow in the evening
+// for anyone west of Greenwich.
+function todayLocalISO() {
+  const d = new Date();
+  const p = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
 // Format an album-of-the-day date as MM-DD-YYYY.
 // Parses the YYYY-MM-DD prefix as a string on purpose: building a Date from
 // a date-only value would be interpreted as UTC midnight and render as the
@@ -5113,7 +5122,7 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
   const [aotdRating, setAotdRating] = React.useState(8);
   const [aotdPullQuote, setAotdPullQuote] = React.useState("");
   const [aotdBody, setAotdBody] = React.useState("");
-  const [aotdDate, setAotdDate] = React.useState(new Date().toISOString().slice(0, 10));
+  const [aotdDate, setAotdDate] = React.useState(todayLocalISO());
   const [aotdSaving, setAotdSaving] = React.useState(false);
 
   // Interview form state
@@ -5251,7 +5260,7 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
               setAotdRating(8);
               setAotdPullQuote("");
               setAotdBody("");
-              setAotdDate(new Date().toISOString().slice(0, 10));
+              setAotdDate(todayLocalISO());
               setShowAotdForm(true);
             }}>+ new</button>}
             {aotd && <button className="sb-btn" style={{ fontSize: 11 }} onClick={() => deleteAotd(aotd.id)}>delete</button>}
