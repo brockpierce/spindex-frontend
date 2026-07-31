@@ -7895,7 +7895,7 @@ function AuthScreen({ backendUrl, onAuthed, embedded }) {
             {loading ? "..." : mode === "login" ? "log in" : "create account"}
           </button>
 
-{false && mode === "signup" && (
+{mode === "signup" && (
             <div style={{ fontSize: 11, color: MUTE, textAlign: "center", lineHeight: 1.6 }} className="ui-sans">
               by creating an account you agree to our{" "}
               <span style={{ color: BLUE, cursor: "pointer", textDecoration: "underline" }} onClick={() => setShowTerms(true)}>
