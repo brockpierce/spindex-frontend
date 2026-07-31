@@ -3659,7 +3659,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                 );
               })}
             </div>
-            {filtered.length === 0 && (
+            {!albumSearchLoading && filtered.length === 0 && query.trim() && (
               <div className="ui-sans" style={{ padding: "40px 0", textAlign: "center", color: MUTE, fontSize: 13 }}>
                 no results for "{query}". we may still be finding it. try again in a moment.
               </div>
