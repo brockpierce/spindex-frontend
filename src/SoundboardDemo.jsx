@@ -6994,7 +6994,52 @@ function FollowListModal({ kind, userId, username, onClose, onVisitProfile }) {
 
 function TermsScreen({ onBack, inline }) {
   const { BLUE, INK, LINE, MUTE, BG } = useTheme();
-  const lastUpdated = "July 1, 2026";
+  const lastUpdated = "July 31, 2026";
+
+ const [legalTab, setLegalTab] = React.useState("terms");
+
+  const termsSections = [
+    { title: "1. Acceptance", body: `By accessing or using mynoteblock.com and any other site, application, API, or content offered, owned, or operated by noteblock ("we", "us", or "our") (together, the "Service"), you accept and agree to be bound by these Terms of Use ("Terms"). If you do not agree, you may not use the Service. Please also read our Privacy Policy. All references to "you" mean the person who accesses or uses the Service.` },
+    { title: "2. License; Use", body: `Your access to the Service and all content contained therein is licensed to you, not sold. You may only use the Service in accordance with these Terms. All rights not expressly granted to you are reserved by us, except that this does not affect your statutory rights.` },
+    { title: "3. Responsibility", body: `You are responsible for all activity that occurs as a result of your use of the Service. To the extent permitted by law, we disclaim liability for the content, opinions, ratings, reviews, or other information posted to or through the Service by its users ("Posted Content").` },
+    { title: "4. Eligibility and Registration", body: `To use the Service, you must be at least 16 years of age. Certain features require you to register for an account. When you register, you agree to provide true, accurate, current, and complete information and to keep it up to date.` },
+    { title: "5. Community Standards", body: `noteblock is a place to review music and talk about it. You must be courteous and respectful of others' opinions and taste. You must not post unwelcome, aggressive, harassing, or otherwise inappropriate remarks directed at another member. Reasonable disagreement is welcome; personal attacks are not.` },
+    { title: "6. Prohibited Conduct", body: `You must not: promote or incite hate, violence, or discrimination; create multiple accounts, misrepresent your identity, or mislead other users; artificially inflate or deflate ratings or coordinate review bombing or boosting; reproduce paid-only features; manipulate your account's popularity through reciprocal follows or likes; circumvent security or content-protection measures; submit malware; export or index Service content without authorization; build a competing business; reverse engineer the Service; or use bots or scrapers except as expressly authorized.` },
+    { title: "7. No Malicious Use", body: `You must access the Service only through the interface we provide. You must not interfere with the Service or its security, or abuse, harass, threaten, impersonate, or solicit personal information from any other user or team member. You must not probe or test the vulnerability of any system, or mislead our support or moderation team, including by making false reports. Such behavior may result in action on your account.` },
+    { title: "8. No Illegal Use", body: `You must not use the Service for any unlawful purpose or post information that breaches any confidentiality obligation, copyright, trademark, or other law. We do not allow Posted Content or activity that sexually exploits or endangers children. When we become aware of apparent child exploitation, we report it in compliance with law. If you encounter such material, report it immediately using the Report option.` },
+    { title: "9. Removal of Posted Content", body: `We may, but are not obligated to, pre-screen Posted Content. We reserve the right (in our sole discretion) to remove any Posted Content we consider offensive, objectionable, unlawful, or otherwise in breach of these Terms, including content promoting hateful ideologies or misinformation. Posted Content is solely the responsibility of the person who submitted it.` },
+    { title: "10. Subscription Fees", body: `Certain features may require a paid subscription. You are responsible for applicable fees and for providing accurate billing information. Subscriptions automatically renew until cancelled. You can cancel at any time in your account settings (or Apple/Google settings for mobile subscriptions). If you cancel within 30 days of enrolling, you may request a refund; after 30 days, payments are non-refundable except where required by law. Prices may change with advance notice.` },
+    { title: "11. Intellectual Property", body: `We (and our licensors) own all intellectual property rights in the Service, except for Posted Content and third-party materials such as album artwork and metadata, which belong to their owners. You are responsible for your Posted Content and affirm you have all rights necessary to provide it. You grant us a non-exclusive, royalty-free, worldwide, transferable, and sub-licensable license to use, reproduce, distribute, and display your Posted Content to operate and promote the Service. Subject to this license, you remain the owner of your Posted Content. Album titles, artist names, and cover art may be sourced from third-party databases (such as MusicBrainz and the Cover Art Archive) and remain the property of their owners.` },
+    { title: "12. Account Security", body: `You must keep your account credentials confidential and secure, choose a strong password, not share it, and notify us promptly of any unauthorized activity. To the extent permitted by law, we are not responsible for losses arising from unauthorized use of your account resulting from your failure to keep it secure.` },
+    { title: "13. Indemnity", body: `To the extent permitted by law, you agree to indemnify and hold harmless noteblock and its affiliates, officers, directors, employees, and agents from any claims, liabilities, damages, losses, and expenses (including reasonable legal fees) arising out of your use of the Service or your breach of these Terms.` },
+    { title: "14. Limitation of Liability", body: `TO THE EXTENT PERMITTED BY LAW, NOTEBLOCK SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, OR CONSEQUENTIAL DAMAGES ARISING FROM YOUR USE OF THE SERVICE. OUR TOTAL AGGREGATE LIABILITY SHALL NOT EXCEED THE GREATER OF THE AMOUNT YOU PAID US IN THE TWELVE MONTHS BEFORE THE CLAIM OR US$50. Any claim relating to the Service must be brought within one (1) year of the events giving rise to it.` },
+    { title: "15. Disclaimer", body: `Your use of the Service is at your own risk. To the extent permitted by law, the Service is provided "as is" and "as available" without warranties of any kind, including implied warranties of merchantability, fitness for a particular purpose, title, and non-infringement. We do not warrant that the Service will be uninterrupted or error-free.` },
+    { title: "16. Changes to These Terms and the Service", body: `We may amend these Terms at any time; if changes are material, we will communicate them. We may also modify, suspend, or discontinue the Service (or any part) at any time. If we discontinue a paid feature you paid for in advance, we will refund the unused portion where required by law.` },
+    { title: "17. Third-Party Services", body: `The Service may link to or integrate third-party applications, including music databases, cover-art providers, payment processors, and email providers. Your use of any third-party service is subject to its own terms. To the extent permitted by law, we are not liable for their content or practices.` },
+    { title: "18. Termination", body: `To the extent permitted by law, we reserve the right to suspend, limit, or terminate your account and access for any reason, with or without notice, including if you breach these Terms. You may terminate your account at any time in your settings.` },
+    { title: "19. Copyright Complaints (DMCA)", body: `We respect intellectual property rights. If you believe content on the Service infringes your copyright, send a written notice to support@mynoteblock.com including: your contact information; a description of the copyrighted work; the location of the infringing material; a good-faith statement; a statement under penalty of perjury that the information is accurate and that you are authorized to act; and your signature.` },
+    { title: "20. Dispute Resolution; Arbitration", body: `To the extent permitted by law, if a dispute arises between us, both parties agree to first try to resolve it informally by written notice to support@mynoteblock.com, with 60 days to resolve. If unresolved, disputes will be resolved by binding individual arbitration under the Federal Arbitration Act, and not in court, except that either party may bring qualifying claims in small claims court or to protect intellectual property. You waive the right to a jury trial and to participate in a class action. You may opt out of arbitration by emailing support@mynoteblock.com within 30 days of first accepting these Terms.` },
+    { title: "21. Governing Law", body: `These Terms are governed by the laws of the United States and the State of Delaware, without regard to conflict-of-law principles. Except for disputes subject to arbitration, exclusive jurisdiction and venue shall be the state and federal courts in Delaware. Nothing here affects your statutory consumer-protection rights.` },
+    { title: "22. Miscellaneous", body: `These Terms are the entire agreement between you and noteblock. If any part is held invalid, the rest remains in effect. Our failure to enforce a provision is not a waiver. We may assign these Terms; you may not without our consent. You consent to receive legal notices electronically.` },
+    { title: "23. Export Controls", body: `You represent that you are not subject to U.S. sanctions and that you will comply with all applicable U.S. export restrictions, and that you are not a person with whom noteblock is prohibited from doing business.` },
+    { title: "24. Contact", body: `For questions about these Terms, contact us at support@mynoteblock.com.` },
+  ];
+
+  const privacySections = [
+    { title: "1. Information We Collect", body: `Information you provide: account information (email, username, display name, hashed password), profile information (avatar, bio, accent color), content you post (ratings, reviews, lists, comments, likes, follows), payment information (handled by our payment processor; we do not store full card numbers), and communications you send us. Information collected automatically: usage information, device and log information (IP address, browser, device, access times), and cookies/local storage. We also use public music-catalog data from third parties such as MusicBrainz and the Cover Art Archive.` },
+    { title: "2. How We Use Your Information", body: `To provide and operate the Service; create and authenticate your account; send transactional communications such as email verification and password-reset codes; process subscription payments; personalize your experience; respond to support requests; moderate and enforce our Terms and community standards; detect and prevent fraud, abuse, and security issues; analyze and improve the Service; and comply with legal obligations.` },
+    { title: "3. How We Share Your Information", body: `We do not sell your personal information. Your username, display name, avatar, and Posted Content are visible to other users and, depending on your settings, the public. We share information with service providers (hosting, payment processing, email delivery) only as needed. We may disclose information for legal reasons or in connection with a business transfer such as a merger or acquisition.` },
+    { title: "4. Third-Party Services", body: `The Service relies on third-party providers, including a hosting/infrastructure provider, a payment processor, an email delivery provider, and public music-metadata sources. Their use of information is governed by their own privacy policies.` },
+    { title: "5. Data Retention", body: `We retain your information for as long as your account is active or as needed to provide the Service. If you delete your account, we will delete or de-identify your personal information within a reasonable period, except where retention is required by law. Some information may remain in backups for a limited time.` },
+    { title: "6. Your Choices and Rights", body: `You can review and update your account and profile information in your settings, and delete your account at any time. Transactional emails are necessary to operate the Service; any optional emails include an unsubscribe link. You can control cookies through your browser. Depending on where you live, you may have rights under laws such as the CCPA or GDPR, including to access, correct, delete, or port your information. To exercise these rights, contact support@mynoteblock.com. We will not discriminate against you for exercising your rights.` },
+    { title: "7. Children's Privacy", body: `The Service is not intended for anyone under 16, and you must be at least 16 to use it. We do not knowingly collect personal information from children under 16. If we learn we have, we will delete it. If you believe a child under 16 has provided us information, contact support@mynoteblock.com.` },
+    { title: "8. Security", body: `We take reasonable measures to protect your information, including hashing passwords and using encrypted connections. However, no method of transmission or storage is completely secure, and we cannot guarantee absolute security. You are responsible for keeping your credentials confidential.` },
+    { title: "9. International Users", body: `We are based in the United States, and your information may be processed and stored in the United States or other countries where we or our service providers operate, which may have different data-protection laws. By using the Service, you consent to this transfer and processing.` },
+    { title: "10. Changes to This Policy", body: `We may update this Privacy Policy from time to time. If we make material changes, we will notify you by posting the updated Policy and updating the date above, or by other means where required by law. Continued use after changes take effect constitutes acceptance.` },
+    { title: "11. Contact", body: `If you have questions about this Privacy Policy, contact us at support@mynoteblock.com.` },
+  ];
+
+  const activeSections = legalTab === "terms" ? termsSections : privacySections;
 
   const content = (
     <div className="ui-sans" style={{ maxWidth: 680, margin: "0 auto", lineHeight: 1.75 }}>
@@ -7004,76 +7049,31 @@ function TermsScreen({ onBack, inline }) {
         </div>
       )}
 
-      <div style={{ fontSize: 22, fontWeight: 400, marginBottom: 4 }}>Terms of Service</div>
-      <div style={{ fontSize: 12.5, color: MUTE, marginBottom: 28 }}>Last updated: {lastUpdated}</div>
+      <div style={{ display: "flex", gap: 20, marginBottom: 24, borderBottom: `1px solid ${LINE}` }}>
+        <div onClick={() => setLegalTab("terms")} style={{ fontSize: 15, paddingBottom: 10, cursor: "pointer", fontWeight: legalTab === "terms" ? 600 : 400, color: legalTab === "terms" ? INK : MUTE, borderBottom: legalTab === "terms" ? `2px solid ${BLUE}` : "2px solid transparent", marginBottom: -1 }}>Terms of Use</div>
+        <div onClick={() => setLegalTab("privacy")} style={{ fontSize: 15, paddingBottom: 10, cursor: "pointer", fontWeight: legalTab === "privacy" ? 600 : 400, color: legalTab === "privacy" ? INK : MUTE, borderBottom: legalTab === "privacy" ? `2px solid ${BLUE}` : "2px solid transparent", marginBottom: -1 }}>Privacy Policy</div>
+      </div>
 
-      {[
-        {
-          title: "1. Acceptance of Terms",
-          body: `By creating an account or using Spindex ("the Service"), you agree to be bound by these Terms of Service. If you do not agree to these terms, do not use the Service. We reserve the right to update these terms at any time. Continued use of the Service after changes constitutes acceptance of the revised terms.`,
-        },
-        {
-          title: "2. Eligibility",
-          body: `You must be at least 13 years of age to use Spindex. By using the Service, you represent that you meet this requirement. If you are under 18, you represent that a parent or guardian has reviewed and agreed to these terms on your behalf.`,
-        },
-        {
-          title: "3. User Accounts",
-          body: `You are responsible for maintaining the confidentiality of your account credentials and for all activity that occurs under your account. You agree to notify us immediately of any unauthorized use of your account. We reserve the right to terminate accounts that violate these terms or that have been inactive for an extended period.`,
-        },
-        {
-          title: "4. User Content",
-          body: `You retain ownership of any reviews, comments, mixes, or other content you submit to Spindex ("User Content"). By submitting User Content, you grant Spindex a worldwide, non-exclusive, royalty-free, sublicensable license to use, reproduce, distribute, display, and create derivative works from your User Content in connection with operating and improving the Service. You represent that you have all rights necessary to grant this license.`,
-        },
-        {
-          title: "5. Prohibited Conduct",
-          body: `You agree not to: post content that is defamatory, harassing, obscene, or otherwise objectionable; impersonate any person or entity; use the Service to distribute spam or unsolicited communications; attempt to gain unauthorized access to any part of the Service; or use automated tools to scrape or interact with the Service without our written consent.`,
-        },
-        {
-          title: "6. Data Collection and Privacy",
-          body: `By using Spindex you agree to our collection and use of your data as described in our Privacy Policy. We collect information you provide (such as email address, username, and content you post), usage data, and device information. This data is used to operate, maintain, and improve the Service.`,
-        },
-        {
-          title: "7. Data Use and Third-Party Disclosure",
-          // ⚠️ FLAGGED FOR LEGAL REVIEW — this clause is intended to permit
-          // data use in acquisition/sale scenarios. The specific language here
-          // is a placeholder and should be reviewed by a qualified attorney
-          // before the app is made public or any acquisition occurs.
-          body: `We may share aggregated or de-identified data with third parties for research, analytics, or business purposes. In the event of a merger, acquisition, sale of assets, or other business transaction involving Spindex, your data — including personal information — may be transferred to the acquiring entity as part of that transaction. By using the Service, you consent to such transfer. The acquiring entity will be required to honor the privacy commitments made in this policy or notify you of material changes.`,
-          flagged: true,
-        },
-        {
-          title: "8. Intellectual Property",
-          body: `The Spindex name, logo, and all associated software, design, and content created by Spindex are owned by Spindex and protected by applicable intellectual property laws. You may not use, copy, or distribute any Spindex intellectual property without our express written permission.`,
-        },
-        {
-          title: "9. Disclaimers",
-          body: `The Service is provided "as is" without warranties of any kind, express or implied. We do not warrant that the Service will be uninterrupted, error-free, or free of viruses or other harmful components. To the fullest extent permitted by law, we disclaim all warranties, including implied warranties of merchantability and fitness for a particular purpose.`,
-        },
-        {
-          title: "10. Limitation of Liability",
-          body: `To the fullest extent permitted by law, Spindex shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the Service, even if we have been advised of the possibility of such damages. Our total liability to you for any claims arising under these terms shall not exceed the amount you paid us in the twelve months preceding the claim.`,
-        },
-        {
-          title: "11. Governing Law",
-          body: `These terms are governed by the laws of the State of California, without regard to its conflict of law principles. Any disputes arising under these terms shall be resolved in the state or federal courts located in Los Angeles County, California.`,
-        },
-        {
-          title: "12. Contact",
-          body: `If you have questions about these terms, contact us at legal@spindex.app.`,
-        },
-      ].map((section) => (
+      <div style={{ fontSize: 12.5, color: MUTE, marginBottom: 20 }}>Last updated: {lastUpdated}</div>
+
+      {legalTab === "terms" && (
+        <div style={{ fontSize: 12.5, color: MUTE, marginBottom: 20, lineHeight: 1.6 }}>
+          Please review Section 20 (Dispute Resolution; Arbitration), which requires certain disputes to be resolved through individual binding arbitration and includes a class-action waiver. You may opt out within 30 days.
+        </div>
+      )}
+
+      {activeSections.map((section) => (
         <div key={section.title} style={{ marginBottom: 24 }}>
-          <div style={{ fontWeight: 400, fontSize: 14, marginBottom: 6 }}>{section.title}</div>
-          {section.flagged && (
-            <div style={{ background: "#FEF3C7", border: "1px solid #F59E0B", borderRadius: 0, padding: "8px 12px", marginBottom: 8, fontSize: 11.5, color: "#92400E" }}>
-              ⚠️ <strong>Legal review recommended</strong> — this clause covers data transfer in acquisition scenarios and should be reviewed by a qualified attorney before the app is made public.
-            </div>
-          )}
+          <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 6 }}>{section.title}</div>
           <div style={{ fontSize: 13.5, color: INK }}>{section.body}</div>
         </div>
       ))}
+
+      <div style={{ fontSize: 11.5, color: MUTE, marginTop: 32, fontStyle: "italic", lineHeight: 1.6 }}>
+        This document is provided for general informational purposes and does not constitute legal advice.
+      </div>
     </div>
-  );
+  );;
 
   if (inline) {
     return <div style={{ padding: "28px 0" }}>{content}</div>;
