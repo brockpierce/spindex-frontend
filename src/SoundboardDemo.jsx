@@ -7115,11 +7115,18 @@ const LANDING_CAROUSEL_ALBUMS = [
   { artist: "Black Country, New Road", album: "Ants From Up There", cover: "https://spindex-backend.onrender.com/api/albums/covers/d622ed70-ccc3-4658-8a0a-b7a2d577c28d" },
   { artist: "Weezer", album: "Pinkerton", cover: "https://spindex-backend.onrender.com/api/albums/covers/385f30e2-0483-355d-aded-23e66aa20f87" },
 ];
-const LANDING_RATINGS = [
-  { handle: "@brock", cover: LANDING_CAROUSEL_ALBUMS[0].cover, album: "Ultraviolence", artist: "Lana Del Rey", score: "9.2", timeAgo: "2h" },
-  { handle: "@brock", cover: LANDING_CAROUSEL_ALBUMS[6].cover, album: "Bottomless Pit", artist: "Death Grips", score: "8.7", timeAgo: "5h" },
-  { handle: "@brock", cover: LANDING_CAROUSEL_ALBUMS[11].cover, album: "IGOR", artist: "Tyler, The Creator", score: "9.5", timeAgo: "1d" },
-];
+// Curated showcase: feature review + real thread + compact review.
+const SHOWCASE_FEATURE = { handle: "@babyspice666", cover: "https://spindex-backend.onrender.com/api/albums/covers/5cbcdd9f-4b7d-3b3c-b9f2-6b0e75971157", album: "Sound of Silver", artist: "LCD Soundsystem", score: "9/10", timeAgo: "3d" };
+const SHOWCASE_COMPACT = { handle: "@mairead", cover: "https://spindex-backend.onrender.com/api/albums/covers/461e255f-b56e-4788-b989-8ff610242b94", album: "Comedown Machine", artist: "The Strokes", score: "8/10", timeAgo: "1d" };
+const SHOWCASE_THREAD = {
+  poster: "brock", posterHandle: "@brock", timeAgo: "6h",
+  post: "i need an album recommendation for the day i think",
+  replier: "littleone", replierHandle: "@littleone",
+  reply: "listen to Red Hot Photo Committee it's so awesome",
+  likes: 1, replies: 2,
+};
+// Avatars are fetched live (they're large base64 blobs, not hardcoded).
+const SHOWCASE_AVATAR_USERS = ["brock", "littleone", "babyspice666", "mairead"];
 const NB = { ink:"#111112", body:"#5c5c59", muted:"#8a8a86", faint:"#b5b5b1", faint2:"#a5a5a1", hair:"#ececea", border:"#dededa", dashed:"#e2e2de", panel:"#f7f7f5", page:"#ffffff", navy:"#22348a", boxLoad:"#e6e6e2" };
 
 function NBCarousel({ tileSize, gap, duration, maskAt }) {
@@ -7138,9 +7145,86 @@ function NBCarousel({ tileSize, gap, duration, maskAt }) {
   );
 }
 
+// Fetches real avatars live and renders the curated showcase (feature review,
+// real thread, compact review). Avatars load progressively (large base64 blobs).
+function useShowcaseAvatars() {
+  const [avatars, setAvatars] = React.useState({});
+  React.useEffect(() => {
+    let alive = true;
+    Promise.all(SHOWCASE_AVATAR_USERS.map((u) =>
+      fetch(`${BACKEND_URL}/api/users/${u}`).then((r) => r.json()).then((d) => [u, d.user && d.user.avatarUrl]).catch(() => [u, null])
+    )).then((pairs) => { if (alive) setAvatars(Object.fromEntries(pairs)); });
+    return () => { alive = false; };
+  }, []);
+  return avatars;
+}
+
+function NBAvatar({ url, size }) {
+  return (
+    <div style={{ width: size, height: size, borderRadius: "50%", flex: "0 0 auto", background: "#d8d8d4", overflow: "hidden" }}>
+      {url ? <img src={url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /> : null}
+    </div>
+  );
+}
+
+// Feature review card (slot 1)
+function ShowcaseFeature() {
+  const r = SHOWCASE_FEATURE;
+  return (
+    <div style={{ border: `1px solid ${NB.border}`, padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+        <span style={{ fontSize: 14, color: NB.muted }}>{r.handle}</span>
+        <span style={{ fontSize: 13, color: NB.faint }}>{r.timeAgo}</span>
+      </div>
+      <div style={{ width: "100%", aspectRatio: "1", background: NB.boxLoad }}><img src={r.cover} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /></div>
+      <div style={{ fontSize: 22, fontWeight: 700, color: NB.navy }}>{r.score}</div>
+      <div><div style={{ fontSize: 15, fontWeight: 700 }}>{r.album}</div><div style={{ fontSize: 14, color: NB.muted }}>{r.artist}</div></div>
+    </div>
+  );
+}
+
+// Thread card (slot 2) with real avatars
+function ShowcaseThread({ avatars }) {
+  const t = SHOWCASE_THREAD;
+  return (
+    <div style={{ border: `1px solid ${NB.border}`, padding: 16, display: "flex", flexDirection: "column", gap: 10 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <NBAvatar url={avatars[t.poster]} size={24} />
+        <span style={{ fontSize: 14, fontWeight: 600 }}>{t.posterHandle}</span>
+        <span style={{ fontSize: 13, color: NB.faint, marginLeft: "auto" }}>{t.timeAgo}</span>
+      </div>
+      <div style={{ fontSize: 15, lineHeight: 1.35 }}>{t.post}</div>
+      <div style={{ background: NB.panel, padding: "9px 10px", display: "flex", gap: 8, alignItems: "flex-start" }}>
+        <NBAvatar url={avatars[t.replier]} size={20} />
+        <div style={{ fontSize: 13, color: "#4a4a48", lineHeight: 1.35 }}><b style={{ fontWeight: 700 }}>{t.replierHandle}</b> {t.reply}</div>
+      </div>
+      <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
+        <span style={{ fontSize: 13, color: NB.muted }}>{"\u2661"} {t.likes}</span>
+        <span style={{ fontSize: 13, color: NB.navy }}>{t.replies} replies</span>
+      </div>
+    </div>
+  );
+}
+
+// Compact review card (slot 3)
+function ShowcaseCompact() {
+  const r = SHOWCASE_COMPACT;
+  return (
+    <div style={{ border: `1px solid ${NB.border}`, padding: 14, display: "flex", gap: 12, alignItems: "center" }}>
+      <div style={{ width: 56, height: 56, flex: "0 0 auto", background: NB.boxLoad }}><img src={r.cover} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /></div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 13, color: NB.muted }}>{r.handle} rated</div>
+        <div style={{ fontSize: 15 }}><b style={{ fontWeight: 700 }}>{r.album}</b> · {r.artist}</div>
+      </div>
+      <div style={{ fontSize: 17, fontWeight: 700, color: NB.navy }}>{r.score}</div>
+    </div>
+  );
+}
+
 function LandingPage({ onAuthed }) {
   const isMobile = typeof window !== "undefined" && window.innerWidth < 900;
   const [showAuth, setShowAuth] = React.useState(false);
+  const avatars = useShowcaseAvatars();
 
   // Mobile: CTA routes to the full-page existing AuthScreen
   if (isMobile && showAuth) {
@@ -7169,17 +7253,9 @@ function LandingPage({ onAuthed }) {
         </div>
         <div style={{ padding: "2px 0 18px" }}><NBCarousel tileSize={100} gap={9} duration={28} maskAt={10} /></div>
         <div style={{ padding: "0 22px 18px", flex: 1, display: "flex", flexDirection: "column", gap: 10 }}>
-          {LANDING_RATINGS.map((r, i) => (
-            <div key={i} style={{ border: `1px solid ${NB.border}`, padding: 14, display: "flex", gap: 12, alignItems: "center" }}>
-              <div style={{ width: 56, height: 56, flex: "0 0 auto", background: NB.boxLoad }}><img src={r.cover} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /></div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, color: NB.muted }}>{r.handle} rated</div>
-                <div style={{ fontSize: 15 }}><b style={{ fontWeight: 700 }}>{r.album}</b> · {r.artist}</div>
-              </div>
-              <div style={{ fontSize: 17, fontWeight: 700, color: NB.navy }}>{r.score}</div>
-            </div>
-          ))}
-          <div style={{ border: `1px dashed ${NB.dashed}`, flex: 1, minHeight: 34, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, color: NB.faint2 }}>214 more today</div>
+          <ShowcaseFeature />
+          <ShowcaseThread avatars={avatars} />
+          <ShowcaseCompact />
         </div>
         <div style={{ background: NB.panel, borderTop: `1px solid ${NB.hair}`, padding: "20px 22px", display: "flex", flexDirection: "column", gap: 10 }}>
           <button onClick={() => setShowAuth(true)} style={{ width: "100%", minHeight: 44, padding: 18, background: NB.navy, color: "#fff", border: "none", fontSize: 17, fontFamily: "inherit", cursor: "pointer" }}>create account</button>
@@ -7200,24 +7276,10 @@ function LandingPage({ onAuthed }) {
           <p style={{ padding: "18px 44px 0", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontSize: 15, lineHeight: 1.5, color: NB.body, margin: 0, textAlign: "center", whiteSpace: "nowrap" }}>score albums, discover new music, and connect with new people</p>
           <div style={{ padding: "28px 0 32px" }}><NBCarousel tileSize={104} gap={10} duration={34} maskAt={7} /></div>
           <div style={{ padding: "0 44px 44px", flex: 1, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-            <div style={{ border: `1px solid ${NB.border}`, padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                <span style={{ fontSize: 14, color: NB.muted }}>{LANDING_RATINGS[0].handle}</span>
-                <span style={{ fontSize: 13, color: NB.faint }}>{LANDING_RATINGS[0].timeAgo}</span>
-              </div>
-              <div style={{ width: "100%", aspectRatio: "1", background: NB.boxLoad }}><img src={LANDING_RATINGS[0].cover} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /></div>
-              <div style={{ fontSize: 22, fontWeight: 700, color: NB.navy }}>{LANDING_RATINGS[0].score}</div>
-              <div><div style={{ fontSize: 15, fontWeight: 700 }}>{LANDING_RATINGS[0].album}</div><div style={{ fontSize: 14, color: NB.muted }}>{LANDING_RATINGS[0].artist}</div></div>
-            </div>
+            <ShowcaseFeature />
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {LANDING_RATINGS.slice(1, 3).map((r, i) => (
-                <div key={i} style={{ border: `1px solid ${NB.border}`, padding: 12, display: "flex", gap: 12, alignItems: "center" }}>
-                  <div style={{ width: 52, height: 52, flex: "0 0 auto", background: NB.boxLoad }}><img src={r.cover} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /></div>
-                  <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, color: NB.muted }}>{r.handle} rated</div><div style={{ fontSize: 15, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{r.album}</div></div>
-                  <div style={{ fontSize: 16, fontWeight: 700, color: NB.navy }}>{r.score}</div>
-                </div>
-              ))}
-              <div style={{ border: `1px dashed ${NB.dashed}`, flex: 1, minHeight: 60, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, color: NB.faint2 }}>214 more today</div>
+              <ShowcaseThread avatars={avatars} />
+              <ShowcaseCompact />
             </div>
           </div>
         </div>
