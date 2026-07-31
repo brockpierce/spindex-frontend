@@ -7198,9 +7198,9 @@ function ShowcaseThread({ avatars }) {
         <NBAvatar url={avatars[t.replier]} size={20} />
         <div style={{ fontSize: 13, color: "#4a4a48", lineHeight: 1.35, textAlign: "left" }}><b style={{ fontWeight: 700 }}>{t.replierHandle}</b> {t.reply}</div>
       </div>
-      <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
-        <span style={{ fontSize: 13, color: NB.muted }}>{"\u2661"} {t.likes}</span>
-        <span style={{ fontSize: 13, color: NB.navy }}>{t.replies} replies</span>
+      <div style={{ display: "flex", gap: 20, alignItems: "center" }}>
+        <span style={{ fontSize: 13, color: NB.muted, display: "inline-flex", alignItems: "center", gap: 5 }}><Heart size={15} strokeWidth={1.6} />{t.likes}</span>
+        <span style={{ fontSize: 13, color: NB.muted, display: "inline-flex", alignItems: "center", gap: 5 }}><MessageCircle size={15} strokeWidth={1.6} />{t.replies}</span>
       </div>
     </div>
   );
@@ -7269,12 +7269,12 @@ function LandingPage({ onAuthed }) {
           {wordmark(17)}
           <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
             <span onClick={() => setShowAuth(true)} style={{ fontSize: 15, color: NB.ink, textDecoration: "underline", cursor: "pointer" }}>log in</span>
-            <span onClick={() => setShowAuth(true)} style={{ fontSize: 15, color: NB.navy, fontWeight: 600, textDecoration: "underline", cursor: "pointer" }}>sign up</span>
+            <span onClick={() => setShowAuth(true)} style={{ fontSize: 15, color: NB.ink, textDecoration: "underline", cursor: "pointer" }}>sign up</span>
           </div>
         </div>
         <div style={{ padding: "30px 22px 16px", display: "flex", flexDirection: "column", gap: 14 }}>
-          <h1 style={{ fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontWeight: 700, color: "#000000", fontSize: 40, lineHeight: 0.98, letterSpacing: "-0.03em", margin: 0 }}>keep track of every listen</h1>
-          <p style={{ fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontSize: 13, lineHeight: 1.45, color: NB.body, margin: 0, textAlign: "center", whiteSpace: "nowrap" }}>score albums, discover new music, and connect with new people</p>
+          <h1 style={{ fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontWeight: 700, color: "#000000", fontSize: 34, lineHeight: 1.0, letterSpacing: "-0.03em", margin: 0 }}>keep track of<br/>every listen</h1>
+          <p style={{ fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontSize: 11, lineHeight: 1.4, color: NB.body, margin: 0, textAlign: "left", whiteSpace: "nowrap" }}>score albums, discover new music, and connect with new people</p>
         </div>
         <div style={{ padding: "2px 0 18px" }}><NBCarousel tileSize={100} gap={9} duration={28} maskAt={10} /></div>
         <div style={{ padding: "0 22px 18px", flex: 1, display: "flex", flexDirection: "column", gap: 10 }}>
