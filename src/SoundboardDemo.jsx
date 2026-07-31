@@ -5080,6 +5080,17 @@ function AddToAlbumMixInline({ album, albumMixes, onAdd }) {
 // for auto-generated playlist art), or the plain headphone mark if the
 // mix has no tracks yet.
 
+// Format an album-of-the-day date as MM-DD-YYYY.
+// Parses the YYYY-MM-DD prefix as a string on purpose: building a Date from
+// a date-only value would be interpreted as UTC midnight and render as the
+// PREVIOUS day for anyone west of Greenwich.
+function fmtAotdDate(d) {
+  if (!d) return "";
+  const m = String(d).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return `${m[2]}-${m[3]}-${m[1]}`;
+  return "";
+}
+
 function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmin, albumMixes = [], setView }) {
   const { BLUE, INK, LINE, MUTE, BG } = useTheme();
   const [aotd, setAotd] = React.useState(null);
@@ -5204,7 +5215,7 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
       {/* ── ALBUM OF THE DAY ── */}
       <div style={{ border: `1px solid ${LINE}`, padding: 16, marginBottom: 14 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-        <div style={LABEL_STYLE}>album of the day · today</div>
+        <div style={LABEL_STYLE}>album of the day{aotd && aotd.date ? ` · ${fmtAotdDate(aotd.date)}` : ""}</div>
         {isAdmin && (
           <div style={{ display: "flex", gap: 8 }}>
             <button className="sb-btn" style={{ fontSize: 11 }} onClick={() => {
@@ -5248,7 +5259,7 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
             <div className="ui-sans" style={{ fontSize: 14, fontWeight: 800, marginTop: 6 }}>{aotdAlbum.title} <span style={{ fontWeight: 400, color: MUTE }}>{aotdAlbum.artist || aotdAlbum.artistName} · {aotdAlbum.year || aotdAlbum.releaseYear}</span></div>
             <p className="ui-sans" style={{ fontSize: 13.5, lineHeight: 1.5, color: "#333", margin: "6px 0 0" }}>{aotd.pullQuote}</p>
             <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${LINE}` }}>
-              <span className="ui-sans" style={{ fontSize: 14, fontWeight: 600, color: BLUE, cursor: "pointer" }} onClick={() => setView({ name: "editorialReview", aotd: aotd, album: aotdAlbum, from: { name: "home", tab: "news" } })}>read the full review →</span>
+              <button className="sb-btn sb-btn-solid ui-sans" style={{ fontSize: 13, fontWeight: 600, cursor: "pointer" }} onClick={() => openAlbum(aotd.albumId)}>share your thoughts</button>
             </div>
           </div>
         </div>
