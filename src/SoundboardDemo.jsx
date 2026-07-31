@@ -7542,7 +7542,7 @@ function AuthScreen({ backendUrl, onAuthed, embedded }) {
               <input className="sb-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" required />
             </div>
             {error && <div style={{ fontSize: 12, color: "#A32D2D", background: "#FCEBEB", borderRadius: 0, padding: "8px 10px", lineHeight: 1.5 }}>{error}</div>}
-            <button type="submit" className="sb-btn sb-btn-solid" disabled={loading} style={{ marginTop: 4, padding: "10px 0" }}>{loading ? "..." : "send reset code"}</button>
+            <button type="submit" className="sb-btn sb-btn-solid" disabled={loading} style={{ marginTop: 4, padding: "10px 0", width: "100%" }}>{loading ? "..." : "send reset code"}</button>
             <div style={{ fontSize: 11.5, color: MUTE, textAlign: "center", marginTop: 6 }}>
               <span style={{ color: BLUE, cursor: "pointer", textDecoration: "underline" }} onClick={() => { setError(""); setMode("login"); }}>back to log in</span>
             </div>
@@ -7561,7 +7561,7 @@ function AuthScreen({ backendUrl, onAuthed, embedded }) {
               <input className="sb-input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="at least 8 characters" required minLength={8} />
             </div>
             {error && <div style={{ fontSize: 12, color: "#A32D2D", background: "#FCEBEB", borderRadius: 0, padding: "8px 10px", lineHeight: 1.5 }}>{error}</div>}
-            <button type="submit" className="sb-btn sb-btn-solid" disabled={loading} style={{ marginTop: 4, padding: "10px 0" }}>{loading ? "..." : "reset password"}</button>
+            <button type="submit" className="sb-btn sb-btn-solid" disabled={loading} style={{ marginTop: 4, padding: "10px 0", width: "100%" }}>{loading ? "..." : "reset password"}</button>
             <div style={{ fontSize: 11.5, color: MUTE, textAlign: "center", marginTop: 6 }}>
               <span style={{ color: BLUE, cursor: "pointer", textDecoration: "underline" }} onClick={() => { setError(""); setResetInfo(""); setMode("login"); }}>back to log in</span>
             </div>
@@ -7576,7 +7576,7 @@ function AuthScreen({ backendUrl, onAuthed, embedded }) {
               <input className="sb-input" value={verifyCode} onChange={(e) => setVerifyCode(e.target.value)} placeholder="123456" inputMode="numeric" maxLength={6} required />
             </div>
             {error && <div style={{ fontSize: 12, color: "#A32D2D", background: "#FCEBEB", borderRadius: 0, padding: "8px 10px", lineHeight: 1.5 }}>{error}</div>}
-            <button type="submit" className="sb-btn sb-btn-solid" disabled={loading} style={{ marginTop: 4, padding: "10px 0" }}>{loading ? "..." : "verify"}</button>
+            <button type="submit" className="sb-btn sb-btn-solid" disabled={loading} style={{ marginTop: 4, padding: "10px 0", width: "100%" }}>{loading ? "..." : "verify"}</button>
             <div style={{ fontSize: 11.5, color: MUTE, textAlign: "center", marginTop: 6 }}>
               <span style={{ color: BLUE, cursor: "pointer", textDecoration: "underline" }} onClick={resendVerify}>resend code</span>
               {"  \u00b7  "}
@@ -7619,7 +7619,7 @@ function AuthScreen({ backendUrl, onAuthed, embedded }) {
             </div>
           )}
 
-          <button type="submit" className="sb-btn sb-btn-solid" disabled={loading} style={{ marginTop: 4, padding: "10px 0" }}>
+          <button type="submit" className="sb-btn sb-btn-solid" disabled={loading} style={{ marginTop: 4, padding: "10px 0", width: "100%" }}>
             {loading ? "..." : mode === "login" ? "log in" : "create account"}
           </button>
 
