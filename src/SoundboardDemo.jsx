@@ -7206,6 +7206,28 @@ function ShowcaseThread({ avatars }) {
   );
 }
 
+// Feed-style review card (matches the real feed look) -- used on mobile
+function ShowcaseFeedReview({ avatars }) {
+  const r = SHOWCASE_COMPACT;
+  return (
+    <div style={{ border: `1px solid ${NB.border}`, padding: 16, display: "flex", flexDirection: "column", gap: 12, textAlign: "left" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <NBAvatar url={avatars[r.username]} size={24} />
+        <span style={{ fontSize: 14, fontWeight: 600 }}>{r.handle}</span>
+        <span style={{ fontSize: 13, color: NB.faint, marginLeft: "auto" }}>{r.timeAgo} ago</span>
+      </div>
+      <div style={{ display: "flex", gap: 12 }}>
+        <div style={{ width: 72, height: 72, flex: "0 0 auto", background: NB.boxLoad }}><img src={r.cover} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /></div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 20, fontWeight: 700, color: NB.navy, marginBottom: 2 }}>{r.score}</div>
+          <div style={{ fontSize: 15 }}><b style={{ fontWeight: 700 }}>{r.album}</b> <span style={{ color: NB.muted }}>{r.artist}</span></div>
+        </div>
+      </div>
+      <div style={{ fontSize: 14, lineHeight: 1.4, color: NB.ink, textAlign: "left" }}>{r.reviewText}</div>
+    </div>
+  );
+}
+
 // Compact review card (slot 3)
 function ShowcaseCompact() {
   const r = SHOWCASE_COMPACT;
@@ -7245,7 +7267,10 @@ function LandingPage({ onAuthed }) {
         {marqueeStyle}
         <div style={{ padding: "20px 22px 0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           {wordmark(17)}
-          <span onClick={() => setShowAuth(true)} style={{ fontSize: 15, color: NB.ink, textDecoration: "underline", cursor: "pointer" }}>log in</span>
+          <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+            <span onClick={() => setShowAuth(true)} style={{ fontSize: 15, color: NB.ink, textDecoration: "underline", cursor: "pointer" }}>log in</span>
+            <span onClick={() => setShowAuth(true)} style={{ fontSize: 15, color: NB.navy, fontWeight: 600, textDecoration: "underline", cursor: "pointer" }}>sign up</span>
+          </div>
         </div>
         <div style={{ padding: "30px 22px 16px", display: "flex", flexDirection: "column", gap: 14 }}>
           <h1 style={{ fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontWeight: 700, color: "#000000", fontSize: 40, lineHeight: 0.98, letterSpacing: "-0.03em", margin: 0 }}>keep track of every listen</h1>
@@ -7253,13 +7278,10 @@ function LandingPage({ onAuthed }) {
         </div>
         <div style={{ padding: "2px 0 18px" }}><NBCarousel tileSize={100} gap={9} duration={28} maskAt={10} /></div>
         <div style={{ padding: "0 22px 18px", flex: 1, display: "flex", flexDirection: "column", gap: 10 }}>
-          <ShowcaseCompact />
+          <ShowcaseFeedReview avatars={avatars} />
           <ShowcaseThread avatars={avatars} />
         </div>
-        <div style={{ background: NB.panel, borderTop: `1px solid ${NB.hair}`, padding: "20px 22px", display: "flex", flexDirection: "column", gap: 10 }}>
-          <button onClick={() => setShowAuth(true)} style={{ width: "100%", minHeight: 44, padding: 18, background: NB.navy, color: "#fff", border: "none", fontSize: 17, fontFamily: "inherit", cursor: "pointer" }}>create account</button>
-          <div style={{ fontSize: 14, color: NB.muted, textAlign: "center" }}>already have an account? <span onClick={() => setShowAuth(true)} style={{ color: NB.navy, textDecoration: "underline", cursor: "pointer" }}>log in</span></div>
-        </div>
+
       </div>
     );
   }
