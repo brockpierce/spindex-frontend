@@ -396,49 +396,9 @@ function MixCoverStack({ albums = [], fetchedAlbums = {}, albumById, size = 80 }
   );
 }
 
-// ---- STATS MASCOT: stills vs. animation ------------------------------------
-// Set USE_STATS_STILLS = false to restore the original animated SVG mascot.
-// Nothing was removed to make this work — the animated code below is intact
-// and runs again the moment this flag flips back.
-const USE_STATS_STILLS = true;
-const STATS_STILL_SRC = {
-  grin:    "/stats/mascot-grin.png",
-  smile:   "/stats/mascot-smile.png",
-  neutral: "/stats/mascot-neutral.svg",
-  frown:   "/stats/mascot-frown.png",
-  dead:    "/stats/mascot-dead.png",
-};
-// ---------------------------------------------------------------------------
-
 function StatsMascot({ mood = "neutral", size = 140, motion = "none", color }) {
   const { BLUE } = useTheme();
   const B = color || BLUE;
-
-  if (USE_STATS_STILLS) {
-    const stillSrc = STATS_STILL_SRC[mood] || STATS_STILL_SRC.neutral;
-    return (
-      <div
-        role="img"
-        aria-label="noteblock mascot"
-        style={{
-          width: size,
-          height: size,
-          display: "block",
-          flexShrink: 0,
-          background: B,
-          WebkitMaskImage: `url(${stillSrc})`,
-          maskImage: `url(${stillSrc})`,
-          WebkitMaskRepeat: "no-repeat",
-          maskRepeat: "no-repeat",
-          WebkitMaskPosition: "center",
-          maskPosition: "center",
-          WebkitMaskSize: "contain",
-          maskSize: "contain",
-        }}
-      />
-    );
-  }
-
   const isHero = motion === "bob";
   const ex1 = 74, ex2 = 126, ey = 175;
 
