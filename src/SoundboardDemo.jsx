@@ -5291,7 +5291,7 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
             <div className="ui-sans" style={{ fontSize: 14, fontWeight: 800, marginTop: 6 }}>{aotdAlbum.title} <span style={{ fontWeight: 400, color: MUTE }}>{aotdAlbum.artist || aotdAlbum.artistName} · {aotdAlbum.year || aotdAlbum.releaseYear}</span></div>
             <p className="ui-sans" style={{ fontSize: 13.5, lineHeight: 1.5, color: "#333", margin: "6px 0 0" }}>{aotd.pullQuote}</p>
             <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${LINE}` }}>
-              <button className="sb-btn ui-sans" style={{ fontSize: 13, fontWeight: 600, cursor: "pointer", background: "transparent", color: BLUE, border: `1px solid ${BLUE}`, borderRadius: 0, padding: "10px 18px" }} onClick={() => openAlbum(aotd.albumId)}>join the conversation</button>
+              <button className="sb-btn ui-sans" style={{ fontSize: 13, fontWeight: 400, cursor: "pointer", background: "transparent", color: BLUE, border: `1px solid ${BLUE}`, borderRadius: 0, padding: "10px 18px" }} onClick={() => openAlbum(aotd.albumId)}>join the conversation</button>
             </div>
           </div>
         </div>
