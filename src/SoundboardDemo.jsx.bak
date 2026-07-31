@@ -2650,8 +2650,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                           <div onClick={() => setShowPlusMenu(false)} style={{ position: "fixed", inset: 0, zIndex: 30 }} />
                           <div className="ui-sans" style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, zIndex: 40, background: BG, border: `1px solid ${LINE}`, borderRadius: 0, minWidth: 170, overflow: "hidden", boxShadow: "0 4px 14px rgba(0,0,0,0.1)" }}>
                             {[
-                              /* QOTD temporarily hidden */
-                              // { label: "QOTD", desc: "answer today's question", action: () => { setShowPlusMenu(false); setShowQotdModal(true); } },
+                              { label: "QOTD", desc: "answer today's question", action: () => { setShowPlusMenu(false); setShowQotdModal(true); } },
                               { label: "write a thought", desc: "share what's on your mind", action: () => { setShowPlusMenu(false); setShowTextPostModal(true); } },
                               { label: "rate an album", desc: "post a review with a score", action: () => { setShowPlusMenu(false); setShowQuickReviewModal(true); } },
 
