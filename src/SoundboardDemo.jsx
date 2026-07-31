@@ -6397,12 +6397,12 @@ function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername, r
   return (
     <div style={{ marginLeft: depth > 0 ? 50 : 0 }}>
       <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-        <Avatar username={comment.username} size={avatarSize} />
+        <div onClick={(e) => { e.stopPropagation(); if (comment.username !== currentUsername && onOpenProfile) onOpenProfile(comment.username); }} style={{ display: "flex", flexShrink: 0, cursor: comment.username !== currentUsername ? "pointer" : "default" }}><Avatar username={comment.username} size={avatarSize} /></div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <p style={{ margin: 0, fontSize, lineHeight: 1.45, color: "#2a2a2a", fontFamily: "inherit" }}>
             <span style={{ fontWeight: 700, cursor: comment.username !== currentUsername ? "pointer" : "default" }} onClick={(e) => { e.stopPropagation(); if (comment.username !== currentUsername && onOpenProfile) onOpenProfile(comment.username); }}>{comment.username === currentUsername ? "you" : "@" + (comment.username || "").toLowerCase()}</span>
             {"  "}
-            <CommentText text={comment.text} />
+            <CommentText text={comment.text} onOpenProfile={onOpenProfile} />
           </p>
           <div style={{ display: "flex", alignItems: "center", gap: 14, marginTop: 6, fontSize: 13, color: "#9aa0a6", fontWeight: 400 }}>
             {comment.date && <span style={{ fontWeight: 400 }}>{relativeTime(comment.date)}</span>}
