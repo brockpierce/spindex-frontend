@@ -1963,6 +1963,8 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
   // individual album pages instead of cluttering this. Posts with several
   const [realFeedItems, setRealFeedItems] = useState([]);
   const [publicFeedItems, setPublicFeedItems] = useState([]);
+  const [publicFeedCursor, setPublicFeedCursor] = useState(null);
+  const [publicFeedLoadingMore, setPublicFeedLoadingMore] = useState(false);
   const [publicFeedLoading, setPublicFeedLoading] = useState(false);
 
   // Load real feed from backend when logged in
@@ -2020,10 +2022,12 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
   // Public feed — recent reviews from anyone on the app. Requires backend
   // endpoint GET /api/feed/public that returns the same shape as /api/feed.
   // (If the endpoint doesn't exist yet, this just leaves the tab empty.)
-  const loadPublicFeed = () => {
+  const loadPublicFeed = (cursor) => {
     if (!authUser) return;
-    setPublicFeedLoading(true);
-    apiFetch(`${BACKEND_URL}/api/feed/public`)
+    if (cursor) setPublicFeedLoadingMore(true);
+    else setPublicFeedLoading(true);
+    const qs = cursor ? `?before=${encodeURIComponent(cursor)}` : "";
+    apiFetch(`${BACKEND_URL}/api/feed/public${qs}`)
       .then((r) => r.json())
       .then((data) => {
         if (data.feed) {
@@ -2042,7 +2046,18 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
             caption: item.caption || "",
             date: item.date ? new Date(item.date).toISOString() : "",
           }));
-          setPublicFeedItems(items);
+          // Append when paging, replace on a fresh load. Dedupe by id:
+          // a new post while you're reading shifts everything down a slot,
+          // which would otherwise repeat an item at the page boundary.
+          if (cursor) {
+            setPublicFeedItems((prev) => {
+              const seen = new Set(prev.map((i) => i.id));
+              return [...prev, ...items.filter((i) => !seen.has(i.id))];
+            });
+          } else {
+            setPublicFeedItems(items);
+          }
+          setPublicFeedCursor(data.nextCursor || null);
           // Load reactions + comments for each public feed item
           loadInteractions(items.map((i) => i.id).filter(Boolean));
           // One batched request instead of one per album, and one state
@@ -2063,7 +2078,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
         }
       })
       .catch(() => {})
-      .finally(() => setPublicFeedLoading(false));
+      .finally(() => { setPublicFeedLoading(false); setPublicFeedLoadingMore(false); });
   };
 
   // Since 'everyone' is the default tab, kick off the public feed load
@@ -3044,6 +3059,28 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                         </div>
                       );
                     })}
+                    {isEveryone && publicFeedCursor && (
+                      <div style={{ display: "flex", justifyContent: "center", padding: "24px 0 8px" }}>
+                        <button
+                          className="ui-sans"
+                          disabled={publicFeedLoadingMore}
+                          onClick={() => loadPublicFeed(publicFeedCursor)}
+                          style={{
+                            fontSize: 13,
+                            fontWeight: 400,
+                            fontFamily: "inherit",
+                            cursor: publicFeedLoadingMore ? "default" : "pointer",
+                            background: "transparent",
+                            color: publicFeedLoadingMore ? MUTE : BLUE,
+                            border: `1px solid ${publicFeedLoadingMore ? LINE : BLUE}`,
+                            borderRadius: 0,
+                            padding: "10px 22px",
+                          }}
+                        >
+                          {publicFeedLoadingMore ? "loading..." : "show more posts"}
+                        </button>
+                      </div>
+                    )}
                     {!isEveryone && displayItems.length === 0 && (
                       <div className="ui-sans" style={{ color: MUTE, fontSize: 13.5, padding: "20px 0" }}>
                         nothing here yet -- follow people, queue albums, or write a review and this fills in.
