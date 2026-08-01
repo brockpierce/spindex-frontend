@@ -552,7 +552,19 @@ function ActivityFeed({
     return "a post";
   };
 
+  // Text posts have no album art — show a pencil-in-square instead of an empty grey box.
+  const textPostIcon = (
+    <div style={{ width: 44, height: 44, flexShrink: 0, background: "#ececec", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#b0b0b0" strokeWidth="1.5">
+        <path d="M17.5 2.5l4 4L8 20l-5.5 1.5L4 16z" />
+        <path d="M15 5l4 4" />
+        <path d="M2.5 21.5L4 16" />
+      </svg>
+    </div>
+  );
+
   const cover = (t) => {
+    if (t && t.kind === "textpost") return textPostIcon;
     const url = t && t.coverArtUrl ? t.coverArtUrl.replace("http://", "https://") : null;
     return (
       <div style={{ width: 44, height: 44, flexShrink: 0, background: url ? "transparent" : "#eee", overflow: "hidden" }}>
@@ -648,7 +660,7 @@ function ActivityFeed({
                 if (it.type === "post") {
                   return (
                     <div key={`post-${it.id}`} onClick={() => openTarget(it)} style={{ display: "flex", gap: 12, alignItems: "flex-start", padding: "14px 12px", borderTop: `1px solid #ededea`, background: "#fbfbfa", cursor: "pointer" }}>
-                      <div style={{ width: 44, flexShrink: 0, fontSize: 11, letterSpacing: "0.1em", color: MUTE, paddingTop: 2 }}>POST</div>
+                      {textPostIcon}
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 14, color: INK, lineHeight: 1.55, whiteSpace: "pre-line" }}>{it.text}</div>
                       </div>
