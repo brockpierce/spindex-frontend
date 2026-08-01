@@ -3652,7 +3652,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
             <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 12.5, marginBottom: 22, cursor: "pointer" }} onClick={() => setView(view.from || { name: "home" })}>
               <ChevronLeft size={14} /> back
             </div>
-            <div className="ui-sans" style={{ fontSize: 20, fontWeight: 400, marginBottom: 20 }}>{view.isOwn ? "your activity" : `@${(view.username || "").toLowerCase()} activity`}</div>
+            <div className="ui-sans" style={{ fontSize: 20, fontWeight: 400, marginBottom: 20, textAlign: "left" }}>{view.isOwn ? "your activity" : `@${(view.username || "").toLowerCase()} activity`}</div>
             <ActivityFeed
               items={activityItems}
               counts={activityCounts}
