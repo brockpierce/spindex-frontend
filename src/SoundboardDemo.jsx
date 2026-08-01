@@ -521,7 +521,7 @@ function activityTime(d) {
 
 function ActivityFeed({
   items, counts, filter, onFilter, loading, loadingMore,
-  cursor, onLoadMore, isOwn, username,
+  cursor, onLoadMore, isOwn, username, isMobile,
   onOpenProfile, onOpenAlbum, onOpenThread,
 }) {
   const { BLUE, INK, MUTE, LINE } = useTheme();
@@ -581,7 +581,7 @@ function ActivityFeed({
   return (
     <div className="ui-sans" style={{ textAlign: "left" }}>
       {/* filter chips */}
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 20 }}>
+      <div style={{ display: "flex", gap: isMobile ? 5 : 8, flexWrap: isMobile ? "nowrap" : "wrap", marginBottom: isMobile ? 10 : 20 }}>
         {chips.map((c) => {
           const active = filter === c.key;
           return (
@@ -590,10 +590,12 @@ function ActivityFeed({
               onClick={() => onFilter(c.key)}
               style={{
                 fontFamily: "inherit",
-                fontSize: 13,
+                fontSize: isMobile ? 12 : 13,
                 cursor: "pointer",
-                padding: "6px 14px",
+                padding: isMobile ? "5px 9px" : "6px 14px",
                 borderRadius: 0,
+                whiteSpace: "nowrap",
+                flexShrink: 0,
                 background: active ? "#111" : "transparent",
                 color: active ? "#fff" : "#555",
                 border: active ? "1px solid #111" : "1px solid #d8d8d5",
@@ -628,7 +630,7 @@ function ActivityFeed({
         <div>
           {groups.map((g) => (
             <div key={g.label}>
-              <div style={{ fontSize: 11, letterSpacing: "0.12em", color: MUTE, fontWeight: 700, padding: "22px 0 4px" }}>
+              <div style={{ fontSize: 11, letterSpacing: "0.12em", color: MUTE, fontWeight: 700, padding: isMobile ? "12px 0 4px" : "22px 0 4px" }}>
                 {g.label}
               </div>
 
@@ -3662,6 +3664,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
               onLoadMore={() => loadActivity(view.username, activityFilter, activityCursor)}
               isOwn={!!view.isOwn}
               username={view.username}
+              isMobile={isMobile}
               onOpenProfile={openUserProfile}
               onOpenAlbum={openAlbum}
               onOpenThread={(id) => openThread(id, view)}
@@ -3846,8 +3849,8 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                     <div style={{ display: "flex", gap: 32, alignItems: "flex-start", flexShrink: 0, marginRight: 24 }}>
                       <Stat label="followers" value={user.followerCount || 0} onClick={() => setShowFollowList({ kind: "followers", userId: user.id, username: user.username })} />
                       <Stat label="following" value={user.followingCount || 0} onClick={() => setShowFollowList({ kind: "following", userId: user.id, username: user.username })} />
-                      <Stat label="activity" value={<PencilGlyph size={20} />} onClick={() => openActivity(user.username, user.id, false)} />
                       <Stat label="listened" value={viewedUserListenedCount} onClick={() => setView({ name: "listenedList", username: user.username, userId: user.id, listenedIds: viewedUserQueue, from: view })} />
+                      <Stat label="activity" value={<PencilGlyph size={20} />} onClick={() => openActivity(user.username, user.id, false)} />
                       <Stat label="stats" value={<EqualizerIcon />} onClick={userReviews.length > 0 ? () => setView({ name: "statsDetail", reviews: userReviews, displayName: user.displayName || user.username, isOwn: false, from: view }) : undefined} />
                     </div>
                   )}
@@ -3858,8 +3861,8 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                 <div style={{ display: "flex", gap: 16, padding: "20px 0", borderBottom: `1px solid ${LINE}`, overflowX: "auto", justifyContent: "center", alignItems: "flex-start" }}>
                   <Stat label="followers" value={user.followerCount || 0} onClick={() => setShowFollowList({ kind: "followers", userId: user.id, username: user.username })} />
                   <Stat label="following" value={user.followingCount || 0} onClick={() => setShowFollowList({ kind: "following", userId: user.id, username: user.username })} />
-                  <Stat label="activity" value={<PencilGlyph size={20} />} onClick={() => openActivity(user.username, user.id, false)} />
                   <Stat label="listened" value={viewedUserListenedCount} />
+                  <Stat label="activity" value={<PencilGlyph size={20} />} onClick={() => openActivity(user.username, user.id, false)} />
                   <Stat label="stats" value={<EqualizerIcon />} onClick={userReviews.length > 0 ? () => setView({ name: "statsDetail", reviews: userReviews, displayName: user.displayName || user.username, isOwn: false, from: view }) : undefined} />
                 </div>
               )}
