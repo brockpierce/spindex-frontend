@@ -1963,6 +1963,14 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
   // individual album pages instead of cluttering this. Posts with several
   const [realFeedItems, setRealFeedItems] = useState([]);
   const [publicFeedItems, setPublicFeedItems] = useState([]);
+  // Profile activity tab
+  const [profileTab, setProfileTab] = useState("overview"); // "overview" | "activity"
+  const [activityItems, setActivityItems] = useState([]);
+  const [activityCounts, setActivityCounts] = useState({ posts: 0, likes: 0, comments: 0 });
+  const [activityFilter, setActivityFilter] = useState("all");
+  const [activityCursor, setActivityCursor] = useState(null);
+  const [activityLoading, setActivityLoading] = useState(false);
+  const [activityLoadingMore, setActivityLoadingMore] = useState(false);
   const [publicFeedCursor, setPublicFeedCursor] = useState(null);
   const [publicFeedLoadingMore, setPublicFeedLoadingMore] = useState(false);
   const [publicFeedLoading, setPublicFeedLoading] = useState(false);
@@ -2022,6 +2030,36 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
   // Public feed — recent reviews from anyone on the app. Requires backend
   // endpoint GET /api/feed/public that returns the same shape as /api/feed.
   // (If the endpoint doesn't exist yet, this just leaves the tab empty.)
+  // Profile activity: likes, comments and text posts merged server-side.
+  // A cursor appends the next page; without one the list is replaced, which
+  // is what a filter change needs.
+  const loadActivity = (username, filter = "all", cursor = null) => {
+    if (!username) return;
+    if (cursor) setActivityLoadingMore(true);
+    else { setActivityLoading(true); if (!cursor) setActivityItems([]); }
+    const params = new URLSearchParams();
+    if (filter && filter !== "all") params.set("filter", filter);
+    if (cursor) params.set("before", cursor);
+    const qs = params.toString() ? `?${params.toString()}` : "";
+    apiFetch(`${BACKEND_URL}/api/activity/${encodeURIComponent(username)}${qs}`)
+      .then((r) => (r.ok ? r.json() : {}))
+      .then((data) => {
+        if (!data.items) return;
+        if (cursor) {
+          setActivityItems((prev) => {
+            const seen = new Set(prev.map((i) => `${i.type}:${i.id}`));
+            return [...prev, ...data.items.filter((i) => !seen.has(`${i.type}:${i.id}`))];
+          });
+        } else {
+          setActivityItems(data.items);
+        }
+        setActivityCursor(data.nextCursor || null);
+        if (data.counts) setActivityCounts(data.counts);
+      })
+      .catch(() => {})
+      .finally(() => { setActivityLoading(false); setActivityLoadingMore(false); });
+  };
+
   const loadPublicFeed = (cursor) => {
     if (!authUser) return;
     if (cursor) setPublicFeedLoadingMore(true);
@@ -4735,6 +4773,45 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                 )}
               </div>
             </div>
+
+            {/* profile tabs — overview / activity */}
+            <div className="ui-sans" style={{ display: "flex", gap: 26, borderBottom: `1px solid ${INK}`, marginBottom: 22 }}>
+              {["overview", "activity"].map((t) => (
+                <button
+                  key={t}
+                  onClick={() => {
+                    setProfileTab(t);
+                    if (t === "activity" && activityItems.length === 0) {
+                      loadActivity(profile.username, activityFilter);
+                    }
+                  }}
+                  style={{
+                    fontFamily: "inherit",
+                    fontSize: 15,
+                    fontWeight: 400,
+                    background: "none",
+                    border: "none",
+                    padding: "0 0 10px",
+                    marginBottom: -1,
+                    cursor: "pointer",
+                    color: profileTab === t ? "#111" : "#8a8a8a",
+                    borderBottom: profileTab === t ? "3px solid #111" : "3px solid transparent",
+                  }}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+
+            {profileTab === "activity" && (
+              <div className="ui-sans" style={{ fontSize: 13.5, color: MUTE, padding: "20px 0" }}>
+                {activityLoading
+                  ? "loading..."
+                  : activityItems.length === 0
+                    ? "nothing here yet — likes, comments and posts you make will show up here."
+                    : `${activityItems.length} activity items loaded.`}
+              </div>
+            )}
 
             {isMobile && profile.profileTheme === "web2003" && (
               <div style={{ display: "flex", gap: 16, padding: "16px 0", borderBottom: `2px groove ${BLUE}`, overflowX: "auto", justifyContent: "center", alignItems: "flex-start" }}>
