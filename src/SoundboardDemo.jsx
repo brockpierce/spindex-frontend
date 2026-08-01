@@ -2266,6 +2266,19 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
       .finally(() => { setActivityLoading(false); setActivityLoadingMore(false); });
   };
 
+  // Reset the profile tab + activity feed whenever we enter/switch a profile view,
+  // so state doesn't bleed between your own profile and another user's (shared state).
+  useEffect(() => {
+    if (view.name === "profile" || view.name === "userProfile") {
+      setProfileTab("overview");
+      setActivityItems([]);
+      setActivityCounts({ posts: 0, likes: 0, comments: 0 });
+      setActivityFilter("all");
+      setActivityCursor(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view.name, view.username]);
+
   const loadPublicFeed = (cursor) => {
     if (!authUser) return;
     if (cursor) setPublicFeedLoadingMore(true);
@@ -3800,6 +3813,55 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                 </div>
               )}
 
+              {/* profile tabs — overview / activity */}
+              <div className="ui-sans" style={{ display: "flex", gap: 26, borderBottom: `1px solid ${INK}`, margin: "22px 0", width: "100%" }}>
+                {["overview", "activity"].map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => {
+                      setProfileTab(t);
+                      if (t === "activity" && activityItems.length === 0) {
+                        loadActivity(user.username, activityFilter);
+                      }
+                    }}
+                    style={{
+                      fontFamily: "inherit",
+                      fontSize: 15,
+                      fontWeight: 400,
+                      background: "none",
+                      border: "none",
+                      padding: "0 0 10px",
+                      marginBottom: -1,
+                      cursor: "pointer",
+                      color: profileTab === t ? "#111" : "#8a8a8a",
+                      borderBottom: profileTab === t ? "3px solid #111" : "3px solid transparent",
+                    }}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+
+              {profileTab === "activity" && (
+                <ActivityFeed
+                  items={activityItems}
+                  counts={activityCounts}
+                  filter={activityFilter}
+                  onFilter={(f) => { setActivityFilter(f); setActivityCursor(null); loadActivity(user.username, f); }}
+                  loading={activityLoading}
+                  loadingMore={activityLoadingMore}
+                  cursor={activityCursor}
+                  onLoadMore={() => loadActivity(user.username, activityFilter, activityCursor)}
+                  isOwn={false}
+                  username={user.username}
+                  onOpenProfile={openUserProfile}
+                  onOpenAlbum={openAlbum}
+                  onOpenThread={(id) => openThread(id, view)}
+                />
+              )}
+
+              {profileTab === "overview" && (<>
+
               {user.profileTheme === "web2003" && (() => {
                 const MOOD_EMOTICONS = { chill: "8)", flirty: ";)", happy: ":)", angry: ">:(", sad: ":(", bored: "-_-", hyper: "^_^" };
                 const rows = [
@@ -3941,6 +4003,8 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                   </div>
                 </div>
               )}
+
+              </>)}
             </div>
           );
         })()}
@@ -5027,6 +5091,8 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
               />
             )}
 
+            {profileTab === "overview" && (<>
+
             {isMobile && profile.profileTheme === "web2003" && (
               <div style={{ display: "flex", gap: 16, padding: "16px 0", borderBottom: `2px groove ${BLUE}`, overflowX: "auto", justifyContent: "center", alignItems: "flex-start" }}>
                 <Stat label="followers" value={profileStats.followers} onClick={() => setShowFollowList({ kind: "followers", userId: authUser?.id, username: profile.username })} />
@@ -5501,6 +5567,8 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                 </div>
               ) : null;
             })()}
+
+            </>)}
           </div>
         )}
       </div>
