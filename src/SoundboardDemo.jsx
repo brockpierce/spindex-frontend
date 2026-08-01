@@ -494,6 +494,212 @@ const STATS_STILL_SRC = {
 };
 // ---------------------------------------------------------------------------
 
+
+// Day header for a date: TODAY / YESTERDAY / MAR 14.
+function activityDayLabel(d) {
+  const date = new Date(d);
+  const today = new Date();
+  const startOf = (x) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const diffDays = Math.round((startOf(today) - startOf(date)) / 86400000);
+  if (diffDays <= 0) return "TODAY";
+  if (diffDays === 1) return "YESTERDAY";
+  return date.toLocaleDateString(undefined, { month: "short", day: "numeric" }).toUpperCase();
+}
+
+// Relative under 7 days, absolute after.
+function activityTime(d) {
+  const date = new Date(d);
+  const mins = Math.floor((Date.now() - date.getTime()) / 60000);
+  if (mins < 1) return "now";
+  if (mins < 60) return mins + "m";
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return hrs + "h";
+  const days = Math.floor(hrs / 24);
+  if (days < 7) return days + "d";
+  return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+function ActivityFeed({
+  items, counts, filter, onFilter, loading, loadingMore,
+  cursor, onLoadMore, isOwn, username,
+  onOpenProfile, onOpenAlbum, onOpenThread,
+}) {
+  const { BLUE, INK, MUTE, LINE } = useTheme();
+
+  const chips = [
+    { key: "all", label: "all", count: null },
+    { key: "posts", label: "posts", count: counts.posts },
+    { key: "likes", label: "likes", count: counts.likes },
+    { key: "comments", label: "comments", count: counts.comments },
+  ];
+
+  // Group into day buckets, preserving the order the server returned.
+  const groups = [];
+  items.forEach((it) => {
+    const label = activityDayLabel(it.date);
+    const last = groups[groups.length - 1];
+    if (last && last.label === label) last.items.push(it);
+    else groups.push({ label, items: [it] });
+  });
+
+  const linkStyle = { color: INK, fontWeight: 600, cursor: "pointer" };
+
+  const targetLabel = (t) => {
+    if (!t) return "";
+    if (t.kind === "review") return t.albumTitle || "an album";
+    if (t.kind === "textpost") return "a post";
+    if (t.kind === "sharemix") return "a mix";
+    return "a post";
+  };
+
+  const cover = (t) => {
+    const url = t && t.coverArtUrl ? t.coverArtUrl.replace("http://", "https://") : null;
+    return (
+      <div style={{ width: 44, height: 44, flexShrink: 0, background: url ? "transparent" : "#eee", overflow: "hidden" }}>
+        {url ? <img src={url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /> : null}
+      </div>
+    );
+  };
+
+  const openTarget = (it) => {
+    if (it.type === "post") { if (onOpenThread) onOpenThread(it.id); return; }
+    if (onOpenThread) onOpenThread(it.targetId);
+  };
+
+  return (
+    <div className="ui-sans" style={{ textAlign: "left" }}>
+      {/* filter chips */}
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 20 }}>
+        {chips.map((c) => {
+          const active = filter === c.key;
+          return (
+            <button
+              key={c.key}
+              onClick={() => onFilter(c.key)}
+              style={{
+                fontFamily: "inherit",
+                fontSize: 13,
+                cursor: "pointer",
+                padding: "6px 14px",
+                borderRadius: 0,
+                background: active ? "#111" : "transparent",
+                color: active ? "#fff" : "#555",
+                border: active ? "1px solid #111" : "1px solid #d8d8d5",
+              }}
+            >
+              {c.label}{c.count !== null && c.count !== undefined ? ` ${c.count}` : ""}
+            </button>
+          );
+        })}
+      </div>
+
+      {loading ? (
+        // Skeleton rows at roughly row height. No day headers until data lands.
+        <div>
+          {[0, 1, 2, 3, 4].map((i) => (
+            <div key={i} style={{ display: "flex", gap: 12, alignItems: "center", padding: "14px 0", borderTop: `1px solid #ededea` }}>
+              <div style={{ width: 44, height: 44, background: "#f0f0ee", flexShrink: 0 }} />
+              <div style={{ flex: 1 }}>
+                <div style={{ height: 11, background: "#f0f0ee", width: "60%", marginBottom: 7 }} />
+                <div style={{ height: 11, background: "#f4f4f2", width: "35%" }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : items.length === 0 ? (
+        <div style={{ fontSize: 13.5, color: MUTE, padding: "24px 0", lineHeight: 1.6 }}>
+          {isOwn
+            ? "nothing here yet — likes, comments and posts you make will show up here."
+            : `@${(username || "").toLowerCase()} hasn't done anything public yet.`}
+        </div>
+      ) : (
+        <div>
+          {groups.map((g) => (
+            <div key={g.label}>
+              <div style={{ fontSize: 11, letterSpacing: "0.12em", color: MUTE, fontWeight: 700, padding: "22px 0 4px" }}>
+                {g.label}
+              </div>
+
+              {g.items.map((it) => {
+                const t = it.target;
+
+                if (it.type === "post") {
+                  return (
+                    <div key={`post-${it.id}`} onClick={() => openTarget(it)} style={{ display: "flex", gap: 12, alignItems: "flex-start", padding: "14px 12px", borderTop: `1px solid #ededea`, background: "#fbfbfa", cursor: "pointer" }}>
+                      <div style={{ width: 44, flexShrink: 0, fontSize: 11, letterSpacing: "0.1em", color: MUTE, paddingTop: 2 }}>POST</div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 14, color: INK, lineHeight: 1.55, whiteSpace: "pre-line" }}>{it.text}</div>
+                      </div>
+                      <div style={{ fontSize: 13, color: MUTE, flexShrink: 0, paddingTop: 2 }}>{activityTime(it.date)}</div>
+                    </div>
+                  );
+                }
+
+                if (it.type === "like") {
+                  return (
+                    <div key={`like-${it.id}`} onClick={() => openTarget(it)} style={{ display: "flex", gap: 12, alignItems: "center", padding: "14px 0", borderTop: `1px solid #ededea`, cursor: "pointer" }}>
+                      {cover(t)}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 14, color: INK, lineHeight: 1.45 }}>
+                          {"\u2661"} liked{" "}
+                          <span style={linkStyle} onClick={(e) => { e.stopPropagation(); if (t && t.username && onOpenProfile) onOpenProfile(t.username); }}>@{(t && t.username ? t.username : "").toLowerCase()}</span>
+                          {t && t.kind === "review" && t.rating != null ? `'s ${t.rating}/10 review of ` : "'s "}
+                          <span style={linkStyle} onClick={(e) => { e.stopPropagation(); if (t && t.albumId && onOpenAlbum) onOpenAlbum(t.albumId); }}>{targetLabel(t)}</span>
+                        </div>
+                        {t && t.text ? (
+                          <div style={{ fontSize: 13, color: MUTE, marginTop: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.text}</div>
+                        ) : null}
+                      </div>
+                      <div style={{ fontSize: 13, color: MUTE, flexShrink: 0 }}>{activityTime(it.date)}</div>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div key={`comment-${it.id}`} onClick={() => openTarget(it)} style={{ display: "flex", gap: 12, alignItems: "flex-start", padding: "14px 0", borderTop: `1px solid #ededea`, cursor: "pointer" }}>
+                    {cover(t)}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 14, color: INK, lineHeight: 1.45 }}>
+                        {"\u21b3"} replied to{" "}
+                        <span style={linkStyle} onClick={(e) => { e.stopPropagation(); if (t && t.username && onOpenProfile) onOpenProfile(t.username); }}>@{(t && t.username ? t.username : "").toLowerCase()}</span>
+                        {t && t.kind === "review" ? " on " : ""}
+                        {t && t.kind === "review" ? (
+                          <span style={linkStyle} onClick={(e) => { e.stopPropagation(); if (t.albumId && onOpenAlbum) onOpenAlbum(t.albumId); }}>{targetLabel(t)}</span>
+                        ) : null}
+                      </div>
+                      <div style={{ fontSize: 13.5, color: INK, marginTop: 4, lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{it.text}</div>
+                    </div>
+                    <div style={{ fontSize: 13, color: MUTE, flexShrink: 0 }}>{activityTime(it.date)}</div>
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+
+          {cursor && (
+            <div style={{ display: "flex", justifyContent: "center", padding: "26px 0 8px" }}>
+              <button
+                disabled={loadingMore}
+                onClick={onLoadMore}
+                style={{
+                  fontFamily: "inherit", fontSize: 13, fontWeight: 400,
+                  cursor: loadingMore ? "default" : "pointer",
+                  background: "transparent",
+                  color: loadingMore ? MUTE : BLUE,
+                  border: `1px solid ${loadingMore ? LINE : BLUE}`,
+                  borderRadius: 0, padding: "10px 22px",
+                }}
+              >
+                {loadingMore ? "loading..." : "load more"}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function StatsMascot({ mood = "neutral", size = 140, motion = "none", color }) {
   const { BLUE } = useTheme();
   const B = color || BLUE;
@@ -4775,7 +4981,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
             </div>
 
             {/* profile tabs — overview / activity */}
-            <div className="ui-sans" style={{ display: "flex", gap: 26, borderBottom: `1px solid ${INK}`, marginBottom: 22 }}>
+            <div className="ui-sans" style={{ display: "flex", gap: 26, borderBottom: `1px solid ${INK}`, marginBottom: 22, width: "100%" }}>
               {["overview", "activity"].map((t) => (
                 <button
                   key={t}
@@ -4804,13 +5010,21 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
             </div>
 
             {profileTab === "activity" && (
-              <div className="ui-sans" style={{ fontSize: 13.5, color: MUTE, padding: "20px 0" }}>
-                {activityLoading
-                  ? "loading..."
-                  : activityItems.length === 0
-                    ? "nothing here yet — likes, comments and posts you make will show up here."
-                    : `${activityItems.length} activity items loaded.`}
-              </div>
+              <ActivityFeed
+                items={activityItems}
+                counts={activityCounts}
+                filter={activityFilter}
+                onFilter={(f) => { setActivityFilter(f); setActivityCursor(null); loadActivity(profile.username, f); }}
+                loading={activityLoading}
+                loadingMore={activityLoadingMore}
+                cursor={activityCursor}
+                onLoadMore={() => loadActivity(profile.username, activityFilter, activityCursor)}
+                isOwn={true}
+                username={profile.username}
+                onOpenProfile={openUserProfile}
+                onOpenAlbum={openAlbum}
+                onOpenThread={(id) => openThread(id, { name: "profile" })}
+              />
             )}
 
             {isMobile && profile.profileTheme === "web2003" && (
