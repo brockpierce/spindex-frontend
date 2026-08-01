@@ -2193,7 +2193,6 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
   const [realFeedItems, setRealFeedItems] = useState([]);
   const [publicFeedItems, setPublicFeedItems] = useState([]);
   // Profile activity tab
-  const [profileTab, setProfileTab] = useState("overview"); // "overview" | "activity"
   const [activityItems, setActivityItems] = useState([]);
   const [activityCounts, setActivityCounts] = useState({ posts: 0, likes: 0, comments: 0 });
   const [activityFilter, setActivityFilter] = useState("all");
@@ -5034,53 +5033,6 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                 )}
               </div>
             </div>
-
-            {/* profile tabs — overview / activity */}
-            <div className="ui-sans" style={{ display: "flex", gap: 26, borderBottom: `1px solid ${INK}`, marginBottom: 22, width: "100%" }}>
-              {["overview", "activity"].map((t) => (
-                <button
-                  key={t}
-                  onClick={() => {
-                    setProfileTab(t);
-                    if (t === "activity" && activityItems.length === 0) {
-                      loadActivity(profile.username, activityFilter);
-                    }
-                  }}
-                  style={{
-                    fontFamily: "inherit",
-                    fontSize: 15,
-                    fontWeight: 400,
-                    background: "none",
-                    border: "none",
-                    padding: "0 0 10px",
-                    marginBottom: -1,
-                    cursor: "pointer",
-                    color: profileTab === t ? "#111" : "#8a8a8a",
-                    borderBottom: profileTab === t ? "3px solid #111" : "3px solid transparent",
-                  }}
-                >
-                  {t}
-                </button>
-              ))}
-            </div>
-
-            {profileTab === "activity" && (
-              <ActivityFeed
-                items={activityItems}
-                counts={activityCounts}
-                filter={activityFilter}
-                onFilter={(f) => { setActivityFilter(f); setActivityCursor(null); loadActivity(profile.username, f); }}
-                loading={activityLoading}
-                loadingMore={activityLoadingMore}
-                cursor={activityCursor}
-                onLoadMore={() => loadActivity(profile.username, activityFilter, activityCursor)}
-                isOwn={true}
-                username={profile.username}
-                onOpenProfile={openUserProfile}
-                onOpenAlbum={openAlbum}
-                onOpenThread={(id) => openThread(id, { name: "profile" })}
-              />
-            )}
 
             {isMobile && profile.profileTheme === "web2003" && (
               <div style={{ display: "flex", gap: 16, padding: "16px 0", borderBottom: `2px groove ${BLUE}`, overflowX: "auto", justifyContent: "center", alignItems: "flex-start" }}>
