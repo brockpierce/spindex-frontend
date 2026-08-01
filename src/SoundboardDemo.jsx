@@ -527,7 +527,6 @@ function ActivityFeed({
   const { BLUE, INK, MUTE, LINE } = useTheme();
 
   const chips = [
-    { key: "all", label: "all", count: null },
     { key: "reviews", label: "reviews", count: counts.reviews },
     { key: "posts", label: "posts", count: counts.posts },
     { key: "likes", label: "likes", count: counts.likes },
@@ -633,7 +632,7 @@ function ActivityFeed({
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 14, color: INK, lineHeight: 1.45 }}>
-                          {"★"} reviewed{" "}
+                          reviewed{" "}
                           <span style={linkStyle} onClick={(e) => { e.stopPropagation(); if (it.albumId && onOpenAlbum) onOpenAlbum(it.albumId); }}>{it.albumTitle || "an album"}</span>
                           {it.rating != null ? <span style={{ color: BLUE, fontWeight: 700 }}>{` ${it.rating}/10`}</span> : null}
                         </div>
@@ -664,7 +663,7 @@ function ActivityFeed({
                       {cover(t)}
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 14, color: INK, lineHeight: 1.45 }}>
-                          {"\u2661"} liked{" "}
+                          liked{" "}
                           <span style={linkStyle} onClick={(e) => { e.stopPropagation(); if (t && t.username && onOpenProfile) onOpenProfile(t.username); }}>@{(t && t.username ? t.username : "").toLowerCase()}</span>
                           {t && t.kind === "review" && t.rating != null ? `'s ${t.rating}/10 review of ` : "'s "}
                           <span style={linkStyle} onClick={(e) => { e.stopPropagation(); if (t && t.albumId && onOpenAlbum) onOpenAlbum(t.albumId); }}>{targetLabel(t)}</span>
@@ -683,7 +682,7 @@ function ActivityFeed({
                     {cover(t)}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 14, color: INK, lineHeight: 1.45 }}>
-                        {"\u21b3"} replied to{" "}
+                        {"↳"} replied to{" "}
                         <span style={linkStyle} onClick={(e) => { e.stopPropagation(); if (t && t.username && onOpenProfile) onOpenProfile(t.username); }}>@{(t && t.username ? t.username : "").toLowerCase()}</span>
                         {t && t.kind === "review" ? " on " : ""}
                         {t && t.kind === "review" ? (
@@ -2195,7 +2194,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
   // Profile activity tab
   const [activityItems, setActivityItems] = useState([]);
   const [activityCounts, setActivityCounts] = useState({ posts: 0, likes: 0, comments: 0 });
-  const [activityFilter, setActivityFilter] = useState("all");
+  const [activityFilter, setActivityFilter] = useState("reviews");
   const [activityCursor, setActivityCursor] = useState(null);
   const [activityLoading, setActivityLoading] = useState(false);
   const [activityLoadingMore, setActivityLoadingMore] = useState(false);
@@ -2579,10 +2578,10 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
   }
 
   function openActivity(username, userId, isOwn) {
-    setActivityFilter("all");
+    setActivityFilter("reviews");
     setActivityCursor(null);
     setView({ name: "activity", username, userId, isOwn, from: view });
-    loadActivity(username, "all");
+    loadActivity(username, "reviews");
   }
 
   function openUserProfile(username) {
