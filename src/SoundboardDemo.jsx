@@ -41,6 +41,47 @@ function nowTimestamp() {
   return new Date().toISOString();
 }
 
+// Resize and re-encode an image File to a JPEG data URL.
+//   maxDim  — longest edge in px. Never upscales (a smaller source keeps its size).
+//   quality — JPEG quality 0-1.
+// Re-encoding through a canvas also strips EXIF (including GPS) and guarantees the
+// output is a real raster image rather than arbitrary bytes smuggled in a data URL.
+// Shared by avatar upload and (phase 2) post images.
+function compressImageFile(file, maxDim = 400, quality = 0.82) {
+  return new Promise((resolve, reject) => {
+    if (!file || !file.type || !file.type.startsWith("image/")) {
+      reject(new Error("Please choose an image file"));
+      return;
+    }
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("Couldn't read that image"));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error("That file isn't a valid image"));
+      img.onload = () => {
+        let { width, height } = img;
+        if (!width || !height) { reject(new Error("That file isn't a valid image")); return; }
+        if (width > maxDim || height > maxDim) {
+          if (width >= height) { height = Math.round(height * (maxDim / width)); width = maxDim; }
+          else { width = Math.round(width * (maxDim / height)); height = maxDim; }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+        try {
+          resolve(canvas.toDataURL("image/jpeg", quality));
+        } catch (err) {
+          reject(new Error("Couldn't process that image"));
+        }
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 // ---------------------------------------------------------------------------
 // MOCK DATA
 // In Phase 2 (the real backend), this data comes from your database instead
@@ -1127,10 +1168,9 @@ export default function SoundboardDemo() {
       flash("Image is too large -- try one under 5MB");
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => setDraftAvatarUrl(reader.result);
-    reader.onerror = () => flash("Couldn't read that image -- try a different file");
-    reader.readAsDataURL(file);
+    compressImageFile(file, 400, 0.82)
+      .then((dataUrl) => setDraftAvatarUrl(dataUrl))
+      .catch((err) => flash(err.message || "Couldn't read that image -- try a different file"));
   }
   // Accent + dark mode apply immediately on click rather than needing a
   // "save" -- these are visual preferences, not profile data someone
@@ -2192,15 +2232,22 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
     setShowSettings(false);
     flash("Profile updated");
     // Persist to backend
+    const body = {
+      displayName: draftDisplayName.trim(),
+      username: draftUsername.trim(),
+      bio: draftBio,
+    };
+    // Only send the avatar when it actually changed. Existing accounts may still
+    // hold a large (pre-compression) avatar; re-sending it on an unrelated save
+    // would trip the new server-side size limit. A change is always either a
+    // freshly compressed (small) image or an explicit removal.
+    if (draftAvatarUrl !== avatarUrl) {
+      body.avatarUrl = draftAvatarUrl || null;
+    }
     apiFetch(`${BACKEND_URL}/api/auth/profile`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        displayName: draftDisplayName.trim(),
-        username: draftUsername.trim(),
-        bio: draftBio,
-        avatarUrl: draftAvatarUrl || null,
-      }),
+      body: JSON.stringify(body),
     }).catch(() => {});
   }
 
