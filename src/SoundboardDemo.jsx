@@ -1225,6 +1225,7 @@ export default function SoundboardDemo() {
   const [trendingAlbums, setTrendingAlbums] = useState([]);
   const [albumSearchLoading, setAlbumSearchLoading] = useState(false);
   const [albumTags, setAlbumTags] = useState(INITIAL_ALBUM_TAGS);
+  const [popularTags, setPopularTags] = useState([]);
   const [reviewComments, setReviewComments] = useState(INITIAL_REVIEW_COMMENTS);
   const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS);
   const [reviewReactions, setReviewReactions] = useState(INITIAL_REVIEW_REACTIONS);
@@ -2868,6 +2869,16 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
     } catch (e) { try { flash("Could not submit the report."); } catch (e) {} }
   }
 
+  // Load the most-used tags for the browse page's "browse by tag" chips.
+  // Real tags from the catalog, so chips only show tags that have albums.
+  useEffect(() => {
+    if (view.name !== "browse" || popularTags.length) return;
+    apiFetch(`${BACKEND_URL}/api/tags/popular?limit=24`)
+      .then((r) => r.json())
+      .then((data) => { if (Array.isArray(data.tags)) setPopularTags(data.tags.map((t) => t.tag)); })
+      .catch(() => {});
+  }, [view.name]);
+
   // Load albums for the tag results view whenever a tag is opened.
   // Backend-driven so tags persist across users and sessions.
   useEffect(() => {
@@ -4452,12 +4463,12 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
             </div>
             {!query.trim() && (
               <>
-                {/* browse by tag — temporarily hidden */}
-                {false && (
+                {/* browse by tag — real most-used tags from the catalog */}
+                {popularTags.length > 0 && (
                   <>
                     <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 12 }}>browse by tag</div>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 28 }}>
-                      {["rap", "slowcore", "folk", "indie", "r-and-b", "alternative", "production", "singer-songwriter", "ambient", "70s", "80s", "90s", "2000s", "2010s", "hip-hop", "soul", "rock", "jazz", "concept-album", "art-rock", "psychedelic", "electronic"].map((tag) => (
+                      {popularTags.map((tag) => (
                         <button
                           key={tag}
                           className="ui-sans"
@@ -4631,15 +4642,14 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
 
                   <AddToAlbumMixInline album={album} albumMixes={albumMixes} onAdd={addToAlbumMix} />
 
-                  {/* Album tags — temporarily hidden */}
-                  {false && (
-                    <MixTagEditor
-                      tags={albumTags[album.id] || []}
-                      isOwn={profile.username === ADMIN_USERNAME}
-                      onUpdateTags={(tags) => updateAlbumTags(album.id, tags)}
-                      onTagClick={(tag) => setView({ name: "tagResults", tag })}
-                    />
-                  )}
+                  {/* Album tags — admin can edit; everyone can view + click to filter.
+                       MixTagEditor renders nothing for non-admins when there are no tags. */}
+                  <MixTagEditor
+                    tags={albumTags[album.id] || []}
+                    isOwn={profile.username === ADMIN_USERNAME}
+                    onUpdateTags={(tags) => updateAlbumTags(album.id, tags)}
+                    onTagClick={(tag) => setView({ name: "tagResults", tag })}
+                  />
                 </div>
               </div>
 
