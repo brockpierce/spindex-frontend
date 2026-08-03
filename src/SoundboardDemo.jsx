@@ -3274,24 +3274,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                               )}
                             </div>
                             <div className="ui-sans" style={{ fontSize: 14, color: INK, lineHeight: 1.6, marginBottom: 10, textAlign: "left" }}><CommentText text={c.text} onOpenProfile={openUserProfile} /></div>
-                            {c.localImages && c.localImages.length > 0 ? (
-                              <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
-                                {c.localImages.slice(0, 3).map((src, idx) => (
-                                  <img key={idx} src={src} alt="" style={{ flex: 1, minWidth: 0, maxWidth: 170, aspectRatio: "1 / 1", objectFit: "cover", border: `1px solid ${LINE}`, display: "block" }} />
-                                ))}
-                              </div>
-                            ) : c.imageCount > 0 ? (
-                              <div onClick={() => c.id && openThread(c.id, { name: "home" })} style={{ display: "flex", gap: 6, marginBottom: 10, cursor: "pointer" }}>
-                                {Array.from({ length: Math.min(c.imageCount, 3) }).map((_, idx) => {
-                                  const dim = c.images && c.images[idx];
-                                  return (
-                                    <div key={idx} style={{ flex: 1, minWidth: 0, maxWidth: 170, aspectRatio: dim && dim.width && dim.height ? `${dim.width} / ${dim.height}` : "1 / 1", background: "#ececec", border: `1px solid ${LINE}`, display: "flex", alignItems: "center", justifyContent: "center", color: "#b8b8b8" }}>
-                                      <ImageGlyph size={22} />
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            ) : null}
+                            <PostImages postId={c.id} imageCount={c.imageCount} localImages={c.localImages} dims={c.images} onExpand={setLightboxSrc} />
                             {c.id && (
                               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 14, paddingTop: 14, paddingBottom: 0, borderTop: `1px solid ${LINE}` }}>
                                 <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
@@ -5700,6 +5683,56 @@ function ImageGlyph({ size = 20 }) {
       <circle cx="8.5" cy="8.5" r="1.5" />
       <path d="M21 15l-5-5L5 21" />
     </svg>
+  );
+}
+
+// Post images in a feed card. Optimistic posts pass localImages (the bytes we
+// just uploaded); everyone else's are lazy-fetched once from /api/posts/:id, so
+// the feed *response* still carries no image data but the card shows the real
+// image instead of a bare placeholder. Shows a sized grey box while loading.
+function PostImages({ postId, imageCount, localImages, dims, onExpand }) {
+  const { LINE } = useTheme();
+  const hasLocal = localImages && localImages.length > 0;
+  const [fetched, setFetched] = useState(null);
+
+  useEffect(() => {
+    if (hasLocal) return;
+    if (!imageCount || !postId) return;
+    if (String(postId).startsWith("tp")) return; // optimistic temp id — not on the server yet
+    let cancelled = false;
+    apiFetch(`${BACKEND_URL}/api/posts/${postId}`)
+      .then((r) => (r.ok ? r.json() : {}))
+      .then((d) => { if (!cancelled && d.post && Array.isArray(d.post.images)) setFetched(d.post.images); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [postId, imageCount, hasLocal]);
+
+  const count = hasLocal ? localImages.length : (imageCount || 0);
+  if (!count) return null;
+
+  const tiles = [];
+  for (let i = 0; i < Math.min(count, 3); i++) {
+    let src = null, w = null, h = null;
+    if (hasLocal) src = localImages[i];
+    else if (fetched && fetched[i]) { src = fetched[i].data; w = fetched[i].width; h = fetched[i].height; }
+    if ((!w || !h) && dims && dims[i]) { w = dims[i].width; h = dims[i].height; }
+    tiles.push({ src, w, h });
+  }
+
+  return (
+    <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
+      {tiles.map((t, i) => (
+        <div
+          key={i}
+          onClick={t.src && onExpand ? (e) => { e.stopPropagation(); onExpand(t.src); } : undefined}
+          style={{ flex: 1, minWidth: 0, maxWidth: 170, aspectRatio: t.w && t.h ? `${t.w} / ${t.h}` : "1 / 1", background: "#ececec", border: `1px solid ${LINE}`, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", color: "#b8b8b8", cursor: t.src ? "zoom-in" : "default" }}
+        >
+          {t.src
+            ? <img src={t.src} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+            : <ImageGlyph size={22} />}
+        </div>
+      ))}
+    </div>
   );
 }
 
