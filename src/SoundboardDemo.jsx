@@ -3496,7 +3496,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                             <Avatar username={c.username} size={26} />
                             <span className="ui-sans" style={{ fontSize: 13, fontWeight: 600, cursor: "pointer" }} onClick={() => openUserProfile(c.username)}>@{(c.username || "").toLowerCase()}</span>
                             <span className="ui-sans" style={{ fontSize: 11, color: MUTE, marginLeft: "auto" }}>{relativeDate(c.date)}</span>
-                            {c.username === profile.username && (
+                            {c.username === profile.username ? (
                               <button
                                 onClick={(e) => { e.stopPropagation(); deleteReview(c.albumId); }}
                                 title="Delete review"
@@ -3505,6 +3505,8 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                               >
                                 <X size={14} />
                               </button>
+                            ) : (
+                              <ReportMenu onReport={() => reportItem("review", c.id)} />
                             )}
                           </div>
                           <div onClick={() => openAlbum(c.albumId)} style={{ display: "flex", gap: 14, cursor: "pointer" }}>
@@ -3857,7 +3859,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                       ))
                   }
                 </div>
-                <CommentInput placeholder="Write a comment..." currentUsername={profile.username} followingUsers={followingUsers} onSubmit={(text) => addComment(rev.id, text, rev.username)} />
+                <CommentInput placeholder="write a comment..." currentUsername={profile.username} followingUsers={followingUsers} onSubmit={(text) => addComment(rev.id, text, rev.username)} />
               </div>
             </div>
           );
@@ -7430,7 +7432,7 @@ function CommentInput({ placeholder, onSubmit, currentUsername, initialValue = "
         <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 8, background: "#ffffff", border: "1px solid #e3e6ea", borderRadius: 0, padding: "2px 4px 2px 14px" }}>
           <input
             style={{ flex: 1, border: "none", outline: "none", background: "none", fontSize: 14, color: "#1a1a1a", padding: "7px 0", fontFamily: "inherit" }}
-            placeholder={placeholder || "Write a comment..."}
+            placeholder={placeholder || "write a comment..."}
             value={text}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
@@ -7497,7 +7499,7 @@ function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername, r
               onClick={() => setReplying((r) => !r)}
               style={{ border: "none", background: "none", padding: 0, cursor: "pointer", font: "inherit", color: replying ? "#1a1a1a" : "#9aa0a6", fontSize: 13, fontWeight: 400 }}
             >
-              {replying ? "cancel" : "Reply"}
+              {replying ? "cancel" : "reply"}
             </button>
             {onDelete && comment.username === currentUsername && (
               <button
@@ -7609,7 +7611,7 @@ function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUserna
           )}
           <div style={{ borderTop: comments.length > 0 ? "1px solid #eceef0" : "none", marginTop: comments.length > 0 ? 20 : 12, paddingTop: comments.length > 0 ? 14 : 0, paddingBottom: 22, paddingLeft: 16, paddingRight: 16 }}>
             <CommentInput
-              placeholder="Write a comment..."
+              placeholder="write a comment..."
               currentUsername={currentUsername}
               followingUsers={followingUsers}
               onSubmit={(text) => onAdd(reviewId, text, reviewOwnerUsername)}
