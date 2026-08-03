@@ -2593,6 +2593,21 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
       setThreadReview(feedItem);
       setView({ name: "thread", reviewId, from: from || view });
       loadInteractions([reviewId]);
+      // Feed items carry image metadata only (no bytes). For a text post with
+      // images we don't already hold, fetch the full images so the detail view
+      // can render them (fixes images not showing from Activity / notifications).
+      const hasBytes = (feedItem.images && feedItem.images[0] && feedItem.images[0].data) ||
+        (feedItem.localImages && feedItem.localImages.length);
+      if (feedItem.itemType === "textpost" && feedItem.imageCount > 0 && !hasBytes) {
+        apiFetch(BACKEND_URL + "/api/posts/" + reviewId)
+          .then((r) => (r.ok ? r.json() : {}))
+          .then((pd) => {
+            if (pd.post && Array.isArray(pd.post.images)) {
+              setThreadReview((prev) => (prev && prev.id === reviewId ? { ...prev, images: pd.post.images } : prev));
+            }
+          })
+          .catch(() => {});
+      }
     } else {
       apiFetch(BACKEND_URL + "/api/reviews/" + reviewId)
         // A 404 here returns Express's default HTML error page, not JSON, so
@@ -3678,15 +3693,24 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                     </div>
                     {rev.images && rev.images.length > 0 && (
                       <div style={{ display: "grid", gridTemplateColumns: rev.images.length === 1 ? "1fr" : "1fr 1fr", gap: 8, marginBottom: 12 }}>
-                        {rev.images.map((im) => (
-                          <img
-                            key={im.id || im.position}
-                            src={im.data}
-                            alt=""
-                            onClick={() => setLightboxSrc(im.data)}
-                            style={{ width: "100%", maxHeight: 420, objectFit: "cover", border: `1px solid ${LINE}`, cursor: "zoom-in", display: "block" }}
-                          />
-                        ))}
+                        {rev.images.map((im, idx) => {
+                          // Prefer fetched bytes; fall back to optimistic just-posted
+                          // bytes; otherwise a sized placeholder while images load.
+                          const src = im.data || (rev.localImages && rev.localImages[idx]) || null;
+                          return src ? (
+                            <img
+                              key={im.id || idx}
+                              src={src}
+                              alt=""
+                              onClick={() => setLightboxSrc(src)}
+                              style={{ width: "100%", maxHeight: 420, objectFit: "cover", border: `1px solid ${LINE}`, cursor: "zoom-in", display: "block" }}
+                            />
+                          ) : (
+                            <div key={im.id || idx} style={{ width: "100%", aspectRatio: im.width && im.height ? `${im.width} / ${im.height}` : "1 / 1", maxHeight: 420, background: "#ececec", border: `1px solid ${LINE}`, display: "flex", alignItems: "center", justifyContent: "center", color: "#b8b8b8" }}>
+                              <ImageGlyph size={26} />
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
                   </div>
@@ -3719,7 +3743,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                   {(reviewComments[rev.id] || []).length === 0
                     ? <div className="ui-sans" style={{ fontSize: 13, color: MUTE }}>no comments yet.</div>
                     : (reviewComments[rev.id] || []).map((comment) => (
-                        <CommentNode key={comment.id} comment={comment} depth={0} reviewId={rev.id} onReply={addReply} currentUsername={profile.username} reviewReactions={reviewReactions} onReact={toggleReaction} followingUsers={followingUsers} />
+                        <CommentNode key={comment.id} comment={comment} depth={0} reviewId={rev.id} onReply={addReply} currentUsername={profile.username} reviewReactions={reviewReactions} onReact={toggleReaction} onOpenProfile={openUserProfile} onDelete={deleteComment} followingUsers={followingUsers} />
                       ))
                   }
                 </div>

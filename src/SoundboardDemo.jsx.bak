@@ -41,6 +41,60 @@ function nowTimestamp() {
   return new Date().toISOString();
 }
 
+// Resize and re-encode an image File to a JPEG data URL.
+//   maxDim  — longest edge in px. Never upscales (a smaller source keeps its size).
+//   quality — JPEG quality 0-1.
+// Re-encoding through a canvas also strips EXIF (including GPS) and guarantees the
+// output is a real raster image rather than arbitrary bytes smuggled in a data URL.
+// Shared by avatar upload and (phase 2) post images.
+function compressImageFile(file, maxDim = 400, quality = 0.82) {
+  return new Promise((resolve, reject) => {
+    if (!file || !file.type || !file.type.startsWith("image/")) {
+      reject(new Error("Please choose an image file"));
+      return;
+    }
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("Couldn't read that image"));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error("That file isn't a valid image"));
+      img.onload = () => {
+        let { width, height } = img;
+        if (!width || !height) { reject(new Error("That file isn't a valid image")); return; }
+        if (width > maxDim || height > maxDim) {
+          if (width >= height) { height = Math.round(height * (maxDim / width)); width = maxDim; }
+          else { width = Math.round(width * (maxDim / height)); height = maxDim; }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+        try {
+          resolve(canvas.toDataURL("image/jpeg", quality));
+        } catch (err) {
+          reject(new Error("Couldn't process that image"));
+        }
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// Same as compressImageFile but also returns the output pixel dimensions, so
+// callers can store width/height for feed layout. Used for post images.
+async function compressImageWithDims(file, maxDim = 1200, quality = 0.8) {
+  const data = await compressImageFile(file, maxDim, quality);
+  const dims = await new Promise((resolve) => {
+    const im = new Image();
+    im.onload = () => resolve({ width: im.naturalWidth, height: im.naturalHeight });
+    im.onerror = () => resolve({ width: null, height: null });
+    im.src = data;
+  });
+  return { data, width: dims.width, height: dims.height };
+}
+
 // ---------------------------------------------------------------------------
 // MOCK DATA
 // In Phase 2 (the real backend), this data comes from your database instead
@@ -1127,10 +1181,9 @@ export default function SoundboardDemo() {
       flash("Image is too large -- try one under 5MB");
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => setDraftAvatarUrl(reader.result);
-    reader.onerror = () => flash("Couldn't read that image -- try a different file");
-    reader.readAsDataURL(file);
+    compressImageFile(file, 400, 0.82)
+      .then((dataUrl) => setDraftAvatarUrl(dataUrl))
+      .catch((err) => flash(err.message || "Couldn't read that image -- try a different file"));
   }
   // Accent + dark mode apply immediately on click rather than needing a
   // "save" -- these are visual preferences, not profile data someone
@@ -1623,6 +1676,9 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
     setDraftLeastFavTrack(existing ? existing.leastFavTrack || "" : "");
     setAlbumTab("reviews");
     setView({ name: "album", id, from: from || null });
+    // Real community average for this album — the local calculation only ever
+    // saw mock friend data plus your own rating.
+    loadAlbumAverage(id);
     // If we already have the album object (e.g. from search results), cache it immediately
     if (albumObj && !fetchedAlbums[id]) {
       const a = albumObj;
@@ -1660,6 +1716,10 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
   }
 
   function saveReview(albumId) {
+    // Refresh the community average shortly after saving so your own rating is
+    // included without needing to navigate away and back. Delayed slightly to
+    // let the write land first.
+    setTimeout(() => loadAlbumAverage(albumId), 700);
     const now = nowTimestamp();
     const todayIso = new Date().toISOString().slice(0, 10);
     // Optimistic update to personal reviews — preserve original date if updating
@@ -2185,15 +2245,22 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
     setShowSettings(false);
     flash("Profile updated");
     // Persist to backend
+    const body = {
+      displayName: draftDisplayName.trim(),
+      username: draftUsername.trim(),
+      bio: draftBio,
+    };
+    // Only send the avatar when it actually changed. Existing accounts may still
+    // hold a large (pre-compression) avatar; re-sending it on an unrelated save
+    // would trip the new server-side size limit. A change is always either a
+    // freshly compressed (small) image or an explicit removal.
+    if (draftAvatarUrl !== avatarUrl) {
+      body.avatarUrl = draftAvatarUrl || null;
+    }
     apiFetch(`${BACKEND_URL}/api/auth/profile`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        displayName: draftDisplayName.trim(),
-        username: draftUsername.trim(),
-        bio: draftBio,
-        avatarUrl: draftAvatarUrl || null,
-      }),
+      body: JSON.stringify(body),
     }).catch(() => {});
   }
 
@@ -2237,6 +2304,8 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
             mixId: item.mixId || null,
             mixType: item.mixType || null,
             caption: item.caption || "",
+            imageCount: item.imageCount || 0,
+            images: item.images || [],
             date: item.date ? new Date(item.date).toISOString() : "",
           }));
           setRealFeedItems(items);
@@ -2324,6 +2393,8 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
             mixId: item.mixId || null,
             mixType: item.mixType || null,
             caption: item.caption || "",
+            imageCount: item.imageCount || 0,
+            images: item.images || [],
             date: item.date ? new Date(item.date).toISOString() : "",
           }));
           // Append when paging, replace on a fresh load. Dedupe by id:
@@ -2484,6 +2555,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
   const [conversationMessages, setConversationMessages] = useState([]);
   const [dmInput, setDmInput] = useState("");
   const [threadReview, setThreadReview] = useState(null);
+  const [lightboxSrc, setLightboxSrc] = useState(null); // full-screen post image
   const [expandedComments, setExpandedComments] = useState({});
   const [viewedUserQueue, setViewedUserQueue] = useState([]);
   const [viewedUserListenedCount, setViewedUserListenedCount] = useState(0);
@@ -2521,6 +2593,21 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
       setThreadReview(feedItem);
       setView({ name: "thread", reviewId, from: from || view });
       loadInteractions([reviewId]);
+      // Feed items carry image metadata only (no bytes). For a text post with
+      // images we don't already hold, fetch the full images so the detail view
+      // can render them (fixes images not showing from Activity / notifications).
+      const hasBytes = (feedItem.images && feedItem.images[0] && feedItem.images[0].data) ||
+        (feedItem.localImages && feedItem.localImages.length);
+      if (feedItem.itemType === "textpost" && feedItem.imageCount > 0 && !hasBytes) {
+        apiFetch(BACKEND_URL + "/api/posts/" + reviewId)
+          .then((r) => (r.ok ? r.json() : {}))
+          .then((pd) => {
+            if (pd.post && Array.isArray(pd.post.images)) {
+              setThreadReview((prev) => (prev && prev.id === reviewId ? { ...prev, images: pd.post.images } : prev));
+            }
+          })
+          .catch(() => {});
+      }
     } else {
       apiFetch(BACKEND_URL + "/api/reviews/" + reviewId)
         // A 404 here returns Express's default HTML error page, not JSON, so
@@ -2552,6 +2639,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                   itemType: "textpost",
                   username: p.username,
                   text: p.text || "",
+                  images: p.images || [],
                   date: p.date ? new Date(p.date).toISOString() : "",
                 });
                 setView({ name: "thread", reviewId, from: from || view });
@@ -2933,16 +3021,17 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
         <QuickReviewModal onSubmit={submitQuickReview} onClose={() => setShowQuickReviewModal(false)} />
       )}
       {showTextPostModal && (
-        <TextPostModal followingUsers={followingUsers} onSubmit={(text) => {
-          const todayIso = new Date().toISOString().slice(0, 10);
+        <TextPostModal followingUsers={followingUsers} onSubmit={(text, images) => {
+          const todayIso = new Date().toISOString();
           const tempId = "tp" + Date.now();
-          const feedItem = { itemType: "textpost", id: tempId, username: profile.username, text, date: todayIso };
+          const imgs = images || [];
+          const feedItem = { itemType: "textpost", id: tempId, username: profile.username, text, date: todayIso, imageCount: imgs.length, images: imgs.map((im, i) => ({ position: i, width: im.width, height: im.height })), localImages: imgs.map((im) => im.data) };
           setPublicFeedItems((prev) => [feedItem, ...prev]);
           setRealFeedItems((prev) => [feedItem, ...prev]);
           apiFetch(`${BACKEND_URL}/api/posts`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ text }),
+            body: JSON.stringify({ text, images: imgs }),
           })
             .then((r) => r.json())
             .then((data) => {
@@ -2958,6 +3047,11 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
       )}
       {showShareMixModal && (
         <ShareMixModal albumMixes={albumMixes} songMixes={songMixes} followingUsers={followingUsers} onSubmit={submitMixShare} onClose={() => setShowShareMixModal(false)} />
+      )}
+      {lightboxSrc && (
+        <div onClick={() => setLightboxSrc(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 24, cursor: "zoom-out" }}>
+          <img src={lightboxSrc} alt="" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain", display: "block" }} />
+        </div>
       )}
 
       <div style={{ maxWidth: 920, margin: "0 auto", padding: ((view.name === "profile" && profile.profileTheme === "mspaint") || (view.name === "userProfile" && viewedUser?.profileTheme === "mspaint")) ? 0 : "28px 16px 64px", minHeight: "calc(100vh - 60px)", position: "relative", background: (view.name === "profile" ? (profile.pageBackground || "") : view.name === "userProfile" ? (viewedUser?.pageBackground || "") : "") || undefined, boxShadow: (view.name === "profile" ? (profile.pageBackground || "") : view.name === "userProfile" ? (viewedUser?.pageBackground || "") : "") ? `0 0 0 100vmax ${(view.name === "profile" ? profile.pageBackground : viewedUser?.pageBackground) || "transparent"}` : undefined, clipPath: (view.name === "profile" ? (profile.pageBackground || "") : view.name === "userProfile" ? (viewedUser?.pageBackground || "") : "") ? "inset(0 -100vmax)" : undefined, transition: "background 0.2s" }}>
@@ -3195,6 +3289,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                               )}
                             </div>
                             <div className="ui-sans" style={{ fontSize: 14, color: INK, lineHeight: 1.6, marginBottom: 10, textAlign: "left" }}><CommentText text={c.text} onOpenProfile={openUserProfile} /></div>
+                            <PostImages postId={c.id} imageCount={c.imageCount} localImages={c.localImages} dims={c.images} onExpand={setLightboxSrc} />
                             {c.id && (
                               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 14, paddingTop: 14, paddingBottom: 0, borderTop: `1px solid ${LINE}` }}>
                                 <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
@@ -3592,8 +3687,32 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                   <span className="ui-sans" style={{ fontSize: 11, color: MUTE, marginLeft: "auto" }}>{relativeDate(rev.date)}</span>
                 </div>
                 {rev.itemType === "textpost" ? (
-                  <div className="ui-sans" style={{ fontSize: 14, color: INK, lineHeight: 1.6, marginBottom: 12, textAlign: "left" }}>
-                    <CommentText text={rev.text} onOpenProfile={openUserProfile} />
+                  <div>
+                    <div className="ui-sans" style={{ fontSize: 14, color: INK, lineHeight: 1.6, marginBottom: 12, textAlign: "left" }}>
+                      <CommentText text={rev.text} onOpenProfile={openUserProfile} />
+                    </div>
+                    {rev.images && rev.images.length > 0 && (
+                      <div style={{ display: "grid", gridTemplateColumns: rev.images.length === 1 ? "1fr" : "1fr 1fr", gap: 8, marginBottom: 12 }}>
+                        {rev.images.map((im, idx) => {
+                          // Prefer fetched bytes; fall back to optimistic just-posted
+                          // bytes; otherwise a sized placeholder while images load.
+                          const src = im.data || (rev.localImages && rev.localImages[idx]) || null;
+                          return src ? (
+                            <img
+                              key={im.id || idx}
+                              src={src}
+                              alt=""
+                              onClick={() => setLightboxSrc(src)}
+                              style={{ width: "100%", maxHeight: 420, objectFit: "cover", border: `1px solid ${LINE}`, cursor: "zoom-in", display: "block" }}
+                            />
+                          ) : (
+                            <div key={im.id || idx} style={{ width: "100%", aspectRatio: im.width && im.height ? `${im.width} / ${im.height}` : "1 / 1", maxHeight: 420, background: "#ececec", border: `1px solid ${LINE}`, display: "flex", alignItems: "center", justifyContent: "center", color: "#b8b8b8" }}>
+                              <ImageGlyph size={26} />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 ) : (
                 <div onClick={() => openAlbum(rev.albumId)} style={{ display: "flex", gap: 14, cursor: "pointer", marginBottom: 12 }}>
@@ -5581,6 +5700,66 @@ function PencilGlyph({ size = 20 }) {
   );
 }
 
+function ImageGlyph({ size = 20 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} aria-hidden="true">
+      <rect x="3" y="3" width="18" height="18" rx="2" />
+      <circle cx="8.5" cy="8.5" r="1.5" />
+      <path d="M21 15l-5-5L5 21" />
+    </svg>
+  );
+}
+
+// Post images in a feed card. Optimistic posts pass localImages (the bytes we
+// just uploaded); everyone else's are lazy-fetched once from /api/posts/:id, so
+// the feed *response* still carries no image data but the card shows the real
+// image instead of a bare placeholder. Shows a sized grey box while loading.
+function PostImages({ postId, imageCount, localImages, dims, onExpand }) {
+  const { LINE } = useTheme();
+  const hasLocal = localImages && localImages.length > 0;
+  const [fetched, setFetched] = useState(null);
+
+  useEffect(() => {
+    if (hasLocal) return;
+    if (!imageCount || !postId) return;
+    if (String(postId).startsWith("tp")) return; // optimistic temp id — not on the server yet
+    let cancelled = false;
+    apiFetch(`${BACKEND_URL}/api/posts/${postId}`)
+      .then((r) => (r.ok ? r.json() : {}))
+      .then((d) => { if (!cancelled && d.post && Array.isArray(d.post.images)) setFetched(d.post.images); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [postId, imageCount, hasLocal]);
+
+  const count = hasLocal ? localImages.length : (imageCount || 0);
+  if (!count) return null;
+
+  const tiles = [];
+  for (let i = 0; i < Math.min(count, 3); i++) {
+    let src = null, w = null, h = null;
+    if (hasLocal) src = localImages[i];
+    else if (fetched && fetched[i]) { src = fetched[i].data; w = fetched[i].width; h = fetched[i].height; }
+    if ((!w || !h) && dims && dims[i]) { w = dims[i].width; h = dims[i].height; }
+    tiles.push({ src, w, h });
+  }
+
+  return (
+    <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
+      {tiles.map((t, i) => (
+        <div
+          key={i}
+          onClick={t.src && onExpand ? (e) => { e.stopPropagation(); onExpand(t.src); } : undefined}
+          style={{ flex: 1, minWidth: 0, maxWidth: 170, aspectRatio: t.w && t.h ? `${t.w} / ${t.h}` : "1 / 1", background: "#ececec", border: `1px solid ${LINE}`, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", color: "#b8b8b8", cursor: t.src ? "zoom-in" : "default" }}
+        >
+          {t.src
+            ? <img src={t.src} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+            : <ImageGlyph size={22} />}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function Stat({ label, value, onClick, highlight }) {
   const { MUTE, INK, BLUE } = useTheme();
   return (
@@ -6561,24 +6740,20 @@ function AdminAlbumForm({ onAdded }) {
       if (!data.album) { setError(data.error || "Failed to create album"); setSaving(false); return; }
       const album = { ...data.album, artist: data.album.artistName, year: data.album.releaseYear };
 
-      // 2. Upload cover if provided
+      // 2. Upload cover if provided — compressed so it stays well under the body limit
       if (coverFile && data.album.id) {
-        // Upload cover as base64 via a simple PUT endpoint
-        const reader = new FileReader();
-        reader.onload = async (ev) => {
-          try {
-            await apiFetch(`${BACKEND_URL}/api/albums/${data.album.id}/cover`, {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ coverDataUrl: ev.target.result }),
-            });
-            album.coverArtUrl = ev.target.result;
-          } catch (e) {}
-          onAdded(album);
-          setTitle(""); setArtistName(""); setYear(""); setCoverFile(null); setCoverPreview(null); setOpen(false);
-          setSaving(false);
-        };
-        reader.readAsDataURL(coverFile);
+        try {
+          const coverDataUrl = await compressImageFile(coverFile, 1000, 0.85);
+          await apiFetch(`${BACKEND_URL}/api/albums/${data.album.id}/cover`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ coverDataUrl }),
+          });
+          album.coverArtUrl = coverDataUrl;
+        } catch (e) {}
+        onAdded(album);
+        setTitle(""); setArtistName(""); setYear(""); setCoverFile(null); setCoverPreview(null); setOpen(false);
+        setSaving(false);
       } else {
         onAdded(album);
         setTitle(""); setArtistName(""); setYear(""); setCoverFile(null); setCoverPreview(null); setOpen(false);
@@ -6627,6 +6802,31 @@ function AdminAlbumForm({ onAdded }) {
 function TextPostModal({ onSubmit, onClose, followingUsers }) {
   const { BLUE, INK, LINE, MUTE, BG } = useTheme();
   const [text, setText] = useState("");
+  const [images, setImages] = useState([]); // { data, width, height }
+  const [busy, setBusy] = useState(false);
+  const fileRef = useRef(null);
+  const MAX = 3;
+
+  async function addFiles(e) {
+    const files = Array.from(e.target.files || []).filter((f) => f.type && f.type.startsWith("image/"));
+    if (fileRef.current) fileRef.current.value = "";
+    const room = MAX - images.length;
+    if (!files.length || room <= 0) return;
+    setBusy(true);
+    const compressed = [];
+    for (const f of files.slice(0, room)) {
+      try {
+        compressed.push(await compressImageWithDims(f, 1200, 0.8));
+      } catch (_) {}
+    }
+    if (compressed.length) setImages((prev) => [...prev, ...compressed].slice(0, MAX));
+    setBusy(false);
+  }
+
+  const removeImage = (i) => setImages((prev) => prev.filter((_, idx) => idx !== i));
+  const totalKB = Math.round(images.reduce((s, im) => s + im.data.length, 0) / 1024);
+  const tooBig = totalKB > 2800; // /api/posts body limit is 3mb
+  const canPost = text.trim() && !busy && !tooBig;
 
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
@@ -6644,16 +6844,42 @@ function TextPostModal({ onSubmit, onClose, followingUsers }) {
           followingUsers={followingUsers}
           style={{ width: "100%", marginBottom: 14 }}
         />
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-          <button className="sb-btn" onClick={onClose}>cancel</button>
+        {images.length > 0 && (
+          <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
+            {images.map((im, i) => (
+              <div key={i} style={{ position: "relative", width: 74, height: 74 }}>
+                <img src={im.data} alt="" style={{ width: 74, height: 74, objectFit: "cover", border: `1px solid ${LINE}`, display: "block" }} />
+                <button
+                  onClick={() => removeImage(i)}
+                  style={{ position: "absolute", top: -7, right: -7, background: INK, color: BG, border: "none", borderRadius: "50%", width: 20, height: 20, cursor: "pointer", fontSize: 12, lineHeight: "20px", padding: 0, textAlign: "center" }}
+                >×</button>
+              </div>
+            ))}
+          </div>
+        )}
+        <input ref={fileRef} type="file" accept="image/*" multiple onChange={addFiles} style={{ display: "none" }} />
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
           <button
-            className="sb-btn sb-btn-solid"
-            onClick={() => { if (text.trim()) onSubmit(text.trim()); }}
-            disabled={!text.trim()}
+            className="sb-btn"
+            onClick={() => fileRef.current && fileRef.current.click()}
+            disabled={images.length >= MAX || busy}
+            style={{ display: "flex", alignItems: "center", gap: 6 }}
           >
-            post
+            <ImageGlyph size={15} /> {busy ? "adding…" : images.length >= MAX ? "3 photos max" : "add photos"}
           </button>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {images.length > 0 && <span className="ui-sans" style={{ fontSize: 11, color: tooBig ? "#c0392b" : MUTE }}>{totalKB} KB</span>}
+            <button className="sb-btn" onClick={onClose}>cancel</button>
+            <button
+              className="sb-btn sb-btn-solid"
+              onClick={() => { if (canPost) onSubmit(text.trim(), images); }}
+              disabled={!canPost}
+            >
+              post
+            </button>
+          </div>
         </div>
+        {tooBig && <div className="ui-sans" style={{ fontSize: 11, color: "#c0392b", marginTop: 8 }}>Those photos are too large together — remove one.</div>}
       </div>
     </div>
   );
@@ -7419,9 +7645,7 @@ function SongMixDetail({ mix, isOwn, onBack, onOpenAlbum, onAddTrack, onRemoveTr
     const file = e.target.files && e.target.files[0];
     if (!file) return;
     if (!file.type.startsWith("image/")) return;
-    const reader = new FileReader();
-    reader.onload = () => onSetCover(reader.result);
-    reader.readAsDataURL(file);
+    compressImageFile(file, 1000, 0.85).then((dataUrl) => onSetCover(dataUrl)).catch(() => {});
   }
 
   return (
