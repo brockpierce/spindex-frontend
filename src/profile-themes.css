@@ -4,6 +4,15 @@
   font-display: swap;
 }
 
+/* Long single-word usernames/display names must wrap instead of overflowing
+   into the stats/nav. Applies across all profile themes and the default. */
+.pf-name, .pf-handle {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  min-width: 0;
+  max-width: 100%;
+}
+
 /* ============================================================
    PROFILE THEME PRESETS
    ------------------------------------------------------------
