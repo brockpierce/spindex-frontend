@@ -2830,6 +2830,44 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
     setDeletingAccount(false);
   }
 
+  // Blocking: warning modal holds the user pending confirmation.
+  const [blockConfirm, setBlockConfirm] = useState(null);
+  async function blockUser(u) {
+    if (!u || !u.id) return;
+    setBlockConfirm(null);
+    try {
+      const r = await apiFetch(`${BACKEND_URL}/api/blocks/${u.id}`, { method: "POST" });
+      if (r.ok) {
+        setViewedUser((prev) => (prev && prev.id === u.id ? { ...prev, blocked: true } : prev));
+        setFollowState((prev) => ({ ...prev, [u.username]: false }));
+        try { flash("User blocked."); } catch (e) {}
+      } else { try { flash("Could not block this user."); } catch (e) {} }
+    } catch (e) { try { flash("Could not block this user."); } catch (e) {} }
+  }
+  async function unblockUser(u) {
+    if (!u || !u.id) return;
+    try {
+      const r = await apiFetch(`${BACKEND_URL}/api/blocks/${u.id}`, { method: "DELETE" });
+      if (r.ok) {
+        setViewedUser((prev) => (prev && prev.id === u.id ? { ...prev, blocked: false } : prev));
+        try { flash("User unblocked."); } catch (e) {}
+      } else { try { flash("Could not unblock this user."); } catch (e) {} }
+    } catch (e) { try { flash("Could not unblock this user."); } catch (e) {} }
+  }
+
+  // Report any item (post/review/comment/user). Fire-and-forget with a toast.
+  async function reportItem(targetType, targetId, reason) {
+    if (!targetId) return;
+    try {
+      const r = await apiFetch(`${BACKEND_URL}/api/reports`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ targetType, targetId, reason: reason || null }),
+      });
+      try { flash(r.ok ? "Thanks — this has been reported." : "Could not submit the report."); } catch (e) {}
+    } catch (e) { try { flash("Could not submit the report."); } catch (e) {} }
+  }
+
   // Load albums for the tag results view whenever a tag is opened.
   // Backend-driven so tags persist across users and sessions.
   useEffect(() => {
@@ -3076,6 +3114,21 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
         </div>
       )}
 
+      {blockConfirm && (
+        <div onClick={() => setBlockConfirm(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 65, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div onClick={(e) => e.stopPropagation()} className="ui-sans" style={{ background: BG, border: `1px solid ${INK}`, padding: 24, width: "100%", maxWidth: 400 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: INK, marginBottom: 12 }}>Block @{(blockConfirm.username || "").toLowerCase()}?</div>
+            <div style={{ fontSize: 13.5, color: MUTE, lineHeight: 1.6, marginBottom: 22 }}>
+              Are you sure you want to block this user? You will not be able to interact or view their posts going forward.
+            </div>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+              <button className="sb-btn" onClick={() => setBlockConfirm(null)}>cancel</button>
+              <button className="sb-btn" style={{ background: "#c0392b", borderColor: "#c0392b", color: "#fff" }} onClick={() => blockUser(blockConfirm)}>block</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {view.name === "deleteAccount" && (
         <div style={{ position: "fixed", inset: 0, background: BG, zIndex: 70, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
           <div className="ui-sans" style={{ maxWidth: 440, width: "100%", textAlign: "center" }}>
@@ -3276,7 +3329,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                                 </button>
                               </div>
                             )}
-                            {c.id && expandedComments[c.id] && <ReviewComments followingUsers={followingUsers} reviewId={c.id} comments={reviewComments[c.id] || []} onAdd={addComment} onReply={addReply} currentUsername={profile.username} reviewOwnerUsername={c.username} onDelete={deleteComment} onLoadReactions={loadCommentReactions} onOpenProfile={openUserProfile} startOpen={true} />}
+                            {c.id && expandedComments[c.id] && <ReviewComments followingUsers={followingUsers} reviewId={c.id} comments={reviewComments[c.id] || []} onAdd={addComment} onReply={addReply} currentUsername={profile.username} reviewOwnerUsername={c.username} onDelete={deleteComment} onReport={(id) => reportItem("comment", id)} onLoadReactions={loadCommentReactions} onOpenProfile={openUserProfile} startOpen={true} />}
                           </div>
                         );
                       }
@@ -3322,7 +3375,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                                 </button>
                               </div>
                             )}
-                            {c.id && expandedComments[c.id] && <ReviewComments followingUsers={followingUsers} reviewId={c.id} comments={reviewComments[c.id] || []} onAdd={addComment} onReply={addReply} currentUsername={profile.username} reviewOwnerUsername={c.username} onDelete={deleteComment} onLoadReactions={loadCommentReactions} onOpenProfile={openUserProfile} startOpen={true} />}
+                            {c.id && expandedComments[c.id] && <ReviewComments followingUsers={followingUsers} reviewId={c.id} comments={reviewComments[c.id] || []} onAdd={addComment} onReply={addReply} currentUsername={profile.username} reviewOwnerUsername={c.username} onDelete={deleteComment} onReport={(id) => reportItem("comment", id)} onLoadReactions={loadCommentReactions} onOpenProfile={openUserProfile} startOpen={true} />}
                           </div>
                         );
                       }
@@ -3334,13 +3387,15 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                               <Avatar username={c.username} size={26} />
                               <span className="ui-sans" style={{ fontSize: 13, fontWeight: 600, cursor: "pointer" }} onClick={() => openUserProfile(c.username)}>@{(c.username || "").toLowerCase()}</span>
                               <span className="ui-sans" style={{ fontSize: 11, color: MUTE, marginLeft: "auto" }}>{relativeDate(c.date)}</span>
-                              {c.username === profile.username && (
+                              {c.username === profile.username ? (
                                 <button
                                   onClick={(e) => { e.stopPropagation(); deleteTextPost(c.id); }}
                                   style={{ background: "transparent", border: "none", padding: 2, cursor: "pointer", color: MUTE, display: "flex", alignItems: "center" }}
                                 >
                                   <X size={14} />
                                 </button>
+                              ) : (
+                                <ReportMenu onReport={() => reportItem("post", c.id)} />
                               )}
                             </div>
                             <div className="ui-sans" style={{ fontSize: 14, color: INK, lineHeight: 1.6, marginBottom: 10, textAlign: "left" }}><CommentText text={c.text} onOpenProfile={openUserProfile} /></div>
@@ -3378,7 +3433,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                                 onReact={toggleReaction}
                                 onLoadReactions={loadCommentReactions}
                                 onOpenProfile={openUserProfile}
-                                onDelete={deleteComment}
+                                onDelete={deleteComment} onReport={(id) => reportItem("comment", id)}
                                 startOpen={true}
                               />
                             )}
@@ -3428,7 +3483,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                                 reviewReactions={reviewReactions}
                                 onReact={toggleReaction}
                                 onOpenProfile={openUserProfile}
-                                onDelete={deleteComment}
+                                onDelete={deleteComment} onReport={(id) => reportItem("comment", id)}
                               />
                             )}
                           </div>
@@ -3502,7 +3557,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                               reviewReactions={reviewReactions}
                               onReact={toggleReaction}
                               onOpenProfile={openUserProfile}
-                              onDelete={deleteComment}
+                              onDelete={deleteComment} onReport={(id) => reportItem("comment", id)}
                               startOpen={true}
                             />
                           )}
@@ -3618,7 +3673,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
         })()}
 
         {view.name === "terms" && (
-          <TermsScreen onBack={() => setView({ name: "home" })} inline />
+          <TermsScreen onBack={() => setView({ name: "home" })} inline initialTab={view.tab} />
         )}
 
         {/* ---------------- NOTIFICATIONS ---------------- */}
@@ -3798,7 +3853,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                   {(reviewComments[rev.id] || []).length === 0
                     ? <div className="ui-sans" style={{ fontSize: 13, color: MUTE }}>no comments yet.</div>
                     : (reviewComments[rev.id] || []).map((comment) => (
-                        <CommentNode key={comment.id} comment={comment} depth={0} reviewId={rev.id} onReply={addReply} currentUsername={profile.username} reviewReactions={reviewReactions} onReact={toggleReaction} onOpenProfile={openUserProfile} onDelete={deleteComment} followingUsers={followingUsers} />
+                        <CommentNode key={comment.id} comment={comment} depth={0} reviewId={rev.id} onReply={addReply} currentUsername={profile.username} reviewReactions={reviewReactions} onReact={toggleReaction} onOpenProfile={openUserProfile} onDelete={deleteComment} onReport={(id) => reportItem("comment", id)} followingUsers={followingUsers} />
                       ))
                   }
                 </div>
@@ -3964,6 +4019,23 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
               <div style={{ display: "flex", justifyContent: "center" }}><Spinner label="loading profile…" /></div>
             </div>
           );
+          if (user.blocked) {
+            return (
+              <div>
+                <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 12.5, marginBottom: 22, cursor: "pointer" }} onClick={() => setView({ name: "home" })}>
+                  <ChevronLeft size={14} /> back
+                </div>
+                <div style={{ textAlign: "center", padding: "56px 20px" }}>
+                  <Avatar username={user.username} size={72} />
+                  <div className="ui-sans" style={{ fontSize: 18, fontWeight: 700, marginTop: 16 }}>@{(user.username || "").toLowerCase()}</div>
+                  <div className="ui-sans" style={{ fontSize: 14, color: MUTE, marginTop: 10, marginBottom: 24, maxWidth: 340, marginLeft: "auto", marginRight: "auto", lineHeight: 1.6 }}>
+                    You've blocked this user. You can't see each other's posts, comments, or messages.
+                  </div>
+                  <button className="sb-btn" onClick={() => unblockUser(user)}>unblock</button>
+                </div>
+              </div>
+            );
+          }
           const userReviews = [...viewedUserReviews].sort((a, b) => (a.date !== b.date ? (a.date < b.date ? 1 : -1) : (a.id < b.id ? 1 : -1)));
           const userAvgRating = userReviews.length ? (userReviews.reduce((s, r) => s + r.rating, 0) / userReviews.length).toFixed(1) : "--";
           if (user.profileTheme === "mspaint") {
@@ -4017,6 +4089,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
                         <button className="pf-friendbtn" onClick={() => toggleFollow(user.username)} style={{ cursor: "pointer" }}>★ {followState[user.username] ? "friends" : "add to friends"}</button>
                         <button className="pf-friendbtn" onClick={() => startConversationWith(user.username)} style={{ cursor: "pointer" }}>✉ send message</button>
+                        <button className="pf-friendbtn" onClick={() => setBlockConfirm(user)} style={{ cursor: "pointer" }}>⊘ block</button>
                       </div>
                     )}
                   </div>
@@ -4031,6 +4104,14 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                     onClick={() => toggleFollow(user.username)}
                   >
                     {followState[user.username] ? "following" : "follow"}
+                  </button>
+                  <button
+                    onClick={() => setBlockConfirm(user)}
+                    className="ui-sans"
+                    style={{ background: "none", border: "none", color: MUTE, fontSize: 12, cursor: "pointer", padding: 2, textDecoration: "underline" }}
+                    title="block this user"
+                  >
+                    block
                   </button>
                     </>
                   )}
@@ -5483,7 +5564,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                     <div style={{ fontSize: 11, color: MUTE, marginTop: 8 }}>how your profile looks to visitors</div>
                   </div>
 
-                  <div style={{ borderTop: `1px solid ${LINE}`, marginTop: 22, paddingTop: 18, display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                  <div style={{ borderTop: `1px solid ${LINE}`, marginTop: 22, paddingTop: 18, display: "flex", gap: 10, alignItems: "center", justifyContent: "space-between" }}>
                     <button
                       onClick={logout}
                       className="ui-sans"
@@ -5733,7 +5814,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
       <div style={{ borderTop: `1px solid ${LINE}`, padding: "18px 24px", display: "flex", justifyContent: "center", gap: 20 }}>
 {false && (<>
         <span className="ui-sans" style={{ fontSize: 11, color: MUTE, cursor: "pointer" }} onClick={() => setView({ name: "terms" })}>terms of service</span>
-        <span className="ui-sans" style={{ fontSize: 11, color: MUTE, cursor: "pointer" }} onClick={() => setView({ name: "terms" })}>privacy policy</span>
+        <span className="ui-sans" style={{ fontSize: 11, color: MUTE, cursor: "pointer" }} onClick={() => setView({ name: "terms", tab: "privacy" })}>privacy policy</span>
         </>)}
         <span className="ui-sans" style={{ fontSize: 11, color: MUTE }}>© {new Date().getFullYear()} noteblock</span>
       </div>
@@ -5771,6 +5852,38 @@ function ImageGlyph({ size = 20 }) {
       <circle cx="8.5" cy="8.5" r="1.5" />
       <path d="M21 15l-5-5L5 21" />
     </svg>
+  );
+}
+
+// A "···" overflow menu with a Report action. Rendered on other people's posts
+// and comments (own content uses its delete control instead).
+function ReportMenu({ onReport, size = 16 }) {
+  const { INK, MUTE, LINE, BG } = useTheme();
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{ position: "relative", display: "flex" }}>
+      <button
+        onClick={(e) => { e.stopPropagation(); setOpen((o) => !o); }}
+        style={{ background: "none", border: "none", cursor: "pointer", color: MUTE, padding: 2, lineHeight: 1, fontSize: size, letterSpacing: 1 }}
+        title="more"
+      >
+        ⋯
+      </button>
+      {open && (
+        <>
+          <div onClick={(e) => { e.stopPropagation(); setOpen(false); }} style={{ position: "fixed", inset: 0, zIndex: 40 }} />
+          <div style={{ position: "absolute", right: 0, top: "100%", marginTop: 2, background: BG, border: `1px solid ${LINE}`, zIndex: 41, minWidth: 110, boxShadow: "0 2px 10px rgba(0,0,0,0.14)" }}>
+            <button
+              onClick={(e) => { e.stopPropagation(); setOpen(false); onReport(); }}
+              className="ui-sans"
+              style={{ display: "block", width: "100%", textAlign: "left", padding: "9px 14px", background: "none", border: "none", cursor: "pointer", fontSize: 13, color: INK, fontFamily: "inherit" }}
+            >
+              report
+            </button>
+          </div>
+        </>
+      )}
+    </div>
   );
 }
 
@@ -7346,7 +7459,7 @@ function CommentInput({ placeholder, onSubmit, currentUsername, initialValue = "
 }
 
 // Renders a single comment node with its nested replies, recursively
-function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername, reviewReactions = {}, onReact, onOpenProfile, onDelete, followingUsers = [] }) {
+function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername, reviewReactions = {}, onReact, onOpenProfile, onDelete, onReport, followingUsers = [] }) {
   const { BLUE, INK, LINE, MUTE } = useTheme();
   const [replying, setReplying] = useState(false);
   const avatarSize = 32;
@@ -7394,6 +7507,14 @@ function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername, r
                 delete
               </button>
             )}
+            {onReport && comment.id && comment.username !== currentUsername && (
+              <button
+                onClick={() => onReport(comment.id)}
+                style={{ border: "none", background: "none", padding: 0, cursor: "pointer", font: "inherit", color: "#9aa0a6", fontSize: 13, fontWeight: 400 }}
+              >
+                report
+              </button>
+            )}
             {comment.id && onReact && (
               <button
                 onClick={() => onReact(comment.id, "heart")}
@@ -7411,7 +7532,7 @@ function CommentNode({ comment, depth = 0, reviewId, onReply, currentUsername, r
 
       {(comment.replies || []).map((reply) => (
         <div key={reply.id} style={{ marginTop: 16 }}>
-          <CommentNode comment={reply} depth={depth + 1} reviewId={reviewId} onReply={onReply} currentUsername={currentUsername} reviewReactions={reviewReactions} onReact={onReact} onOpenProfile={onOpenProfile} onDelete={onDelete} followingUsers={followingUsers} />
+          <CommentNode comment={reply} depth={depth + 1} reviewId={reviewId} onReply={onReply} currentUsername={currentUsername} reviewReactions={reviewReactions} onReact={onReact} onOpenProfile={onOpenProfile} onDelete={onDelete} onReport={onReport} followingUsers={followingUsers} />
         </div>
       ))}
 
@@ -7439,7 +7560,7 @@ function countAllComments(comments) {
   return comments.reduce((s, c) => s + 1 + countReplies(c), 0);
 }
 
-function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUsername, reviewOwnerUsername, reviewReactions = {}, onReact, onLoadReactions, onOpenProfile, onDelete, startOpen = false, followingUsers = [] }) {
+function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUsername, reviewOwnerUsername, reviewReactions = {}, onReact, onLoadReactions, onOpenProfile, onDelete, onReport, startOpen = false, followingUsers = [] }) {
   const { BLUE, INK, LINE, MUTE, BG } = useTheme();
   const [open, setOpen] = useState(startOpen);
   const total = countAllComments(comments);
@@ -7482,7 +7603,7 @@ function ReviewComments({ reviewId, comments = [], onAdd, onReply, currentUserna
           {comments.length > 0 && (
             <div style={{ maxHeight: 360, overflowY: "auto", padding: "20px 16px 6px", display: "flex", flexDirection: "column", gap: 22 }}>
               {comments.map((c) => (
-                <CommentNode key={c.id} comment={c} depth={0} reviewId={reviewId} onReply={onReply} currentUsername={currentUsername} reviewReactions={reviewReactions} onReact={onReact} onOpenProfile={onOpenProfile} onDelete={onDelete} followingUsers={followingUsers} />
+                <CommentNode key={c.id} comment={c} depth={0} reviewId={reviewId} onReply={onReply} currentUsername={currentUsername} reviewReactions={reviewReactions} onReact={onReact} onOpenProfile={onOpenProfile} onDelete={onDelete} onReport={onReport} followingUsers={followingUsers} />
               ))}
             </div>
           )}
@@ -8104,11 +8225,11 @@ function FollowListModal({ kind, userId, username, onClose, onVisitProfile }) {
   );
 }
 
-function TermsScreen({ onBack, inline }) {
+function TermsScreen({ onBack, inline, initialTab }) {
   const { BLUE, INK, LINE, MUTE, BG } = useTheme();
   const lastUpdated = "July 31, 2026";
 
- const [legalTab, setLegalTab] = React.useState("terms");
+ const [legalTab, setLegalTab] = React.useState(initialTab === "privacy" ? "privacy" : "terms");
 
   const termsSections = [
     { title: "1. Acceptance", body: `By accessing or using mynoteblock.com and any other site, application, API, or content offered, owned, or operated by noteblock ("we", "us", or "our") (together, the "Service"), you accept and agree to be bound by these Terms of Use ("Terms"). If you do not agree, you may not use the Service. Please also read our Privacy Policy. All references to "you" mean the person who accesses or uses the Service.` },
