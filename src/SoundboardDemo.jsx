@@ -6751,20 +6751,18 @@ function TextPostModal({ onSubmit, onClose, followingUsers }) {
   const MAX = 3;
 
   async function addFiles(e) {
-    const files = Array.from(e.target.files || []);
+    const files = Array.from(e.target.files || []).filter((f) => f.type && f.type.startsWith("image/"));
     if (fileRef.current) fileRef.current.value = "";
-    if (!files.length) return;
+    const room = MAX - images.length;
+    if (!files.length || room <= 0) return;
     setBusy(true);
-    for (const f of files) {
-      if (!f.type || !f.type.startsWith("image/")) continue;
-      let added = false;
-      setImages((prev) => { added = prev.length < MAX; return prev; });
-      if (!added) break;
+    const compressed = [];
+    for (const f of files.slice(0, room)) {
       try {
-        const img = await compressImageWithDims(f, 1200, 0.8);
-        setImages((prev) => (prev.length < MAX ? [...prev, img] : prev));
+        compressed.push(await compressImageWithDims(f, 1200, 0.8));
       } catch (_) {}
     }
+    if (compressed.length) setImages((prev) => [...prev, ...compressed].slice(0, MAX));
     setBusy(false);
   }
 
