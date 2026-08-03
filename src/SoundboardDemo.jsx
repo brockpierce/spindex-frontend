@@ -1199,6 +1199,8 @@ export default function SoundboardDemo() {
   const [favorites, setFavorites] = useState(INITIAL_FAVORITES);
   const [albumMixes, setAlbumMixes] = useState(INITIAL_ALBUM_MIXES);
   const [siteCommunityAvg, setSiteCommunityAvg] = useState(null);
+  // Real per-album averages from the server, keyed by album id.
+  const [albumAverages, setAlbumAverages] = useState({});
   const [editingMixTitle, setEditingMixTitle] = useState(null);
   const [infoEditMode, setInfoEditMode] = useState(false);
   const [infoDrafts, setInfoDrafts] = useState({});
@@ -1621,6 +1623,9 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
     setDraftLeastFavTrack(existing ? existing.leastFavTrack || "" : "");
     setAlbumTab("reviews");
     setView({ name: "album", id, from: from || null });
+    // Real community average for this album — the local calculation only ever
+    // saw mock friend data plus your own rating.
+    loadAlbumAverage(id);
     // If we already have the album object (e.g. from search results), cache it immediately
     if (albumObj && !fetchedAlbums[id]) {
       const a = albumObj;
@@ -1658,6 +1663,10 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
   }
 
   function saveReview(albumId) {
+    // Refresh the community average shortly after saving so your own rating is
+    // included without needing to navigate away and back. Delayed slightly to
+    // let the write land first.
+    setTimeout(() => loadAlbumAverage(albumId), 700);
     const now = nowTimestamp();
     const todayIso = new Date().toISOString().slice(0, 10);
     // Optimistic update to personal reviews — preserve original date if updating
@@ -2498,6 +2507,19 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
   const [guestbookLoading, setGuestbookLoading] = useState(false);
   const [guestbookSigning, setGuestbookSigning] = useState(false);
   const [albumListSort, setAlbumListSort] = useState("date");
+
+  // Pull the real community average for an album. Cached per id, refetched
+  // after you rate so your own review is reflected.
+  function loadAlbumAverage(albumId) {
+    if (!albumId) return;
+    apiFetch(`${BACKEND_URL}/api/reviews/album-average/${albumId}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!d) return;
+        setAlbumAverages((prev) => ({ ...prev, [albumId]: { average: d.average, count: d.count || 0 } }));
+      })
+      .catch(() => {});
+  }
 
   function openThread(reviewId, from) {
     const allFeed = [...(publicFeedItems || []), ...(feed || [])];
@@ -4257,10 +4279,16 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
           // people you follow, the wider community, and your own review if
           // you've left one -- "everyone who's logged this" rather than a
           // single isolated pool.
+          // Real average across every rating in the database. The old local
+          // calculation used FRIENDS (mock) plus COMMUNITY_REVIEWS (an empty
+          // array), so it mostly reflected your own rating back at you.
+          const serverAvg = albumAverages[album.id];
           const friendRatings = FRIENDS.flatMap((f) => f.reviews.filter((r) => r.albumId === album.id).map((r) => r.rating));
-          const communityRatings = COMMUNITY_REVIEWS.filter((r) => r.albumId === album.id).map((r) => r.rating);
-          const allRatings = [...friendRatings, ...communityRatings, ...(existing ? [existing.rating] : [])];
-          const communityAvg = allRatings.length ? (allRatings.reduce((s, r) => s + r, 0) / allRatings.length) : null;
+          const localRatings = [...friendRatings, ...(existing ? [existing.rating] : [])];
+          const communityAvg = serverAvg && serverAvg.count > 0
+            ? serverAvg.average
+            : (serverAvg ? null : (localRatings.length ? localRatings.reduce((s, r) => s + r, 0) / localRatings.length : null));
+          const ratingCount = serverAvg ? serverAvg.count : localRatings.length;
 
           return (
             <div style={{ maxWidth: "100%", overflowX: "hidden" }}>
@@ -4306,7 +4334,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                     {communityAvg ? (
                       <div className="ui-sans" style={{ display: "flex", alignItems: "baseline", gap: 8, justifyContent: isMobile ? "center" : "flex-start" }}>
                         <span style={{ fontSize: 18, fontWeight: 600 }}>{communityAvg.toFixed(1)}</span>
-                        <span style={{ fontSize: 12, color: MUTE }}>/10 · {allRatings.length} rating{allRatings.length !== 1 ? "s" : ""}</span>
+                        <span style={{ fontSize: 12, color: MUTE }}>/10 · {ratingCount} rating{ratingCount !== 1 ? "s" : ""}</span>
                       </div>
                     ) : (
                       <div className="ui-sans" style={{ fontSize: 13, color: MUTE }}>no ratings yet -- be the first.</div>

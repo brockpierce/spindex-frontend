@@ -494,6 +494,247 @@ const STATS_STILL_SRC = {
 };
 // ---------------------------------------------------------------------------
 
+
+// Day header for a date: TODAY / YESTERDAY / MAR 14.
+function activityDayLabel(d) {
+  const date = new Date(d);
+  const today = new Date();
+  const startOf = (x) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const diffDays = Math.round((startOf(today) - startOf(date)) / 86400000);
+  if (diffDays <= 0) return "TODAY";
+  if (diffDays === 1) return "YESTERDAY";
+  return date.toLocaleDateString(undefined, { month: "short", day: "numeric" }).toUpperCase();
+}
+
+// Relative under 7 days, absolute after.
+function activityTime(d) {
+  const date = new Date(d);
+  const mins = Math.floor((Date.now() - date.getTime()) / 60000);
+  if (mins < 1) return "now";
+  if (mins < 60) return mins + "m";
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return hrs + "h";
+  const days = Math.floor(hrs / 24);
+  if (days < 7) return days + "d";
+  return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+function ActivityFeed({
+  items, counts, filter, onFilter, loading, loadingMore,
+  cursor, onLoadMore, isOwn, username, isMobile,
+  onOpenProfile, onOpenAlbum, onOpenThread,
+}) {
+  const { BLUE, INK, MUTE, LINE } = useTheme();
+
+  const chips = [
+    { key: "reviews", label: "reviews", count: counts.reviews },
+    { key: "posts", label: "posts", count: counts.posts },
+    { key: "likes", label: "likes", count: counts.likes },
+    { key: "comments", label: "comments", count: counts.comments },
+  ];
+
+  // Group into day buckets, preserving the order the server returned.
+  const groups = [];
+  items.forEach((it) => {
+    const label = activityDayLabel(it.date);
+    const last = groups[groups.length - 1];
+    if (last && last.label === label) last.items.push(it);
+    else groups.push({ label, items: [it] });
+  });
+
+  const linkStyle = { color: INK, fontWeight: 600, cursor: "pointer" };
+
+  const targetLabel = (t) => {
+    if (!t) return "";
+    if (t.kind === "review") return t.albumTitle || "an album";
+    if (t.kind === "textpost") return "a post";
+    if (t.kind === "sharemix") return "a mix";
+    return "a post";
+  };
+
+  // Text posts have no album art — show a pencil-in-square instead of an empty grey box.
+  const textPostIcon = (
+    <div style={{ width: 44, height: 44, flexShrink: 0, background: "#ececec", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#b0b0b0" strokeWidth="1.5">
+        <path d="M17.5 2.5l4 4L8 20l-5.5 1.5L4 16z" />
+        <path d="M15 5l4 4" />
+        <path d="M2.5 21.5L4 16" />
+      </svg>
+    </div>
+  );
+
+  const cover = (t) => {
+    if (t && t.kind === "textpost") return textPostIcon;
+    const url = t && t.coverArtUrl ? t.coverArtUrl.replace("http://", "https://") : null;
+    return (
+      <div style={{ width: 44, height: 44, flexShrink: 0, background: url ? "transparent" : "#eee", overflow: "hidden" }}>
+        {url ? <img src={url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /> : null}
+      </div>
+    );
+  };
+
+  const openTarget = (it) => {
+    if (it.type === "post") { if (onOpenThread) onOpenThread(it.id); return; }
+    if (onOpenThread) onOpenThread(it.targetId);
+  };
+
+  return (
+    <div className="ui-sans" style={{ textAlign: "left" }}>
+      {/* filter chips */}
+      <div style={{ display: "flex", gap: isMobile ? 5 : 8, flexWrap: isMobile ? "nowrap" : "wrap", marginBottom: isMobile ? 10 : 20 }}>
+        {chips.map((c) => {
+          const active = filter === c.key;
+          return (
+            <button
+              key={c.key}
+              onClick={() => onFilter(c.key)}
+              style={{
+                fontFamily: "inherit",
+                fontSize: isMobile ? 12 : 13,
+                cursor: "pointer",
+                padding: isMobile ? "5px 9px" : "6px 14px",
+                borderRadius: 0,
+                whiteSpace: "nowrap",
+                flexShrink: 0,
+                background: active ? "#111" : "transparent",
+                color: active ? "#fff" : "#555",
+                border: active ? "1px solid #111" : "1px solid #d8d8d5",
+              }}
+            >
+              {c.label}{c.count !== null && c.count !== undefined ? ` ${c.count}` : ""}
+            </button>
+          );
+        })}
+      </div>
+
+      {loading ? (
+        // Skeleton rows at roughly row height. No day headers until data lands.
+        <div>
+          {[0, 1, 2, 3, 4].map((i) => (
+            <div key={i} style={{ display: "flex", gap: 12, alignItems: "center", padding: "14px 0", borderTop: `1px solid #ededea` }}>
+              <div style={{ width: 44, height: 44, background: "#f0f0ee", flexShrink: 0 }} />
+              <div style={{ flex: 1 }}>
+                <div style={{ height: 11, background: "#f0f0ee", width: "60%", marginBottom: 7 }} />
+                <div style={{ height: 11, background: "#f4f4f2", width: "35%" }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : items.length === 0 ? (
+        <div style={{ fontSize: 13.5, color: MUTE, padding: "24px 0", lineHeight: 1.6 }}>
+          {isOwn
+            ? "nothing here yet — reviews, posts, likes and comments you make will show up here."
+            : `@${(username || "").toLowerCase()} hasn't done anything public yet.`}
+        </div>
+      ) : (
+        <div>
+          {groups.map((g) => (
+            <div key={g.label}>
+              <div style={{ fontSize: 11, letterSpacing: "0.12em", color: MUTE, fontWeight: 700, padding: isMobile ? "12px 0 4px" : "22px 0 4px" }}>
+                {g.label}
+              </div>
+
+              {g.items.map((it) => {
+                const t = it.target;
+
+                if (it.type === "review") {
+                  const url = it.coverArtUrl ? it.coverArtUrl.replace("http://", "https://") : null;
+                  return (
+                    <div key={`review-${it.id}`} onClick={() => { if (it.albumId && onOpenAlbum) onOpenAlbum(it.albumId); }} style={{ display: "flex", gap: 12, alignItems: "center", padding: "14px 0", borderTop: `1px solid #ededea`, cursor: "pointer" }}>
+                      <div style={{ width: 44, height: 44, flexShrink: 0, background: url ? "transparent" : "#eee", overflow: "hidden" }}>
+                        {url ? <img src={url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /> : null}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 14, color: INK, lineHeight: 1.45 }}>
+                          reviewed{" "}
+                          <span style={linkStyle} onClick={(e) => { e.stopPropagation(); if (it.albumId && onOpenAlbum) onOpenAlbum(it.albumId); }}>{it.albumTitle || "an album"}</span>
+                          {it.rating != null ? <span style={{ color: BLUE, fontWeight: 700 }}>{` ${it.rating}/10`}</span> : null}
+                        </div>
+                        {it.text ? (
+                          <div style={{ fontSize: 13.5, color: INK, marginTop: 4, lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{it.text}</div>
+                        ) : null}
+                      </div>
+                      <div style={{ fontSize: 13, color: MUTE, flexShrink: 0 }}>{activityTime(it.date)}</div>
+                    </div>
+                  );
+                }
+
+                if (it.type === "post") {
+                  return (
+                    <div key={`post-${it.id}`} onClick={() => openTarget(it)} style={{ display: "flex", gap: 12, alignItems: "flex-start", padding: "14px 12px", borderTop: `1px solid #ededea`, background: "#fbfbfa", cursor: "pointer" }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 14, color: INK, lineHeight: 1.55, whiteSpace: "pre-line" }}>{it.text}</div>
+                      </div>
+                      <div style={{ fontSize: 13, color: MUTE, flexShrink: 0, paddingTop: 2 }}>{activityTime(it.date)}</div>
+                    </div>
+                  );
+                }
+
+                if (it.type === "like") {
+                  return (
+                    <div key={`like-${it.id}`} onClick={() => openTarget(it)} style={{ display: "flex", gap: 12, alignItems: "center", padding: "14px 0", borderTop: `1px solid #ededea`, cursor: "pointer" }}>
+                      {cover(t)}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 14, color: INK, lineHeight: 1.45 }}>
+                          liked{" "}
+                          <span style={linkStyle} onClick={(e) => { e.stopPropagation(); if (t && t.username && onOpenProfile) onOpenProfile(t.username); }}>@{(t && t.username ? t.username : "").toLowerCase()}</span>
+                          {t && t.kind === "review" && t.rating != null ? `'s ${t.rating}/10 review of ` : "'s "}
+                          <span style={linkStyle} onClick={(e) => { e.stopPropagation(); if (t && t.albumId && onOpenAlbum) onOpenAlbum(t.albumId); }}>{targetLabel(t)}</span>
+                        </div>
+                        {t && t.text ? (
+                          <div style={{ fontSize: 13, color: MUTE, marginTop: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.text}</div>
+                        ) : null}
+                      </div>
+                      <div style={{ fontSize: 13, color: MUTE, flexShrink: 0 }}>{activityTime(it.date)}</div>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div key={`comment-${it.id}`} onClick={() => openTarget(it)} style={{ display: "flex", gap: 12, alignItems: "flex-start", padding: "14px 0", borderTop: `1px solid #ededea`, cursor: "pointer" }}>
+                    {cover(t)}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 14, color: INK, lineHeight: 1.45 }}>
+                        {"↳"} replied to{" "}
+                        <span style={linkStyle} onClick={(e) => { e.stopPropagation(); if (t && t.username && onOpenProfile) onOpenProfile(t.username); }}>@{(t && t.username ? t.username : "").toLowerCase()}</span>
+                        {t && t.kind === "review" ? " on " : ""}
+                        {t && t.kind === "review" ? (
+                          <span style={linkStyle} onClick={(e) => { e.stopPropagation(); if (t.albumId && onOpenAlbum) onOpenAlbum(t.albumId); }}>{targetLabel(t)}</span>
+                        ) : null}
+                      </div>
+                      <div style={{ fontSize: 13.5, color: INK, marginTop: 4, lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{it.text}</div>
+                    </div>
+                    <div style={{ fontSize: 13, color: MUTE, flexShrink: 0 }}>{activityTime(it.date)}</div>
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+
+          {cursor && (
+            <div style={{ display: "flex", justifyContent: "center", padding: "26px 0 8px" }}>
+              <button
+                disabled={loadingMore}
+                onClick={onLoadMore}
+                style={{
+                  fontFamily: "inherit", fontSize: 13, fontWeight: 400,
+                  cursor: loadingMore ? "default" : "pointer",
+                  background: "transparent",
+                  color: loadingMore ? MUTE : BLUE,
+                  border: `1px solid ${loadingMore ? LINE : BLUE}`,
+                  borderRadius: 0, padding: "10px 22px",
+                }}
+              >
+                {loadingMore ? "loading..." : "load more"}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function StatsMascot({ mood = "neutral", size = 140, motion = "none", color }) {
   const { BLUE } = useTheme();
   const B = color || BLUE;
@@ -958,6 +1199,8 @@ export default function SoundboardDemo() {
   const [favorites, setFavorites] = useState(INITIAL_FAVORITES);
   const [albumMixes, setAlbumMixes] = useState(INITIAL_ALBUM_MIXES);
   const [siteCommunityAvg, setSiteCommunityAvg] = useState(null);
+  // Real per-album averages from the server, keyed by album id.
+  const [albumAverages, setAlbumAverages] = useState({});
   const [editingMixTitle, setEditingMixTitle] = useState(null);
   const [infoEditMode, setInfoEditMode] = useState(false);
   const [infoDrafts, setInfoDrafts] = useState({});
@@ -1964,10 +2207,9 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
   const [realFeedItems, setRealFeedItems] = useState([]);
   const [publicFeedItems, setPublicFeedItems] = useState([]);
   // Profile activity tab
-  const [profileTab, setProfileTab] = useState("overview"); // "overview" | "activity"
   const [activityItems, setActivityItems] = useState([]);
   const [activityCounts, setActivityCounts] = useState({ posts: 0, likes: 0, comments: 0 });
-  const [activityFilter, setActivityFilter] = useState("all");
+  const [activityFilter, setActivityFilter] = useState("reviews");
   const [activityCursor, setActivityCursor] = useState(null);
   const [activityLoading, setActivityLoading] = useState(false);
   const [activityLoadingMore, setActivityLoadingMore] = useState(false);
@@ -2259,6 +2501,19 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
   const [guestbookSigning, setGuestbookSigning] = useState(false);
   const [albumListSort, setAlbumListSort] = useState("date");
 
+  // Pull the real community average for an album. Cached per id, refetched
+  // after you rate so your own review is reflected.
+  function loadAlbumAverage(albumId) {
+    if (!albumId) return;
+    apiFetch(`${BACKEND_URL}/api/reviews/album-average/${albumId}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!d) return;
+        setAlbumAverages((prev) => ({ ...prev, [albumId]: { average: d.average, count: d.count || 0 } }));
+      })
+      .catch(() => {});
+  }
+
   function openThread(reviewId, from) {
     const allFeed = [...(publicFeedItems || []), ...(feed || [])];
     const feedItem = allFeed.find((i) => i.id === reviewId);
@@ -2348,6 +2603,13 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
     }).then((r) => r.json()).then((data) => {
       if (data.message) setConversationMessages((prev) => prev.map((m) => m.id === tempMsg.id ? data.message : m));
     }).catch(() => {});
+  }
+
+  function openActivity(username, userId, isOwn) {
+    setActivityFilter("reviews");
+    setActivityCursor(null);
+    setView({ name: "activity", username, userId, isOwn, from: view });
+    loadActivity(username, "reviews");
   }
 
   function openUserProfile(username) {
@@ -3399,6 +3661,32 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
           );
         })()}
 
+        {/* ---------------- ACTIVITY ---------------- */}
+        {view.name === "activity" && (
+          <div>
+            <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 12.5, marginBottom: 22, cursor: "pointer" }} onClick={() => setView(view.from || { name: "home" })}>
+              <ChevronLeft size={14} /> back
+            </div>
+            <div className="ui-sans" style={{ fontSize: 20, fontWeight: 400, marginBottom: 20, textAlign: "left" }}>{view.isOwn ? "your activity" : `@${(view.username || "").toLowerCase()} activity`}</div>
+            <ActivityFeed
+              items={activityItems}
+              counts={activityCounts}
+              filter={activityFilter}
+              onFilter={(f) => { setActivityFilter(f); setActivityCursor(null); loadActivity(view.username, f); }}
+              loading={activityLoading}
+              loadingMore={activityLoadingMore}
+              cursor={activityCursor}
+              onLoadMore={() => loadActivity(view.username, activityFilter, activityCursor)}
+              isOwn={!!view.isOwn}
+              username={view.username}
+              isMobile={isMobile}
+              onOpenProfile={openUserProfile}
+              onOpenAlbum={openAlbum}
+              onOpenThread={(id) => openThread(id, view)}
+            />
+          </div>
+        )}
+
         {/* ---------------- REVIEWS LIST ---------------- */}
         {view.name === "reviewsList" && (() => {
           const revs = view.reviews || [];
@@ -3576,8 +3864,8 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                     <div style={{ display: "flex", gap: 32, alignItems: "flex-start", flexShrink: 0, marginRight: 24 }}>
                       <Stat label="followers" value={user.followerCount || 0} onClick={() => setShowFollowList({ kind: "followers", userId: user.id, username: user.username })} />
                       <Stat label="following" value={user.followingCount || 0} onClick={() => setShowFollowList({ kind: "following", userId: user.id, username: user.username })} />
-                      <Stat label="reviews" value={userReviews.length} onClick={() => setView({ name: "reviewsList", username: user.username, userId: user.id, reviews: userReviews, from: view })} />
                       <Stat label="listened" value={viewedUserListenedCount} onClick={() => setView({ name: "listenedList", username: user.username, userId: user.id, listenedIds: viewedUserQueue, from: view })} />
+                      <Stat label="activity" value={<PencilGlyph size={20} />} onClick={() => openActivity(user.username, user.id, false)} />
                       <Stat label="stats" value={<EqualizerIcon />} onClick={userReviews.length > 0 ? () => setView({ name: "statsDetail", reviews: userReviews, displayName: user.displayName || user.username, isOwn: false, from: view }) : undefined} />
                     </div>
                   )}
@@ -3588,8 +3876,8 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                 <div style={{ display: "flex", gap: 16, padding: "20px 0", borderBottom: `1px solid ${LINE}`, overflowX: "auto", justifyContent: "center", alignItems: "flex-start" }}>
                   <Stat label="followers" value={user.followerCount || 0} onClick={() => setShowFollowList({ kind: "followers", userId: user.id, username: user.username })} />
                   <Stat label="following" value={user.followingCount || 0} onClick={() => setShowFollowList({ kind: "following", userId: user.id, username: user.username })} />
-                  <Stat label="reviews" value={userReviews.length} />
                   <Stat label="listened" value={viewedUserListenedCount} />
+                  <Stat label="activity" value={<PencilGlyph size={20} />} onClick={() => openActivity(user.username, user.id, false)} />
                   <Stat label="stats" value={<EqualizerIcon />} onClick={userReviews.length > 0 ? () => setView({ name: "statsDetail", reviews: userReviews, displayName: user.displayName || user.username, isOwn: false, from: view }) : undefined} />
                 </div>
               )}
@@ -3984,10 +4272,16 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
           // people you follow, the wider community, and your own review if
           // you've left one -- "everyone who's logged this" rather than a
           // single isolated pool.
+          // Real average across every rating in the database. The old local
+          // calculation used FRIENDS (mock) plus COMMUNITY_REVIEWS (an empty
+          // array), so it mostly reflected your own rating back at you.
+          const serverAvg = albumAverages[album.id];
           const friendRatings = FRIENDS.flatMap((f) => f.reviews.filter((r) => r.albumId === album.id).map((r) => r.rating));
-          const communityRatings = COMMUNITY_REVIEWS.filter((r) => r.albumId === album.id).map((r) => r.rating);
-          const allRatings = [...friendRatings, ...communityRatings, ...(existing ? [existing.rating] : [])];
-          const communityAvg = allRatings.length ? (allRatings.reduce((s, r) => s + r, 0) / allRatings.length) : null;
+          const localRatings = [...friendRatings, ...(existing ? [existing.rating] : [])];
+          const communityAvg = serverAvg && serverAvg.count > 0
+            ? serverAvg.average
+            : (serverAvg ? null : (localRatings.length ? localRatings.reduce((s, r) => s + r, 0) / localRatings.length : null));
+          const ratingCount = serverAvg ? serverAvg.count : localRatings.length;
 
           return (
             <div style={{ maxWidth: "100%", overflowX: "hidden" }}>
@@ -4033,7 +4327,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                     {communityAvg ? (
                       <div className="ui-sans" style={{ display: "flex", alignItems: "baseline", gap: 8, justifyContent: isMobile ? "center" : "flex-start" }}>
                         <span style={{ fontSize: 18, fontWeight: 600 }}>{communityAvg.toFixed(1)}</span>
-                        <span style={{ fontSize: 12, color: MUTE }}>/10 · {allRatings.length} rating{allRatings.length !== 1 ? "s" : ""}</span>
+                        <span style={{ fontSize: 12, color: MUTE }}>/10 · {ratingCount} rating{ratingCount !== 1 ? "s" : ""}</span>
                       </div>
                     ) : (
                       <div className="ui-sans" style={{ fontSize: 13, color: MUTE }}>no ratings yet -- be the first.</div>
@@ -4767,58 +5061,19 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                     <Stat label="followers" value={profileStats.followers} onClick={() => setShowFollowList({ kind: "followers", userId: authUser?.id, username: profile.username })} />
                     <Stat label="following" value={profileStats.following} onClick={() => setShowFollowList({ kind: "following", userId: authUser?.id, username: profile.username })} />
                     <Stat label="listened" value={listenLoaded ? listenedCount : (cachedCounts.listened ?? listenedCount)} onClick={() => setView({ name: "albumList", filter: "listened" })} />
-                    <Stat label="reviews" value={reviewsLoaded ? reviews.length : (cachedCounts.reviews ?? reviews.length)} onClick={() => setView({ name: "reviewsList", username: profile.username, userId: profile.id, reviews: reviews, isOwn: true, from: view })} />
+                    <Stat label="activity" value={<PencilGlyph size={20} />} onClick={() => openActivity(profile.username, profile.id, true)} />
                     <Stat label="stats" value={<EqualizerIcon />} onClick={reviews.length > 0 ? () => setView({ name: "statsDetail" }) : undefined} />
                   </div>
                 )}
               </div>
             </div>
 
-            {/* profile tabs — overview / activity */}
-            <div className="ui-sans" style={{ display: "flex", gap: 26, borderBottom: `1px solid ${INK}`, marginBottom: 22 }}>
-              {["overview", "activity"].map((t) => (
-                <button
-                  key={t}
-                  onClick={() => {
-                    setProfileTab(t);
-                    if (t === "activity" && activityItems.length === 0) {
-                      loadActivity(profile.username, activityFilter);
-                    }
-                  }}
-                  style={{
-                    fontFamily: "inherit",
-                    fontSize: 15,
-                    fontWeight: 400,
-                    background: "none",
-                    border: "none",
-                    padding: "0 0 10px",
-                    marginBottom: -1,
-                    cursor: "pointer",
-                    color: profileTab === t ? "#111" : "#8a8a8a",
-                    borderBottom: profileTab === t ? "3px solid #111" : "3px solid transparent",
-                  }}
-                >
-                  {t}
-                </button>
-              ))}
-            </div>
-
-            {profileTab === "activity" && (
-              <div className="ui-sans" style={{ fontSize: 13.5, color: MUTE, padding: "20px 0" }}>
-                {activityLoading
-                  ? "loading..."
-                  : activityItems.length === 0
-                    ? "nothing here yet — likes, comments and posts you make will show up here."
-                    : `${activityItems.length} activity items loaded.`}
-              </div>
-            )}
-
             {isMobile && profile.profileTheme === "web2003" && (
               <div style={{ display: "flex", gap: 16, padding: "16px 0", borderBottom: `2px groove ${BLUE}`, overflowX: "auto", justifyContent: "center", alignItems: "flex-start" }}>
                 <Stat label="followers" value={profileStats.followers} onClick={() => setShowFollowList({ kind: "followers", userId: authUser?.id, username: profile.username })} />
                 <Stat label="following" value={profileStats.following} onClick={() => setShowFollowList({ kind: "following", userId: authUser?.id, username: profile.username })} />
                 <Stat label="listened" value={listenLoaded ? listenedCount : (cachedCounts.listened ?? listenedCount)} onClick={() => setView({ name: "albumList", filter: "listened" })} />
-                <Stat label="reviews" value={reviewsLoaded ? reviews.length : (cachedCounts.reviews ?? reviews.length)} onClick={() => setView({ name: "reviewsList", username: profile.username, userId: profile.id, reviews: reviews, isOwn: true, from: view })} />
+                <Stat label="activity" value={<PencilGlyph size={20} />} onClick={() => openActivity(profile.username, profile.id, true)} />
                 <Stat label="stats" value={<EqualizerIcon />} onClick={reviews.length > 0 ? () => setView({ name: "statsDetail" }) : undefined} />
               </div>
             )}
@@ -5079,7 +5334,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                 <Stat label="followers" value={profileStats.followers} onClick={() => setShowFollowList({ kind: "followers", userId: authUser?.id, username: profile.username })} />
                 <Stat label="following" value={profileStats.following} onClick={() => setShowFollowList({ kind: "following", userId: authUser?.id, username: profile.username })} />
                 <Stat label="listened" value={listenLoaded ? listenedCount : (cachedCounts.listened ?? listenedCount)} onClick={() => setView({ name: "albumList", filter: "listened" })} />
-                <Stat label="reviews" value={reviewsLoaded ? reviews.length : (cachedCounts.reviews ?? reviews.length)} onClick={() => setView({ name: "reviewsList", username: profile.username, userId: profile.id, reviews: reviews, isOwn: true, from: view })} />
+                <Stat label="activity" value={<PencilGlyph size={20} />} onClick={() => openActivity(profile.username, profile.id, true)} />
                 <Stat label="stats" value={<EqualizerIcon />} onClick={reviews.length > 0 ? () => setView({ name: "statsDetail" }) : undefined} />
               </div>
             )}
@@ -5312,6 +5567,16 @@ function EqualizerIcon({ size = 20 }) {
       <line x1="13" y1="5" x2="13" y2="29" />
       <line x1="20" y1="9" x2="20" y2="25" />
       <line x1="27" y1="14" x2="27" y2="20" />
+    </svg>
+  );
+}
+
+function PencilGlyph({ size = 20 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} aria-hidden="true">
+      <path d="M17.5 2.5l4 4L8 20l-5.5 1.5L4 16z" />
+      <path d="M15 5l4 4" />
+      <path d="M2.5 21.5L4 16" />
     </svg>
   );
 }
