@@ -6615,24 +6615,20 @@ function AdminAlbumForm({ onAdded }) {
       if (!data.album) { setError(data.error || "Failed to create album"); setSaving(false); return; }
       const album = { ...data.album, artist: data.album.artistName, year: data.album.releaseYear };
 
-      // 2. Upload cover if provided
+      // 2. Upload cover if provided — compressed so it stays well under the body limit
       if (coverFile && data.album.id) {
-        // Upload cover as base64 via a simple PUT endpoint
-        const reader = new FileReader();
-        reader.onload = async (ev) => {
-          try {
-            await apiFetch(`${BACKEND_URL}/api/albums/${data.album.id}/cover`, {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ coverDataUrl: ev.target.result }),
-            });
-            album.coverArtUrl = ev.target.result;
-          } catch (e) {}
-          onAdded(album);
-          setTitle(""); setArtistName(""); setYear(""); setCoverFile(null); setCoverPreview(null); setOpen(false);
-          setSaving(false);
-        };
-        reader.readAsDataURL(coverFile);
+        try {
+          const coverDataUrl = await compressImageFile(coverFile, 1000, 0.85);
+          await apiFetch(`${BACKEND_URL}/api/albums/${data.album.id}/cover`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ coverDataUrl }),
+          });
+          album.coverArtUrl = coverDataUrl;
+        } catch (e) {}
+        onAdded(album);
+        setTitle(""); setArtistName(""); setYear(""); setCoverFile(null); setCoverPreview(null); setOpen(false);
+        setSaving(false);
       } else {
         onAdded(album);
         setTitle(""); setArtistName(""); setYear(""); setCoverFile(null); setCoverPreview(null); setOpen(false);
@@ -7473,9 +7469,7 @@ function SongMixDetail({ mix, isOwn, onBack, onOpenAlbum, onAddTrack, onRemoveTr
     const file = e.target.files && e.target.files[0];
     if (!file) return;
     if (!file.type.startsWith("image/")) return;
-    const reader = new FileReader();
-    reader.onload = () => onSetCover(reader.result);
-    reader.readAsDataURL(file);
+    compressImageFile(file, 1000, 0.85).then((dataUrl) => onSetCover(dataUrl)).catch(() => {});
   }
 
   return (
