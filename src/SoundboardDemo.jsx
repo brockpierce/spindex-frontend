@@ -2808,6 +2808,28 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
     setView({ name: "home" });
   }
 
+  const [deletingAccount, setDeletingAccount] = useState(false);
+  async function deleteAccount() {
+    if (deletingAccount) return;
+    setDeletingAccount(true);
+    try {
+      const r = await apiFetch(`${BACKEND_URL}/api/auth/account`, { method: "DELETE" });
+      if (r.ok) {
+        // Wipe the local session and drop back to the landing page.
+        setToken(null);
+        setAuthUser(null);
+        setProfile(PROFILE);
+        setView({ name: "home" });
+        try { flash("Your account has been permanently deleted."); } catch (e) {}
+      } else {
+        try { flash("Could not delete your account. Please try again."); } catch (e) {}
+      }
+    } catch (e) {
+      try { flash("Could not delete your account. Please try again."); } catch (e) {}
+    }
+    setDeletingAccount(false);
+  }
+
   // Load albums for the tag results view whenever a tag is opened.
   // Backend-driven so tags persist across users and sessions.
   useEffect(() => {
@@ -3051,6 +3073,39 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
       {lightboxSrc && (
         <div onClick={() => setLightboxSrc(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 24, cursor: "zoom-out" }}>
           <img src={lightboxSrc} alt="" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain", display: "block" }} />
+        </div>
+      )}
+
+      {view.name === "deleteAccount" && (
+        <div style={{ position: "fixed", inset: 0, background: BG, zIndex: 70, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+          <div className="ui-sans" style={{ maxWidth: 440, width: "100%", textAlign: "center" }}>
+            <div style={{ fontSize: 40, marginBottom: 16 }}>⚠️</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: INK, marginBottom: 12 }}>Warning: this cannot be undone.</div>
+            <div style={{ fontSize: 14.5, color: INK, lineHeight: 1.6, marginBottom: 10 }}>
+              Are you sure you want to permanently delete your account?
+            </div>
+            <div style={{ fontSize: 13, color: MUTE, lineHeight: 1.6, marginBottom: 28 }}>
+              This permanently erases your profile, reviews, posts, photos, lists, mixes, messages, and everything else. It can't be recovered.
+            </div>
+            <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
+              <button
+                onClick={() => setView(view.from || { name: "profile" })}
+                disabled={deletingAccount}
+                className="ui-sans"
+                style={{ fontFamily: "inherit", fontSize: 14, fontWeight: 500, padding: "11px 24px", background: "transparent", color: INK, border: `1px solid ${LINE}`, borderRadius: 0, cursor: deletingAccount ? "default" : "pointer" }}
+              >
+                cancel
+              </button>
+              <button
+                onClick={deleteAccount}
+                disabled={deletingAccount}
+                className="ui-sans"
+                style={{ fontFamily: "inherit", fontSize: 14, fontWeight: 700, padding: "11px 24px", background: "#c0392b", color: "#fff", border: "1px solid #c0392b", borderRadius: 0, cursor: deletingAccount ? "default" : "pointer", opacity: deletingAccount ? 0.7 : 1 }}
+              >
+                {deletingAccount ? "deleting…" : "yes, delete my account"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -5428,7 +5483,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                     <div style={{ fontSize: 11, color: MUTE, marginTop: 8 }}>how your profile looks to visitors</div>
                   </div>
 
-                  <div style={{ borderTop: `1px solid ${LINE}`, marginTop: 22, paddingTop: 18 }}>
+                  <div style={{ borderTop: `1px solid ${LINE}`, marginTop: 22, paddingTop: 18, display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
                     <button
                       onClick={logout}
                       className="ui-sans"
@@ -5437,6 +5492,15 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                       onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
                     >
                       log out
+                    </button>
+                    <button
+                      onClick={() => setView({ name: "deleteAccount", from: view })}
+                      className="ui-sans"
+                      style={{ fontFamily: "inherit", fontSize: 13, fontWeight: 600, padding: "9px 18px", background: "#c0392b", color: "#fff", border: "1px solid #c0392b", borderRadius: 0, cursor: "pointer" }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = "#a93226"; e.currentTarget.style.borderColor = "#a93226"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = "#c0392b"; e.currentTarget.style.borderColor = "#c0392b"; }}
+                    >
+                      delete account
                     </button>
                   </div>
 
