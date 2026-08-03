@@ -82,6 +82,19 @@ function compressImageFile(file, maxDim = 400, quality = 0.82) {
   });
 }
 
+// Same as compressImageFile but also returns the output pixel dimensions, so
+// callers can store width/height for feed layout. Used for post images.
+async function compressImageWithDims(file, maxDim = 1200, quality = 0.8) {
+  const data = await compressImageFile(file, maxDim, quality);
+  const dims = await new Promise((resolve) => {
+    const im = new Image();
+    im.onload = () => resolve({ width: im.naturalWidth, height: im.naturalHeight });
+    im.onerror = () => resolve({ width: null, height: null });
+    im.src = data;
+  });
+  return { data, width: dims.width, height: dims.height };
+}
+
 // ---------------------------------------------------------------------------
 // MOCK DATA
 // In Phase 2 (the real backend), this data comes from your database instead
@@ -2291,6 +2304,8 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
             mixId: item.mixId || null,
             mixType: item.mixType || null,
             caption: item.caption || "",
+            imageCount: item.imageCount || 0,
+            images: item.images || [],
             date: item.date ? new Date(item.date).toISOString() : "",
           }));
           setRealFeedItems(items);
@@ -2378,6 +2393,8 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
             mixId: item.mixId || null,
             mixType: item.mixType || null,
             caption: item.caption || "",
+            imageCount: item.imageCount || 0,
+            images: item.images || [],
             date: item.date ? new Date(item.date).toISOString() : "",
           }));
           // Append when paging, replace on a fresh load. Dedupe by id:
@@ -2538,6 +2555,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
   const [conversationMessages, setConversationMessages] = useState([]);
   const [dmInput, setDmInput] = useState("");
   const [threadReview, setThreadReview] = useState(null);
+  const [lightboxSrc, setLightboxSrc] = useState(null); // full-screen post image
   const [expandedComments, setExpandedComments] = useState({});
   const [viewedUserQueue, setViewedUserQueue] = useState([]);
   const [viewedUserListenedCount, setViewedUserListenedCount] = useState(0);
@@ -2606,6 +2624,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                   itemType: "textpost",
                   username: p.username,
                   text: p.text || "",
+                  images: p.images || [],
                   date: p.date ? new Date(p.date).toISOString() : "",
                 });
                 setView({ name: "thread", reviewId, from: from || view });
@@ -2987,16 +3006,17 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
         <QuickReviewModal onSubmit={submitQuickReview} onClose={() => setShowQuickReviewModal(false)} />
       )}
       {showTextPostModal && (
-        <TextPostModal followingUsers={followingUsers} onSubmit={(text) => {
-          const todayIso = new Date().toISOString().slice(0, 10);
+        <TextPostModal followingUsers={followingUsers} onSubmit={(text, images) => {
+          const todayIso = new Date().toISOString();
           const tempId = "tp" + Date.now();
-          const feedItem = { itemType: "textpost", id: tempId, username: profile.username, text, date: todayIso };
+          const imgs = images || [];
+          const feedItem = { itemType: "textpost", id: tempId, username: profile.username, text, date: todayIso, imageCount: imgs.length, images: imgs.map((im, i) => ({ position: i, width: im.width, height: im.height })), localImages: imgs.map((im) => im.data) };
           setPublicFeedItems((prev) => [feedItem, ...prev]);
           setRealFeedItems((prev) => [feedItem, ...prev]);
           apiFetch(`${BACKEND_URL}/api/posts`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ text }),
+            body: JSON.stringify({ text, images: imgs }),
           })
             .then((r) => r.json())
             .then((data) => {
@@ -3012,6 +3032,11 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
       )}
       {showShareMixModal && (
         <ShareMixModal albumMixes={albumMixes} songMixes={songMixes} followingUsers={followingUsers} onSubmit={submitMixShare} onClose={() => setShowShareMixModal(false)} />
+      )}
+      {lightboxSrc && (
+        <div onClick={() => setLightboxSrc(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 24, cursor: "zoom-out" }}>
+          <img src={lightboxSrc} alt="" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain", display: "block" }} />
+        </div>
       )}
 
       <div style={{ maxWidth: 920, margin: "0 auto", padding: ((view.name === "profile" && profile.profileTheme === "mspaint") || (view.name === "userProfile" && viewedUser?.profileTheme === "mspaint")) ? 0 : "28px 16px 64px", minHeight: "calc(100vh - 60px)", position: "relative", background: (view.name === "profile" ? (profile.pageBackground || "") : view.name === "userProfile" ? (viewedUser?.pageBackground || "") : "") || undefined, boxShadow: (view.name === "profile" ? (profile.pageBackground || "") : view.name === "userProfile" ? (viewedUser?.pageBackground || "") : "") ? `0 0 0 100vmax ${(view.name === "profile" ? profile.pageBackground : viewedUser?.pageBackground) || "transparent"}` : undefined, clipPath: (view.name === "profile" ? (profile.pageBackground || "") : view.name === "userProfile" ? (viewedUser?.pageBackground || "") : "") ? "inset(0 -100vmax)" : undefined, transition: "background 0.2s" }}>
@@ -3249,6 +3274,24 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                               )}
                             </div>
                             <div className="ui-sans" style={{ fontSize: 14, color: INK, lineHeight: 1.6, marginBottom: 10, textAlign: "left" }}><CommentText text={c.text} onOpenProfile={openUserProfile} /></div>
+                            {c.localImages && c.localImages.length > 0 ? (
+                              <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
+                                {c.localImages.slice(0, 3).map((src, idx) => (
+                                  <img key={idx} src={src} alt="" style={{ flex: 1, minWidth: 0, maxWidth: 170, aspectRatio: "1 / 1", objectFit: "cover", border: `1px solid ${LINE}`, display: "block" }} />
+                                ))}
+                              </div>
+                            ) : c.imageCount > 0 ? (
+                              <div onClick={() => c.id && openThread(c.id, { name: "home" })} style={{ display: "flex", gap: 6, marginBottom: 10, cursor: "pointer" }}>
+                                {Array.from({ length: Math.min(c.imageCount, 3) }).map((_, idx) => {
+                                  const dim = c.images && c.images[idx];
+                                  return (
+                                    <div key={idx} style={{ flex: 1, minWidth: 0, maxWidth: 170, aspectRatio: dim && dim.width && dim.height ? `${dim.width} / ${dim.height}` : "1 / 1", background: "#ececec", border: `1px solid ${LINE}`, display: "flex", alignItems: "center", justifyContent: "center", color: "#b8b8b8" }}>
+                                      <ImageGlyph size={22} />
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            ) : null}
                             {c.id && (
                               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 14, paddingTop: 14, paddingBottom: 0, borderTop: `1px solid ${LINE}` }}>
                                 <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
@@ -3646,8 +3689,23 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                   <span className="ui-sans" style={{ fontSize: 11, color: MUTE, marginLeft: "auto" }}>{relativeDate(rev.date)}</span>
                 </div>
                 {rev.itemType === "textpost" ? (
-                  <div className="ui-sans" style={{ fontSize: 14, color: INK, lineHeight: 1.6, marginBottom: 12, textAlign: "left" }}>
-                    <CommentText text={rev.text} onOpenProfile={openUserProfile} />
+                  <div>
+                    <div className="ui-sans" style={{ fontSize: 14, color: INK, lineHeight: 1.6, marginBottom: 12, textAlign: "left" }}>
+                      <CommentText text={rev.text} onOpenProfile={openUserProfile} />
+                    </div>
+                    {rev.images && rev.images.length > 0 && (
+                      <div style={{ display: "grid", gridTemplateColumns: rev.images.length === 1 ? "1fr" : "1fr 1fr", gap: 8, marginBottom: 12 }}>
+                        {rev.images.map((im) => (
+                          <img
+                            key={im.id || im.position}
+                            src={im.data}
+                            alt=""
+                            onClick={() => setLightboxSrc(im.data)}
+                            style={{ width: "100%", maxHeight: 420, objectFit: "cover", border: `1px solid ${LINE}`, cursor: "zoom-in", display: "block" }}
+                          />
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ) : (
                 <div onClick={() => openAlbum(rev.albumId)} style={{ display: "flex", gap: 14, cursor: "pointer", marginBottom: 12 }}>
@@ -5635,6 +5693,16 @@ function PencilGlyph({ size = 20 }) {
   );
 }
 
+function ImageGlyph({ size = 20 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} aria-hidden="true">
+      <rect x="3" y="3" width="18" height="18" rx="2" />
+      <circle cx="8.5" cy="8.5" r="1.5" />
+      <path d="M21 15l-5-5L5 21" />
+    </svg>
+  );
+}
+
 function Stat({ label, value, onClick, highlight }) {
   const { MUTE, INK, BLUE } = useTheme();
   return (
@@ -6677,6 +6745,33 @@ function AdminAlbumForm({ onAdded }) {
 function TextPostModal({ onSubmit, onClose, followingUsers }) {
   const { BLUE, INK, LINE, MUTE, BG } = useTheme();
   const [text, setText] = useState("");
+  const [images, setImages] = useState([]); // { data, width, height }
+  const [busy, setBusy] = useState(false);
+  const fileRef = useRef(null);
+  const MAX = 3;
+
+  async function addFiles(e) {
+    const files = Array.from(e.target.files || []);
+    if (fileRef.current) fileRef.current.value = "";
+    if (!files.length) return;
+    setBusy(true);
+    for (const f of files) {
+      if (!f.type || !f.type.startsWith("image/")) continue;
+      let added = false;
+      setImages((prev) => { added = prev.length < MAX; return prev; });
+      if (!added) break;
+      try {
+        const img = await compressImageWithDims(f, 1200, 0.8);
+        setImages((prev) => (prev.length < MAX ? [...prev, img] : prev));
+      } catch (_) {}
+    }
+    setBusy(false);
+  }
+
+  const removeImage = (i) => setImages((prev) => prev.filter((_, idx) => idx !== i));
+  const totalKB = Math.round(images.reduce((s, im) => s + im.data.length, 0) / 1024);
+  const tooBig = totalKB > 2800; // /api/posts body limit is 3mb
+  const canPost = text.trim() && !busy && !tooBig;
 
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
@@ -6694,16 +6789,42 @@ function TextPostModal({ onSubmit, onClose, followingUsers }) {
           followingUsers={followingUsers}
           style={{ width: "100%", marginBottom: 14 }}
         />
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-          <button className="sb-btn" onClick={onClose}>cancel</button>
+        {images.length > 0 && (
+          <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
+            {images.map((im, i) => (
+              <div key={i} style={{ position: "relative", width: 74, height: 74 }}>
+                <img src={im.data} alt="" style={{ width: 74, height: 74, objectFit: "cover", border: `1px solid ${LINE}`, display: "block" }} />
+                <button
+                  onClick={() => removeImage(i)}
+                  style={{ position: "absolute", top: -7, right: -7, background: INK, color: BG, border: "none", borderRadius: "50%", width: 20, height: 20, cursor: "pointer", fontSize: 12, lineHeight: "20px", padding: 0, textAlign: "center" }}
+                >×</button>
+              </div>
+            ))}
+          </div>
+        )}
+        <input ref={fileRef} type="file" accept="image/*" multiple onChange={addFiles} style={{ display: "none" }} />
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
           <button
-            className="sb-btn sb-btn-solid"
-            onClick={() => { if (text.trim()) onSubmit(text.trim()); }}
-            disabled={!text.trim()}
+            className="sb-btn"
+            onClick={() => fileRef.current && fileRef.current.click()}
+            disabled={images.length >= MAX || busy}
+            style={{ display: "flex", alignItems: "center", gap: 6 }}
           >
-            post
+            <ImageGlyph size={15} /> {busy ? "adding…" : images.length >= MAX ? "3 photos max" : "add photos"}
           </button>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {images.length > 0 && <span className="ui-sans" style={{ fontSize: 11, color: tooBig ? "#c0392b" : MUTE }}>{totalKB} KB</span>}
+            <button className="sb-btn" onClick={onClose}>cancel</button>
+            <button
+              className="sb-btn sb-btn-solid"
+              onClick={() => { if (canPost) onSubmit(text.trim(), images); }}
+              disabled={!canPost}
+            >
+              post
+            </button>
+          </div>
         </div>
+        {tooBig && <div className="ui-sans" style={{ fontSize: 11, color: "#c0392b", marginTop: 8 }}>Those photos are too large together — remove one.</div>}
       </div>
     </div>
   );
