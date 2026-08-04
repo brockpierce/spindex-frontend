@@ -24,6 +24,9 @@ const BACKEND_URL = "https://spindex-backend.onrender.com";
 // until we build a proper moderation flow.
 const ADMIN_USERNAME = "brock";
 
+// Curated tags shown on the browse page (any tag is still searchable).
+const FEATURED_TAGS = ["indie-rock", "emo", "electronic", "shibuya-kei", "shoegaze", "alternative-rock", "abstract", "downtempo", "hip-hop", "pop"];
+
 // JWT token helpers -- stored in localStorage so it survives page refresh.
 // apiFetch wraps fetch to automatically attach the Authorization header.
 const getToken = () => localStorage.getItem("spindex_token");
@@ -1226,6 +1229,7 @@ export default function SoundboardDemo() {
   const [albumSearchLoading, setAlbumSearchLoading] = useState(false);
   const [albumTags, setAlbumTags] = useState(INITIAL_ALBUM_TAGS);
   const [popularTags, setPopularTags] = useState([]);
+  const [matchingTags, setMatchingTags] = useState([]); // tags matching the search box
   const [tagDecade, setTagDecade] = useState(null); // decade filter on the tag page
   const [reviewComments, setReviewComments] = useState(INITIAL_REVIEW_COMMENTS);
   const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS);
@@ -1636,6 +1640,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
   useEffect(() => {
     if (!query.trim() || query.trim().length < 3) {
       setLiveAlbums([]);
+      setMatchingTags([]);
       return;
     }
     const timer = setTimeout(() => {
@@ -1652,6 +1657,11 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
         })
         .catch(() => setLiveAlbums([]))
         .finally(() => setAlbumSearchLoading(false));
+      // Matching tags, so you can search by tag too.
+      apiFetch(`${BACKEND_URL}/api/tags/search?q=${encodeURIComponent(query.trim())}`)
+        .then((res) => res.json())
+        .then((data) => setMatchingTags(Array.isArray(data.tags) ? data.tags : []))
+        .catch(() => setMatchingTags([]));
     }, 500);
     return () => clearTimeout(timer);
   }, [query]);
@@ -1669,10 +1679,6 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
     ? liveAlbums
     : trendingAlbums.length > 0 ? trendingAlbums : ALBUMS;
 
-  // Tags matching the current search query (so you can search by tag too).
-  const matchingTags = query.trim()
-    ? popularTags.filter((t) => t.toLowerCase().includes(query.trim().toLowerCase())).slice(0, 10)
-    : [];
 
 
   function openAlbum(id, albumObj, from) {
@@ -4503,12 +4509,12 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
             )}
             {!query.trim() && (
               <>
-                {/* browse by tag — real most-used tags from the catalog */}
-                {popularTags.length > 0 && (
+                {/* browse by tag — curated featured tags */}
+                {FEATURED_TAGS.length > 0 && (
                   <>
                     <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 12 }}>browse by tag</div>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 28 }}>
-                      {popularTags.slice(0, 12).map((tag) => (
+                      {FEATURED_TAGS.map((tag) => (
                         <button
                           key={tag}
                           className="ui-sans"
