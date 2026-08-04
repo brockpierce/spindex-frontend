@@ -4373,8 +4373,8 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
 
               {matchedAlbums.length > 0 && (
                 <div style={{ marginBottom: 32 }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
-                    <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE }}>albums{tagDecade ? ` · ${tagDecade}s` : ""}</div>
+                  <div style={{ marginBottom: 14 }}>
+                    <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 10 }}>albums{tagDecade ? ` · ${tagDecade}s` : ""}</div>
                     {decadesPresent.length > 1 && (
                       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                         {[null, ...decadesPresent].map((d) => {
