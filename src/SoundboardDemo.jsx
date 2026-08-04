@@ -7731,7 +7731,8 @@ function MixTagEditor({ tags, isOwn, onUpdateTags, onTagClick }) {
   const [input, setInput] = useState("");
 
   function normalizeTag(raw) {
-    return raw.replace(/#/g, "").replace(/\s+/g, "-").toLowerCase().trim();
+    // "Funk / Soul" -> "funk-soul", "Rhythm & Blues" -> "rhythm-and-blues"
+    return String(raw).toLowerCase().replace(/&/g, " and ").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
   }
 
   function addTag() {
