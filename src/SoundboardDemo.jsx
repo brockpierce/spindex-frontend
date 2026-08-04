@@ -1669,6 +1669,11 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
     ? liveAlbums
     : trendingAlbums.length > 0 ? trendingAlbums : ALBUMS;
 
+  // Tags matching the current search query (so you can search by tag too).
+  const matchingTags = query.trim()
+    ? popularTags.filter((t) => t.toLowerCase().includes(query.trim().toLowerCase())).slice(0, 10)
+    : [];
+
 
   function openAlbum(id, albumObj, from) {
     const existing = reviewFor(id);
@@ -2874,7 +2879,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
   // Real tags from the catalog, so chips only show tags that have albums.
   useEffect(() => {
     if (view.name !== "browse" || popularTags.length) return;
-    apiFetch(`${BACKEND_URL}/api/tags/popular?limit=24`)
+    apiFetch(`${BACKEND_URL}/api/tags/popular?limit=40`)
       .then((r) => r.json())
       .then((data) => { if (Array.isArray(data.tags)) setPopularTags(data.tags.map((t) => t.tag)); })
       .catch(() => {});
@@ -4481,11 +4486,21 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
               <input
                 className="sb-input ui-sans"
                 style={{ flex: 1 }}
-                placeholder="search albums or artists..."
+                placeholder="search for albums, artists, or tags"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
               />
             </div>
+            {query.trim() && matchingTags.length > 0 && (
+              <div style={{ marginBottom: 22 }}>
+                <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 10 }}>tags</div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  {matchingTags.map((tag) => (
+                    <button key={tag} className="ui-sans" onClick={() => setView({ name: "tagResults", tag })} style={{ background: "transparent", border: `1px solid ${BLUE}`, borderRadius: 0, padding: "5px 12px", fontSize: 12.5, color: BLUE, cursor: "pointer", fontFamily: "inherit" }}>#{tag}</button>
+                  ))}
+                </div>
+              </div>
+            )}
             {!query.trim() && (
               <>
                 {/* browse by tag — real most-used tags from the catalog */}
@@ -4493,7 +4508,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                   <>
                     <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 12 }}>browse by tag</div>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 28 }}>
-                      {popularTags.map((tag) => (
+                      {popularTags.slice(0, 12).map((tag) => (
                         <button
                           key={tag}
                           className="ui-sans"
