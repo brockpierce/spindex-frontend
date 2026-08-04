@@ -1226,6 +1226,7 @@ export default function SoundboardDemo() {
   const [albumSearchLoading, setAlbumSearchLoading] = useState(false);
   const [albumTags, setAlbumTags] = useState(INITIAL_ALBUM_TAGS);
   const [popularTags, setPopularTags] = useState([]);
+  const [tagDecade, setTagDecade] = useState(null); // decade filter on the tag page
   const [reviewComments, setReviewComments] = useState(INITIAL_REVIEW_COMMENTS);
   const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS);
   const [reviewReactions, setReviewReactions] = useState(INITIAL_REVIEW_REACTIONS);
@@ -2883,6 +2884,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
   // Backend-driven so tags persist across users and sessions.
   useEffect(() => {
     if (view.name !== "tagResults" || !view.tag) return;
+    setTagDecade(null);
     setTagResultLoading(true);
     setTagResultAlbums([]);
     apiFetch(`${BACKEND_URL}/api/tags/${encodeURIComponent(view.tag)}/albums`)
@@ -4353,6 +4355,10 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
           const matchedAlbum = allAlbumMixes.filter((m) => (m.tags || []).includes(tag));
           const matchedSong = allSongMixes.filter((m) => (m.tags || []).includes(tag));
           const totalCount = matchedAlbums.length + matchedAlbum.length + matchedSong.length;
+          // Decade filter: chips for the decades actually present, filtering the album grid.
+          const decadeOf = (y) => (y ? Math.floor(Number(y) / 10) * 10 : null);
+          const decadesPresent = [...new Set(matchedAlbums.map((a) => decadeOf(a.year)).filter(Boolean))].sort((a, b) => a - b);
+          const shownAlbums = tagDecade ? matchedAlbums.filter((a) => decadeOf(a.year) === tagDecade) : matchedAlbums;
           return (
             <div>
               <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 12.5, marginBottom: 22, cursor: "pointer" }} onClick={() => setView({ name: "browse" })}>
@@ -4367,9 +4373,28 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
 
               {matchedAlbums.length > 0 && (
                 <div style={{ marginBottom: 32 }}>
-                  <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 14 }}>albums</div>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
+                    <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE }}>albums{tagDecade ? ` · ${tagDecade}s` : ""}</div>
+                    {decadesPresent.length > 1 && (
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                        {[null, ...decadesPresent].map((d) => {
+                          const active = tagDecade === d;
+                          return (
+                            <button
+                              key={d === null ? "all" : d}
+                              onClick={() => setTagDecade(d)}
+                              className="ui-sans"
+                              style={{ fontFamily: "inherit", fontSize: 11.5, padding: "3px 9px", borderRadius: 0, cursor: "pointer", background: active ? INK : "transparent", color: active ? BG : MUTE, border: `1px solid ${active ? INK : LINE}` }}
+                            >
+                              {d === null ? "all" : `${d}s`}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: "20px 16px" }}>
-                    {matchedAlbums.map((album) => {
+                    {shownAlbums.map((album) => {
                       const rev = reviews.find((r) => r.albumId === album.id);
                       return (
                         <div key={album.id} onClick={() => openAlbum(album.id, album)}>
