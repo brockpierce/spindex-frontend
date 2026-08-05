@@ -1235,6 +1235,7 @@ export default function SoundboardDemo() {
   const [query, setQuery] = useState("");
   const [liveAlbums, setLiveAlbums] = useState([]);
   const [trendingAlbums, setTrendingAlbums] = useState([]);
+  const [featuredIds, setFeaturedIds] = useState([]); // admin-featured album ids (browse showcase)
   const [albumSearchLoading, setAlbumSearchLoading] = useState(false);
   const [albumTags, setAlbumTags] = useState(INITIAL_ALBUM_TAGS);
   const [popularTags, setPopularTags] = useState([]);
@@ -1630,7 +1631,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
       .finally(() => setArtistLoading(false));
   }, [view.name, view.artistName]);
 
-  useEffect(() => {
+  const loadTrending = () => {
     apiFetch(`${BACKEND_URL}/api/albums/trending`)
       .then((r) => r.json())
       .then((data) => {
@@ -1641,9 +1642,11 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
             year: a.releaseYear || a.year || null,
           })));
         }
+        setFeaturedIds(Array.isArray(data.featured) ? data.featured : []);
       })
       .catch(() => {});
-  }, []);
+  };
+  useEffect(() => { loadTrending(); }, []);
 
   // Debounced album search — fires 300ms after the user stops typing.
   // Uses the real backend API if available, falls back to mock ALBUMS.
@@ -1868,6 +1871,23 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
       // Revert on failure
       setFavorites((prev) => isFav ? [...prev, albumId] : prev.filter((id) => id !== albumId));
     });
+  }
+
+  // Admin-only: add/remove an album from the browse "trending" showcase.
+  function toggleFeatured(albumId) {
+    const isFeatured = featuredIds.includes(albumId);
+    // Optimistic
+    setFeaturedIds((prev) => isFeatured ? prev.filter((id) => id !== albumId) : [...prev, albumId]);
+    apiFetch(`${BACKEND_URL}/api/albums/${albumId}/feature`, {
+      method: isFeatured ? "DELETE" : "POST",
+    })
+      .then((r) => { if (!r.ok) throw new Error("failed"); })
+      .then(() => { flash(isFeatured ? "Removed from browse" : "Featured on browse"); loadTrending(); })
+      .catch(() => {
+        // Revert on failure
+        setFeaturedIds((prev) => isFeatured ? [...prev, albumId] : prev.filter((id) => id !== albumId));
+        flash("Couldn't update — admin only");
+      });
   }
 
   React.useEffect(() => {
@@ -4691,6 +4711,16 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                     >
                       {status === "listened" ? "✓ listened" : "mark listened"}
                     </button>
+                    {profile.username === ADMIN_USERNAME && (
+                      <button
+                        className="sb-btn"
+                        style={featuredIds.includes(album.id) ? { background: BLUE, color: "#fff", borderColor: BLUE } : {}}
+                        onClick={() => toggleFeatured(album.id)}
+                        title="Show this album in the browse showcase (admin only)"
+                      >
+                        {featuredIds.includes(album.id) ? "★ featured on browse" : "☆ feature on browse"}
+                      </button>
+                    )}
                   </div>
 
                   <div style={{ marginTop: 22, paddingTop: 18, borderTop: `1px solid ${LINE}`, width: "100%", textAlign: isMobile ? "center" : "left" }}>
