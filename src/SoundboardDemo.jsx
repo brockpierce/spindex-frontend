@@ -1240,6 +1240,7 @@ export default function SoundboardDemo() {
   const [popularTags, setPopularTags] = useState([]);
   const [matchingTags, setMatchingTags] = useState([]); // tags matching the search box
   const [tagDecade, setTagDecade] = useState(null); // decade filter on the tag page
+  const [tagVisible, setTagVisible] = useState(24); // how many tag-page albums are rendered (show-more)
   const [reviewComments, setReviewComments] = useState(INITIAL_REVIEW_COMMENTS);
   const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS);
   const [reviewReactions, setReviewReactions] = useState(INITIAL_REVIEW_REACTIONS);
@@ -2932,9 +2933,10 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
   useEffect(() => {
     if (view.name !== "tagResults" || !view.tag) return;
     setTagDecade(null);
+    setTagVisible(24);
     setTagResultLoading(true);
     setTagResultAlbums([]);
-    apiFetch(`${BACKEND_URL}/api/tags/${encodeURIComponent(view.tag)}/albums`)
+    apiFetch(`${BACKEND_URL}/api/tags/${encodeURIComponent(view.tag)}/albums?limit=1000`)
       .then((r) => r.json())
       .then((data) => {
         const albums = (data.albums || []).map((a) => ({
@@ -4429,7 +4431,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                           return (
                             <button
                               key={d === null ? "all" : d}
-                              onClick={() => setTagDecade(d)}
+                              onClick={() => { setTagDecade(d); setTagVisible(24); }}
                               className="ui-sans"
                               style={{ fontFamily: "inherit", fontSize: 11.5, padding: "3px 9px", borderRadius: 0, cursor: "pointer", background: active ? INK : "transparent", color: active ? BG : MUTE, border: `1px solid ${active ? INK : LINE}` }}
                             >
@@ -4440,16 +4442,16 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                       </div>
                     )}
                   </div>
-                  <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(auto-fill, minmax(140px, 1fr))", gap: "20px 16px" }}>
-                    {shownAlbums.map((album) => {
+                  <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, minmax(0, 1fr))" : "repeat(auto-fill, minmax(140px, 1fr))", gap: "20px 16px" }}>
+                    {shownAlbums.slice(0, tagVisible).map((album) => {
                       const rev = reviews.find((r) => r.albumId === album.id);
                       return (
-                        <div key={album.id} onClick={() => openAlbum(album.id, album)}>
+                        <div key={album.id} onClick={() => openAlbum(album.id, album)} style={{ minWidth: 0 }}>
                           <div className="sb-cover-wrap">
                             <AlbumCover album={album} size={140} fluid />
                           </div>
-                          <div style={{ marginTop: 8 }}>
-                            <div className="ui-sans" style={{ fontSize: 13, fontWeight: 400, lineHeight: 1.3 }}>{album.title}</div>
+                          <div style={{ marginTop: 8, minWidth: 0 }}>
+                            <div className="ui-sans" style={{ fontSize: 13, fontWeight: 400, lineHeight: 1.3, wordBreak: "break-word" }}>{album.title}</div>
                             <div className="ui-sans" style={{ fontSize: 11.5, color: MUTE, marginTop: 1 }}>{album.artist} · {album.year}</div>
                             {rev && <span className="ui-sans" style={{ fontSize: 11, fontWeight: 600, color: BLUE }}>{rev.rating}/10</span>}
                             <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginTop: 4 }}>
@@ -4462,6 +4464,17 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                       );
                     })}
                   </div>
+                  {shownAlbums.length > tagVisible && (
+                    <div style={{ display: "flex", justifyContent: "center", marginTop: 26 }}>
+                      <button
+                        onClick={() => setTagVisible((n) => n + 24)}
+                        className="ui-sans"
+                        style={{ fontFamily: "inherit", fontSize: 12.5, padding: "9px 20px", borderRadius: 0, cursor: "pointer", background: "transparent", color: INK, border: `1px solid ${INK}` }}
+                      >
+                        show more ({shownAlbums.length - tagVisible} more)
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -4583,7 +4596,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
               </>
             )}
             {!isTagSearch && (<>
-            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(auto-fill, minmax(150px, 1fr))", gap: "20px 16px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, minmax(0, 1fr))" : "repeat(auto-fill, minmax(150px, 1fr))", gap: "20px 16px" }}>
               {albumSearchLoading && (
                 <div style={{ gridColumn: "1 / -1", display: "flex", justifyContent: "center", padding: "20px 0" }}><Spinner label="searching…" /></div>
               )}
