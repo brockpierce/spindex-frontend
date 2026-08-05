@@ -4385,9 +4385,9 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
               {matchedAlbums.length > 0 && (
                 <div style={{ marginBottom: 32 }}>
                   <div style={{ marginBottom: 14 }}>
-                    <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 10 }}>albums{tagDecade ? ` · ${tagDecade}s` : ""}</div>
+                    <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 10, textAlign: isMobile ? "center" : "left" }}>albums{tagDecade ? ` · ${tagDecade}s` : ""}</div>
                     {decadesPresent.length > 1 && (
-                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: isMobile ? "center" : "flex-start" }}>
                         {[null, ...decadesPresent].map((d) => {
                           const active = tagDecade === d;
                           return (
@@ -4404,7 +4404,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                       </div>
                     )}
                   </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: "20px 16px" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(auto-fill, minmax(140px, 1fr))", gap: "20px 16px", justifyItems: isMobile ? "center" : "stretch" }}>
                     {shownAlbums.map((album) => {
                       const rev = reviews.find((r) => r.albumId === album.id);
                       return (
