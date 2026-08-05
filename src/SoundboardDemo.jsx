@@ -1006,7 +1006,7 @@ function RatingBlocks({ value, onChange, size = 14 }) {
   );
 }
 
-function AlbumCover({ album, size = 92, listened = false }) {
+function AlbumCover({ album, size = 92, listened = false, fluid = false }) {
   const { BLUE } = useTheme();
   const rawUrl = album?.coverArtUrl && album.coverArtUrl !== "none" ? album.coverArtUrl.replace("http://", "https://") : null;
   const [imgFailed, setImgFailed] = useState(false);
@@ -1046,14 +1046,14 @@ function AlbumCover({ album, size = 92, listened = false }) {
 
   if (coverUrl) {
     return (
-      <div style={{ position: "relative", width: size, height: size, flexShrink: 0 }}>
+      <div style={fluid ? { position: "relative", width: "100%", aspectRatio: "1 / 1" } : { position: "relative", width: size, height: size, flexShrink: 0 }}>
         <img
           src={coverUrl}
           alt=""
           loading="lazy"
           decoding="async"
           onError={() => setImgFailed(true)}
-          style={{ width: size, height: size, borderRadius: radius, objectFit: "cover", display: "block" }}
+          style={fluid ? { width: "100%", height: "100%", borderRadius: radius, objectFit: "cover", display: "block" } : { width: size, height: size, borderRadius: radius, objectFit: "cover", display: "block" }}
         />
         {pill}
       </div>
@@ -1061,7 +1061,16 @@ function AlbumCover({ album, size = 92, listened = false }) {
   }
   return (
     <div
-      style={{
+      style={fluid ? {
+        position: "relative",
+        width: "100%",
+        aspectRatio: "1 / 1",
+        background: BLUE,
+        borderRadius: radius,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      } : {
         position: "relative",
         width: size,
         height: size,
@@ -1638,14 +1647,33 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
   // Debounced album search — fires 300ms after the user stops typing.
   // Uses the real backend API if available, falls back to mock ALBUMS.
   useEffect(() => {
-    if (!query.trim() || query.trim().length < 3) {
+    const q = query.trim();
+
+    // Hashtag mode: query starts with "#". Search tags only (no album lookup),
+    // with a short debounce and no min length so autocomplete feels live. A bare
+    // "#" clears matches; the render then shows recommended tags.
+    if (q.startsWith("#")) {
+      setLiveAlbums([]);
+      setAlbumSearchLoading(false);
+      const term = q.replace(/^#+/, "").toLowerCase().trim();
+      if (!term) { setMatchingTags([]); return; }
+      const timer = setTimeout(() => {
+        apiFetch(`${BACKEND_URL}/api/tags/search?q=${encodeURIComponent(term)}`)
+          .then((res) => res.json())
+          .then((data) => setMatchingTags(Array.isArray(data.tags) ? data.tags : []))
+          .catch(() => setMatchingTags([]));
+      }, 250);
+      return () => clearTimeout(timer);
+    }
+
+    if (!q || q.length < 3) {
       setLiveAlbums([]);
       setMatchingTags([]);
       return;
     }
     const timer = setTimeout(() => {
       setAlbumSearchLoading(true);
-      apiFetch(`${BACKEND_URL}/api/albums?search=${encodeURIComponent(query.trim())}&limit=30`)
+      apiFetch(`${BACKEND_URL}/api/albums?search=${encodeURIComponent(q)}&limit=30`)
         .then((res) => res.json())
         .then((data) => {
           const albums = (data.albums || []).map((a) => ({
@@ -1657,8 +1685,8 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
         })
         .catch(() => setLiveAlbums([]))
         .finally(() => setAlbumSearchLoading(false));
-      // Matching tags, so you can search by tag too.
-      apiFetch(`${BACKEND_URL}/api/tags/search?q=${encodeURIComponent(query.trim())}`)
+      // Matching tags, so you can search by tag too (plain-text query).
+      apiFetch(`${BACKEND_URL}/api/tags/search?q=${encodeURIComponent(q)}`)
         .then((res) => res.json())
         .then((data) => setMatchingTags(Array.isArray(data.tags) ? data.tags : []))
         .catch(() => setMatchingTags([]));
@@ -1678,6 +1706,14 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
   const filtered = query.trim().length >= 3
     ? liveAlbums
     : trendingAlbums.length > 0 ? trendingAlbums : ALBUMS;
+
+  // Hashtag search: query begins with "#". Shows matching tags as you type, or
+  // recommended tags (popular, falling back to featured) on a bare "#".
+  const isTagSearch = query.trim().startsWith("#");
+  const tagSearchTerm = isTagSearch ? query.trim().replace(/^#+/, "").toLowerCase().trim() : "";
+  const tagSuggestions = isTagSearch
+    ? (tagSearchTerm ? matchingTags : (popularTags.length ? popularTags : FEATURED_TAGS)).slice(0, 8)
+    : [];
 
 
 
@@ -4404,13 +4440,13 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                       </div>
                     )}
                   </div>
-                  <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(auto-fill, minmax(140px, 1fr))", gap: "20px 16px", justifyItems: isMobile ? "center" : "stretch" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(auto-fill, minmax(140px, 1fr))", gap: "20px 16px" }}>
                     {shownAlbums.map((album) => {
                       const rev = reviews.find((r) => r.albumId === album.id);
                       return (
                         <div key={album.id} onClick={() => openAlbum(album.id, album)}>
                           <div className="sb-cover-wrap">
-                            <AlbumCover album={album} size={140} />
+                            <AlbumCover album={album} size={140} fluid />
                           </div>
                           <div style={{ marginTop: 8 }}>
                             <div className="ui-sans" style={{ fontSize: 13, fontWeight: 400, lineHeight: 1.3 }}>{album.title}</div>
@@ -4497,7 +4533,21 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                 onChange={(e) => setQuery(e.target.value)}
               />
             </div>
-            {query.trim() && matchingTags.length > 0 && (
+            {isTagSearch && (
+              <div style={{ marginBottom: 22 }}>
+                <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 12 }}>{tagSearchTerm ? "matching tags" : "recommended tags"}</div>
+                {tagSuggestions.length > 0 ? (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                    {tagSuggestions.map((tag) => (
+                      <button key={tag} className="ui-sans" onClick={() => setView({ name: "tagResults", tag })} style={{ background: "transparent", border: `1px solid ${BLUE}`, borderRadius: 0, padding: "6px 13px", fontSize: 13, color: BLUE, cursor: "pointer", fontFamily: "inherit" }}>#{tag}</button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="ui-sans" style={{ color: MUTE, fontSize: 13 }}>{tagSearchTerm ? `no tags matching "${tagSearchTerm}"` : "start typing to find a tag"}</div>
+                )}
+              </div>
+            )}
+            {!isTagSearch && query.trim() && matchingTags.length > 0 && (
               <div style={{ marginBottom: 22 }}>
                 <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 10 }}>tags</div>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
@@ -4507,7 +4557,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                 </div>
               </div>
             )}
-            {!query.trim() && (
+            {!isTagSearch && !query.trim() && (
               <>
                 {/* browse by tag — curated featured tags */}
                 {FEATURED_TAGS.length > 0 && (
@@ -4532,7 +4582,8 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                 </div>
               </>
             )}
-            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(auto-fill, minmax(150px, 1fr))", gap: "20px 16px", justifyItems: isMobile ? "center" : "stretch" }}>
+            {!isTagSearch && (<>
+            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(auto-fill, minmax(150px, 1fr))", gap: "20px 16px" }}>
               {albumSearchLoading && (
                 <div style={{ gridColumn: "1 / -1", display: "flex", justifyContent: "center", padding: "20px 0" }}><Spinner label="searching…" /></div>
               )}
@@ -4544,7 +4595,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                 return (
                   <div key={album.id} onClick={() => openAlbum(album.id, album)}>
                     <div className="sb-cover-wrap">
-                      <AlbumCover album={displayAlbum} size={150} listened={listenStatus[album.id] === "listened"} />
+                      <AlbumCover album={displayAlbum} size={150} fluid listened={listenStatus[album.id] === "listened"} />
                     </div>
                     <div style={{ marginTop: 9 }}>
                       <div className="ui-sans" style={{ fontSize: 13.5, fontWeight: 400, lineHeight: 1.3, wordBreak: "break-word", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{album.title}</div>
@@ -4559,6 +4610,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                 no results for "{query}". we may still be finding it. try again in a moment.
               </div>
             )}
+            </>)}
 
             {/* Admin-only: manually add album to database */}
             {profile.username === ADMIN_USERNAME && !query.trim() && (
