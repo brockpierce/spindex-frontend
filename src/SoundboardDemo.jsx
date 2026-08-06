@@ -3073,10 +3073,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
           {!IS_NATIVE_APP && (<>
           <div className={`sb-nav-item ${view.name === "home" ? "active" : ""}`} onClick={() => setView({ name: "home" })}>home</div>
           <div className={`sb-nav-item ${view.name === "browse" || view.name === "tagResults" || view.name === "artist" ? "active" : ""}`} onClick={() => setView({ name: "browse" })}>browse</div>
-          </>)}
-          {/* mixes has no bottom-nav slot yet (open item) — keep it reachable up top. */}
           <div className={`sb-nav-item ${view.name === "mixes" || view.name === "albumMixDetail" || view.name === "songMixDetail" ? "active" : ""}`} onClick={() => setView({ name: "mixes" })}>mixes</div>
-          {!IS_NATIVE_APP && (<>
           <div className={`sb-nav-item ${view.name === "profile" ? "active" : ""}`} onClick={() => setView({ name: "profile" })}>profile</div>
           </>)}
           <div
@@ -3132,14 +3129,14 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
               { key: "home", label: "home", active: view.name === "home", go: () => setView({ name: "home" }) },
               { key: "browse", label: "browse", active: ["browse", "tagResults", "artist"].includes(view.name), go: () => setView({ name: "browse" }) },
               { key: "create" },
-              { key: "inbox", label: "inbox", active: ["messages", "dmThread"].includes(view.name), badge: dmUnreadCount > 0, go: () => { setView({ name: "messages" }); loadConversations(); } },
+              { key: "mixes", label: "mixes", active: ["mixes", "albumMixDetail", "songMixDetail"].includes(view.name), go: () => setView({ name: "mixes" }) },
               { key: "you", label: "you", active: view.name === "profile", go: () => setView({ name: "profile" }) },
             ].map((t) => t.key === "create" ? (
               <button key="create" onClick={() => setShowCreateSheet((s) => !s)} aria-label="create a post" style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", margin: "-6px 0", padding: 0, fontFamily: "inherit" }}>
                 <span style={{ width: 30, height: 30, border: `1px solid ${INK}`, display: "flex", alignItems: "center", justifyContent: "center", color: INK, fontSize: 19, lineHeight: 1, fontWeight: 400 }}>+</span>
               </button>
             ) : (
-              <button key={t.key} onClick={t.go} className="ui-sans" style={{ background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 7, padding: 0, fontFamily: "inherit" }}>
+              <button key={t.key} onClick={() => { if (t.active) window.scrollTo({ top: 0, behavior: "smooth" }); else t.go(); }} className="ui-sans" style={{ background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 7, padding: 0, fontFamily: "inherit" }}>
                 <span style={{ position: "relative", fontSize: 14, lineHeight: 1, color: t.active ? INK : MUTE, fontWeight: t.active ? 700 : 400 }}>
                   {t.label}
                   {t.badge ? <span style={{ position: "absolute", top: -2, right: -9, width: 7, height: 7, borderRadius: "50%", background: BLUE }} /> : null}
