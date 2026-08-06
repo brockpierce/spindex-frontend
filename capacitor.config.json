@@ -1,0 +1,9 @@
+{
+  "appId": "com.noteblock.app",
+  "appName": "noteblock",
+  "webDir": "dist",
+  "ios": {
+    "backgroundColor": "#ffffff",
+    "contentInset": "never"
+  }
+}

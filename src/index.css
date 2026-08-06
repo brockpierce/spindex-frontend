@@ -1,3 +1,14 @@
+/* Capacitor / iOS: keep app content clear of the notch, status bar, and home
+   indicator. On the web (and non-notch devices) these insets are 0, so this is
+   a no-op there. */
+body {
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+  box-sizing: border-box;
+}
+
 :root {
   --text: #6b6375;
   --text-h: #08060d;
