@@ -9,7 +9,8 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "ios": "vite build && cap sync ios && cap open ios",
-    "sync:ios": "vite build && cap sync ios"
+    "sync:ios": "vite build && cap sync ios",
+    "icons": "capacitor-assets generate --ios --iconBackgroundColor '#ffffff' --iconBackgroundColorDark '#ffffff' --splashBackgroundColor '#ffffff' --splashBackgroundColorDark '#ffffff'"
   },
   "dependencies": {
     "@capacitor/app": "^8.1.1",
@@ -24,6 +25,7 @@
     "react-dom": "^19.2.7"
   },
   "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.3",
