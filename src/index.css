@@ -9,10 +9,9 @@ body {
   box-sizing: border-box;
 }
 
-/* Clear the fixed mobile bottom nav so the last item isn't hidden behind it. */
-@media (max-width: 599px) {
-  #root { padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px)); }
-}
+/* Clear the fixed bottom nav (native app only) so the last item isn't hidden
+   behind it. Mobile web has no bottom nav, so it gets no extra padding. */
+html.capacitor-native #root { padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px)); }
 
 :root {
   --text: #6b6375;

@@ -9,6 +9,8 @@ import { Capacitor } from '@capacitor/core'
 // is completely unaffected. The webview extends under the status bar (we handle
 // spacing via CSS safe-area insets); the light UI gets dark status-bar text.
 if (Capacitor.isNativePlatform()) {
+  // Marker class so CSS can target the native app only (e.g. bottom-nav spacing).
+  document.documentElement.classList.add('capacitor-native')
   import('@capacitor/status-bar').then(({ StatusBar, Style }) => {
     StatusBar.setStyle({ style: Style.Light }).catch(() => {})
     // Don't overlay: let iOS place the webview BELOW the status bar so the top
