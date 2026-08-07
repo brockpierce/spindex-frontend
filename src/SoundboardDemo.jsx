@@ -1809,7 +1809,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
     const sortByDate = (items) => [...items].sort((a, b) => { if (a.date !== b.date) return a.date < b.date ? 1 : -1; return a.id < b.id ? 1 : -1; });
     setPublicFeedItems((prev) => sortByDate([feedItem, ...prev.filter((r) => !(r.username === profile.username && r.albumId === albumId))]));
     setRealFeedItems((prev) => sortByDate([feedItem, ...prev.filter((r) => !(r.username === profile.username && r.albumId === albumId))]));
-    if (draftRating > 0) setListenStatus((prev) => ({ ...prev, [albumId]: "listened" }));
+    if (draftRating > 0 || (draftText && draftText.trim())) markListenedFromReview(albumId);
     flash("Review saved");
     // Persist to backend
     apiFetch(`${BACKEND_URL}/api/reviews/${albumId}`, {
@@ -1860,6 +1860,19 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
         setListenStatus((prev) => ({ ...prev, [albumId]: current || undefined }));
       });
     }
+  }
+
+  // Reviewing an album implies you've listened to it — mark + persist "listened"
+  // so it always shows in the listened tab (idempotent; skips a redundant write
+  // if it's already listened, and overrides a prior "want to listen").
+  function markListenedFromReview(albumId) {
+    if (listenStatus[albumId] === "listened") return;
+    setListenStatus((prev) => ({ ...prev, [albumId]: "listened" }));
+    apiFetch(`${BACKEND_URL}/api/listen-status/${albumId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "listened" }),
+    }).catch(() => {});
   }
 
   function toggleFavorite(albumId) {
@@ -2047,7 +2060,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
       const without = prev.filter((r) => r.albumId !== albumId);
       return [...without, newReview];
     });
-    setListenStatus((prev) => ({ ...prev, [albumId]: "listened" }));
+    markListenedFromReview(albumId);
     setShowQuickReviewModal(false);
     flash("Review posted");
     // Persist to backend
