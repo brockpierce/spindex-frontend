@@ -3204,6 +3204,9 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
           username={showFollowList.username}
           onClose={() => setShowFollowList(null)}
           onVisitProfile={(u) => { setShowFollowList(null); openUserProfile(u); }}
+          followState={followState}
+          setFollowState={setFollowState}
+          currentUsername={authUser?.username || profile.username}
         />
       )}
       {showQotdModal && (
@@ -8400,10 +8403,63 @@ function AlbumCommunitySection({ albumId, albumTab, setAlbumTab, openAlbum, revi
 // TermsScreen is used in two contexts:
 // - `inline=true`: rendered inside the main app (navigated to from footer)
 // - `inline=false/undefined`: full-page, rendered from AuthScreen
-function FollowListModal({ kind, userId, username, onClose, onVisitProfile }) {
+// Brand-blue hex -> rgba, for the subtle hover tint (keeps the accent + theme).
+function hexToRgba(hex, a) {
+  const h = (hex || "#1e3a8a").replace("#", "");
+  const n = h.length === 3 ? h.split("").map((c) => c + c).join("") : h;
+  const r = parseInt(n.slice(0, 2), 16), g = parseInt(n.slice(2, 4), 16), b = parseInt(n.slice(4, 6), 16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+// Compact 34x34 square follow control for list rows (design option 1c):
+// navy "+" when not following, filled navy check when following. 44px hit area.
+function FollowSquareButton({ isFollowing, pending, onToggle, handle }) {
+  const { BLUE, BG, LINE } = useTheme();
+  const [hover, setHover] = React.useState(false);
+  const [pressed, setPressed] = React.useState(false);
+  const label = isFollowing ? `Unfollow ${handle}` : `Follow ${handle}`;
+  const bg = isFollowing ? BLUE : (hover ? hexToRgba(BLUE, 0.12) : BG);
+  const border = (isFollowing || hover) ? BLUE : LINE;
+  return (
+    <button
+      type="button"
+      aria-pressed={isFollowing}
+      aria-label={label}
+      title={label}
+      disabled={pending}
+      onClick={(e) => { e.stopPropagation(); onToggle(); }}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => { setHover(false); setPressed(false); }}
+      onMouseDown={() => setPressed(true)}
+      onMouseUp={() => setPressed(false)}
+      style={{
+        flex: "none", width: 44, height: 44, margin: "-5px -5px -5px 0", padding: 0,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        background: "transparent", border: "none",
+        cursor: pending ? "default" : "pointer",
+        opacity: pending ? 0.5 : 1, pointerEvents: pending ? "none" : "auto",
+      }}
+    >
+      <span style={{
+        width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center",
+        background: bg, border: `1px solid ${border}`, borderRadius: 0, color: isFollowing ? BG : BLUE,
+        transition: "background .12s ease, border-color .12s ease, color .12s ease",
+        transform: pressed ? "scale(0.94)" : "none",
+        filter: isFollowing && hover ? "brightness(0.92)" : "none",
+      }}>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square">
+          <path d={isFollowing ? "M3 8.5L6.3 11.5L13 4.5" : "M8 3V13M3 8H13"} />
+        </svg>
+      </span>
+    </button>
+  );
+}
+
+function FollowListModal({ kind, userId, username, onClose, onVisitProfile, followState, setFollowState, currentUsername }) {
   const { BLUE, INK, LINE, MUTE, BG } = useTheme();
   const [users, setUsers] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
+  const [pending, setPending] = React.useState({}); // userId -> in-flight
 
   React.useEffect(() => {
     if (!userId) return;
@@ -8412,10 +8468,30 @@ function FollowListModal({ kind, userId, username, onClose, onVisitProfile }) {
       : `${BACKEND_URL}/api/follows/${userId}/following`;
     apiFetch(endpoint)
       .then((r) => r.json())
-      .then((data) => setUsers(data.users || []))
+      .then((data) => {
+        const list = data.users || [];
+        setUsers(list);
+        // Seed global follow state from the server flags, but never clobber a
+        // row the viewer has already toggled locally this session.
+        setFollowState((prev) => {
+          const next = { ...prev };
+          list.forEach((u) => { if (next[u.username] === undefined) next[u.username] = !!u.isFollowing; });
+          return next;
+        });
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [kind, userId]);
+
+  function toggleRow(u) {
+    const cur = followState[u.username] ?? u.isFollowing;
+    setFollowState((prev) => ({ ...prev, [u.username]: !cur })); // optimistic
+    setPending((p) => ({ ...p, [u.id]: true }));
+    apiFetch(`${BACKEND_URL}/api/follows/${u.id}`, { method: cur ? "DELETE" : "POST" })
+      .then((r) => { if (!r.ok) throw new Error("follow failed"); })
+      .catch(() => setFollowState((prev) => ({ ...prev, [u.username]: cur }))) // revert
+      .finally(() => setPending((p) => { const n = { ...p }; delete n[u.id]; return n; }));
+  }
 
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
@@ -8444,6 +8520,14 @@ function FollowListModal({ kind, userId, username, onClose, onVisitProfile }) {
                 <div className="ui-sans" style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.3, color: INK, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textAlign: "left" }}>{u.displayName || u.username}</div>
                 <div className="ui-sans" style={{ fontSize: 12.5, color: MUTE, lineHeight: 1.3, marginTop: 1, textAlign: "left" }}>@{(u.username || "").toLowerCase()}</div>
               </div>
+              {(u.isSelf || u.username === currentUsername)
+                ? <div style={{ width: 34, flex: "none" }} />
+                : <FollowSquareButton
+                    isFollowing={followState[u.username] ?? u.isFollowing}
+                    pending={!!pending[u.id]}
+                    onToggle={() => toggleRow(u)}
+                    handle={(u.username || "").toLowerCase()}
+                  />}
             </div>
           ))}
         </div>
