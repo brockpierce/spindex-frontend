@@ -275,3 +275,8 @@
   .pf[data-theme="elegant"]:not([data-theme=""]) .pf-stat-num { font-size: 25px !important; }
   .pf[data-theme]:not([data-theme=""]) .pf-stats { gap: 10px !important; }
 }
+
+/* ---------------- bubble (Frutiger Aero) theme ---------------- */
+@keyframes aeroFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-18px); } }
+.aero-bubble { will-change: transform; }
+@media (prefers-reduced-motion: reduce) { .aero-bubble { animation: none !important; } }
