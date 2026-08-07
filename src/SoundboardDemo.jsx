@@ -1176,6 +1176,9 @@ export default function SoundboardDemo() {
     return { ...PROFILE, profileTheme: cachedTheme, pageBackground: cachedBg };
   });
   const [showSettings, setShowSettings] = useState(false);
+  // Selected palette for the admin-only "bubble" theme (persisted client-side).
+  const [bubblePalette, setBubblePalette] = useState(() => { try { return localStorage.getItem("nb_bubble_palette") || "aqua"; } catch (e) { return "aqua"; } });
+  function chooseBubblePalette(k) { setBubblePalette(k); try { localStorage.setItem("nb_bubble_palette", k); } catch (e) {} }
   const [draftDisplayName, setDraftDisplayName] = useState(PROFILE.displayName);
   const [draftUsername, setDraftUsername] = useState(PROFILE.username);
   const [draftBio, setDraftBio] = useState(PROFILE.bio);
@@ -2461,7 +2464,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                   <div style={{ marginTop: 22 }}>
                     <div style={{ fontSize: 13, fontWeight: 600, color: "#6b6b74", marginBottom: 10, letterSpacing: "0.01em" }}>profile theme</div>
                     <select
-                      value={profile.profileTheme || ""}
+                      value={profile.profileTheme === "bubble" ? "" : (profile.profileTheme || "")}
                       onChange={(e) => saveProfileTheme(e.target.value)}
                       style={{ fontFamily: "inherit", fontSize: 14, padding: "8px 12px", border: `1px solid ${LINE}`, background: BG, color: INK, cursor: "pointer", borderRadius: 0, minWidth: 160 }}
                     >
@@ -2469,10 +2472,33 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                       <option value="web2003">web2003</option>
                       <option value="terminal">terminal</option>
                       <option value="geocities">netscape</option>
-                      {profile.username === ADMIN_USERNAME && <option value="bubble">bubble (admin test)</option>}
                     </select>
                     <div style={{ fontSize: 11, color: MUTE, marginTop: 8 }}>how your profile looks to visitors</div>
                   </div>
+
+                  {profile.username === ADMIN_USERNAME && (
+                    <div style={{ marginTop: 22, borderTop: `1px solid ${LINE}`, paddingTop: 18 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: "#6b6b74", letterSpacing: "0.01em" }}>bubble <span style={{ fontWeight: 400, color: MUTE }}>(admin test)</span></div>
+                      <div style={{ fontSize: 11, color: MUTE, marginTop: 4, marginBottom: 12 }}>frutiger aero theme — pick a palette to apply it</div>
+                      <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                        {Object.keys(AERO_PALETTES).map((k) => {
+                          const on = profile.profileTheme === "bubble" && bubblePalette === k;
+                          return (
+                            <button
+                              key={k}
+                              onClick={() => { chooseBubblePalette(k); if (profile.profileTheme !== "bubble") saveProfileTheme("bubble"); }}
+                              title={AERO_PALETTES[k].label}
+                              aria-label={`Bubble ${AERO_PALETTES[k].label} palette`}
+                              style={{ width: 34, height: 34, borderRadius: 9999, background: AERO_PALETTES[k].swatch, cursor: "pointer", padding: 0, border: on ? `2px solid ${INK}` : "1px solid rgba(0,0,0,.15)", outline: on ? "2px solid #fff" : "none", outlineOffset: -4, boxShadow: on ? `0 0 0 1px ${INK}` : "none" }}
+                            />
+                          );
+                        })}
+                        {profile.profileTheme === "bubble" && (
+                          <button className="sb-btn" onClick={() => saveProfileTheme("")} style={{ marginLeft: 6 }}>turn off</button>
+                        )}
+                      </div>
+                    </div>
+                  )}
 
                   <div style={{ borderTop: `1px solid ${LINE}`, marginTop: 22, paddingTop: 18, display: "flex", gap: 10, alignItems: "center", justifyContent: "space-between" }}>
                     <button
@@ -5693,11 +5719,15 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
             username={profile.username}
             bio={profile.bio}
             isMobile={isMobile}
+            palette={bubblePalette}
             stats={{ followers: profileStats.followers, following: profileStats.following, listened: listenLoaded ? listenedCount : (cachedCounts.listened ?? listenedCount), reviews: reviewsLoaded ? reviews.length : (cachedCounts.reviews ?? reviews.length) }}
             albums={favorites.map((id) => { const a = fetchedAlbums[id] || albumById(id); return { id, title: a && a.title !== "Unknown Album" ? a.title : "", album: a }; })}
             reviews={[...reviews].sort((a, b) => (a.date !== b.date ? (a.date < b.date ? 1 : -1) : (a.id < b.id ? 1 : -1))).slice(0, 3).map((r) => { const a = fetchedAlbums[r.albumId] || albumById(r.albumId); return { score: r.rating, albumTitle: a && a.title !== "Unknown Album" ? a.title : "", artist: a ? (a.artist || a.artistName || "") : "", body: r.text || r.reviewText || r.body || "", albumId: r.albumId, album: a }; })}
             info={{ age: profile.age, town: profile.town, country: profile.country, interests: profile.interests, mood: profile.mood }}
+            mixes={albumMixes.filter((m) => m.isPublic !== false).map((m) => ({ id: m.id, title: m.title, count: m.albums.length, cover: <MixCoverStack albums={m.albums} fetchedAlbums={fetchedAlbums} albumById={albumById} size={56} /> }))}
+            queued={Object.entries(listenStatus).filter(([, s]) => s === "want_to_listen").map(([id]) => { const a = fetchedAlbums[id] || albumById(id); return { id, title: a && a.title !== "Unknown Album" ? a.title : "", album: a }; })}
             onOpenSettings={openSettings}
+            onOpenMix={(id) => setView({ name: "albumMixDetail", id })}
             onOpenAlbum={(id) => openAlbum(id)}
             onNeedAlbum={(id) => { if (!fetchedAlbums[id]) { apiFetch(`${BACKEND_URL}/api/albums/${id}`).then((r) => r.json()).then((data) => { if (data.album) { const a = data.album; setFetchedAlbums((prev) => ({ ...prev, [id]: { ...a, artist: a.artistName || "", year: a.releaseYear || null } })); } }).catch(() => {}); } }}
             onStatClick={(label) => {
@@ -8454,30 +8484,31 @@ const AERO_PALETTES = {
 };
 const AERO_MOOD = { chill: "8)", flirty: ";)", happy: ":)", angry: ">:(", sad: ":(", bored: "-_-", hyper: "^_^" };
 
-function BubbleProfile({ displayName, username, bio, isMobile, stats, albums, reviews, info,
-                         onOpenSettings, onOpenAlbum, onStatClick, onNeedAlbum, renderAvatar, renderAlbumCover }) {
-  // Pull album details for any favorite/review cover we don't have yet.
+function BubbleProfile({ displayName, username, bio, isMobile, palette, stats, albums, reviews, info, mixes, queued,
+                         onOpenSettings, onOpenAlbum, onOpenMix, onStatClick, onNeedAlbum, renderAvatar, renderAlbumCover }) {
+  // Pull album details for any favorite/review/queued cover we don't have yet.
   React.useEffect(() => {
     if (!onNeedAlbum) return;
     albums.forEach((a) => { if (a && (!a.album || a.album.title === "Unknown Album")) onNeedAlbum(a.id); });
     reviews.forEach((r) => { if (r && r.albumId && (!r.album || r.album.title === "Unknown Album")) onNeedAlbum(r.albumId); });
-  }, [albums, reviews, onNeedAlbum]);
+    queued.forEach((a) => { if (a && (!a.album || a.album.title === "Unknown Album")) onNeedAlbum(a.id); });
+  }, [albums, reviews, queued, onNeedAlbum]);
 
-  const [palKey, setPalKey] = React.useState(() => {
-    try { return localStorage.getItem("nb_bubble_palette") || "aqua"; } catch (e) { return "aqua"; }
-  });
-  const pal = AERO_PALETTES[palKey] || AERO_PALETTES.aqua;
-  const setPal = (k) => { setPalKey(k); try { localStorage.setItem("nb_bubble_palette", k); } catch (e) {} };
+  const pal = AERO_PALETTES[palette] || AERO_PALETTES.aqua;
 
   const NAME_SH = "0 2px 6px rgba(0,20,50,.5), 0 1px 0 rgba(255,255,255,.25)";
   const WHITE_SH = "0 1px 3px rgba(0,20,50,.5)";
-  const frosted = { background: "linear-gradient(180deg,rgba(255,255,255,.55),rgba(255,255,255,.28))", border: "1px solid rgba(255,255,255,.7)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", boxShadow: "0 6px 22px rgba(0,20,50,.22)", borderRadius: 14, overflow: "hidden" };
+  // Glassier panels: lower white alpha + saturate so the gradient/bubbles read through.
+  const frosted = { background: "linear-gradient(180deg,rgba(255,255,255,.26),rgba(255,255,255,.10))", border: "1px solid rgba(255,255,255,.6)", backdropFilter: "blur(16px) saturate(1.35)", WebkitBackdropFilter: "blur(16px) saturate(1.35)", boxShadow: "0 6px 22px rgba(0,20,50,.22), inset 0 1px 0 rgba(255,255,255,.55)", borderRadius: 14, overflow: "hidden" };
   const pill = { background: "linear-gradient(180deg,#ffffff 0%,#F4FAFD 48%,#DCEBF4 52%,#F4FAFD 100%)", border: "1px solid rgba(255,255,255,.9)", boxShadow: "0 3px 10px rgba(0,20,50,.28)", borderRadius: 9999, padding: isMobile ? "7px 14px" : "9px 18px", fontWeight: 700, fontSize: isMobile ? 13 : 15, color: pal.ink, cursor: "pointer", fontFamily: '"Helvetica Neue",Helvetica,Arial,sans-serif' };
   const Bar = ({ children }) => (
     <div style={{ background: pal.bar, borderBottom: "1px solid rgba(255,255,255,.5)", padding: isMobile ? "11px 15px" : "13px 18px", fontWeight: 700, fontSize: isMobile ? 15 : 17, color: "#fff", textShadow: WHITE_SH, textAlign: "center", fontFamily: '"Helvetica Neue",Helvetica,Arial,sans-serif' }}>{children}</div>
   );
   const pad = isMobile ? 16 : 30;
   const av = isMobile ? 82 : 132;
+  const bub = (t, l, sz, dur) => (
+    <div className="aero-bubble" style={{ position: "absolute", top: t, left: l, width: sz, height: sz, borderRadius: 9999, background: "radial-gradient(circle at 32% 28%,rgba(255,255,255,.85),rgba(255,255,255,.12) 45%,rgba(255,255,255,.03) 70%)", border: "1px solid rgba(255,255,255,.4)", animation: `aeroFloat ${dur}s ease-in-out infinite`, pointerEvents: "none" }} />
+  );
 
   const StatCell = ({ num, label, icon, onClick, first }) => (
     <div onClick={onClick} style={{ flex: 1, padding: isMobile ? "10px 2px" : "15px 10px", textAlign: "center", cursor: onClick ? "pointer" : "default", borderLeft: first ? "none" : "1px solid rgba(255,255,255,.35)", minWidth: 0 }}>
@@ -8486,32 +8517,31 @@ function BubbleProfile({ displayName, username, bio, isMobile, stats, albums, re
     </div>
   );
 
+  const Cover = ({ item }) => (
+    <div style={{ padding: 4, borderRadius: 6, background: "linear-gradient(180deg,rgba(255,255,255,.9),rgba(255,255,255,.4))", boxShadow: "0 4px 12px rgba(0,20,50,.28)" }}>
+      <div style={{ aspectRatio: "1/1", borderRadius: 3, overflow: "hidden", background: pal.ink }}>{renderAlbumCover(item)}</div>
+    </div>
+  );
+
   return (
     <div className="ui-sans" style={{ position: "relative", fontFamily: '"Helvetica Neue",Helvetica,Arial,sans-serif' }}>
-      {/* full-bleed gradient + floating bubbles behind everything */}
+      {/* full-bleed gradient + top light glow + floating bubbles behind everything */}
       <div aria-hidden style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: "100vw", height: "100%", background: pal.bg, zIndex: 0 }}>
-        <div className="aero-bubble" style={{ position: "absolute", top: "34%", left: "6%", width: isMobile ? 96 : 150, height: isMobile ? 96 : 150, borderRadius: 9999, background: "radial-gradient(circle at 32% 28%,rgba(255,255,255,.85),rgba(255,255,255,.12) 45%,rgba(255,255,255,.03) 70%)", border: "1px solid rgba(255,255,255,.4)", animation: "aeroFloat 7s ease-in-out infinite", pointerEvents: "none" }} />
-        <div className="aero-bubble" style={{ position: "absolute", top: "62%", left: "72%", width: isMobile ? 96 : 92, height: isMobile ? 96 : 92, borderRadius: 9999, background: "radial-gradient(circle at 32% 28%,rgba(255,255,255,.85),rgba(255,255,255,.12) 45%,rgba(255,255,255,.03) 70%)", border: "1px solid rgba(255,255,255,.4)", animation: "aeroFloat 9s ease-in-out infinite", pointerEvents: "none" }} />
-        {!isMobile && <div className="aero-bubble" style={{ position: "absolute", top: "48%", left: "44%", width: 58, height: 58, borderRadius: 9999, background: "radial-gradient(circle at 32% 28%,rgba(255,255,255,.85),rgba(255,255,255,.12) 45%,rgba(255,255,255,.03) 70%)", border: "1px solid rgba(255,255,255,.4)", animation: "aeroFloat 6s ease-in-out infinite", pointerEvents: "none" }} />}
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "48%", background: "radial-gradient(120% 80% at 50% -18%, rgba(255,255,255,.38), rgba(255,255,255,0) 62%)", pointerEvents: "none" }} />
+        {bub("34%", "6%", isMobile ? 96 : 150, 7)}
+        {bub("62%", "72%", isMobile ? 96 : 92, 9)}
+        {!isMobile && bub("48%", "44%", 58, 6)}
       </div>
 
       <div style={{ position: "relative", zIndex: 1, maxWidth: 1000, margin: "0 auto", padding: `${pad}px ${pad}px ${pad + 30}px` }}>
-        {/* palette switcher (admin test control) */}
-        <div style={{ display: "flex", gap: 7, justifyContent: "flex-end", marginBottom: 12 }}>
-          {Object.keys(AERO_PALETTES).map((k) => (
-            <button key={k} onClick={() => setPal(k)} title={AERO_PALETTES[k].label} aria-label={AERO_PALETTES[k].label}
-              style={{ width: 22, height: 22, borderRadius: 9999, background: AERO_PALETTES[k].swatch, cursor: "pointer", padding: 0, border: palKey === k ? "2px solid #fff" : "2px solid rgba(255,255,255,.5)", boxShadow: palKey === k ? "0 0 0 1px rgba(0,20,50,.4)" : "0 1px 3px rgba(0,20,50,.3)" }} />
-          ))}
-        </div>
-
         {/* header */}
         <div style={{ display: "flex", gap: isMobile ? 16 : 26, alignItems: "center" }}>
           <div style={{ padding: 5, borderRadius: "50%", background: "linear-gradient(180deg,rgba(255,255,255,.95),rgba(255,255,255,.35))", boxShadow: "0 4px 16px rgba(0,20,50,.35)", flexShrink: 0 }}>
             <div style={{ width: av, height: av, borderRadius: "50%", overflow: "hidden", background: pal.ink }}>{renderAvatar(av)}</div>
           </div>
-          <div style={{ minWidth: 0, flex: 1 }}>
-            <div style={{ fontSize: isMobile ? 30 : 46, fontWeight: 700, color: "#fff", letterSpacing: "-.02em", lineHeight: 1, textShadow: NAME_SH, overflowWrap: "anywhere" }}>{displayName || username}</div>
-            <div style={{ fontSize: isMobile ? 15 : 18, color: "rgba(255,255,255,.85)", textShadow: WHITE_SH, marginTop: 6 }}>@{(username || "").toLowerCase()}</div>
+          <div style={{ minWidth: 0, flex: 1, textAlign: "left" }}>
+            <div style={{ fontSize: isMobile ? 30 : 46, fontWeight: 700, color: "#fff", letterSpacing: "-.02em", lineHeight: 1, textShadow: NAME_SH, overflowWrap: "anywhere", textAlign: "left" }}>{displayName || username}</div>
+            <div style={{ fontSize: isMobile ? 15 : 18, color: "rgba(255,255,255,.85)", textShadow: WHITE_SH, marginTop: 6, textAlign: "left" }}>@{(username || "").toLowerCase()}</div>
             {bio && <div style={{ ...pill, display: "inline-block", marginTop: 10, cursor: "default" }}>{bio}</div>}
           </div>
           <button onClick={onOpenSettings} style={{ ...pill, alignSelf: "flex-start", flexShrink: 0 }}>settings</button>
@@ -8532,46 +8562,77 @@ function BubbleProfile({ displayName, username, bio, isMobile, stats, albums, re
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(3,1fr)" : "repeat(3,minmax(0,210px))", justifyContent: "center", gap: isMobile ? 11 : 26, padding: isMobile ? 14 : "20px 18px 22px" }}>
             {albums.map((a) => (
               <div key={a.id} onClick={() => onOpenAlbum(a.id)} style={{ cursor: "pointer", textAlign: "center" }}>
-                <div style={{ padding: 4, borderRadius: 6, background: "linear-gradient(180deg,rgba(255,255,255,.9),rgba(255,255,255,.4))", boxShadow: "0 4px 12px rgba(0,20,50,.28)" }}>
-                  <div style={{ aspectRatio: "1/1", borderRadius: 3, overflow: "hidden", background: pal.ink }}>{renderAlbumCover(a)}</div>
-                </div>
+                <Cover item={a} />
                 <div style={{ fontSize: isMobile ? 12 : 14, fontWeight: 700, color: "#fff", textShadow: WHITE_SH, marginTop: 8, overflowWrap: "anywhere" }}>{a.title || "…"}</div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* info card */}
-        <div style={{ ...frosted, marginTop: 16, maxWidth: isMobile ? "100%" : 460 }}>
-          <Bar>{displayName || username}'s info</Bar>
-          {[["Age", info.age], ["Town", info.town], ["Country", info.country], ["Interests", info.interests], ["Mood", info.mood ? (AERO_MOOD[info.mood] || info.mood) : ""]].map(([label, val], i) => (
-            <div key={label} style={{ display: "flex", padding: isMobile ? "9px 15px" : "11px 18px", fontSize: isMobile ? 14 : 15, borderTop: i === 0 ? "none" : "1px solid rgba(255,255,255,.35)" }}>
-              <div style={{ width: isMobile ? 96 : 110, flexShrink: 0, fontWeight: 700, color: pal.ink }}>{label}</div>
-              <div style={{ color: "#1b3242" }}>{val || "—"}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* recent reviews */}
-        <div style={{ marginTop: 22 }}>
-          <div style={{ ...pill, display: "inline-block", marginBottom: 14, cursor: "default" }}>recent reviews</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            {reviews.map((r, i) => (
-              <div key={i} onClick={() => onOpenAlbum(r.albumId)} style={{ background: "linear-gradient(180deg,rgba(255,255,255,.65),rgba(255,255,255,.4))", border: "1px solid rgba(255,255,255,.7)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", boxShadow: "0 6px 22px rgba(0,20,50,.18)", borderRadius: 14, padding: isMobile ? 12 : 16, display: "flex", gap: isMobile ? 12 : 18, cursor: "pointer" }}>
-                <div style={{ width: isMobile ? 66 : 96, height: isMobile ? 84 : 120, flexShrink: 0, borderRadius: 6, overflow: "hidden", background: pal.ink }}>{renderAlbumCover(r)}</div>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
-                    <span style={{ fontSize: isMobile ? 22 : 28, fontWeight: 700, color: pal.ink }}>{r.score}/10</span>
-                    <span style={{ fontSize: isMobile ? 14 : 17, fontWeight: 700, color: "#12384f", overflowWrap: "anywhere" }}>{r.albumTitle}</span>
-                    {r.artist && <span style={{ fontSize: isMobile ? 12 : 15, color: "#5d8299" }}>{r.artist}</span>}
-                  </div>
-                  {r.body && <div style={{ fontSize: isMobile ? 13 : 14, lineHeight: 1.55, color: "#1a3d52", marginTop: 6 }}>{r.body}</div>}
-                </div>
+        {/* info (left) nestled next to recent reviews (right) */}
+        <div style={{ display: isMobile ? "block" : "flex", gap: 16, marginTop: 16, alignItems: "flex-start" }}>
+          <div style={{ ...frosted, flex: isMobile ? "auto" : "0 0 42%", marginBottom: isMobile ? 16 : 0 }}>
+            <Bar>{displayName || username}'s info</Bar>
+            {[["Age", info.age], ["Town", info.town], ["Country", info.country], ["Interests", info.interests], ["Mood", info.mood ? (AERO_MOOD[info.mood] || info.mood) : ""]].map(([label, val], i) => (
+              <div key={label} style={{ display: "flex", padding: isMobile ? "9px 15px" : "11px 18px", fontSize: isMobile ? 14 : 15, borderTop: i === 0 ? "none" : "1px solid rgba(255,255,255,.35)" }}>
+                <div style={{ width: isMobile ? 96 : 96, flexShrink: 0, fontWeight: 700, color: pal.ink }}>{label}</div>
+                <div style={{ color: "#12384f", overflowWrap: "anywhere" }}>{val || "—"}</div>
               </div>
             ))}
-            {reviews.length === 0 && <div style={{ color: "rgba(255,255,255,.9)", textShadow: WHITE_SH, fontSize: 14 }}>no reviews yet.</div>}
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ ...pill, display: "inline-block", marginBottom: 12, cursor: "default" }}>recent reviews</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {reviews.map((r, i) => (
+                <div key={i} onClick={() => onOpenAlbum(r.albumId)} style={{ ...frosted, background: "linear-gradient(180deg,rgba(255,255,255,.34),rgba(255,255,255,.14))", padding: isMobile ? 12 : 15, display: "flex", gap: isMobile ? 12 : 16, cursor: "pointer" }}>
+                  <div style={{ width: isMobile ? 60 : 84, height: isMobile ? 76 : 106, flexShrink: 0, borderRadius: 6, overflow: "hidden", background: pal.ink }}>{renderAlbumCover(r)}</div>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
+                      <span style={{ fontSize: isMobile ? 20 : 26, fontWeight: 700, color: pal.ink }}>{r.score}/10</span>
+                      <span style={{ fontSize: isMobile ? 14 : 16, fontWeight: 700, color: "#12384f", overflowWrap: "anywhere" }}>{r.albumTitle}</span>
+                      {r.artist && <span style={{ fontSize: isMobile ? 12 : 14, color: "#3f6a86" }}>{r.artist}</span>}
+                    </div>
+                    {r.body && <div style={{ fontSize: isMobile ? 13 : 13.5, lineHeight: 1.5, color: "#14384e", marginTop: 5 }}>{r.body}</div>}
+                  </div>
+                </div>
+              ))}
+              {reviews.length === 0 && <div style={{ color: "rgba(255,255,255,.92)", textShadow: WHITE_SH, fontSize: 14 }}>no reviews yet.</div>}
+            </div>
           </div>
         </div>
+
+        {/* mixes */}
+        {mixes.length > 0 && (
+          <div style={{ ...frosted, marginTop: 16 }}>
+            <Bar>mixes</Bar>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: isMobile ? 12 : 16 }}>
+              {mixes.map((m) => (
+                <div key={m.id} onClick={() => onOpenMix(m.id)} style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer", background: "rgba(255,255,255,.22)", border: "1px solid rgba(255,255,255,.5)", borderRadius: 10, padding: "10px 12px" }}>
+                  <div style={{ flexShrink: 0, lineHeight: 0 }}>{m.cover}</div>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: isMobile ? 14 : 15, fontWeight: 700, color: "#12384f", overflowWrap: "anywhere" }}>{m.title}</div>
+                    <div style={{ fontSize: 12, color: "#3f6a86", marginTop: 2 }}>{m.count} album{m.count !== 1 ? "s" : ""}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* queued */}
+        {queued.length > 0 && (
+          <div style={{ ...frosted, marginTop: 16 }}>
+            <Bar>queued</Bar>
+            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(3,1fr)" : "repeat(auto-fill,minmax(120px,1fr))", gap: isMobile ? 11 : 16, padding: isMobile ? 14 : 18 }}>
+              {queued.slice(0, 12).map((a) => (
+                <div key={a.id} onClick={() => onOpenAlbum(a.id)} style={{ cursor: "pointer", textAlign: "center" }}>
+                  <Cover item={a} />
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "#fff", textShadow: WHITE_SH, marginTop: 6, overflowWrap: "anywhere" }}>{a.title || "…"}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
