@@ -8433,7 +8433,7 @@ function FollowSquareButton({ isFollowing, pending, onToggle, handle }) {
       onMouseDown={() => setPressed(true)}
       onMouseUp={() => setPressed(false)}
       style={{
-        flex: "none", width: 44, height: 44, margin: "-5px -5px -5px 0", padding: 0,
+        flex: "none", width: 32, height: 32, margin: "-6px 0", padding: 0,
         display: "flex", alignItems: "center", justifyContent: "center",
         background: "transparent", border: "none",
         cursor: pending ? "default" : "pointer",
@@ -8441,13 +8441,13 @@ function FollowSquareButton({ isFollowing, pending, onToggle, handle }) {
       }}
     >
       <span style={{
-        width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center",
+        width: 20, height: 20, display: "flex", alignItems: "center", justifyContent: "center",
         background: bg, border: `1px solid ${border}`, borderRadius: 0, color: isFollowing ? BG : BLUE,
         transition: "background .12s ease, border-color .12s ease, color .12s ease",
         transform: pressed ? "scale(0.94)" : "none",
         filter: isFollowing && hover ? "brightness(0.92)" : "none",
       }}>
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square">
+        <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square">
           <path d={isFollowing ? "M3 8.5L6.3 11.5L13 4.5" : "M8 3V13M3 8H13"} />
         </svg>
       </span>
@@ -8521,7 +8521,7 @@ function FollowListModal({ kind, userId, username, onClose, onVisitProfile, foll
                 <div className="ui-sans" style={{ fontSize: 12.5, color: MUTE, lineHeight: 1.3, marginTop: 1, textAlign: "left" }}>@{(u.username || "").toLowerCase()}</div>
               </div>
               {(u.isSelf || u.username === currentUsername)
-                ? <div style={{ width: 34, flex: "none" }} />
+                ? <div style={{ width: 32, flex: "none" }} />
                 : <FollowSquareButton
                     isFollowing={followState[u.username] ?? u.isFollowing}
                     pending={!!pending[u.id]}
