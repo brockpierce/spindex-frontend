@@ -2316,6 +2316,194 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
     flash("Removed from saved song mixes");
   }
 
+  function renderProfileSettings() {
+    return (
+              <div style={{ marginTop: 18, border: `1px solid ${LINE}`, borderRadius: 0, padding: 18 }} className="ui-sans">
+                <div style={{ fontSize: 13.5, fontWeight: 400, marginBottom: 14 }}>edit profile</div>
+
+                <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 18 }}>
+                  {draftAvatarUrl ? (
+                    <img src={draftAvatarUrl} alt="" style={{ width: 56, height: 56, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
+                  ) : (
+                    <div style={{ width: 56, height: 56, borderRadius: "50%", background: BLUE, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <User color="#fff" size={24} />
+                    </div>
+                  )}
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <input
+                      ref={avatarFileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleAvatarFile}
+                      style={{ display: "none" }}
+                    />
+                    <button className="sb-btn" onClick={() => avatarFileInputRef.current && avatarFileInputRef.current.click()}>
+                      upload photo
+                    </button>
+                    {draftAvatarUrl && (
+                      <button className="sb-btn" onClick={() => setDraftAvatarUrl(null)}>
+                        remove
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  <div>
+                    <div style={{ fontSize: 11, color: MUTE, marginBottom: 5 }}>display name</div>
+                    <input className="sb-input" style={{ width: "100%" }} value={draftDisplayName} onChange={(e) => setDraftDisplayName(e.target.value)} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 11, color: MUTE, marginBottom: 5 }}>username</div>
+                    <input className="sb-input" style={{ width: "100%" }} value={draftUsername} onChange={(e) => setDraftUsername(e.target.value)} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 11, color: MUTE, marginBottom: 5, display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                      <span>bio</span>
+                      <span style={{ fontSize: 10 }}>{draftBio.length}/30</span>
+                    </div>
+                    <textarea
+                      className="sb-textarea"
+                      rows={3}
+                      maxLength={30}
+                      value={draftBio}
+                      onChange={(e) => setDraftBio(e.target.value.slice(0, 30))}
+                    />
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
+                  <button className="sb-btn sb-btn-solid" onClick={saveSettings}>save changes</button>
+                  <button className="sb-btn" onClick={() => setShowSettings(false)}>cancel</button>
+                </div>
+
+                <div style={{ borderTop: `1px solid ${LINE}`, marginTop: 20, paddingTop: 18, textAlign: "left" }}>
+                  {true && (() => {
+                    const isPreset = Object.values(ACCENTS).some((a) => a.value.toLowerCase() === BLUE.toLowerCase());
+                    const isCustom = !isPreset;
+                    return (
+                    <>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: "#6b6b74", marginBottom: 12, letterSpacing: "0.01em" }}>accent color</div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 18 }}>
+                        {Object.entries(ACCENTS).map(([key, a]) => {
+                          const on = BLUE.toLowerCase() === a.value.toLowerCase();
+                          return (
+                            <button
+                              key={key}
+                              onClick={() => chooseAccent(a.value)}
+                              title={a.name}
+                              aria-label={`Use ${a.name} accent`}
+                              style={{
+                                width: 34, height: 34, background: a.value, cursor: "pointer", padding: 0,
+                                border: on ? `2px solid ${INK}` : "1px solid rgba(0,0,0,.12)",
+                                outline: on ? "2px solid #fff" : "none", outlineOffset: -4,
+                                boxShadow: on ? `0 0 0 1px ${INK}` : "none",
+                              }}
+                            />
+                          );
+                        })}
+                        <label
+                          title="Pick a custom color"
+                          style={{
+                            position: "relative", width: 34, height: 34, cursor: "pointer",
+                            display: "inline-flex", alignItems: "center", justifyContent: "center",
+                            background: isCustom ? BLUE : "#fff", color: isCustom ? "#fff" : "#6b6b74",
+                            border: isCustom ? `2px solid ${INK}` : "1px dashed #b8b8bf", boxSizing: "border-box",
+                          }}
+                        >
+                          <span style={{ fontSize: 16, lineHeight: 1 }}>+</span>
+                          <input
+                            type="color"
+                            value={BLUE}
+                            onChange={(e) => chooseAccent(e.target.value)}
+                            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0, cursor: "pointer", border: "none", padding: 0 }}
+                            aria-label="Pick a custom accent color"
+                          />
+                        </label>
+                        <span style={{ fontSize: 14, color: "#8a8a92", marginLeft: 4 }}>custom</span>
+                      </div>
+                    </>
+                    );
+                  })()}
+
+                  <div style={{ marginTop: 22 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: "#6b6b74", marginBottom: 12, letterSpacing: "0.01em" }}>page background</div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 6 }}>
+                      {[
+                        { name: "White", value: "" },
+                        { name: "Cream", value: "#f7f4ee" },
+                        { name: "Soft Gray", value: "#eceef1" },
+                        { name: "Baby Pink", value: "#fbeef2" },
+                      ].map((bg) => {
+                        const cur = profile.pageBackground || "";
+                        const on = cur === bg.value;
+                        return (
+                          <button
+                            key={bg.name}
+                            onClick={() => saveProfileField({ pageBackground: bg.value })}
+                            title={bg.name}
+                            aria-label={bg.name}
+                            style={{
+                              width: 34, height: 34, borderRadius: "50%", cursor: "pointer", padding: 0,
+                              background: bg.value || "#ffffff",
+                              border: on ? `2px solid ${INK}` : "1px solid rgba(0,0,0,.15)",
+                              outline: on ? "2px solid #fff" : "none", outlineOffset: -4,
+                              boxShadow: on ? `0 0 0 1px ${INK}` : "none",
+                            }}
+                          />
+                        );
+                      })}
+                      <span style={{ fontSize: 14, color: "#8a8a92", marginLeft: 4 }}>
+                        {({ "": "White", "#f7f4ee": "Cream", "#eceef1": "Soft Gray", "#fbeef2": "Baby Pink" })[profile.pageBackground || ""] || "White"}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div style={{ marginTop: 22 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: "#6b6b74", marginBottom: 10, letterSpacing: "0.01em" }}>profile theme</div>
+                    <select
+                      value={profile.profileTheme || ""}
+                      onChange={(e) => saveProfileTheme(e.target.value)}
+                      style={{ fontFamily: "inherit", fontSize: 14, padding: "8px 12px", border: `1px solid ${LINE}`, background: BG, color: INK, cursor: "pointer", borderRadius: 0, minWidth: 160 }}
+                    >
+                      <option value="">default</option>
+                      <option value="web2003">web2003</option>
+                      <option value="terminal">terminal</option>
+                      <option value="geocities">netscape</option>
+                      {profile.username === ADMIN_USERNAME && <option value="bubble">bubble (admin test)</option>}
+                    </select>
+                    <div style={{ fontSize: 11, color: MUTE, marginTop: 8 }}>how your profile looks to visitors</div>
+                  </div>
+
+                  <div style={{ borderTop: `1px solid ${LINE}`, marginTop: 22, paddingTop: 18, display: "flex", gap: 10, alignItems: "center", justifyContent: "space-between" }}>
+                    <button
+                      onClick={logout}
+                      className="ui-sans"
+                      style={{ fontFamily: "inherit", fontSize: 13, fontWeight: 500, padding: "9px 18px", background: "transparent", color: "#b23b3b", border: `1px solid #d9a0a0`, borderRadius: 0, cursor: "pointer" }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = "#fbeaea"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                    >
+                      log out
+                    </button>
+                    <button
+                      onClick={() => setView({ name: "deleteAccount", from: view })}
+                      className="ui-sans"
+                      style={{ fontFamily: "inherit", fontSize: 13, fontWeight: 600, padding: "9px 18px", background: "#c0392b", color: "#fff", border: "1px solid #c0392b", borderRadius: 0, cursor: "pointer" }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = "#a93226"; e.currentTarget.style.borderColor = "#a93226"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = "#c0392b"; e.currentTarget.style.borderColor = "#c0392b"; }}
+                    >
+                      delete account
+                    </button>
+                  </div>
+
+                  {false && (
+                    <AdminAddAlbum apiFetch={apiFetch} backendUrl={BACKEND_URL} />
+                  )}
+
+                </div>
+              </div>
+    );
+  }
+
   function openSettings() {
     setDraftDisplayName(profile.displayName);
     setDraftUsername(profile.username);
@@ -5499,7 +5687,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
             renderAlbumCover={(alb) => { const u = alb.album && alb.album.coverArtUrl && alb.album.coverArtUrl !== "none" ? alb.album.coverArtUrl.replace("http://", "https://") : null; return u ? <img src={u} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /> : <div style={{ width: "100%", height: "100%", background: "#0a3a8a" }} />; }}
           />
         )}
-        {view.name === "profile" && profile.profileTheme === "bubble" && profile.username === ADMIN_USERNAME && (
+        {view.name === "profile" && profile.profileTheme === "bubble" && profile.username === ADMIN_USERNAME && (<>
           <BubbleProfile
             displayName={profile.displayName}
             username={profile.username}
@@ -5522,7 +5710,8 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
             renderAvatar={(size) => avatarUrl ? <img src={avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}><User color="#fff" size={size / 2} /></div>}
             renderAlbumCover={(alb) => { const u = alb.album && alb.album.coverArtUrl && alb.album.coverArtUrl !== "none" ? alb.album.coverArtUrl.replace("http://", "https://") : null; return u ? <img src={u} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /> : <div style={{ width: "100%", height: "100%" }} />; }}
           />
-        )}
+          {showSettings && <div style={{ padding: 16 }}>{renderProfileSettings()}</div>}
+        </>)}
         {view.name === "profile" && profile.profileTheme !== "mspaint" && !(profile.profileTheme === "bubble" && profile.username === ADMIN_USERNAME) && (
           <div className="pf" data-theme={profile.profileTheme || ""} style={{ "--pf-navy": BLUE }}>
             {profile.profileTheme === "geocities" && (
@@ -5661,191 +5850,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
               );
             })()}
 
-            {showSettings && (
-              <div style={{ marginTop: 18, border: `1px solid ${LINE}`, borderRadius: 0, padding: 18 }} className="ui-sans">
-                <div style={{ fontSize: 13.5, fontWeight: 400, marginBottom: 14 }}>edit profile</div>
-
-                <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 18 }}>
-                  {draftAvatarUrl ? (
-                    <img src={draftAvatarUrl} alt="" style={{ width: 56, height: 56, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
-                  ) : (
-                    <div style={{ width: 56, height: 56, borderRadius: "50%", background: BLUE, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      <User color="#fff" size={24} />
-                    </div>
-                  )}
-                  <div style={{ display: "flex", gap: 8 }}>
-                    <input
-                      ref={avatarFileInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={handleAvatarFile}
-                      style={{ display: "none" }}
-                    />
-                    <button className="sb-btn" onClick={() => avatarFileInputRef.current && avatarFileInputRef.current.click()}>
-                      upload photo
-                    </button>
-                    {draftAvatarUrl && (
-                      <button className="sb-btn" onClick={() => setDraftAvatarUrl(null)}>
-                        remove
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  <div>
-                    <div style={{ fontSize: 11, color: MUTE, marginBottom: 5 }}>display name</div>
-                    <input className="sb-input" style={{ width: "100%" }} value={draftDisplayName} onChange={(e) => setDraftDisplayName(e.target.value)} />
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 11, color: MUTE, marginBottom: 5 }}>username</div>
-                    <input className="sb-input" style={{ width: "100%" }} value={draftUsername} onChange={(e) => setDraftUsername(e.target.value)} />
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 11, color: MUTE, marginBottom: 5, display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                      <span>bio</span>
-                      <span style={{ fontSize: 10 }}>{draftBio.length}/30</span>
-                    </div>
-                    <textarea
-                      className="sb-textarea"
-                      rows={3}
-                      maxLength={30}
-                      value={draftBio}
-                      onChange={(e) => setDraftBio(e.target.value.slice(0, 30))}
-                    />
-                  </div>
-                </div>
-                <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
-                  <button className="sb-btn sb-btn-solid" onClick={saveSettings}>save changes</button>
-                  <button className="sb-btn" onClick={() => setShowSettings(false)}>cancel</button>
-                </div>
-
-                <div style={{ borderTop: `1px solid ${LINE}`, marginTop: 20, paddingTop: 18, textAlign: "left" }}>
-                  {true && (() => {
-                    const isPreset = Object.values(ACCENTS).some((a) => a.value.toLowerCase() === BLUE.toLowerCase());
-                    const isCustom = !isPreset;
-                    return (
-                    <>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: "#6b6b74", marginBottom: 12, letterSpacing: "0.01em" }}>accent color</div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 18 }}>
-                        {Object.entries(ACCENTS).map(([key, a]) => {
-                          const on = BLUE.toLowerCase() === a.value.toLowerCase();
-                          return (
-                            <button
-                              key={key}
-                              onClick={() => chooseAccent(a.value)}
-                              title={a.name}
-                              aria-label={`Use ${a.name} accent`}
-                              style={{
-                                width: 34, height: 34, background: a.value, cursor: "pointer", padding: 0,
-                                border: on ? `2px solid ${INK}` : "1px solid rgba(0,0,0,.12)",
-                                outline: on ? "2px solid #fff" : "none", outlineOffset: -4,
-                                boxShadow: on ? `0 0 0 1px ${INK}` : "none",
-                              }}
-                            />
-                          );
-                        })}
-                        <label
-                          title="Pick a custom color"
-                          style={{
-                            position: "relative", width: 34, height: 34, cursor: "pointer",
-                            display: "inline-flex", alignItems: "center", justifyContent: "center",
-                            background: isCustom ? BLUE : "#fff", color: isCustom ? "#fff" : "#6b6b74",
-                            border: isCustom ? `2px solid ${INK}` : "1px dashed #b8b8bf", boxSizing: "border-box",
-                          }}
-                        >
-                          <span style={{ fontSize: 16, lineHeight: 1 }}>+</span>
-                          <input
-                            type="color"
-                            value={BLUE}
-                            onChange={(e) => chooseAccent(e.target.value)}
-                            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0, cursor: "pointer", border: "none", padding: 0 }}
-                            aria-label="Pick a custom accent color"
-                          />
-                        </label>
-                        <span style={{ fontSize: 14, color: "#8a8a92", marginLeft: 4 }}>custom</span>
-                      </div>
-                    </>
-                    );
-                  })()}
-
-                  <div style={{ marginTop: 22 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: "#6b6b74", marginBottom: 12, letterSpacing: "0.01em" }}>page background</div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 6 }}>
-                      {[
-                        { name: "White", value: "" },
-                        { name: "Cream", value: "#f7f4ee" },
-                        { name: "Soft Gray", value: "#eceef1" },
-                        { name: "Baby Pink", value: "#fbeef2" },
-                      ].map((bg) => {
-                        const cur = profile.pageBackground || "";
-                        const on = cur === bg.value;
-                        return (
-                          <button
-                            key={bg.name}
-                            onClick={() => saveProfileField({ pageBackground: bg.value })}
-                            title={bg.name}
-                            aria-label={bg.name}
-                            style={{
-                              width: 34, height: 34, borderRadius: "50%", cursor: "pointer", padding: 0,
-                              background: bg.value || "#ffffff",
-                              border: on ? `2px solid ${INK}` : "1px solid rgba(0,0,0,.15)",
-                              outline: on ? "2px solid #fff" : "none", outlineOffset: -4,
-                              boxShadow: on ? `0 0 0 1px ${INK}` : "none",
-                            }}
-                          />
-                        );
-                      })}
-                      <span style={{ fontSize: 14, color: "#8a8a92", marginLeft: 4 }}>
-                        {({ "": "White", "#f7f4ee": "Cream", "#eceef1": "Soft Gray", "#fbeef2": "Baby Pink" })[profile.pageBackground || ""] || "White"}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div style={{ marginTop: 22 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: "#6b6b74", marginBottom: 10, letterSpacing: "0.01em" }}>profile theme</div>
-                    <select
-                      value={profile.profileTheme || ""}
-                      onChange={(e) => saveProfileTheme(e.target.value)}
-                      style={{ fontFamily: "inherit", fontSize: 14, padding: "8px 12px", border: `1px solid ${LINE}`, background: BG, color: INK, cursor: "pointer", borderRadius: 0, minWidth: 160 }}
-                    >
-                      <option value="">default</option>
-                      <option value="web2003">web2003</option>
-                      <option value="terminal">terminal</option>
-                      <option value="geocities">netscape</option>
-                      {profile.username === ADMIN_USERNAME && <option value="bubble">bubble (admin test)</option>}
-                    </select>
-                    <div style={{ fontSize: 11, color: MUTE, marginTop: 8 }}>how your profile looks to visitors</div>
-                  </div>
-
-                  <div style={{ borderTop: `1px solid ${LINE}`, marginTop: 22, paddingTop: 18, display: "flex", gap: 10, alignItems: "center", justifyContent: "space-between" }}>
-                    <button
-                      onClick={logout}
-                      className="ui-sans"
-                      style={{ fontFamily: "inherit", fontSize: 13, fontWeight: 500, padding: "9px 18px", background: "transparent", color: "#b23b3b", border: `1px solid #d9a0a0`, borderRadius: 0, cursor: "pointer" }}
-                      onMouseEnter={(e) => { e.currentTarget.style.background = "#fbeaea"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-                    >
-                      log out
-                    </button>
-                    <button
-                      onClick={() => setView({ name: "deleteAccount", from: view })}
-                      className="ui-sans"
-                      style={{ fontFamily: "inherit", fontSize: 13, fontWeight: 600, padding: "9px 18px", background: "#c0392b", color: "#fff", border: "1px solid #c0392b", borderRadius: 0, cursor: "pointer" }}
-                      onMouseEnter={(e) => { e.currentTarget.style.background = "#a93226"; e.currentTarget.style.borderColor = "#a93226"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.background = "#c0392b"; e.currentTarget.style.borderColor = "#c0392b"; }}
-                    >
-                      delete account
-                    </button>
-                  </div>
-
-                  {false && (
-                    <AdminAddAlbum apiFetch={apiFetch} backendUrl={BACKEND_URL} />
-                  )}
-
-                </div>
-              </div>
-            )}
+            {showSettings && renderProfileSettings()}
 
             {isMobile && profile.profileTheme !== "web2003" && (
               <div style={{ display: "flex", gap: 16, padding: "20px 0", borderBottom: `1px solid ${LINE}`, overflowX: "auto", justifyContent: "center", alignItems: "flex-start" }}>
