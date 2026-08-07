@@ -1231,15 +1231,17 @@ export default function SoundboardDemo() {
   }, []);
   const theme = useMemo(() => {
     const surfaces = darkMode ? SURFACES.dark : SURFACES.light;
+    // While the admin-only bubble theme is active, its palette drives the site accent.
+    const bubbleAccent = (profile.profileTheme === "bubble" && profile.username === ADMIN_USERNAME && AERO_PALETTES[bubblePalette] && AERO_PALETTES[bubblePalette].accent) || null;
     return {
-      BLUE: customAccent || ACCENTS[accentKey].value,
+      BLUE: bubbleAccent || customAccent || ACCENTS[accentKey].value,
       INK: surfaces.ink,
       LINE: surfaces.line,
       MUTE: surfaces.mute,
       BG: surfaces.bg,
       darkMode,
     };
-  }, [accentKey, customAccent, darkMode]);
+  }, [accentKey, customAccent, darkMode, profile.profileTheme, profile.username, bubblePalette]);
   const [query, setQuery] = useState("");
   const [liveAlbums, setLiveAlbums] = useState([]);
   const [trendingAlbums, setTrendingAlbums] = useState([]);
@@ -5728,6 +5730,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
             queued={Object.entries(listenStatus).filter(([, s]) => s === "want_to_listen").map(([id]) => { const a = fetchedAlbums[id] || albumById(id); return { id, title: a && a.title !== "Unknown Album" ? a.title : "", album: a }; })}
             onOpenSettings={openSettings}
             onOpenMix={(id) => setView({ name: "albumMixDetail", id })}
+            onShowAllQueued={() => setView({ name: "albumList", filter: "want_to_listen" })}
             onOpenAlbum={(id) => openAlbum(id)}
             onNeedAlbum={(id) => { if (!fetchedAlbums[id]) { apiFetch(`${BACKEND_URL}/api/albums/${id}`).then((r) => r.json()).then((data) => { if (data.album) { const a = data.album; setFetchedAlbums((prev) => ({ ...prev, [id]: { ...a, artist: a.artistName || "", year: a.releaseYear || null } })); } }).catch(() => {}); } }}
             onStatClick={(label) => {
@@ -8466,26 +8469,26 @@ function AlbumCommunitySection({ albumId, albumTab, setAlbumTab, openAlbum, revi
 // ---------------- bubble (Frutiger Aero) profile theme ----------------
 // Admin-only test theme. Five palettes; everything derives from the selected one.
 const AERO_PALETTES = {
-  aqua: { label: "aqua", swatch: "#1478C4", ink: "#0B4C86",
-    bg: "linear-gradient(180deg,#0B5FA5 0%,#1478C4 26%,#39A9DE 58%,#7FD3E8 82%,#C9F0F2 100%)",
-    bar: "linear-gradient(180deg,rgba(11,95,165,.9) 0%,rgba(11,95,165,.72) 49%,rgba(6,66,120,.82) 51%,rgba(20,120,196,.8) 100%)" },
-  navy: { label: "navy", swatch: "#1F388A", ink: "#1F388A",
-    bg: "linear-gradient(180deg,#16265E 0%,#1F388A 28%,#4E6BC4 60%,#A9BCEA 84%,#E9ECF6 100%)",
-    bar: "linear-gradient(180deg,rgba(31,56,138,.92) 0%,rgba(31,56,138,.74) 49%,rgba(18,34,90,.85) 51%,rgba(60,92,180,.8) 100%)" },
-  lime: { label: "lime", swatch: "#6FB828", ink: "#3E7C1B",
-    bg: "linear-gradient(180deg,#2E6B10 0%,#5CA320 26%,#8FD44B 58%,#C6EE94 82%,#EEF9DC 100%)",
-    bar: "linear-gradient(180deg,rgba(64,132,26,.9) 0%,rgba(64,132,26,.72) 49%,rgba(38,86,14,.85) 51%,rgba(92,163,32,.8) 100%)" },
-  pink: { label: "baby pink", swatch: "#F08BB8", ink: "#AE3A6E",
-    bg: "linear-gradient(180deg,#B23A72 0%,#DE5F97 26%,#F294C0 58%,#FBC7DD 82%,#FDEBF2 100%)",
-    bar: "linear-gradient(180deg,rgba(190,63,120,.9) 0%,rgba(190,63,120,.72) 49%,rgba(140,38,84,.85) 51%,rgba(222,95,151,.8) 100%)" },
-  red: { label: "red", swatch: "#D42A2A", ink: "#96171B",
-    bg: "linear-gradient(180deg,#7A0E12 0%,#B81C1F 26%,#E24B3C 58%,#F3A08D 82%,#FCE3DA 100%)",
-    bar: "linear-gradient(180deg,rgba(138,18,22,.92) 0%,rgba(138,18,22,.74) 49%,rgba(94,10,14,.86) 51%,rgba(184,28,31,.8) 100%)" },
+  aqua: { label: "aqua", swatch: "#39A9DE", ink: "#0B4C86", accent: "#1E86C8",
+    bg: "linear-gradient(180deg,#45A0D6 0%,#68B9E2 26%,#93D4ED 58%,#C1E9F3 82%,#EAF9FB 100%)",
+    bar: "linear-gradient(180deg,rgba(69,160,214,.82) 0%,rgba(69,160,214,.62) 49%,rgba(40,120,180,.74) 51%,rgba(104,185,226,.7) 100%)" },
+  navy: { label: "navy", swatch: "#4E6BC4", ink: "#33469A", accent: "#3E58B4",
+    bg: "linear-gradient(180deg,#5568B6 0%,#6A7DCA 28%,#94A8E2 60%,#CBD6F3 84%,#F2F4FB 100%)",
+    bar: "linear-gradient(180deg,rgba(85,104,182,.82) 0%,rgba(85,104,182,.64) 49%,rgba(58,76,150,.76) 51%,rgba(120,146,220,.7) 100%)" },
+  lime: { label: "lime", swatch: "#7BC63A", ink: "#3E7C1B", accent: "#4E9E1F",
+    bg: "linear-gradient(180deg,#7DC63C 0%,#98D65C 26%,#B6E588 58%,#D6F1B4 82%,#F1FBE2 100%)",
+    bar: "linear-gradient(180deg,rgba(125,198,60,.82) 0%,rgba(125,198,60,.62) 49%,rgba(84,150,32,.76) 51%,rgba(152,214,92,.7) 100%)" },
+  pink: { label: "baby pink", swatch: "#F294C0", ink: "#B0426F", accent: "#D0568E",
+    bg: "linear-gradient(180deg,#E687B2 0%,#F0A2C8 26%,#F7BFDB 58%,#FCDFEC 82%,#FEF4F8 100%)",
+    bar: "linear-gradient(180deg,rgba(230,135,178,.82) 0%,rgba(230,135,178,.62) 49%,rgba(188,90,134,.76) 51%,rgba(240,162,200,.7) 100%)" },
+  red: { label: "red", swatch: "#E24B3C", ink: "#A82420", accent: "#D0392B",
+    bg: "linear-gradient(180deg,#E5675A 0%,#EE8578 26%,#F4A89A 58%,#F9CCC0 82%,#FDECE6 100%)",
+    bar: "linear-gradient(180deg,rgba(229,103,90,.82) 0%,rgba(229,103,90,.62) 49%,rgba(188,60,48,.76) 51%,rgba(238,133,120,.7) 100%)" },
 };
 const AERO_MOOD = { chill: "8)", flirty: ";)", happy: ":)", angry: ">:(", sad: ":(", bored: "-_-", hyper: "^_^" };
 
 function BubbleProfile({ displayName, username, bio, isMobile, palette, stats, albums, reviews, info, mixes, queued,
-                         onOpenSettings, onOpenAlbum, onOpenMix, onStatClick, onNeedAlbum, renderAvatar, renderAlbumCover }) {
+                         onOpenSettings, onOpenAlbum, onOpenMix, onShowAllQueued, onStatClick, onNeedAlbum, renderAvatar, renderAlbumCover }) {
   // Pull album details for any favorite/review/queued cover we don't have yet.
   React.useEffect(() => {
     if (!onNeedAlbum) return;
@@ -8498,8 +8501,8 @@ function BubbleProfile({ displayName, username, bio, isMobile, palette, stats, a
 
   const NAME_SH = "0 2px 6px rgba(0,20,50,.5), 0 1px 0 rgba(255,255,255,.25)";
   const WHITE_SH = "0 1px 3px rgba(0,20,50,.5)";
-  // Glassier panels: lower white alpha + saturate so the gradient/bubbles read through.
-  const frosted = { background: "linear-gradient(180deg,rgba(255,255,255,.26),rgba(255,255,255,.10))", border: "1px solid rgba(255,255,255,.6)", backdropFilter: "blur(16px) saturate(1.35)", WebkitBackdropFilter: "blur(16px) saturate(1.35)", boxShadow: "0 6px 22px rgba(0,20,50,.22), inset 0 1px 0 rgba(255,255,255,.55)", borderRadius: 14, overflow: "hidden" };
+  // Glassier panels: very low white alpha so the gradient + bubbles read clearly through.
+  const frosted = { background: "linear-gradient(180deg,rgba(255,255,255,.18),rgba(255,255,255,.06))", border: "1px solid rgba(255,255,255,.55)", backdropFilter: "blur(18px) saturate(1.05)", WebkitBackdropFilter: "blur(18px) saturate(1.05)", boxShadow: "0 6px 22px rgba(0,20,50,.16), inset 0 1px 0 rgba(255,255,255,.5)", borderRadius: 14, overflow: "hidden" };
   const pill = { background: "linear-gradient(180deg,#ffffff 0%,#F4FAFD 48%,#DCEBF4 52%,#F4FAFD 100%)", border: "1px solid rgba(255,255,255,.9)", boxShadow: "0 3px 10px rgba(0,20,50,.28)", borderRadius: 9999, padding: isMobile ? "7px 14px" : "9px 18px", fontWeight: 700, fontSize: isMobile ? 13 : 15, color: pal.ink, cursor: "pointer", fontFamily: '"Helvetica Neue",Helvetica,Arial,sans-serif' };
   const Bar = ({ children }) => (
     <div style={{ background: pal.bar, borderBottom: "1px solid rgba(255,255,255,.5)", padding: isMobile ? "11px 15px" : "13px 18px", fontWeight: 700, fontSize: isMobile ? 15 : 17, color: "#fff", textShadow: WHITE_SH, textAlign: "center", fontFamily: '"Helvetica Neue",Helvetica,Arial,sans-serif' }}>{children}</div>
@@ -8507,7 +8510,7 @@ function BubbleProfile({ displayName, username, bio, isMobile, palette, stats, a
   const pad = isMobile ? 16 : 30;
   const av = isMobile ? 82 : 132;
   const bub = (t, l, sz, dur) => (
-    <div className="aero-bubble" style={{ position: "absolute", top: t, left: l, width: sz, height: sz, borderRadius: 9999, background: "radial-gradient(circle at 32% 28%,rgba(255,255,255,.85),rgba(255,255,255,.12) 45%,rgba(255,255,255,.03) 70%)", border: "1px solid rgba(255,255,255,.4)", animation: `aeroFloat ${dur}s ease-in-out infinite`, pointerEvents: "none" }} />
+    <div className="aero-bubble" style={{ position: "absolute", top: t, left: l, width: sz, height: sz, borderRadius: 9999, background: "radial-gradient(circle at 32% 28%,rgba(255,255,255,.92),rgba(255,255,255,.18) 45%,rgba(255,255,255,.04) 70%)", border: "1px solid rgba(255,255,255,.5)", animation: `aeroFloat ${dur}s ease-in-out infinite`, pointerEvents: "none" }} />
   );
 
   const StatCell = ({ num, label, icon, onClick, first }) => (
@@ -8527,10 +8530,14 @@ function BubbleProfile({ displayName, username, bio, isMobile, palette, stats, a
     <div className="ui-sans" style={{ position: "relative", fontFamily: '"Helvetica Neue",Helvetica,Arial,sans-serif' }}>
       {/* full-bleed gradient + top light glow + floating bubbles behind everything */}
       <div aria-hidden style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: "100vw", height: "100%", background: pal.bg, zIndex: 0 }}>
-        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "48%", background: "radial-gradient(120% 80% at 50% -18%, rgba(255,255,255,.38), rgba(255,255,255,0) 62%)", pointerEvents: "none" }} />
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "55%", background: "radial-gradient(130% 85% at 50% -16%, rgba(255,255,255,.5), rgba(255,255,255,0) 64%)", pointerEvents: "none" }} />
+        <div style={{ position: "absolute", bottom: 0, left: "-10%", width: "55%", height: "45%", background: "radial-gradient(circle at 30% 80%, rgba(255,255,255,.3), rgba(255,255,255,0) 60%)", pointerEvents: "none" }} />
+        {bub("16%", "78%", isMobile ? 70 : 120, 8)}
         {bub("34%", "6%", isMobile ? 96 : 150, 7)}
-        {bub("62%", "72%", isMobile ? 96 : 92, 9)}
+        {bub("62%", "72%", isMobile ? 96 : 96, 9)}
+        {bub("80%", "14%", isMobile ? 64 : 110, 10)}
         {!isMobile && bub("48%", "44%", 58, 6)}
+        {!isMobile && bub("88%", "58%", 84, 7)}
       </div>
 
       <div style={{ position: "relative", zIndex: 1, maxWidth: 1000, margin: "0 auto", padding: `${pad}px ${pad}px ${pad + 30}px` }}>
@@ -8584,7 +8591,7 @@ function BubbleProfile({ displayName, username, bio, isMobile, palette, stats, a
             <div style={{ ...pill, display: "inline-block", marginBottom: 12, cursor: "default" }}>recent reviews</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               {reviews.map((r, i) => (
-                <div key={i} onClick={() => onOpenAlbum(r.albumId)} style={{ ...frosted, background: "linear-gradient(180deg,rgba(255,255,255,.34),rgba(255,255,255,.14))", padding: isMobile ? 12 : 15, display: "flex", gap: isMobile ? 12 : 16, cursor: "pointer" }}>
+                <div key={i} onClick={() => onOpenAlbum(r.albumId)} style={{ ...frosted, background: "linear-gradient(180deg,rgba(255,255,255,.24),rgba(255,255,255,.09))", padding: isMobile ? 12 : 15, display: "flex", gap: isMobile ? 12 : 16, cursor: "pointer" }}>
                   <div style={{ width: isMobile ? 60 : 84, height: isMobile ? 76 : 106, flexShrink: 0, borderRadius: 6, overflow: "hidden", background: pal.ink }}>{renderAlbumCover(r)}</div>
                   <div style={{ minWidth: 0 }}>
                     <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
@@ -8619,18 +8626,23 @@ function BubbleProfile({ displayName, username, bio, isMobile, palette, stats, a
           </div>
         )}
 
-        {/* queued */}
+        {/* queued — small assortment + show-all to the full page */}
         {queued.length > 0 && (
           <div style={{ ...frosted, marginTop: 16 }}>
             <Bar>queued</Bar>
             <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(3,1fr)" : "repeat(auto-fill,minmax(120px,1fr))", gap: isMobile ? 11 : 16, padding: isMobile ? 14 : 18 }}>
-              {queued.slice(0, 12).map((a) => (
+              {queued.slice(0, isMobile ? 6 : 5).map((a) => (
                 <div key={a.id} onClick={() => onOpenAlbum(a.id)} style={{ cursor: "pointer", textAlign: "center" }}>
                   <Cover item={a} />
                   <div style={{ fontSize: 12, fontWeight: 700, color: "#fff", textShadow: WHITE_SH, marginTop: 6, overflowWrap: "anywhere" }}>{a.title || "…"}</div>
                 </div>
               ))}
             </div>
+            {queued.length > (isMobile ? 6 : 5) && (
+              <div style={{ padding: isMobile ? "0 14px 16px" : "0 18px 18px" }}>
+                <button onClick={onShowAllQueued} style={{ ...pill, cursor: "pointer" }}>show all queued ({queued.length})</button>
+              </div>
+            )}
           </div>
         )}
       </div>
