@@ -2647,6 +2647,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
   const [lightboxSrc, setLightboxSrc] = useState(null); // full-screen post image
   const [expandedComments, setExpandedComments] = useState({});
   const [viewedUserQueue, setViewedUserQueue] = useState([]);
+  const [viewedUserListened, setViewedUserListened] = useState([]);
   const [viewedUserListenedCount, setViewedUserListenedCount] = useState(0);
   const [artistAlbums, setArtistAlbums] = useState([]);
   const [artistAliases, setArtistAliases] = useState([]);
@@ -2795,6 +2796,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
     setViewedUserFavorites([]);
     setViewedUserMixes([]);
     setViewedUserQueue([]);
+    setViewedUserListened([]);
     setViewedUserListenedCount(0);
     setShowAllUserReviews(false);
     setView({ name: "userProfile", username });
@@ -2845,14 +2847,18 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
               }
             })
             .catch(() => {});
-          // Load their queue
+          // Load their listened + queue lists
           apiFetch(`${BACKEND_URL}/api/listen-status/user/${data.user.id}`)
             .then((r) => r.json())
             .then((qData) => {
-              if (qData && qData.queue) {
-                setViewedUserQueue(qData.queue);
-                setViewedUserListenedCount(qData.listenedCount || 0);
-                qData.queue.forEach((id) => {
+              if (qData) {
+                const listened = qData.listened || [];
+                const queue = qData.queue || [];
+                setViewedUserListened(listened);
+                setViewedUserQueue(queue);
+                setViewedUserListenedCount(qData.listenedCount ?? listened.length);
+                // Prefetch album data for both lists so covers render.
+                [...listened, ...queue].forEach((id) => {
                   if (!fetchedAlbums[id]) {
                     apiFetch(`${BACKEND_URL}/api/albums/${id}`)
                       .then((r) => r.json())
@@ -4207,7 +4213,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                 onStatClick={(label) => {
                   if (label === "followers") setShowFollowList({ kind: "followers", userId: user.id, username: user.username });
                   else if (label === "following") setShowFollowList({ kind: "following", userId: user.id, username: user.username });
-                  else if (label === "listened") setView({ name: "listenedList", username: user.username, userId: user.id, listenedIds: viewedUserQueue, from: view });
+                  else if (label === "listened") setView({ name: "listenedList", username: user.username, userId: user.id, listenedIds: viewedUserListened, from: view });
                   else if (label === "reviews") setView({ name: "reviewsList", username: user.username, userId: user.id, reviews: userReviews, from: view });
                 }}
                 renderAvatar={(size) => <Avatar username={user.username} size={size} />}
@@ -4270,7 +4276,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                     <div style={{ display: "flex", gap: 32, alignItems: "flex-start", flexShrink: 0, marginRight: 24 }}>
                       <Stat label="followers" value={user.followerCount || 0} onClick={() => setShowFollowList({ kind: "followers", userId: user.id, username: user.username })} />
                       <Stat label="following" value={user.followingCount || 0} onClick={() => setShowFollowList({ kind: "following", userId: user.id, username: user.username })} />
-                      <Stat label="listened" value={viewedUserListenedCount} onClick={() => setView({ name: "listenedList", username: user.username, userId: user.id, listenedIds: viewedUserQueue, from: view })} />
+                      <Stat label="listened" value={viewedUserListenedCount} onClick={() => setView({ name: "listenedList", username: user.username, userId: user.id, listenedIds: viewedUserListened, from: view })} />
                       <Stat label="activity" value={<PencilGlyph size={20} />} onClick={() => openActivity(user.username, user.id, false)} />
                       <Stat label="stats" value={<EqualizerIcon />} onClick={userReviews.length > 0 ? () => setView({ name: "statsDetail", reviews: userReviews, displayName: user.displayName || user.username, isOwn: false, from: view }) : undefined} />
                     </div>
