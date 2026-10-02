@@ -6336,6 +6336,19 @@ function renderBold(text) {
   });
 }
 
+// Rich inline formatting: **bold**, __underline__, *italic* or _italic_.
+// Single-pass (no nesting) — plenty for interview/review copy.
+function renderRich(text) {
+  if (!text) return null;
+  return String(text).split(/(\*\*[^*]+\*\*|__[^_]+__|\*[^*]+\*|_[^_]+_)/g).map((part, i) => {
+    if (/^\*\*[^*]+\*\*$/.test(part)) return <strong key={i}>{part.slice(2, -2)}</strong>;
+    if (/^__[^_]+__$/.test(part)) return <u key={i}>{part.slice(2, -2)}</u>;
+    if (/^\*[^*]+\*$/.test(part)) return <em key={i}>{part.slice(1, -1)}</em>;
+    if (/^_[^_]+_$/.test(part)) return <em key={i}>{part.slice(1, -1)}</em>;
+    return part;
+  });
+}
+
 // Today as YYYY-MM-DD in LOCAL time. Not toISOString(), which is UTC and
 // would allow a future date for anyone west of Greenwich in the evening.
 function nbTodayLocal() {
@@ -6401,6 +6414,7 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
   const [intSaving, setIntSaving] = React.useState(false);
   const [intPhoto, setIntPhoto] = React.useState(null);
   const intPhotoRef = React.useRef(null);
+  const intBodyRef = React.useRef(null);
 
   React.useEffect(() => {
     apiFetch(BACKEND_URL + "/api/news")
@@ -6521,6 +6535,17 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
     } catch (e) {
       setAotdError("Network error — " + (e.message || "try again.")); setAotdSaving(false);
     }
+  }
+
+  // Wrap the current textarea selection in formatting markers.
+  function intWrap(pre, suf) {
+    const el = intBodyRef.current;
+    if (!el) { setIntBody(intBody + pre + suf); return; }
+    const a = el.selectionStart, b = el.selectionEnd;
+    const sel = intBody.slice(a, b);
+    setIntBody(intBody.slice(0, a) + pre + sel + suf + intBody.slice(b));
+    const caret = sel ? a + pre.length + sel.length + suf.length : a + pre.length;
+    requestAnimationFrame(() => { el.focus(); el.setSelectionRange(caret, caret); });
   }
 
   async function saveInterview() {
@@ -6702,10 +6727,15 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
         <div style={{ border: "1px solid #eee", borderRadius: 0, padding: 20, marginBottom: 24 }}>
           <div className="ui-sans" style={{ fontSize: 14, fontWeight: 400, marginBottom: 14 }}>{editingInterview ? "edit interview" : "new interview"}</div>
           <input className="sb-input ui-sans" placeholder="subject name (e.g. Alex G)" value={intTitle} onChange={(e) => setIntTitle(e.target.value)} style={{ width: "100%", marginBottom: 8 }} />
-          <textarea className="sb-textarea ui-sans" placeholder="body text..." value={intBody} onChange={(e) => setIntBody(e.target.value)} rows={10} style={{ width: "100%", marginBottom: 8, fontSize: 13 }} />
+          <div style={{ display: "flex", gap: 6, marginBottom: 6 }}>
+            <button type="button" className="sb-btn" title="bold" style={{ fontWeight: 800, padding: "4px 11px" }} onClick={() => intWrap("**", "**")}>B</button>
+            <button type="button" className="sb-btn" title="italic" style={{ fontStyle: "italic", padding: "4px 11px" }} onClick={() => intWrap("*", "*")}>I</button>
+            <button type="button" className="sb-btn" title="underline" style={{ textDecoration: "underline", padding: "4px 11px" }} onClick={() => intWrap("__", "__")}>U</button>
+          </div>
+          <textarea ref={intBodyRef} className="sb-textarea ui-sans" placeholder="body text... (select text, then B / I / U)" value={intBody} onChange={(e) => setIntBody(e.target.value)} rows={10} style={{ width: "100%", marginBottom: 8, fontSize: 13 }} />
           <input className="sb-input ui-sans" placeholder="album IDs (comma separated, optional)" value={intAlbumIds} onChange={(e) => setIntAlbumIds(e.target.value)} style={{ width: "100%", marginBottom: 12 }} />
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-            {intPhoto ? <img src={intPhoto} alt="" style={{ width: 52, height: 52, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} /> : <div style={{ width: 52, height: 52, borderRadius: "50%", background: LINE, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", color: MUTE, fontSize: 9, textAlign: "center" }}>no photo</div>}
+            {intPhoto ? <img src={intPhoto} alt="" style={{ width: 52, height: 52, borderRadius: 0, objectFit: "cover", flexShrink: 0 }} /> : <div style={{ width: 52, height: 52, borderRadius: 0, background: LINE, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", color: MUTE, fontSize: 9, textAlign: "center" }}>no photo</div>}
             <input ref={intPhotoRef} type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => { const f = e.target.files && e.target.files[0]; if (f) compressImageFile(f, 400, 0.82).then(setIntPhoto).catch(() => {}); }} />
             <button className="sb-btn" type="button" onClick={() => intPhotoRef.current && intPhotoRef.current.click()}>{intPhoto ? "change artist photo" : "add artist photo"}</button>
             {intPhoto && <button className="sb-btn" type="button" onClick={() => setIntPhoto(null)}>remove</button>}
@@ -6727,19 +6757,19 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
             <div key={interview.id}>
               <div onClick={() => setActiveInterview(activeInterview === interview.id ? null : interview.id)}
                 style={{ display: "flex", alignItems: "center", gap: 13, padding: "13px 0", borderTop: idx === 0 ? "none" : `1px solid ${LINE}`, cursor: "pointer" }}>
-                <div style={{ width: 46, height: 46, flexShrink: 0, borderRadius: interview.artistPhoto ? "50%" : 0, background: LINE, overflow: "hidden" }}>
+                <div style={{ width: 46, height: 46, flexShrink: 0, borderRadius: 0, background: LINE, overflow: "hidden" }}>
                   {interview.artistPhoto
                     ? <img src={interview.artistPhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     : (firstAlbum && firstAlbum.coverArtUrl && <img src={firstAlbum.coverArtUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />)}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div className="ui-sans" style={{ fontSize: 14.5, fontWeight: 800, lineHeight: 1.3 }}>{interview.title}</div>
-                  <div className="ui-sans" style={{ fontSize: 13, color: MUTE }}>{interview.author?.username || "staff"}</div>
+                  <div className="ui-sans" style={{ fontSize: 13, color: MUTE }}>interview by {interview.author?.username || "staff"}</div>
                 </div>
                 <div className="ui-sans" style={{ fontSize: 13, color: MUTE, flexShrink: 0 }}>{interview.date || ""}</div>
               </div>
               {activeInterview === interview.id && (
-                <div className="ui-sans" style={{ fontSize: 13.5, lineHeight: 1.75, color: "#444", padding: "0 0 12px 59px", whiteSpace: "pre-line" }}>{interview.body}</div>
+                <div className="ui-sans" style={{ fontSize: 13.5, lineHeight: 1.75, color: "#444", padding: "0 0 12px 59px", whiteSpace: "pre-line" }}>{renderRich(interview.body)}</div>
               )}
               {isAdmin && activeInterview === interview.id && (
                 <div style={{ display: "flex", gap: 12, padding: "0 0 12px 59px" }}>
