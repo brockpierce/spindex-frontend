@@ -6349,6 +6349,17 @@ function renderRich(text) {
   });
 }
 
+// Interview body: inline images via markdown ![..](dataUrl|url), text via renderRich.
+function renderInterviewBody(body) {
+  if (!body) return null;
+  return String(body).split(/(!\[[^\]]*\]\([^)]+\))/g).map((part, i) => {
+    const m = part.match(/^!\[[^\]]*\]\(([^)]+)\)$/);
+    if (m) return <img key={i} src={m[1]} alt="" style={{ display: "block", maxWidth: "100%", borderRadius: 0, margin: "16px 0" }} />;
+    if (!part) return null;
+    return <span key={i} style={{ whiteSpace: "pre-line" }}>{renderRich(part)}</span>;
+  });
+}
+
 // Today as YYYY-MM-DD in LOCAL time. Not toISOString(), which is UTC and
 // would allow a future date for anyone west of Greenwich in the evening.
 function nbTodayLocal() {
@@ -6415,6 +6426,7 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
   const [intPhoto, setIntPhoto] = React.useState(null);
   const intPhotoRef = React.useRef(null);
   const intBodyRef = React.useRef(null);
+  const intImgRef = React.useRef(null);
 
   React.useEffect(() => {
     apiFetch(BACKEND_URL + "/api/news")
@@ -6535,6 +6547,16 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
     } catch (e) {
       setAotdError("Network error — " + (e.message || "try again.")); setAotdSaving(false);
     }
+  }
+
+  // Insert text at the body cursor (used for inline images).
+  function intInsert(text) {
+    const el = intBodyRef.current;
+    if (!el) { setIntBody(intBody + text); return; }
+    const a = el.selectionStart;
+    setIntBody(intBody.slice(0, a) + text + intBody.slice(a));
+    const caret = a + text.length;
+    requestAnimationFrame(() => { el.focus(); el.setSelectionRange(caret, caret); });
   }
 
   // Wrap the current textarea selection in formatting markers.
@@ -6727,10 +6749,12 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
         <div style={{ border: "1px solid #eee", borderRadius: 0, padding: 20, marginBottom: 24 }}>
           <div className="ui-sans" style={{ fontSize: 14, fontWeight: 400, marginBottom: 14 }}>{editingInterview ? "edit interview" : "new interview"}</div>
           <input className="sb-input ui-sans" placeholder="subject name (e.g. Alex G)" value={intTitle} onChange={(e) => setIntTitle(e.target.value)} style={{ width: "100%", marginBottom: 8 }} />
-          <div style={{ display: "flex", gap: 6, marginBottom: 6 }}>
+          <div style={{ display: "flex", gap: 6, marginBottom: 6, flexWrap: "wrap" }}>
             <button type="button" className="sb-btn" title="bold" style={{ fontWeight: 800, padding: "4px 11px" }} onClick={() => intWrap("**", "**")}>B</button>
             <button type="button" className="sb-btn" title="italic" style={{ fontStyle: "italic", padding: "4px 11px" }} onClick={() => intWrap("*", "*")}>I</button>
             <button type="button" className="sb-btn" title="underline" style={{ textDecoration: "underline", padding: "4px 11px" }} onClick={() => intWrap("__", "__")}>U</button>
+            <input ref={intImgRef} type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => { const f = e.target.files && e.target.files[0]; if (f) compressImageFile(f, 900, 0.8).then((d) => intInsert("\n\n![img](" + d + ")\n\n")).catch(() => {}); e.target.value = ""; }} />
+            <button type="button" className="sb-btn" title="insert image at cursor" style={{ padding: "4px 11px" }} onClick={() => intImgRef.current && intImgRef.current.click()}>+ image</button>
           </div>
           <textarea ref={intBodyRef} className="sb-textarea ui-sans" placeholder="body text... (select text, then B / I / U)" value={intBody} onChange={(e) => setIntBody(e.target.value)} rows={10} style={{ width: "100%", marginBottom: 8, fontSize: 13 }} />
           <input className="sb-input ui-sans" placeholder="album IDs (comma separated, optional)" value={intAlbumIds} onChange={(e) => setIntAlbumIds(e.target.value)} style={{ width: "100%", marginBottom: 12 }} />
@@ -6769,7 +6793,7 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
                 <div className="ui-sans" style={{ fontSize: 13, color: MUTE, flexShrink: 0 }}>{interview.date || ""}</div>
               </div>
               {activeInterview === interview.id && (
-                <div className="ui-sans" style={{ fontSize: 13.5, lineHeight: 1.75, color: "#444", padding: "0 0 12px 59px", whiteSpace: "pre-line" }}>{renderRich(interview.body)}</div>
+                <div className="ui-sans" style={{ fontSize: 13.5, lineHeight: 1.75, color: "#444", padding: "0 0 12px 59px" }}>{renderInterviewBody(interview.body)}</div>
               )}
               {isAdmin && activeInterview === interview.id && (
                 <div style={{ display: "flex", gap: 12, padding: "0 0 12px 59px" }}>
