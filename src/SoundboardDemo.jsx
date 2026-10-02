@@ -4156,27 +4156,57 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
         {view.name === "editorialReview" && (() => {
           const ev_aotd = view.aotd;
           const ev_album = view.album || fetchedAlbums[ev_aotd.albumId] || albumById(ev_aotd.albumId);
+          // Deck (pull quote) is only shown when it's genuinely separate from the
+          // body — not when the quote is just the body's opening sentence.
+          const norm = (t) => (t || "").trim().toLowerCase().replace(/[“”‘’"']/g, "");
+          const nq = norm(ev_aotd.pullQuote);
+          const showDeck = nq && !norm(ev_aotd.body).startsWith(nq);
+          const cv = ev_album && ev_album.coverArtUrl ? ev_album.coverArtUrl.replace("http://", "https://") : null;
+          const coverSz = isMobile ? 160 : 320;
+          const viewAlbumLink = (
+            <div
+              onClick={() => openAlbum(ev_aotd.albumId)}
+              onMouseEnter={(e) => { e.currentTarget.style.color = BLUE; const a = e.currentTarget.querySelector("[data-arrow]"); if (a) a.style.transform = "translateX(3px)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = INK; const a = e.currentTarget.querySelector("[data-arrow]"); if (a) a.style.transform = "none"; }}
+              className="ui-sans"
+              style={{ marginTop: 16, display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderTop: `1px solid ${INK}`, borderBottom: `1px solid ${LINE}`, fontSize: 15, fontWeight: 700, color: INK, cursor: "pointer", transition: "color 120ms ease", maxWidth: isMobile ? 320 : undefined }}
+            >
+              <span>view album page</span>
+              <span data-arrow style={{ transition: "transform 120ms ease" }}>→</span>
+            </div>
+          );
           return (
-            <div style={{ maxWidth: 680, margin: "0 auto" }}>
-              <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 12.5, marginBottom: 32, cursor: "pointer" }} onClick={() => { const f = view.from || { name: "home" }; setView(f); if (f.tab) setHomeTab(f.tab); }}>
-                <ChevronLeft size={14} /> back
+            <div style={{ maxWidth: 940, margin: "0 auto" }}>
+              <div className="ui-sans" onClick={() => { const f = view.from || { name: "home" }; setView(f); if (f.tab) setHomeTab(f.tab); }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = INK; }} onMouseLeave={(e) => { e.currentTarget.style.color = MUTE; }}
+                style={{ display: "inline-flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 15, cursor: "pointer", transition: "color 120ms ease" }}>
+                <ChevronLeft size={16} strokeWidth={1.6} /> back
               </div>
               {ev_album && (
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", marginBottom: 40 }}>
-                  {ev_album.coverArtUrl
-                    ? <img src={ev_album.coverArtUrl} alt="" style={{ width: 200, height: 200, borderRadius: 0, objectFit: "cover", marginBottom: 24, boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }} />
-                    : <div style={{ width: 200, height: 200, borderRadius: 0, background: "#eee", marginBottom: 24 }} />}
-                  <div className="ui-sans" style={{ fontSize: 11, letterSpacing: ".12em", fontWeight: 700, color: "#9a9a9a", textTransform: "uppercase", marginBottom: 10 }}>album of the day · {fmtAotdDate(ev_aotd.date)}</div>
-                  <div className="ui-sans" style={{ fontSize: 36, fontWeight: 800, letterSpacing: "-.02em", lineHeight: 1.1, marginBottom: 8 }}>{ev_album.title}</div>
-                  <div className="ui-sans" style={{ fontSize: 16, color: "#8a8a8a", marginBottom: 20 }}>{ev_album.artist || ev_album.artistName} · {ev_album.year || ev_album.releaseYear}</div>
-                  <span className="ui-sans" style={{ fontSize: 20, fontWeight: 800, color: "#2f6ae0", background: "#f0f4fe", borderRadius: 0, padding: "8px 18px" }}>{ev_aotd.staffRating} / 10</span>
+                <div style={{ display: isMobile ? "block" : "grid", gridTemplateColumns: isMobile ? undefined : "320px minmax(0, 1fr)", gap: isMobile ? 0 : 48, marginTop: 26, alignItems: "start" }}>
+                  {/* left column — cover (sticky on desktop) */}
+                  <div style={{ position: isMobile ? "static" : "sticky", top: 24 }}>
+                    {cv
+                      ? <img src={cv} alt="" style={{ width: coverSz, height: coverSz, objectFit: "cover", borderRadius: 0, display: "block", boxShadow: "0 10px 30px rgba(20,40,90,.18)" }} />
+                      : <div style={{ width: coverSz, height: coverSz, background: "#eee", borderRadius: 0, boxShadow: "0 10px 30px rgba(20,40,90,.18)" }} />}
+                    {!isMobile && viewAlbumLink}
+                  </div>
+                  {/* right column — text */}
+                  <div style={{ marginTop: isMobile ? 22 : 0 }}>
+                    <div className="ui-sans" style={{ fontSize: 13, fontWeight: 700, letterSpacing: ".14em", textTransform: "uppercase", color: MUTE }}>album of the day · {fmtAotdDate(ev_aotd.date)}</div>
+                    <div className="ui-sans" style={{ fontSize: isMobile ? 34 : 44, fontWeight: 700, letterSpacing: "-.02em", lineHeight: 1.08, color: INK, marginTop: 14 }}>{ev_album.title}</div>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 16, marginTop: 10, flexWrap: "wrap" }}>
+                      <span className="ui-sans" style={{ fontSize: 19, color: MUTE }}>{ev_album.artist || ev_album.artistName} · {ev_album.year || ev_album.releaseYear}</span>
+                      <span className="ui-sans" style={{ fontSize: 22, fontWeight: 700, color: BLUE }}>{ev_aotd.staffRating}/10</span>
+                    </div>
+                    {showDeck && (
+                      <div className="ui-sans" style={{ marginTop: 28, paddingLeft: 18, borderLeft: `2px solid ${BLUE}`, fontSize: isMobile ? 19 : 22, fontStyle: "italic", lineHeight: 1.35, color: INK }}>{'"'}{renderBold(ev_aotd.pullQuote)}{'"'}</div>
+                    )}
+                    <div className="ui-sans" style={{ marginTop: showDeck ? 26 : 28, maxWidth: 560, fontSize: 17, lineHeight: 1.6, color: INK, whiteSpace: "pre-line" }}>{renderBold(ev_aotd.body)}</div>
+                    {isMobile && viewAlbumLink}
+                  </div>
                 </div>
               )}
-              <div style={{ height: 1, background: "#eee", margin: "32px 0" }} />
-              <p className="ui-sans" style={{ fontSize: 17, lineHeight: 1.6, color: "#333", fontStyle: "italic", marginBottom: 28, fontWeight: 500 }}>"{renderBold(ev_aotd.pullQuote)}"</p>
-              <div className="ui-sans" style={{ fontSize: 15.5, lineHeight: 1.8, color: "#222", whiteSpace: "pre-line" }}>{renderBold(ev_aotd.body)}</div>
-              <div style={{ height: 1, background: "#eee", margin: "40px 0 24px" }} />
-              <button className="sb-btn" onClick={() => openAlbum(ev_aotd.albumId)} style={{ fontSize: 13 }}>view album page →</button>
             </div>
           );
         })()}
