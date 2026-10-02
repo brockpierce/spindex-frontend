@@ -28,6 +28,7 @@ const BACKEND_URL = "https://spindex-backend.onrender.com";
 // click tags to filter but not add or remove them. Temporary curation gate
 // until we build a proper moderation flow.
 const ADMIN_USERNAME = "brock";
+const TERMS_VERSION = "2026-08-07"; // bump to re-prompt everyone to accept updated terms
 
 // Curated tags shown on the browse page (any tag is still searchable).
 const FEATURED_TAGS = ["indie-rock", "emo", "electronic", "shibuya-kei", "shoegaze", "alternative-rock", "abstract", "downtempo", "hip-hop", "pop"];
@@ -1124,6 +1125,7 @@ export default function SoundboardDemo() {
   // deployed server URL before going live.
   // --------------------------------------------------------------------
   const [authUser, setAuthUser] = useState(null);
+  const [needsTerms, setNeedsTerms] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
@@ -2378,7 +2380,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                 </div>
                 <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
                   <button className="sb-btn sb-btn-solid" onClick={saveSettings}>save changes</button>
-                  <button className="sb-btn" onClick={() => setShowSettings(false)}>cancel</button>
+                  <button className="sb-btn" onClick={closeSettings}>cancel</button>
                 </div>
 
                 <div style={{ borderTop: `1px solid ${LINE}`, marginTop: 20, paddingTop: 18, textAlign: "left" }}>
@@ -2537,8 +2539,10 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
     setDraftUsername(profile.username);
     setDraftBio(profile.bio);
     setDraftAvatarUrl(avatarUrl);
-    setShowSettings(true);
+    setView({ name: "settings", from: view });
   }
+
+  function closeSettings() { setView(view && view.from ? view.from : { name: "profile" }); }
 
   function saveSettings() {
     if (!draftDisplayName.trim() || !draftUsername.trim()) {
@@ -2547,7 +2551,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
     }
     setProfile((prev) => ({ ...prev, displayName: draftDisplayName.trim(), username: draftUsername.trim(), bio: draftBio }));
     setAvatarUrl(draftAvatarUrl);
-    setShowSettings(false);
+    setView(view && view.from ? view.from : { name: "profile" });
     flash("Profile updated");
     // Persist to backend
     const body = {
@@ -3119,6 +3123,16 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
     setView({ name: "home" });
   }
 
+  // Terms-of-use acceptance gate (Apple Guideline 1.2 for user-generated content).
+  useEffect(() => {
+    if (!authUser) { setNeedsTerms(false); return; }
+    try { setNeedsTerms(!localStorage.getItem(`nb_terms_${TERMS_VERSION}_${authUser.id}`)); } catch (e) { setNeedsTerms(false); }
+  }, [authUser]);
+  function acceptTerms() {
+    try { if (authUser) localStorage.setItem(`nb_terms_${TERMS_VERSION}_${authUser.id}`, new Date().toISOString()); } catch (e) {}
+    setNeedsTerms(false);
+  }
+
   const [deletingAccount, setDeletingAccount] = useState(false);
   async function deleteAccount() {
     if (deletingAccount) return;
@@ -3262,6 +3276,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
     <ThemeContext.Provider value={theme}>
     <AvatarContext.Provider value={{ cache: userAvatarCache, fetch: fetchUserAvatar }}>
     <div style={{ fontFamily: "Helvetica Neue, Helvetica, Arial, sans-serif", background: BG, minHeight: "100%", color: INK, overflowX: "hidden", maxWidth: "100vw" }}>
+      {needsTerms && <EulaGate onAgree={acceptTerms} onDecline={logout} />}
       <style>{`
         * { box-sizing: border-box; }
         html, body { overflow-x: hidden; max-width: 100vw; }
@@ -4050,6 +4065,16 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
 
         {view.name === "terms" && (
           <TermsScreen onBack={() => setView({ name: "home" })} inline initialTab={view.tab} />
+        )}
+
+        {view.name === "settings" && (
+          <div>
+            <div className="ui-sans" onClick={closeSettings} style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 12.5, marginBottom: 16, cursor: "pointer" }}>
+              <ChevronLeft size={14} /> back
+            </div>
+            <div className="ui-sans" style={{ fontSize: 20, fontWeight: 400, marginBottom: 4 }}>settings</div>
+            {renderProfileSettings()}
+          </div>
         )}
 
         {/* ---------------- NOTIFICATIONS ---------------- */}
@@ -5743,7 +5768,6 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
             renderAvatar={(size) => avatarUrl ? <img src={avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}><User color="#fff" size={size / 2} /></div>}
             renderAlbumCover={(alb) => { const u = alb.album && alb.album.coverArtUrl && alb.album.coverArtUrl !== "none" ? alb.album.coverArtUrl.replace("http://", "https://") : null; return u ? <img src={u} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /> : <div style={{ width: "100%", height: "100%" }} />; }}
           />
-          {showSettings && <div style={{ padding: 16 }}>{renderProfileSettings()}</div>}
         </>)}
         {view.name === "profile" && profile.profileTheme !== "mspaint" && !(profile.profileTheme === "bubble" && profile.username === ADMIN_USERNAME) && (
           <div className="pf" data-theme={profile.profileTheme || ""} style={{ "--pf-navy": BLUE }}>
@@ -5883,7 +5907,6 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
               );
             })()}
 
-            {showSettings && renderProfileSettings()}
 
             {isMobile && profile.profileTheme !== "web2003" && (
               <div style={{ display: "flex", gap: 16, padding: "20px 0", borderBottom: `1px solid ${LINE}`, overflowX: "auto", justifyContent: "center", alignItems: "flex-start" }}>
@@ -6368,12 +6391,15 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
   const aotdBodyRef = React.useRef(null);
   const [aotdDate, setAotdDate] = React.useState(todayLocalISO());
   const [aotdSaving, setAotdSaving] = React.useState(false);
+  const [aotdError, setAotdError] = React.useState("");
 
   // Interview form state
   const [intTitle, setIntTitle] = React.useState("");
   const [intBody, setIntBody] = React.useState("");
   const [intAlbumIds, setIntAlbumIds] = React.useState("");
   const [intSaving, setIntSaving] = React.useState(false);
+  const [intPhoto, setIntPhoto] = React.useState(null);
+  const intPhotoRef = React.useRef(null);
 
   React.useEffect(() => {
     apiFetch(BACKEND_URL + "/api/news")
@@ -6463,22 +6489,36 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
   }
 
   async function saveAotd() {
-    if (!aotdAlbumPicked || !aotdPullQuote || !aotdBody) return;
+    setAotdError("");
+    if (!aotdAlbumPicked) { setAotdError("Pick an album first."); return; }
+    if (!aotdPullQuote.trim()) { setAotdError("Add a pull quote."); return; }
+    if (!aotdBody.trim()) { setAotdError("Add the review body."); return; }
+    if (!aotdDate) { setAotdError("Pick a date."); return; }
     setAotdSaving(true);
-    const method = editingAotd ? "PUT" : "POST";
-    const url = editingAotd ? BACKEND_URL + "/api/news/aotd/" + editingAotd.id : BACKEND_URL + "/api/news/aotd";
-    const res = await apiFetch(url, {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ albumId: aotdAlbumPicked.id, staffRating: aotdRating, pullQuote: aotdPullQuote, body: aotdBody, date: aotdDate }),
-    });
-    const data = await res.json();
-    if (data.item) {
-      setAotd(data.item);
-      if (data.item.album) setFetchedAlbums((prev) => ({ ...prev, [data.item.album.id]: { ...data.item.album, artist: data.item.album.artistName || "", year: data.item.album.releaseYear || null } }));
+    try {
+      const method = editingAotd ? "PUT" : "POST";
+      const url = editingAotd ? BACKEND_URL + "/api/news/aotd/" + editingAotd.id : BACKEND_URL + "/api/news/aotd";
+      const res = await apiFetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ albumId: aotdAlbumPicked.id, staffRating: aotdRating, pullQuote: aotdPullQuote, body: aotdBody, date: aotdDate }),
+      });
+      if (!res.ok) {
+        let msg = "Couldn't save (error " + res.status + ").";
+        try { const err = await res.json(); if (err && err.error) msg = err.error; } catch (e) {}
+        if (res.status === 403) msg = "Server doesn't recognize your account as admin (check ADMIN_USER_ID on Render).";
+        setAotdError(msg); setAotdSaving(false); return;
+      }
+      const data = await res.json();
+      if (data.item) {
+        setAotd(data.item);
+        if (data.item.album) setFetchedAlbums((prev) => ({ ...prev, [data.item.album.id]: { ...data.item.album, artist: data.item.album.artistName || "", year: data.item.album.releaseYear || null } }));
+      }
+      await refreshAotd();
+      setShowAotdForm(false); setEditingAotd(null); setAotdAlbumPicked(null); setAotdPullQuote(""); setAotdBody(""); setAotdSaving(false);
+    } catch (e) {
+      setAotdError("Network error — " + (e.message || "try again.")); setAotdSaving(false);
     }
-    await refreshAotd();
-    setShowAotdForm(false); setEditingAotd(null); setAotdAlbumPicked(null); setAotdPullQuote(""); setAotdBody(""); setAotdSaving(false);
   }
 
   async function saveInterview() {
@@ -6487,13 +6527,13 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
     const method = editingInterview ? "PUT" : "POST";
     const url = editingInterview ? BACKEND_URL + "/api/news/interviews/" + editingInterview.id : BACKEND_URL + "/api/news/interviews";
     const albumIds = intAlbumIds.split(",").map((s) => s.trim()).filter(Boolean);
-    const res = await apiFetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ title: intTitle, body: intBody, albumIds }) });
+    const res = await apiFetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ title: intTitle, body: intBody, albumIds, artistPhoto: intPhoto }) });
     const data = await res.json();
     if (data.item) {
       if (editingInterview) setInterviews((prev) => prev.map((i) => i.id === data.item.id ? data.item : i));
       else setInterviews((prev) => [data.item, ...prev]);
     }
-    setShowInterviewForm(false); setEditingInterview(null); setIntTitle(""); setIntBody(""); setIntAlbumIds(""); setIntSaving(false);
+    setShowInterviewForm(false); setEditingInterview(null); setIntTitle(""); setIntBody(""); setIntAlbumIds(""); setIntPhoto(null); setIntSaving(false);
   }
 
   async function deleteAotd(id) {
@@ -6561,9 +6601,10 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
             <button type="button" className="sb-btn" style={{ fontSize: 11 }} onClick={aotdInsertByline}>insert byline</button>
           </div>
           <textarea ref={aotdBodyRef} className="sb-textarea ui-sans" placeholder="full review body..." value={aotdBody} onChange={(e) => setAotdBody(e.target.value)} rows={8} style={{ width: "100%", marginBottom: 12, fontSize: 13 }} />
+          {aotdError && <div className="ui-sans" style={{ fontSize: 12.5, color: "#c0392b", marginBottom: 10 }}>{aotdError}</div>}
           <div style={{ display: "flex", gap: 8 }}>
             <button className="sb-btn sb-btn-solid" onClick={saveAotd} disabled={aotdSaving}>{aotdSaving ? "saving..." : "save"}</button>
-            <button className="sb-btn" onClick={() => { setShowAotdForm(false); setEditingAotd(null); }}>cancel</button>
+            <button className="sb-btn" onClick={() => { setShowAotdForm(false); setEditingAotd(null); setAotdError(""); }}>cancel</button>
           </div>
         </div>
       )}
@@ -6637,7 +6678,7 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
       <div style={{ border: `1px solid ${LINE}`, padding: 16, marginBottom: 14 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
         <div style={LABEL_STYLE}>interviews</div>
-        {isAdmin && <span className="ui-sans" style={{ fontSize: 13, color: MUTE, cursor: "pointer" }} onClick={() => setShowInterviewForm(true)}>+ new</span>}
+        {isAdmin && <span className="ui-sans" style={{ fontSize: 13, color: MUTE, cursor: "pointer" }} onClick={() => { setEditingInterview(null); setIntTitle(""); setIntBody(""); setIntAlbumIds(""); setIntPhoto(null); setShowInterviewForm(true); }}>+ new</span>}
       </div>
 
       {showInterviewForm && (
@@ -6646,9 +6687,15 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
           <input className="sb-input ui-sans" placeholder="subject name (e.g. Alex G)" value={intTitle} onChange={(e) => setIntTitle(e.target.value)} style={{ width: "100%", marginBottom: 8 }} />
           <textarea className="sb-textarea ui-sans" placeholder="body text..." value={intBody} onChange={(e) => setIntBody(e.target.value)} rows={10} style={{ width: "100%", marginBottom: 8, fontSize: 13 }} />
           <input className="sb-input ui-sans" placeholder="album IDs (comma separated, optional)" value={intAlbumIds} onChange={(e) => setIntAlbumIds(e.target.value)} style={{ width: "100%", marginBottom: 12 }} />
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+            {intPhoto ? <img src={intPhoto} alt="" style={{ width: 52, height: 52, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} /> : <div style={{ width: 52, height: 52, borderRadius: "50%", background: LINE, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", color: MUTE, fontSize: 9, textAlign: "center" }}>no photo</div>}
+            <input ref={intPhotoRef} type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => { const f = e.target.files && e.target.files[0]; if (f) compressImageFile(f, 400, 0.82).then(setIntPhoto).catch(() => {}); }} />
+            <button className="sb-btn" type="button" onClick={() => intPhotoRef.current && intPhotoRef.current.click()}>{intPhoto ? "change artist photo" : "add artist photo"}</button>
+            {intPhoto && <button className="sb-btn" type="button" onClick={() => setIntPhoto(null)}>remove</button>}
+          </div>
           <div style={{ display: "flex", gap: 8 }}>
             <button className="sb-btn sb-btn-solid" onClick={saveInterview} disabled={intSaving}>{intSaving ? "saving..." : "save"}</button>
-            <button className="sb-btn" onClick={() => { setShowInterviewForm(false); setEditingInterview(null); }}>cancel</button>
+            <button className="sb-btn" onClick={() => { setShowInterviewForm(false); setEditingInterview(null); setIntTitle(""); setIntBody(""); setIntAlbumIds(""); setIntPhoto(null); }}>cancel</button>
           </div>
         </div>
       )}
@@ -6663,8 +6710,10 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
             <div key={interview.id}>
               <div onClick={() => setActiveInterview(activeInterview === interview.id ? null : interview.id)}
                 style={{ display: "flex", alignItems: "center", gap: 13, padding: "13px 0", borderTop: idx === 0 ? "none" : `1px solid ${LINE}`, cursor: "pointer" }}>
-                <div style={{ width: 46, height: 46, flexShrink: 0, borderRadius: 0, background: LINE, overflow: "hidden" }}>
-                  {firstAlbum && firstAlbum.coverArtUrl && <img src={firstAlbum.coverArtUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
+                <div style={{ width: 46, height: 46, flexShrink: 0, borderRadius: interview.artistPhoto ? "50%" : 0, background: LINE, overflow: "hidden" }}>
+                  {interview.artistPhoto
+                    ? <img src={interview.artistPhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    : (firstAlbum && firstAlbum.coverArtUrl && <img src={firstAlbum.coverArtUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />)}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div className="ui-sans" style={{ fontSize: 14.5, fontWeight: 800, lineHeight: 1.3 }}>{interview.title}</div>
@@ -6677,7 +6726,7 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
               )}
               {isAdmin && activeInterview === interview.id && (
                 <div style={{ display: "flex", gap: 12, padding: "0 0 12px 59px" }}>
-                  <span className="ui-sans" style={{ fontSize: 13, color: MUTE, cursor: "pointer" }} onClick={(e) => { e.stopPropagation(); setEditingInterview(interview); setIntTitle(interview.title); setIntBody(interview.body); setIntAlbumIds(interview.albumIds || ""); setShowInterviewForm(true); }}>edit</span>
+                  <span className="ui-sans" style={{ fontSize: 13, color: MUTE, cursor: "pointer" }} onClick={(e) => { e.stopPropagation(); setEditingInterview(interview); setIntTitle(interview.title); setIntBody(interview.body); setIntAlbumIds(interview.albumIds || ""); setIntPhoto(interview.artistPhoto || null); setShowInterviewForm(true); }}>edit</span>
                   <span className="ui-sans" style={{ fontSize: 13, color: MUTE, cursor: "pointer" }} onClick={(e) => { e.stopPropagation(); deleteInterview(interview.id); }}>delete</span>
                 </div>
               )}
@@ -8777,6 +8826,53 @@ function FollowListModal({ kind, userId, username, onClose, onVisitProfile, foll
                   />}
             </div>
           ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function EulaGate({ onAgree, onDecline }) {
+  const { BLUE, INK, LINE, MUTE, BG } = useTheme();
+  const [showFull, setShowFull] = React.useState(null); // null | "terms" | "privacy"
+  const overlay = { position: "fixed", inset: 0, background: "rgba(10,20,40,.55)", zIndex: 4000, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 };
+  if (showFull) {
+    return (
+      <div style={{ ...overlay, padding: 0 }} className="ui-sans">
+        <div style={{ background: BG, width: "100%", maxWidth: 680, margin: "auto", maxHeight: "94vh", display: "flex", flexDirection: "column" }}>
+          <div style={{ overflowY: "auto", flex: 1, padding: 16 }}>
+            <TermsScreen inline initialTab={showFull} onBack={() => setShowFull(null)} />
+          </div>
+          <div style={{ padding: 12, borderTop: `1px solid ${LINE}`, display: "flex", gap: 10, justifyContent: "flex-end", background: BG }}>
+            <button className="sb-btn" onClick={() => setShowFull(null)}>back</button>
+            <button className="sb-btn sb-btn-solid" onClick={onAgree}>I agree</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div style={overlay} className="ui-sans">
+      <div style={{ background: BG, color: INK, border: `1px solid ${LINE}`, maxWidth: 440, width: "100%", padding: 24, boxShadow: "0 20px 60px rgba(0,0,0,.4)" }}>
+        <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 6 }}>welcome to noteblock</div>
+        <div style={{ fontSize: 13, color: MUTE, marginBottom: 16 }}>a quick agreement before you start</div>
+        <div style={{ fontSize: 13.5, lineHeight: 1.6 }}>
+          noteblock is a community for talking about music. to keep it safe:
+          <ul style={{ margin: "10px 0 0", paddingLeft: 18 }}>
+            <li>there is <b>zero tolerance</b> for objectionable content or abusive behavior.</li>
+            <li>you can <b>report</b> content and <b>block</b> users at any time.</li>
+            <li>objectionable content and the people who post it are removed.</li>
+            <li>you must be at least <b>16</b> years old.</li>
+          </ul>
+        </div>
+        <div style={{ fontSize: 13, color: MUTE, margin: "16px 0 18px" }}>
+          By tapping &ldquo;I agree&rdquo; you accept our{" "}
+          <span onClick={() => setShowFull("terms")} style={{ color: BLUE, cursor: "pointer", textDecoration: "underline" }}>Terms of Use</span>{" "}and{" "}
+          <span onClick={() => setShowFull("privacy")} style={{ color: BLUE, cursor: "pointer", textDecoration: "underline" }}>Privacy Policy</span>.
+        </div>
+        <div style={{ display: "flex", gap: 10 }}>
+          <button className="sb-btn sb-btn-solid" style={{ flex: 1 }} onClick={onAgree}>I agree</button>
+          <button className="sb-btn" onClick={onDecline}>decline</button>
         </div>
       </div>
     </div>
