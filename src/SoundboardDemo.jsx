@@ -6420,6 +6420,7 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
 
   // Interview form state
   const [intTitle, setIntTitle] = React.useState("");
+  const [intSubtitle, setIntSubtitle] = React.useState("");
   const [intBody, setIntBody] = React.useState("");
   const [intAlbumIds, setIntAlbumIds] = React.useState("");
   const [intSaving, setIntSaving] = React.useState(false);
@@ -6576,13 +6577,13 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
     const method = editingInterview ? "PUT" : "POST";
     const url = editingInterview ? BACKEND_URL + "/api/news/interviews/" + editingInterview.id : BACKEND_URL + "/api/news/interviews";
     const albumIds = intAlbumIds.split(",").map((s) => s.trim()).filter(Boolean);
-    const res = await apiFetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ title: intTitle, body: intBody, albumIds, artistPhoto: intPhoto }) });
+    const res = await apiFetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ title: intTitle, body: intBody, albumIds, artistPhoto: intPhoto, subtitle: intSubtitle }) });
     const data = await res.json();
     if (data.item) {
       if (editingInterview) setInterviews((prev) => prev.map((i) => i.id === data.item.id ? data.item : i));
       else setInterviews((prev) => [data.item, ...prev]);
     }
-    setShowInterviewForm(false); setEditingInterview(null); setIntTitle(""); setIntBody(""); setIntAlbumIds(""); setIntPhoto(null); setIntSaving(false);
+    setShowInterviewForm(false); setEditingInterview(null); setIntTitle(""); setIntSubtitle(""); setIntBody(""); setIntAlbumIds(""); setIntPhoto(null); setIntSaving(false);
   }
 
   async function deleteAotd(id) {
@@ -6742,13 +6743,14 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
       <div style={{ border: `1px solid ${LINE}`, padding: 16, marginBottom: 14 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
         <div style={LABEL_STYLE}>interviews</div>
-        {isAdmin && <span className="ui-sans" style={{ fontSize: 13, color: MUTE, cursor: "pointer" }} onClick={() => { setEditingInterview(null); setIntTitle(""); setIntBody(""); setIntAlbumIds(""); setIntPhoto(null); setShowInterviewForm(true); }}>+ new</span>}
+        {isAdmin && <span className="ui-sans" style={{ fontSize: 13, color: MUTE, cursor: "pointer" }} onClick={() => { setEditingInterview(null); setIntTitle(""); setIntSubtitle(""); setIntBody(""); setIntAlbumIds(""); setIntPhoto(null); setShowInterviewForm(true); }}>+ new</span>}
       </div>
 
       {showInterviewForm && (
         <div style={{ border: "1px solid #eee", borderRadius: 0, padding: 20, marginBottom: 24 }}>
           <div className="ui-sans" style={{ fontSize: 14, fontWeight: 400, marginBottom: 14 }}>{editingInterview ? "edit interview" : "new interview"}</div>
           <input className="sb-input ui-sans" placeholder="subject name (e.g. Alex G)" value={intTitle} onChange={(e) => setIntTitle(e.target.value)} style={{ width: "100%", marginBottom: 8 }} />
+          <input className="sb-input ui-sans" placeholder="subtitle / quick bio (optional)" value={intSubtitle} onChange={(e) => setIntSubtitle(e.target.value)} style={{ width: "100%", marginBottom: 8 }} />
           <div style={{ display: "flex", gap: 6, marginBottom: 6, flexWrap: "wrap" }}>
             <button type="button" className="sb-btn" title="bold" style={{ fontWeight: 800, padding: "4px 11px" }} onClick={() => intWrap("**", "**")}>B</button>
             <button type="button" className="sb-btn" title="italic" style={{ fontStyle: "italic", padding: "4px 11px" }} onClick={() => intWrap("*", "*")}>I</button>
@@ -6790,7 +6792,7 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
           </div>
           <div style={{ display: "flex", gap: 8 }}>
             <button className="sb-btn sb-btn-solid" onClick={saveInterview} disabled={intSaving}>{intSaving ? "saving..." : "save"}</button>
-            <button className="sb-btn" onClick={() => { setShowInterviewForm(false); setEditingInterview(null); setIntTitle(""); setIntBody(""); setIntAlbumIds(""); setIntPhoto(null); }}>cancel</button>
+            <button className="sb-btn" onClick={() => { setShowInterviewForm(false); setEditingInterview(null); setIntTitle(""); setIntSubtitle(""); setIntBody(""); setIntAlbumIds(""); setIntPhoto(null); }}>cancel</button>
           </div>
         </div>
       )}
@@ -6813,6 +6815,7 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div className="ui-sans" style={{ fontSize: 14.5, fontWeight: 800, lineHeight: 1.3 }}>{interview.title}</div>
                   <div className="ui-sans" style={{ fontSize: 13, color: MUTE }}>interview by {interview.author?.username || "staff"}</div>
+                  {interview.subtitle && <div className="ui-sans" style={{ fontSize: 12, fontWeight: 700, fontStyle: "italic", color: MUTE, marginTop: 3, lineHeight: 1.35 }}>&ldquo;{interview.subtitle}&rdquo;</div>}
                 </div>
                 <div className="ui-sans" style={{ fontSize: 13, color: MUTE, flexShrink: 0 }}>{interview.date || ""}</div>
               </div>
@@ -6845,7 +6848,7 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
               )}
               {isAdmin && activeInterview === interview.id && (
                 <div style={{ display: "flex", gap: 12, padding: "0 0 12px 59px" }}>
-                  <span className="ui-sans" style={{ fontSize: 13, color: MUTE, cursor: "pointer" }} onClick={(e) => { e.stopPropagation(); setEditingInterview(interview); setIntTitle(interview.title); setIntBody(interview.body); setIntAlbumIds(interview.albumIds || ""); setIntPhoto(interview.artistPhoto || null); setShowInterviewForm(true); }}>edit</span>
+                  <span className="ui-sans" style={{ fontSize: 13, color: MUTE, cursor: "pointer" }} onClick={(e) => { e.stopPropagation(); setEditingInterview(interview); setIntTitle(interview.title); setIntSubtitle(interview.subtitle || ""); setIntBody(interview.body); setIntAlbumIds(interview.albumIds || ""); setIntPhoto(interview.artistPhoto || null); setShowInterviewForm(true); }}>edit</span>
                   <span className="ui-sans" style={{ fontSize: 13, color: MUTE, cursor: "pointer" }} onClick={(e) => { e.stopPropagation(); deleteInterview(interview.id); }}>delete</span>
                 </div>
               )}
