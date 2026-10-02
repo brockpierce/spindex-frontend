@@ -8857,11 +8857,11 @@ function EulaGate({ onAgree, onDecline }) {
         <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 6 }}>welcome to noteblock</div>
         <div style={{ fontSize: 13, color: MUTE, marginBottom: 16 }}>a quick agreement before you start</div>
         <div style={{ fontSize: 13.5, lineHeight: 1.6 }}>
-          noteblock is a community for talking about music. to keep it safe:
+          noteblock is a community for talking about music. it should be fun. so to keep it safe:
           <ul style={{ margin: "10px 0 0", paddingLeft: 18 }}>
-            <li>there is <b>zero tolerance</b> for objectionable content or abusive behavior.</li>
+            <li><b>zero tolerance</b> for offensive/discriminatory language, bullying, and abusive behavior.</li>
             <li>you can <b>report</b> content and <b>block</b> users at any time.</li>
-            <li>objectionable content and the people who post it are removed.</li>
+            <li>offensive/discriminatory content is removed, along with the users who post it.</li>
             <li>you must be at least <b>16</b> years old.</li>
           </ul>
         </div>
