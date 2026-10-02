@@ -3211,7 +3211,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
     setTagVisible(24);
     setTagResultLoading(true);
     setTagResultAlbums([]);
-    apiFetch(`${BACKEND_URL}/api/tags/${encodeURIComponent(view.tag)}/albums?limit=1000`)
+    apiFetch(`${BACKEND_URL}/api/tags/${encodeURIComponent(view.tag)}/albums`)
       .then((r) => r.json())
       .then((data) => {
         const albums = (data.albums || []).map((a) => ({
