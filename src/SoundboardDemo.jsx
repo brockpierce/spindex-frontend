@@ -6757,7 +6757,31 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
             <button type="button" className="sb-btn" title="insert image at cursor" style={{ padding: "4px 11px" }} onClick={() => intImgRef.current && intImgRef.current.click()}>+ image</button>
           </div>
           <textarea ref={intBodyRef} className="sb-textarea ui-sans" placeholder="body text... (select text, then B / I / U)" value={intBody} onChange={(e) => setIntBody(e.target.value)} rows={10} style={{ width: "100%", marginBottom: 8, fontSize: 13 }} />
-          <input className="sb-input ui-sans" placeholder="album IDs (comma separated, optional)" value={intAlbumIds} onChange={(e) => setIntAlbumIds(e.target.value)} style={{ width: "100%", marginBottom: 12 }} />
+          <div style={{ marginBottom: 12 }}>
+            <div className="ui-sans" style={{ fontSize: 11, color: MUTE, marginBottom: 6 }}>attach album(s) — shown at the bottom of the interview with &ldquo;join the conversation&rdquo;</div>
+            {(() => {
+              const ids = intAlbumIds.split(",").map((x) => x.trim()).filter(Boolean);
+              return ids.length > 0 ? (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 8 }}>
+                  {ids.map((id) => { const a = fetchedAlbums[id] || albumById(id); const label = a && a.title && a.title !== "Unknown Album" ? a.title : id; return (
+                    <span key={id} className="ui-sans" style={{ display: "inline-flex", alignItems: "center", gap: 6, border: `1px solid ${LINE}`, padding: "4px 8px", fontSize: 12 }}>
+                      {label}
+                      <span style={{ cursor: "pointer", color: MUTE, fontWeight: 700 }} onClick={() => setIntAlbumIds(ids.filter((x) => x !== id).join(","))}>×</span>
+                    </span>
+                  ); })}
+                </div>
+              ) : null;
+            })()}
+            <AlbumSearchPicker
+              placeholder="search album to attach..."
+              onCancel={() => {}}
+              onPick={(album) => {
+                const ids = intAlbumIds.split(",").map((x) => x.trim()).filter(Boolean);
+                if (!ids.includes(album.id)) setIntAlbumIds([...ids, album.id].join(","));
+                setFetchedAlbums((prev) => ({ ...prev, [album.id]: { ...album, artist: album.artistName || album.artist || "", year: album.releaseYear || album.year || null } }));
+              }}
+            />
+          </div>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
             {intPhoto ? <img src={intPhoto} alt="" style={{ width: 52, height: 52, borderRadius: 0, objectFit: "cover", flexShrink: 0 }} /> : <div style={{ width: 52, height: 52, borderRadius: 0, background: LINE, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", color: MUTE, fontSize: 9, textAlign: "center" }}>no photo</div>}
             <input ref={intPhotoRef} type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => { const f = e.target.files && e.target.files[0]; if (f) compressImageFile(f, 400, 0.82).then(setIntPhoto).catch(() => {}); }} />
@@ -6794,6 +6818,30 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
               </div>
               {activeInterview === interview.id && (
                 <div className="ui-sans" style={{ fontSize: 13.5, lineHeight: 1.75, color: "#444", padding: "0 0 12px 59px" }}>{renderInterviewBody(interview.body)}</div>
+              )}
+              {activeInterview === interview.id && albumIds.length > 0 && (
+                <div style={{ padding: "0 0 14px 59px", display: "flex", flexDirection: "column", gap: 10 }}>
+                  {albumIds.map((id) => {
+                    let alb = fetchedAlbums[id] || albumById(id);
+                    if (!fetchedAlbums[id] && (!alb || alb.title === "Unknown Album")) {
+                      apiFetch(`${BACKEND_URL}/api/albums/${id}`).then((r) => r.json()).then((d) => { if (d.album) { const a = d.album; setFetchedAlbums((prev) => ({ ...prev, [id]: { ...a, artist: a.artistName || "", year: a.releaseYear || null } })); } }).catch(() => {});
+                    }
+                    if (!alb) alb = { title: "", coverArtUrl: null };
+                    const cover = alb.coverArtUrl ? alb.coverArtUrl.replace("http://", "https://") : null;
+                    return (
+                      <div key={id} style={{ display: "flex", alignItems: "center", gap: 12, border: `1px solid ${LINE}`, padding: 10 }}>
+                        <div style={{ width: 48, height: 48, flexShrink: 0, background: LINE, overflow: "hidden", cursor: "pointer" }} onClick={() => openAlbum(id)}>
+                          {cover && <img src={cover} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div className="ui-sans" style={{ fontSize: 13.5, fontWeight: 800, cursor: "pointer" }} onClick={() => openAlbum(id)}>{alb.title !== "Unknown Album" ? (alb.title || "album") : "album"}</div>
+                          <div className="ui-sans" style={{ fontSize: 12, color: MUTE }}>{alb.artist || alb.artistName || ""}{(alb.year || alb.releaseYear) ? ` · ${alb.year || alb.releaseYear}` : ""}</div>
+                        </div>
+                        <button className="sb-btn ui-sans" style={{ fontSize: 12.5, fontWeight: 400, cursor: "pointer", background: "transparent", color: BLUE, border: `1px solid ${BLUE}`, borderRadius: 0, padding: "8px 14px", flexShrink: 0 }} onClick={() => openAlbum(id)}>join the conversation</button>
+                      </div>
+                    );
+                  })}
+                </div>
               )}
               {isAdmin && activeInterview === interview.id && (
                 <div style={{ display: "flex", gap: 12, padding: "0 0 12px 59px" }}>
