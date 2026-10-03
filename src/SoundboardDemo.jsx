@@ -3990,7 +3990,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
 
             {/* ---- NEWS TAB ---- */}
             {homeTab === "news" && (() => {
-              return <NewsTab openAlbum={openAlbum} fetchedAlbums={fetchedAlbums} albumById={albumById} setFetchedAlbums={setFetchedAlbums} isAdmin={profile.username === ADMIN_USERNAME} albumMixes={albumMixes} setView={setView} feedMixes={feedMixes} />;
+              return <NewsTab openAlbum={openAlbum} fetchedAlbums={fetchedAlbums} albumById={albumById} setFetchedAlbums={setFetchedAlbums} isAdmin={profile.username === ADMIN_USERNAME} albumMixes={albumMixes} setView={setView} feedMixes={feedMixes} isMobile={isMobile} />;
             })()}
           </div>
         )}
@@ -6465,7 +6465,7 @@ function fmtAotdDate(d) {
   return "";
 }
 
-function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmin, albumMixes = [], setView }) {
+function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmin, albumMixes = [], setView, isMobile }) {
   const { BLUE, INK, LINE, MUTE, BG } = useTheme();
   const [aotd, setAotd] = React.useState(null);
   const [interviews, setInterviews] = React.useState([]);
