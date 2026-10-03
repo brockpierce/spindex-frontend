@@ -6894,7 +6894,7 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
                 </div>
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <div className="ui-sans" style={{ fontSize: isMobile ? 24 : 30, fontWeight: 700, letterSpacing: "-.02em", lineHeight: 1.1, color: INK, overflowWrap: "anywhere" }}>{interview.title}</div>
-                  <div className="ui-sans" style={{ fontSize: 15, color: MUTE, marginTop: 5 }}>interview by {interview.author?.username || "staff"}</div>
+                  <div className="ui-sans" style={{ fontSize: 15, color: MUTE, marginTop: 5 }}>interview by staff</div>
                   {interview.subtitle && <div className="ui-sans" style={{ fontSize: 13, fontStyle: "italic", color: MUTE, marginTop: 3 }}>&ldquo;{interview.subtitle}&rdquo;</div>}
                 </div>
                 {isAdmin && (
