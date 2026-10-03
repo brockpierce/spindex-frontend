@@ -6511,20 +6511,21 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
         setAotd(data.aotd || null);
         setInterviews(data.interviews || []);
         if (data.featuredMixId) setFeaturedMixId(data.featuredMixId);
-        if (data.featuredMixId) {
+        const mergeMixAlbums = (mix) => {
+          const merged = {};
+          (mix.albums || []).forEach((it) => {
+            if (it && it.album) merged[it.album.id] = { ...it.album, artist: it.album.artistName || "", year: it.album.releaseYear || null };
+          });
+          if (Object.keys(merged).length) setFetchedAlbums((prev) => ({ ...merged, ...prev }));
+        };
+        if (data.featuredMix) {
+          // Featured mix served directly by /api/news (works even if private).
+          setFeaturedMix(data.featuredMix);
+          mergeMixAlbums(data.featuredMix);
+        } else if (data.featuredMixId) {
           apiFetch(BACKEND_URL + "/api/mixes/" + data.featuredMixId)
             .then((r) => r.json())
-            .then((d) => {
-              if (!d.mix) return;
-              setFeaturedMix(d.mix);
-              // Merge the mix's albums into the shared cache in ONE update so
-              // MixCoverStack can resolve covers for first-time visitors.
-              const merged = {};
-              (d.mix.albums || []).forEach((it) => {
-                if (it && it.album) merged[it.album.id] = { ...it.album, artist: it.album.artistName || "", year: it.album.releaseYear || null };
-              });
-              if (Object.keys(merged).length) setFetchedAlbums((prev) => ({ ...merged, ...prev }));
-            })
+            .then((d) => { if (!d.mix) return; setFeaturedMix(d.mix); mergeMixAlbums(d.mix); })
             .catch(() => {});
         }
         if (data.aotd && data.aotd.album) {
@@ -6885,7 +6886,7 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
           const ivPhoto = interview.artistPhoto || (fAlb && fAlb.coverArtUrl ? fAlb.coverArtUrl.replace("http://", "https://") : null);
           let parsed; try { parsed = parseInterview(interview.body); } catch (e) { parsed = { intro: interview.body || "", items: [] }; }
           const photoSz = isMobile ? 72 : 96;
-          const qHead = { fontSize: 15.5, fontWeight: 700, color: INK, lineHeight: 1.5 };
+          const qHead = { fontSize: 13.5, fontWeight: 700, color: INK, lineHeight: 1.45 };
           return (
             <div key={interview.id} style={{ marginTop: idx === 0 ? 0 : 44, paddingTop: idx === 0 ? 0 : 40, borderTop: idx === 0 ? "none" : `1px solid ${LINE}` }}>
               <div style={{ display: "flex", alignItems: "center", gap: isMobile ? 14 : 20 }}>
@@ -6893,7 +6894,7 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
                   {ivPhoto && <img src={ivPhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
                 </div>
                 <div style={{ minWidth: 0, flex: 1 }}>
-                  <div className="ui-sans" style={{ fontSize: isMobile ? 24 : 30, fontWeight: 700, letterSpacing: "-.02em", lineHeight: 1.1, color: INK, overflowWrap: "anywhere" }}>{interview.title}</div>
+                  <div className="ui-sans" style={{ fontSize: isMobile ? 20 : 24, fontWeight: 700, letterSpacing: "-.02em", lineHeight: 1.12, color: INK, overflowWrap: "anywhere" }}>{interview.title}</div>
                   <div className="ui-sans" style={{ fontSize: 15, color: MUTE, marginTop: 5 }}>interview by staff</div>
                   {interview.subtitle && <div className="ui-sans" style={{ fontSize: 13, fontStyle: "italic", color: MUTE, marginTop: 3 }}>&ldquo;{interview.subtitle}&rdquo;</div>}
                 </div>
@@ -6904,7 +6905,7 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
                   </div>
                 )}
               </div>
-              {parsed.intro && <div className="ui-sans" style={{ marginTop: 20, maxWidth: 620, fontSize: 16, lineHeight: 1.6, color: INK }}>{parsed.intro}</div>}
+              {parsed.intro && <div className="ui-sans" style={{ marginTop: 18, maxWidth: 620, fontSize: 14, lineHeight: 1.55, color: INK }}>{parsed.intro}</div>}
               {parsed.items.length > 0 && (
                 <div style={{ marginTop: 26, paddingTop: 6, borderTop: `1px solid ${INK}`, columnCount: isMobile ? 1 : 2, columnGap: 48, columnRule: isMobile ? "none" : `1px solid ${LINE}` }}>
                   {parsed.items.map((it, i) => (
@@ -6915,7 +6916,7 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
                           ? <div className="ui-sans" style={qHead}>{it.staff}</div>
                           : (<>
                               <div className="ui-sans" style={qHead}>{it.q}</div>
-                              {it.a && <div className="ui-sans" style={{ fontSize: 15.5, color: "#5C5C5C", lineHeight: 1.6, marginTop: 5 }}>{it.a}</div>}
+                              {it.a && <div className="ui-sans" style={{ fontSize: 13.5, color: "#5C5C5C", lineHeight: 1.55, marginTop: 4 }}>{it.a}</div>}
                             </>)}
                     </div>
                   ))}
