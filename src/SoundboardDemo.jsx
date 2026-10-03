@@ -6885,8 +6885,8 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
           const ivCover = fAlb && fAlb.coverArtUrl ? fAlb.coverArtUrl.replace("http://", "https://") : null;
           const ivPhoto = interview.artistPhoto || (fAlb && fAlb.coverArtUrl ? fAlb.coverArtUrl.replace("http://", "https://") : null);
           let parsed; try { parsed = parseInterview(interview.body); } catch (e) { parsed = { intro: interview.body || "", items: [] }; }
-          const photoSz = isMobile ? 72 : 96;
-          const qHead = { fontSize: 13.5, fontWeight: 700, color: INK, lineHeight: 1.45 };
+          const photoSz = isMobile ? 54 : 68;
+          const qHead = { fontSize: 13, fontWeight: 700, color: INK, lineHeight: 1.4 };
           return (
             <div key={interview.id} style={{ marginTop: idx === 0 ? 0 : 44, paddingTop: idx === 0 ? 0 : 40, borderTop: idx === 0 ? "none" : `1px solid ${LINE}` }}>
               <div style={{ display: "flex", alignItems: "center", gap: isMobile ? 14 : 20 }}>
@@ -6894,9 +6894,9 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
                   {ivPhoto && <img src={ivPhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
                 </div>
                 <div style={{ minWidth: 0, flex: 1 }}>
-                  <div className="ui-sans" style={{ fontSize: isMobile ? 20 : 24, fontWeight: 700, letterSpacing: "-.02em", lineHeight: 1.12, color: INK, overflowWrap: "anywhere" }}>{interview.title}</div>
-                  <div className="ui-sans" style={{ fontSize: 15, color: MUTE, marginTop: 5 }}>interview by staff</div>
-                  {interview.subtitle && <div className="ui-sans" style={{ fontSize: 13, fontStyle: "italic", color: MUTE, marginTop: 3 }}>&ldquo;{interview.subtitle}&rdquo;</div>}
+                  <div className="ui-sans" style={{ fontSize: isMobile ? 17 : 19, fontWeight: 700, letterSpacing: "-.01em", lineHeight: 1.15, color: INK, overflowWrap: "anywhere" }}>{interview.title}</div>
+                  <div className="ui-sans" style={{ fontSize: 12.5, color: MUTE, marginTop: 4 }}>interview by staff</div>
+                  {interview.subtitle && <div className="ui-sans" style={{ fontSize: 12, fontStyle: "italic", color: MUTE, marginTop: 3 }}>&ldquo;{interview.subtitle}&rdquo;</div>}
                 </div>
                 {isAdmin && (
                   <div style={{ display: "flex", gap: 12, flexShrink: 0 }}>
@@ -6905,18 +6905,18 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
                   </div>
                 )}
               </div>
-              {parsed.intro && <div className="ui-sans" style={{ marginTop: 18, maxWidth: 620, fontSize: 14, lineHeight: 1.55, color: INK }}>{parsed.intro}</div>}
+              {parsed.intro && <div className="ui-sans" style={{ marginTop: 16, maxWidth: 620, fontSize: 13, lineHeight: 1.55, color: INK }}>{parsed.intro}</div>}
               {parsed.items.length > 0 && (
                 <div style={{ marginTop: 26, paddingTop: 6, borderTop: `1px solid ${INK}`, columnCount: isMobile ? 1 : 2, columnGap: 48, columnRule: isMobile ? "none" : `1px solid ${LINE}` }}>
                   {parsed.items.map((it, i) => (
-                    <div key={i} style={{ breakInside: "avoid", WebkitColumnBreakInside: "avoid", paddingTop: 22 }}>
+                    <div key={i} style={{ breakInside: "avoid", WebkitColumnBreakInside: "avoid", paddingTop: 18 }}>
                       {it.img
                         ? <img src={it.img} alt="" style={{ width: "100%", display: "block" }} />
                         : it.staff
                           ? <div className="ui-sans" style={qHead}>{it.staff}</div>
                           : (<>
                               <div className="ui-sans" style={qHead}>{it.q}</div>
-                              {it.a && <div className="ui-sans" style={{ fontSize: 13.5, color: "#5C5C5C", lineHeight: 1.55, marginTop: 4 }}>{it.a}</div>}
+                              {it.a && <div className="ui-sans" style={{ fontSize: 13, color: "#5C5C5C", lineHeight: 1.5, marginTop: 4 }}>{it.a}</div>}
                             </>)}
                     </div>
                   ))}
