@@ -2940,9 +2940,9 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
             // Not a review — try a text post. Notification referenceIds point
             // at whatever was commented on, and 56 of them are text posts.
             apiFetch(BACKEND_URL + "/api/posts/" + reviewId)
-              .then((pr) => pr.json())
+              .then((pr) => (pr.ok ? pr.json() : {}))
               .then((pd) => {
-                if (!pd.post) return;
+                if (!pd.post) { flash("Couldn't open that — it may have been deleted."); return; }
                 const p = pd.post;
                 setThreadReview({
                   id: p.id,
@@ -2955,7 +2955,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                 setView({ name: "thread", reviewId, from: from || view });
                 loadInteractions([reviewId]);
               })
-              .catch(() => {});
+              .catch(() => { flash("Couldn't open that."); });
           }
         }).catch(() => {});
     }
@@ -5925,13 +5925,35 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                     {favorites.map((id) => {
                       const album = fetchedAlbums[id] || albumById(id);
                       return (
-                        <div key={id} onClick={() => openAlbum(id)} className="sb-cover-wrap" style={{ cursor: "pointer" }}>
-                          <div className="pf-card" style={{ lineHeight: 0 }}><AlbumCover album={album} size={150} /></div>
-                          <div style={{ fontSize: 11, fontWeight: 700, color: BLUE, textAlign: "center", marginTop: 6 }}>{album.title}</div>
+                        <div key={id} className="sb-cover-wrap" style={{ position: "relative" }}>
+                          <div onClick={() => openAlbum(id)} style={{ cursor: "pointer" }}>
+                            <div className="pf-card" style={{ lineHeight: 0 }}><AlbumCover album={album} size={150} /></div>
+                            <div style={{ fontSize: 11, fontWeight: 700, color: BLUE, textAlign: "center", marginTop: 6 }}>{album.title}</div>
+                          </div>
+                          <div onClick={(e) => { e.stopPropagation(); toggleFavorite(id); }} title="Remove favorite" style={{ position: "absolute", top: -6, right: -6, width: 20, height: 20, borderRadius: "50%", background: "rgba(120,120,120,0.65)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 2 }}><X size={11} color="#fff" /></div>
                         </div>
                       );
                     })}
+                    {[...Array(Math.max(0, 3 - favorites.length))].map((_, i) => (
+                      <div key={"addfav" + i} onClick={() => setShowFavPicker(true)} title="Add a favorite album" style={{ aspectRatio: "1 / 1", border: "1.5px dashed #b7c4dd", display: "flex", alignItems: "center", justifyContent: "center", color: "#8a9bbf", cursor: "pointer" }}>
+                        <Plus size={16} strokeWidth={1.5} />
+                      </div>
+                    ))}
                   </div>
+                  {showFavPicker && favorites.length < 3 && (
+                    <div style={{ padding: 12 }}>
+                      <AlbumSearchPicker
+                        onPick={(album) => {
+                          if (favorites.includes(album.id)) { flash("Already in your top 3"); return; }
+                          toggleFavorite(album.id);
+                          setFetchedAlbums((prev) => ({ ...prev, [album.id]: { ...album, artist: album.artistName || album.artist || "", year: album.releaseYear || album.year || null } }));
+                          setShowFavPicker(false);
+                        }}
+                        onCancel={() => setShowFavPicker(false)}
+                        placeholder="search for an album to add to top 3..."
+                      />
+                    </div>
+                  )}
                 </div>
                 </div>
               );
