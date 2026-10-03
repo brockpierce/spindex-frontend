@@ -6878,6 +6878,10 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
           const albumIds = interview.albumIds ? interview.albumIds.split(",").filter(Boolean) : [];
           const firstId = albumIds[0];
           const fAlb = firstId ? (fetchedAlbums[firstId] || albumById(firstId)) : null;
+          if (firstId && !fetchedAlbums[firstId] && (!fAlb || fAlb.title === "Unknown Album")) {
+            apiFetch(`${BACKEND_URL}/api/albums/${firstId}`).then((r) => r.json()).then((d) => { if (d.album) { const a = d.album; setFetchedAlbums((prev) => ({ ...prev, [firstId]: { ...a, artist: a.artistName || "", year: a.releaseYear || null } })); } }).catch(() => {});
+          }
+          const ivCover = fAlb && fAlb.coverArtUrl ? fAlb.coverArtUrl.replace("http://", "https://") : null;
           const ivPhoto = interview.artistPhoto || (fAlb && fAlb.coverArtUrl ? fAlb.coverArtUrl.replace("http://", "https://") : null);
           let parsed; try { parsed = parseInterview(interview.body); } catch (e) { parsed = { intro: interview.body || "", items: [] }; }
           const photoSz = isMobile ? 72 : 96;
@@ -6917,9 +6921,19 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
                   ))}
                 </div>
               )}
-              {firstId && (
-                <div className="ui-sans" onClick={() => openAlbum(firstId)} style={{ marginTop: 28, fontSize: 15, color: BLUE, cursor: "pointer" }}>{fAlb && fAlb.title && fAlb.title !== "Unknown Album" ? fAlb.title + " · " : ""}join the conversation →</div>
-              )}
+              {firstId && (() => {
+                  const t = fAlb && fAlb.title && fAlb.title !== "Unknown Album" ? fAlb.title : "";
+                  const ar = fAlb ? (fAlb.artist || fAlb.artistName || "") : "";
+                  const label = t ? `review ${t}${ar ? " by " + ar : ""}. join the conversation →` : "join the conversation →";
+                  return (
+                    <div onClick={() => openAlbum(firstId)}
+                      onMouseEnter={(e) => { e.currentTarget.style.color = "#182C6E"; }} onMouseLeave={(e) => { e.currentTarget.style.color = BLUE; }}
+                      style={{ marginTop: 28, display: "inline-flex", alignItems: "center", gap: 10, cursor: "pointer", color: BLUE, transition: "color 120ms ease" }}>
+                      <div style={{ width: 40, height: 40, flexShrink: 0, background: LINE, overflow: "hidden" }}>{ivCover && <img src={ivCover} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />}</div>
+                      <span className="ui-sans" style={{ fontSize: 15, color: "inherit" }}>{label}</span>
+                    </div>
+                  );
+              })()}
             </div>
           );
         })}
