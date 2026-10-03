@@ -6685,64 +6685,6 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
   const DIVIDER = <div style={{ height: 1, background: "#eee", margin: "32px 0" }} />;
   const ACCENT = BLUE;
 
-  // Dedicated interview page (design 15a): two-column newspaper Q&A.
-  const openedIv = activeInterview ? interviews.find((i) => i.id === activeInterview) : null;
-  if (openedIv) {
-    const ivAlbumIds = openedIv.albumIds ? openedIv.albumIds.split(",").filter(Boolean) : [];
-    const firstId = ivAlbumIds[0];
-    let fAlb = firstId ? (fetchedAlbums[firstId] || albumById(firstId)) : null;
-    if (firstId && !fetchedAlbums[firstId] && (!fAlb || fAlb.title === "Unknown Album")) {
-      apiFetch(`${BACKEND_URL}/api/albums/${firstId}`).then((r) => r.json()).then((d) => { if (d.album) { const a = d.album; setFetchedAlbums((prev) => ({ ...prev, [firstId]: { ...a, artist: a.artistName || "", year: a.releaseYear || null } })); } }).catch(() => {});
-    }
-    const ivPhoto = openedIv.artistPhoto || (fAlb && fAlb.coverArtUrl ? fAlb.coverArtUrl.replace("http://", "https://") : null);
-    const parsed = parseInterview(openedIv.body);
-    const photoSz = isMobile ? 72 : 96;
-    const qaStyle = { fontSize: 16, lineHeight: 1.5 };
-    return (
-      <div style={{ maxWidth: 980, margin: "0 auto", textAlign: "left" }}>
-        <div className="ui-sans" onClick={() => setActiveInterview(null)} style={{ display: "inline-flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 13, cursor: "pointer", marginBottom: 22 }}><ChevronLeft size={15} /> back</div>
-        <div style={{ display: "flex", alignItems: "center", gap: isMobile ? 14 : 20 }}>
-          <div style={{ width: photoSz, height: photoSz, flexShrink: 0, background: LINE, overflow: "hidden" }}>
-            {ivPhoto && <img src={ivPhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
-          </div>
-          <div style={{ minWidth: 0 }}>
-            <div className="ui-sans" style={{ fontSize: isMobile ? 26 : 34, fontWeight: 700, letterSpacing: "-.02em", lineHeight: 1.08, color: INK, overflowWrap: "anywhere" }}>{openedIv.title}</div>
-            <div className="ui-sans" style={{ fontSize: 17, color: MUTE, marginTop: 6 }}>interview by {openedIv.author?.username || "staff"}</div>
-            {openedIv.subtitle && <div className="ui-sans" style={{ fontSize: 13, fontStyle: "italic", color: MUTE, marginTop: 4 }}>&ldquo;{openedIv.subtitle}&rdquo;</div>}
-          </div>
-        </div>
-        {parsed.intro && <div className="ui-sans" style={{ marginTop: 24, maxWidth: 620, fontSize: 17, lineHeight: 1.6, color: INK }}>{parsed.intro}</div>}
-        <div style={{ marginTop: 32, paddingTop: 6, borderTop: `1px solid ${INK}`, columnCount: isMobile ? 1 : 2, columnGap: 48, columnRule: isMobile ? "none" : `1px solid ${LINE}` }}>
-          {parsed.items.map((it, i) => (
-            <div key={i} style={{ breakInside: "avoid", WebkitColumnBreakInside: "avoid", paddingTop: 24 }}>
-              {it.img
-                ? <img src={it.img} alt="" style={{ width: "100%", display: "block" }} />
-                : it.staff
-                  ? <div className="ui-sans" style={{ ...qaStyle, fontWeight: 700, color: INK }}>{it.staff}</div>
-                  : (<>
-                      <div className="ui-sans" style={{ ...qaStyle, fontWeight: 700, color: INK }}>{it.q}</div>
-                      {it.a && <div className="ui-sans" style={{ fontSize: 16, color: "#5C5C5C", lineHeight: 1.6, marginTop: 5 }}>{it.a}</div>}
-                    </>)}
-            </div>
-          ))}
-        </div>
-        {firstId && (
-          <div className="ui-sans" onClick={() => openAlbum(firstId)}
-            onMouseEnter={(e) => { e.currentTarget.style.color = "#182C6E"; }} onMouseLeave={(e) => { e.currentTarget.style.color = BLUE; }}
-            style={{ marginTop: 40, fontSize: 15, color: BLUE, cursor: "pointer", transition: "color 120ms ease" }}>
-            {fAlb && fAlb.title && fAlb.title !== "Unknown Album" ? fAlb.title + " · " : ""}join the conversation →
-          </div>
-        )}
-        {isAdmin && (
-          <div style={{ display: "flex", gap: 14, marginTop: 22 }}>
-            <span className="ui-sans" style={{ fontSize: 13, color: MUTE, cursor: "pointer" }} onClick={() => { setEditingInterview(openedIv); setIntTitle(openedIv.title); setIntSubtitle(openedIv.subtitle || ""); setIntBody(openedIv.body); setIntAlbumIds(openedIv.albumIds || ""); setIntPhoto(openedIv.artistPhoto || null); setActiveInterview(null); setShowInterviewForm(true); }}>edit</span>
-            <span className="ui-sans" style={{ fontSize: 13, color: MUTE, cursor: "pointer" }} onClick={() => { deleteInterview(openedIv.id); setActiveInterview(null); }}>delete</span>
-          </div>
-        )}
-      </div>
-    );
-  }
-
   return (
     <div style={{ maxWidth: 900, margin: "0 auto", textAlign: "left" }}>
       <div className="ui-sans" style={{ fontSize: 20, fontWeight: 400 }}>news</div>
@@ -6934,23 +6876,50 @@ function NewsTab({ openAlbum, fetchedAlbums, albumById, setFetchedAlbums, isAdmi
       <div>
         {interviews.map((interview, idx) => {
           const albumIds = interview.albumIds ? interview.albumIds.split(",").filter(Boolean) : [];
-          const firstAlbum = albumIds.length > 0 ? (fetchedAlbums[albumIds[0]] || albumById(albumIds[0])) : null;
+          const firstId = albumIds[0];
+          const fAlb = firstId ? (fetchedAlbums[firstId] || albumById(firstId)) : null;
+          const ivPhoto = interview.artistPhoto || (fAlb && fAlb.coverArtUrl ? fAlb.coverArtUrl.replace("http://", "https://") : null);
+          let parsed; try { parsed = parseInterview(interview.body); } catch (e) { parsed = { intro: interview.body || "", items: [] }; }
+          const photoSz = isMobile ? 72 : 96;
+          const qHead = { fontSize: 15.5, fontWeight: 700, color: INK, lineHeight: 1.5 };
           return (
-            <div key={interview.id}>
-              <div onClick={() => setActiveInterview(interview.id)}
-                style={{ display: "flex", alignItems: "center", gap: 13, padding: "13px 0", borderTop: idx === 0 ? "none" : `1px solid ${LINE}`, cursor: "pointer" }}>
-                <div style={{ width: 46, height: 46, flexShrink: 0, borderRadius: 0, background: LINE, overflow: "hidden" }}>
-                  {interview.artistPhoto
-                    ? <img src={interview.artistPhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                    : (firstAlbum && firstAlbum.coverArtUrl && <img src={firstAlbum.coverArtUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />)}
+            <div key={interview.id} style={{ marginTop: idx === 0 ? 0 : 44, paddingTop: idx === 0 ? 0 : 40, borderTop: idx === 0 ? "none" : `1px solid ${LINE}` }}>
+              <div style={{ display: "flex", alignItems: "center", gap: isMobile ? 14 : 20 }}>
+                <div style={{ width: photoSz, height: photoSz, flexShrink: 0, background: LINE, overflow: "hidden" }}>
+                  {ivPhoto && <img src={ivPhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
                 </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div className="ui-sans" style={{ fontSize: 14.5, fontWeight: 800, lineHeight: 1.3 }}>{interview.title}</div>
-                  <div className="ui-sans" style={{ fontSize: 13, color: MUTE }}>interview by {interview.author?.username || "staff"}</div>
-                  {interview.subtitle && <div className="ui-sans" style={{ fontSize: 12, fontWeight: 700, fontStyle: "italic", color: MUTE, marginTop: 3, lineHeight: 1.35 }}>&ldquo;{interview.subtitle}&rdquo;</div>}
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div className="ui-sans" style={{ fontSize: isMobile ? 24 : 30, fontWeight: 700, letterSpacing: "-.02em", lineHeight: 1.1, color: INK, overflowWrap: "anywhere" }}>{interview.title}</div>
+                  <div className="ui-sans" style={{ fontSize: 15, color: MUTE, marginTop: 5 }}>interview by {interview.author?.username || "staff"}</div>
+                  {interview.subtitle && <div className="ui-sans" style={{ fontSize: 13, fontStyle: "italic", color: MUTE, marginTop: 3 }}>&ldquo;{interview.subtitle}&rdquo;</div>}
                 </div>
-                <div className="ui-sans" style={{ fontSize: 13, color: MUTE, flexShrink: 0 }}>{interview.date || ""}</div>
+                {isAdmin && (
+                  <div style={{ display: "flex", gap: 12, flexShrink: 0 }}>
+                    <span className="ui-sans" style={{ fontSize: 13, color: MUTE, cursor: "pointer" }} onClick={() => { setEditingInterview(interview); setIntTitle(interview.title); setIntSubtitle(interview.subtitle || ""); setIntBody(interview.body); setIntAlbumIds(interview.albumIds || ""); setIntPhoto(interview.artistPhoto || null); setShowInterviewForm(true); window.scrollTo({ top: 0, behavior: "smooth" }); }}>edit</span>
+                    <span className="ui-sans" style={{ fontSize: 13, color: MUTE, cursor: "pointer" }} onClick={() => deleteInterview(interview.id)}>delete</span>
+                  </div>
+                )}
               </div>
+              {parsed.intro && <div className="ui-sans" style={{ marginTop: 20, maxWidth: 620, fontSize: 16, lineHeight: 1.6, color: INK }}>{parsed.intro}</div>}
+              {parsed.items.length > 0 && (
+                <div style={{ marginTop: 26, paddingTop: 6, borderTop: `1px solid ${INK}`, columnCount: isMobile ? 1 : 2, columnGap: 48, columnRule: isMobile ? "none" : `1px solid ${LINE}` }}>
+                  {parsed.items.map((it, i) => (
+                    <div key={i} style={{ breakInside: "avoid", WebkitColumnBreakInside: "avoid", paddingTop: 22 }}>
+                      {it.img
+                        ? <img src={it.img} alt="" style={{ width: "100%", display: "block" }} />
+                        : it.staff
+                          ? <div className="ui-sans" style={qHead}>{it.staff}</div>
+                          : (<>
+                              <div className="ui-sans" style={qHead}>{it.q}</div>
+                              {it.a && <div className="ui-sans" style={{ fontSize: 15.5, color: "#5C5C5C", lineHeight: 1.6, marginTop: 5 }}>{it.a}</div>}
+                            </>)}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {firstId && (
+                <div className="ui-sans" onClick={() => openAlbum(firstId)} style={{ marginTop: 28, fontSize: 15, color: BLUE, cursor: "pointer" }}>{fAlb && fAlb.title && fAlb.title !== "Unknown Album" ? fAlb.title + " · " : ""}join the conversation →</div>
+              )}
             </div>
           );
         })}
