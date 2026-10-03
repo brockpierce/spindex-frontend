@@ -4176,7 +4176,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
             </div>
           );
           return (
-            <div style={{ maxWidth: 940, margin: "0 auto" }}>
+            <div style={{ maxWidth: 940, margin: "0 auto", textAlign: "left" }}>
               <div className="ui-sans" onClick={() => { const f = view.from || { name: "home" }; setView(f); if (f.tab) setHomeTab(f.tab); }}
                 onMouseEnter={(e) => { e.currentTarget.style.color = INK; }} onMouseLeave={(e) => { e.currentTarget.style.color = MUTE; }}
                 style={{ display: "inline-flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 15, cursor: "pointer", transition: "color 120ms ease" }}>
