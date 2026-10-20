@@ -94,6 +94,27 @@ function mergeLatest(reviews, relistens) {
   });
 }
 
+// Flatten reviews + re-listens into separate entries (one card each), for the
+// profile's recent-reviews list. Originals keep their shape; each re-listen
+// becomes its own review-shaped entry, flagged + numbered. Caller sorts by date.
+function listenEntries(reviews, relistens) {
+  const entries = (reviews || []).map((r) => ({ ...r }));
+  for (const rl of (relistens || [])) {
+    entries.push({
+      id: rl.id,
+      albumId: rl.albumId,
+      rating: rl.rating,
+      text: rl.review || "",
+      favTrack: rl.favoriteTrack || "",
+      leastFavTrack: rl.leastFavoriteTrack || "",
+      date: rl.createdAt ? new Date(rl.createdAt).toISOString() : "",
+      isRelisten: true,
+      relistenNumber: rl.number,
+    });
+  }
+  return entries;
+}
+
 // Short human date for the re-listen history ("Oct 20, 2026"). Tolerates both
 // ISO strings and the app's own timestamp format; returns "" if unparseable.
 function fmtListenDate(d) {
@@ -762,9 +783,10 @@ function ActivityFeed({
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 14, color: INK, lineHeight: 1.45 }}>
-                          reviewed{" "}
+                          {it.isRelisten ? "re-listened to" : "reviewed"}{" "}
                           <span style={linkStyle} onClick={(e) => { e.stopPropagation(); if (it.albumId && onOpenAlbum) onOpenAlbum(it.albumId); }}>{it.albumTitle || "an album"}</span>
                           {it.rating != null ? <span style={{ color: BLUE, fontWeight: 700 }}>{` ${it.rating}/10`}</span> : null}
+                          {it.isRelisten ? <span style={{ marginLeft: 7, fontSize: 9.5, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", whiteSpace: "nowrap", color: BLUE, border: `1px solid ${BLUE}`, borderRadius: 999, padding: "1px 6px", verticalAlign: "middle" }}>↻ re-listen</span> : null}
                         </div>
                         {it.text ? (
                           <div style={{ fontSize: 13.5, color: INK, marginTop: 4, lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{it.text}</div>
@@ -1943,7 +1965,41 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
     setLdLeast(L.least || "");
     setLdError("");
     setLdSaving(false);
-    setView({ name: "listenDetail", albumId, listenId: L.id, isFirst: L.isFirst, number: L.number, date: L.date, from: view });
+    // Make sure the page has what it needs: the album's re-listens (for the
+    // stepper/total), the album itself (cover/title), and the community average.
+    loadRelistens(albumId);
+    if (!fetchedAlbums[albumId]) {
+      apiFetch(`${BACKEND_URL}/api/albums/${albumId}`)
+        .then((r) => r.json())
+        .then((d) => { if (d.album) { const a = d.album; setFetchedAlbums((prev) => ({ ...prev, [a.id]: { ...a, artist: a.artistName || a.artist || "", year: a.releaseYear || a.year || null } })); } })
+        .catch(() => {});
+    }
+    if (!albumAverages[albumId]) loadAlbumAverage(albumId);
+    setView((prev) => ({ name: "listenDetail", albumId, listenId: L.id, isFirst: L.isFirst, number: L.number, date: L.date, from: (prev && prev.name === "listenDetail") ? prev.from : prev }));
+  }
+
+  // Open a recent-review entry: your own re-listen opens its editable listen
+  // page; an original (or anyone else's) opens the album page.
+  function openListenEntry(r, isOwn) {
+    if (r.isRelisten && isOwn) {
+      openListenDetail(r.albumId, { id: r.id, isFirst: false, number: (r.relistenNumber || 0) + 1, rating: r.rating, text: r.text, fav: r.favTrack, least: r.leastFavTrack, date: r.date });
+    } else {
+      openAlbum(r.albumId);
+    }
+  }
+
+  // Stepper: move to a listen by position (1 = original, 2+ = re-listens).
+  function gotoListen(albumId, pos) {
+    const rels = [...relistens].filter((r) => r.albumId === albumId).sort((a, b) => a.number - b.number);
+    const total = 1 + rels.length;
+    if (pos < 1 || pos > total) return;
+    if (pos === 1) {
+      const ex = reviewFor(albumId);
+      openListenDetail(albumId, { id: "first", isFirst: true, number: 1, rating: ex ? ex.rating : 0, text: ex ? ex.text : "", fav: ex ? ex.favTrack : "", least: ex ? ex.leastFavTrack : "", date: ex ? ex.date : "" });
+    } else {
+      const rl = rels[pos - 2];
+      openListenDetail(albumId, { id: rl.id, isFirst: false, number: pos, rating: rl.rating, text: rl.review || "", fav: rl.favoriteTrack || "", least: rl.leastFavoriteTrack || "", date: rl.createdAt });
+    }
   }
 
   function saveListenDetail() {
@@ -1953,11 +2009,12 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
     if (v.isFirst && (!ldRating || ldRating < 1)) { setLdError("Rating must be 1–10."); return; }
     setLdSaving(true);
     setLdError("");
+    // Stay on the listen page after saving (the layout shows "last saved" in
+    // place); the user leaves via back or the stepper.
     const finish = () => {
       setLdSaving(false);
       setTimeout(() => loadAlbumAverage(albumId), 700);
       flash("Saved");
-      setView(v.from || { name: "album", id: albumId });
     };
     if (v.isFirst) {
       apiFetch(`${BACKEND_URL}/api/reviews/${albumId}`, {
@@ -1987,6 +2044,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
         .then(({ ok, d }) => {
           if (!ok || !d.relisten) { setLdError((d && d.error) || "Could not save."); setLdSaving(false); return; }
           setRelistens((prev) => prev.map((x) => (x.id === v.listenId ? d.relisten : x)));
+          setMyRelistens((prev) => prev.map((x) => (x.id === v.listenId ? d.relisten : x)));
           const patchRl = (prev) => prev.map((x) => (x.id === v.listenId ? { ...x, rating: d.relisten.rating, text: d.relisten.review || "", favTrack: d.relisten.favoriteTrack || "", leastFavTrack: d.relisten.leastFavoriteTrack || "" } : x));
           setRealFeedItems(patchRl); setPublicFeedItems(patchRl);
           finish();
@@ -1998,17 +2056,18 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
   function deleteListenDetail() {
     const v = view;
     if (v.isFirst) return; // the original review is deleted from the album page, not here
-    if (!window.confirm(`Delete listen #${v.number}? This can't be undone.`)) return;
+    if (!window.confirm(`Delete re-listen #${v.number}? This can't be undone.`)) return;
     apiFetch(`${BACKEND_URL}/api/relistens/item/${v.listenId}`, { method: "DELETE" })
       .then((r) => r.json().then((d) => ({ ok: r.ok })))
       .then(({ ok }) => {
         if (!ok) { flash("Could not delete"); return; }
         setRelistens((prev) => prev.filter((x) => x.id !== v.listenId));
+        setMyRelistens((prev) => prev.filter((x) => x.id !== v.listenId));
         setRealFeedItems((prev) => prev.filter((x) => x.id !== v.listenId));
         setPublicFeedItems((prev) => prev.filter((x) => x.id !== v.listenId));
         setTimeout(() => loadAlbumAverage(v.albumId), 700);
-        flash("Listen deleted");
-        setView(v.from || { name: "album", id: v.albumId });
+        flash("Re-listen deleted");
+        setView(v.from && v.from.name === "album" ? v.from : { name: "album", id: v.albumId });
       })
       .catch(() => flash("Could not delete"));
   }
@@ -3062,6 +3121,20 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
 
   // Delete a feed card. A re-listen card looks like a review but is NOT one —
   // deleting it must hit the re-listen, never the original review for the album.
+  // Delete a recent-review entry. A re-listen entry deletes only that re-listen;
+  // an original entry deletes the review (and its re-listens, via deleteReview).
+  function deleteListenEntry(r) {
+    if (typeof window === "undefined") return;
+    if (!r.isRelisten) { deleteReview(r.albumId); return; }
+    if (!window.confirm("Delete this re-listen?")) return;
+    setRelistens((prev) => prev.filter((x) => x.id !== r.id));
+    setMyRelistens((prev) => prev.filter((x) => x.id !== r.id));
+    setRealFeedItems((prev) => prev.filter((x) => x.id !== r.id));
+    setPublicFeedItems((prev) => prev.filter((x) => x.id !== r.id));
+    setTimeout(() => loadAlbumAverage(r.albumId), 700);
+    apiFetch(`${BACKEND_URL}/api/relistens/item/${r.id}`, { method: "DELETE" }).catch(() => {});
+  }
+
   function deleteFeedItem(c) {
     if (typeof window === "undefined") return;
     if (!c.isRelisten) { deleteReview(c.albumId); return; }
@@ -4694,7 +4767,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                   const album = fetchedAlbums[r.albumId] || albumById(r.albumId);
                   if (!album) return null;
                   return (
-                    <div key={r.id} onClick={() => openAlbum(r.albumId, album)} style={{ display: "flex", gap: 14, cursor: "pointer", border: "1px solid " + LINE, borderRadius: 0, padding: "12px 14px" }}>
+                    <div key={r.id} onClick={() => openListenEntry(r, view.isOwn)} style={{ display: "flex", gap: 14, cursor: "pointer", border: "1px solid " + LINE, borderRadius: 0, padding: "12px 14px" }}>
                       <AlbumCover album={album} size={72} listened={listenStatus[r.albumId] === "listened"} />
                       <div className="ui-sans" style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -4717,47 +4790,115 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
 
         {/* ---------------- LISTEN DETAIL (edit one listen) ---------------- */}
         {view.name === "listenDetail" && (() => {
-          const album = fetchedAlbums[view.albumId] || albumById(view.albumId);
+          const albumId = view.albumId;
+          const album = fetchedAlbums[albumId] || albumById(albumId);
+          const original = reviewFor(albumId);
+          const rels = [...relistens].filter((r) => r.albumId === albumId).sort((a, b) => a.number - b.number);
+          const total = 1 + rels.length;
+          const isFirst = !!view.isFirst;
+          const serverAvg = albumAverages[albumId];
+          // Resolve this re-listen's position from the loaded list so the badge
+          // and stepper are right even when opened from recent reviews (where the
+          // position isn't known at click time). Falls back to view.number.
+          const relIdx = isFirst ? -1 : rels.findIndex((r) => r.id === view.listenId);
+          const cur = isFirst ? null : (relIdx >= 0 ? rels[relIdx] : null);
+          const pos = isFirst ? 1 : (relIdx >= 0 ? relIdx + 2 : (view.number || 2));
+          const dirty = isFirst
+            ? (original && (ldRating !== (original.rating || 0) || ldText !== (original.text || "") || ldFav !== (original.favTrack || "") || ldLeast !== (original.leastFavTrack || "")))
+            : (cur && (ldRating !== (cur.rating || 0) || ldText !== (cur.review || "") || ldFav !== (cur.favoriteTrack || "") || ldLeast !== (cur.leastFavoriteTrack || "")));
+          const leaveOk = () => !dirty || window.confirm("Discard unsaved changes?");
+          const goAlbum = () => { if (leaveOk()) setView(view.from && view.from.name === "album" ? view.from : { name: "album", id: albumId, from: view.from }); };
+          const stepTo = (p) => { if (leaveOk()) gotoListen(albumId, p); };
+          const delta = (!isFirst && original && ldRating) ? (ldRating - original.rating) : null;
+          const deltaText = delta == null ? "" : (delta > 0 ? `up ${delta}` : delta < 0 ? `down ${-delta}` : "same");
+          const label = { fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", color: MUTE, marginBottom: 10 };
           return (
-            <div style={{ maxWidth: 680, margin: "0 auto" }}>
-              <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 12.5, marginBottom: 22, cursor: "pointer" }} onClick={() => setView(view.from || { name: "album", id: view.albumId })}>
-                <ChevronLeft size={14} /> back
-              </div>
-              <div style={{ marginBottom: 4, fontSize: 24, fontWeight: 700, letterSpacing: "-0.01em" }}>listen #{view.number}</div>
-              <div className="ui-sans" style={{ fontSize: 13.5, color: MUTE, marginBottom: 2 }}>{album ? album.title : ""}{album && (album.artist || album.artistName) ? ` · ${album.artist || album.artistName}` : ""}</div>
-              <div className="ui-sans" style={{ fontSize: 12.5, color: MUTE, marginBottom: 22 }}>{view.date}{view.isFirst ? " · your original review" : ""}</div>
-
-              <div style={{ marginBottom: 18 }}>
-                <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 9 }}>rating</div>
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <RatingBlocks value={ldRating} onChange={setLdRating} size={isMobile ? 13 : 16} />
-                  <span style={{ fontSize: 13, fontWeight: 600, color: ldRating ? BLUE : LINE }}>{ldRating || "--"}/10</span>
+            <div style={{ maxWidth: 920, margin: "0 auto" }}>
+              {/* top bar: back + stepper */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 24, flexWrap: "wrap" }}>
+                <div className="ui-sans" onClick={goAlbum} style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 13.5, cursor: "pointer" }}>
+                  <ChevronLeft size={15} /> back to album
+                </div>
+                <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 13.5, color: MUTE }}>
+                  {pos > 1 && <span style={{ cursor: "pointer" }} onClick={() => stepTo(pos - 1)}>‹ {pos - 1 === 1 ? "original" : `listen ${pos - 1}`}</span>}
+                  <span style={{ color: INK, fontWeight: 600 }}>{pos} of {total}</span>
+                  {pos < total && <span style={{ cursor: "pointer" }} onClick={() => stepTo(pos + 1)}>listen {pos + 1} ›</span>}
                 </div>
               </div>
 
-              <div style={{ marginBottom: 14 }}>
-                <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 9 }}>review</div>
-                <MentionInput className="sb-textarea" rows={7} placeholder="what stood out to you on this one?" value={ldText} onChange={setLdText} followingUsers={followingUsers} />
-              </div>
-
-              <div style={{ display: "flex", gap: 12 }}>
-                <div style={{ flex: 1 }}>
-                  <div className="ui-sans" style={{ fontSize: 11, color: MUTE, marginBottom: 5 }}>favorite track</div>
-                  <input className="sb-input ui-sans" style={{ width: "100%" }} placeholder="e.g. track 3" value={ldFav} onChange={(e) => setLdFav(e.target.value)} />
+              <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 18 : 40, alignItems: isMobile ? "center" : "flex-start" }}>
+                {/* cover column */}
+                <div style={{ position: "relative", flexShrink: 0 }}>
+                  <AlbumCover album={album} size={isMobile ? 160 : 200} />
+                  <span style={{ position: "absolute", top: 10, left: 10, background: BLUE, color: "#fff", fontSize: 12, fontWeight: 700, letterSpacing: "0.03em", padding: "4px 10px", lineHeight: 1, whiteSpace: "nowrap", boxShadow: `0 2px 6px ${BLUE}80` }}>{isFirst ? "original" : `↻ re-listen #${pos}`}</span>
                 </div>
-                <div style={{ flex: 1 }}>
-                  <div className="ui-sans" style={{ fontSize: 11, color: MUTE, marginBottom: 5 }}>least favorite track</div>
-                  <input className="sb-input ui-sans" style={{ width: "100%" }} placeholder="e.g. track 7" value={ldLeast} onChange={(e) => setLdLeast(e.target.value)} />
+
+                {/* content column */}
+                <div style={{ flex: 1, width: "100%", display: "flex", flexDirection: "column", gap: 24, textAlign: isMobile ? "center" : "left", minWidth: 0 }}>
+                  <div>
+                    <div className="ui-sans" style={{ fontSize: isMobile ? 26 : 34, fontWeight: 400, lineHeight: 1.1, wordBreak: "break-word" }}>{album ? album.title : ""}</div>
+                    <div className="ui-sans" style={{ fontSize: 15, color: MUTE, marginTop: 6 }}>
+                      <span style={{ cursor: "pointer", textDecoration: "underline" }} onClick={() => album && openArtist(album.artist || album.artistName)}>{album ? (album.artist || album.artistName) : ""}</span>
+                      {album && album.year ? ` · ${album.year}` : ""}
+                    </div>
+                  </div>
+
+                  <div style={{ borderTop: `1px solid ${LINE}` }} />
+
+                  <div>
+                    <div style={label}>{isFirst ? "your rating" : "re-listen rating"}</div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 14, justifyContent: isMobile ? "center" : "flex-start" }}>
+                      <RatingBlocks value={ldRating} onChange={setLdRating} size={isMobile ? 16 : 18} />
+                      <span style={{ fontSize: 20, fontWeight: 700, color: ldRating ? BLUE : LINE }}>{ldRating || "–"}/10</span>
+                    </div>
+                  </div>
+
+                  {!isFirst && original ? (
+                    <div onClick={goAlbum} style={{ cursor: "pointer" }}>
+                      <div style={label}>your original</div>
+                      <div className="ui-sans" style={{ display: "flex", alignItems: "baseline", gap: 8, justifyContent: isMobile ? "center" : "flex-start", flexWrap: "wrap" }}>
+                        <span style={{ fontSize: 28, fontWeight: 700 }}>{original.rating}</span>
+                        <span style={{ fontSize: 14.5, color: MUTE }}>/10 · first listen{original.date ? `, ${fmtListenDate(original.date)}` : ""}{deltaText ? ` · ${deltaText}` : ""}</span>
+                      </div>
+                    </div>
+                  ) : isFirst && serverAvg && serverAvg.count > 0 ? (
+                    <div>
+                      <div style={label}>community average</div>
+                      <div className="ui-sans" style={{ display: "flex", alignItems: "baseline", gap: 8, justifyContent: isMobile ? "center" : "flex-start" }}>
+                        <span style={{ fontSize: 28, fontWeight: 700 }}>{serverAvg.average.toFixed(1)}</span>
+                        <span style={{ fontSize: 14.5, color: MUTE }}>/10 · {serverAvg.count} rating{serverAvg.count !== 1 ? "s" : ""}</span>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  <div>
+                    <div style={label}>{isFirst ? "your review" : "re-listen review"}</div>
+                    <MentionInput className="sb-textarea" rows={6} placeholder={isFirst ? "what stood out to you on this one?" : "what changed this time?"} value={ldText} onChange={setLdText} followingUsers={followingUsers} />
+                  </div>
+
+                  <div style={{ display: "flex", gap: 12 }}>
+                    <div style={{ flex: 1 }}>
+                      <div className="ui-sans" style={{ fontSize: 11, color: MUTE, marginBottom: 5 }}>favorite track</div>
+                      <input className="sb-input ui-sans" style={{ width: "100%" }} placeholder="e.g. track 3" value={ldFav} onChange={(e) => setLdFav(e.target.value)} />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div className="ui-sans" style={{ fontSize: 11, color: MUTE, marginBottom: 5 }}>least favorite track</div>
+                      <input className="sb-input ui-sans" style={{ width: "100%" }} placeholder="e.g. track 7" value={ldLeast} onChange={(e) => setLdLeast(e.target.value)} />
+                    </div>
+                  </div>
+
+                  {ldError && <div className="ui-sans" style={{ fontSize: 12, color: "#c0392b" }}>{ldError}</div>}
+
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
+                      <button className="sb-btn sb-btn-solid" disabled={ldSaving} onClick={saveListenDetail}>{ldSaving ? "saving…" : "save changes"}</button>
+                      {!isFirst && (
+                        <button onClick={deleteListenDetail} className="ui-sans" style={{ background: "transparent", border: "none", color: "#c0392b", fontSize: 13, cursor: "pointer" }}>delete re-listen</button>
+                      )}
+                    </div>
+                    {view.date && <span className="ui-sans" style={{ fontSize: 13, color: MUTE }}>last saved {fmtListenDate(view.date)}</span>}
+                  </div>
                 </div>
-              </div>
-
-              {ldError && <div className="ui-sans" style={{ fontSize: 12, color: "#c0392b", marginTop: 12 }}>{ldError}</div>}
-
-              <div style={{ marginTop: 20, display: "flex", alignItems: "center", gap: 18 }}>
-                <button className="sb-btn sb-btn-solid" disabled={ldSaving} onClick={saveListenDetail}>{ldSaving ? "saving…" : "save changes"}</button>
-                {!view.isFirst && (
-                  <button onClick={deleteListenDetail} className="ui-sans" style={{ background: "transparent", border: "none", color: "#c0392b", fontSize: 13, cursor: "pointer" }}>delete this listen</button>
-                )}
               </div>
             </div>
           );
@@ -4851,8 +4992,11 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
               </div>
             );
           }
-          const userReviews = [...mergeLatest(viewedUserReviews, viewedUserRelistens)].sort((a, b) => (a.date !== b.date ? (a.date < b.date ? 1 : -1) : (a.id < b.id ? 1 : -1)));
-          const userAvgRating = userReviews.length ? (userReviews.reduce((s, r) => s + r.rating, 0) / userReviews.length).toFixed(1) : "--";
+          // Display list: originals + re-listens as separate entries (newest first).
+          const userReviews = [...listenEntries(viewedUserReviews, viewedUserRelistens)].sort((a, b) => (a.date !== b.date ? (a.date < b.date ? 1 : -1) : (a.id < b.id ? 1 : -1)));
+          // Per-album (latest listen) for the average + stats, so re-listens don't double-count.
+          const userLatest = mergeLatest(viewedUserReviews, viewedUserRelistens);
+          const userAvgRating = userLatest.length ? (userLatest.reduce((s, r) => s + (r.rating || 0), 0) / userLatest.length).toFixed(1) : "--";
           if (user.profileTheme === "mspaint") {
             return (
               <MSPaintProfile
@@ -4862,7 +5006,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                 accentColor={user.accentColor}
                 isOwn={false}
                 isMobile={isMobile}
-                stats={{ followers: user.followerCount || 0, following: user.followingCount || 0, listened: viewedUserListenedCount, reviews: userReviews.length }}
+                stats={{ followers: user.followerCount || 0, following: user.followingCount || 0, listened: viewedUserListenedCount, reviews: userLatest.length }}
                 albums={viewedUserFavorites.map((id) => { const a = fetchedAlbums[id] || albumById(id); return { id, title: a ? a.title : "", album: a }; })}
                 reviews={userReviews.slice(0, 3).map((r) => { const a = fetchedAlbums[r.albumId] || albumById(r.albumId); return { score: r.rating, albumTitle: a ? a.title : "", artist: a ? (a.artist || a.artistName || "") : "", body: r.text || "", albumId: r.albumId, album: a, favoriteTrack: r.favoriteTrack || "", renderCover: (size) => { const u = a && a.coverArtUrl && a.coverArtUrl !== "none" ? a.coverArtUrl.replace("http://", "https://") : null; return u ? <img src={u} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /> : <div style={{ width: "100%", height: "100%", background: "#0a3a8a" }} />; } }; })}
                 initialDrawing={user.profileDrawing}
@@ -4936,7 +5080,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                       <Stat label="following" value={user.followingCount || 0} onClick={() => setShowFollowList({ kind: "following", userId: user.id, username: user.username })} />
                       <Stat label="listened" value={viewedUserListenedCount} onClick={() => setView({ name: "listenedList", username: user.username, userId: user.id, listenedIds: viewedUserListened, from: view })} />
                       <Stat label="activity" value={<PencilGlyph size={20} />} onClick={() => openActivity(user.username, user.id, false)} />
-                      <Stat label="stats" value={<EqualizerIcon />} onClick={userReviews.length > 0 ? () => setView({ name: "statsDetail", reviews: userReviews, displayName: user.displayName || user.username, isOwn: false, from: view }) : undefined} />
+                      <Stat label="stats" value={<EqualizerIcon />} onClick={userReviews.length > 0 ? () => setView({ name: "statsDetail", reviews: userLatest, displayName: user.displayName || user.username, isOwn: false, from: view }) : undefined} />
                     </div>
                   )}
                 </div>
@@ -4948,7 +5092,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                   <Stat label="following" value={user.followingCount || 0} onClick={() => setShowFollowList({ kind: "following", userId: user.id, username: user.username })} />
                   <Stat label="listened" value={viewedUserListenedCount} />
                   <Stat label="activity" value={<PencilGlyph size={20} />} onClick={() => openActivity(user.username, user.id, false)} />
-                  <Stat label="stats" value={<EqualizerIcon />} onClick={userReviews.length > 0 ? () => setView({ name: "statsDetail", reviews: userReviews, displayName: user.displayName || user.username, isOwn: false, from: view }) : undefined} />
+                  <Stat label="stats" value={<EqualizerIcon />} onClick={userReviews.length > 0 ? () => setView({ name: "statsDetail", reviews: userLatest, displayName: user.displayName || user.username, isOwn: false, from: view }) : undefined} />
                 </div>
               )}
 
@@ -5024,7 +5168,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                   {(showAllUserReviews ? userReviews : userReviews.slice(0, 3)).map((r, i) => {
                     const album = fetchedAlbums[r.albumId] || albumById(r.albumId) || { id: r.albumId, title: "Loading...", artist: "", artistName: "", year: null };
                     return (
-                      <div key={i} onClick={() => openAlbum(r.albumId, album)} style={{ display: "flex", gap: 14, cursor: "pointer", position: "relative" }}>
+                      <div key={i} onClick={() => openListenEntry(r, viewedUser && authUser && viewedUser.id === authUser.id)} style={{ display: "flex", gap: 14, cursor: "pointer", position: "relative" }}>
                         <div className="ui-sans" style={{ position: "absolute", top: 0, right: 0, fontSize: 11, color: MUTE }}>{relativeDate(r.date)}</div>
                         <AlbumCover album={album} size={88} />
                         <div className="ui-sans" style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
@@ -5818,7 +5962,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                       );
                     })}
                   </div>
-                  <div className="ui-sans" style={{ textAlign: "center", fontSize: 14, fontWeight: 400, marginTop: 18, cursor: "pointer", color: BLUE }} onClick={() => setView({ name: "reviewsList", username: profile.username, userId: profile.id, reviews: mergeLatest(reviews, myRelistens), isOwn: true, from: { name: "statsDetail" } })}>
+                  <div className="ui-sans" style={{ textAlign: "center", fontSize: 14, fontWeight: 400, marginTop: 18, cursor: "pointer", color: BLUE }} onClick={() => setView({ name: "reviewsList", username: profile.username, userId: profile.id, reviews: listenEntries(reviews, myRelistens), isOwn: true, from: { name: "statsDetail" } })}>
                     see all {reviews.length} reviews &rarr;
                   </div>
                 </>
@@ -6248,7 +6392,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
               if (label === "followers") setShowFollowList({ kind: "followers", userId: authUser?.id, username: profile.username });
               else if (label === "following") setShowFollowList({ kind: "following", userId: authUser?.id, username: profile.username });
               else if (label === "listened") setView({ name: "albumList", filter: "listened" });
-              else if (label === "reviews") setView({ name: "reviewsList", username: profile.username, userId: profile.id, reviews: mergeLatest(reviews, myRelistens), isOwn: true, from: view });
+              else if (label === "reviews") setView({ name: "reviewsList", username: profile.username, userId: profile.id, reviews: listenEntries(reviews, myRelistens), isOwn: true, from: view });
             }}
             renderAvatar={(size) => avatarUrl ? <img src={avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ width: "100%", height: "100%", background: "#0a3a8a", display: "flex", alignItems: "center", justifyContent: "center" }}><User color="#fff" size={size / 2} /></div>}
             renderAlbumCover={(alb) => { const u = alb.album && alb.album.coverArtUrl && alb.album.coverArtUrl !== "none" ? alb.album.coverArtUrl.replace("http://", "https://") : null; return u ? <img src={u} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /> : <div style={{ width: "100%", height: "100%", background: "#0a3a8a" }} />; }}
@@ -6536,19 +6680,19 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
               <div className={profile.profileTheme ? "pf-section-wrap" : ""} style={profile.profileTheme ? { marginBottom: 14, textAlign: "left" } : {}}><span className={profile.profileTheme ? "pf-section" : ""} style={profile.profileTheme ? {} : { fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: INK, marginBottom: 14, textAlign: isMobile ? "center" : "left", fontWeight: 400, display: "block" }}>recent reviews</span></div>
               <div style={{ display: "flex", flexDirection: "column", gap: 16, alignItems: isMobile ? "center" : "flex-start" }}>
                 {(() => {
-                  const sorted = [...mergeLatest(reviews, myRelistens)].sort((a, b) => (a.date !== b.date ? (a.date < b.date ? 1 : -1) : (a.id < b.id ? 1 : -1)));
+                  const sorted = [...listenEntries(reviews, myRelistens)].sort((a, b) => (a.date !== b.date ? (a.date < b.date ? 1 : -1) : (a.id < b.id ? 1 : -1)));
                   const visible = showAllOwnReviews ? sorted : sorted.slice(0, 3);
                   return visible.map((r) => {
                   const album = fetchedAlbums[r.albumId] || albumById(r.albumId);
                   if (!album) return null;
                   return (
-                    <div key={r.id} onClick={() => openAlbum(r.albumId)} style={{ display: "flex", gap: 14, cursor: "pointer", width: "100%", maxWidth: isMobile ? 340 : "100%", position: "relative" }}>
+                    <div key={r.id} onClick={() => openListenEntry(r, true)} style={{ display: "flex", gap: 14, cursor: "pointer", width: "100%", maxWidth: isMobile ? 340 : "100%", position: "relative" }}>
                       <div className="ui-sans" style={{ position: "absolute", top: 0, right: 0, display: "flex", alignItems: "center", gap: 8 }}>
                         <span style={{ fontSize: 11, color: MUTE }}>{relativeDate(r.date)}</span>
                         <button
-                          onClick={(e) => { e.stopPropagation(); deleteReview(r.albumId); }}
-                          title="Delete review"
-                          aria-label="Delete review"
+                          onClick={(e) => { e.stopPropagation(); deleteListenEntry(r); }}
+                          title={r.isRelisten ? "Delete re-listen" : "Delete review"}
+                          aria-label={r.isRelisten ? "Delete re-listen" : "Delete review"}
                           style={{ background: "transparent", border: "none", padding: 2, cursor: "pointer", color: MUTE, display: "flex", alignItems: "center" }}
                         >
                           <X size={14} />
@@ -6577,13 +6721,13 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                 });
                 })()}
                 {reviews.length === 0 && <div className="ui-sans" style={{ color: MUTE, fontSize: 13 }}>no reviews yet -- rate something from browse.</div>}
-                {reviews.length > 3 && (
+                {(reviews.length + myRelistens.length) > 3 && (
                   <button
                     className="sb-btn"
                     onClick={() => setShowAllOwnReviews((v) => !v)}
                     style={{ marginTop: 4, alignSelf: isMobile ? "center" : "flex-start" }}
                   >
-                    {showAllOwnReviews ? "show fewer" : `see all reviews (${reviews.length})`}
+                    {showAllOwnReviews ? "show fewer" : `see all reviews (${reviews.length + myRelistens.length})`}
                   </button>
                 )}
               </div>
