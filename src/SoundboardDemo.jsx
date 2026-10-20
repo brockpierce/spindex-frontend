@@ -5394,8 +5394,8 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                           {showRelistenForm && (
                             <div style={{ marginTop: 16, border: `1.5px solid ${BLUE}`, padding: isMobile ? 16 : 22, textAlign: "left" }}>
                               <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 10, flexWrap: "wrap", marginBottom: 14 }}>
-                                <div style={{ fontSize: 17, fontWeight: 700 }}>{editingRelistenId ? `edit re-listen #${editingNum || ""}` : `re-listen #${relistens.length + 1}`}</div>
-                                <div className="ui-sans" style={{ fontSize: 12.5, color: MUTE }}>{fmtListenDate(nowTimestamp())} · your original review won't change</div>
+                                <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE }}>{editingRelistenId ? `edit re-listen #${editingNum || ""}` : `re-listen #${relistens.length + 1}`}</div>
+                                <div className="ui-sans" style={{ fontSize: 11, color: MUTE }}>{fmtListenDate(nowTimestamp())} · your original review won't change</div>
                               </div>
                               <div style={{ marginBottom: 14 }}>
                                 <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 9 }}>rating</div>
