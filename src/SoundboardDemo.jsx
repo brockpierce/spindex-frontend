@@ -64,6 +64,36 @@ function nowTimestamp() {
   return new Date().toISOString();
 }
 
+// Given a list of original reviews and a list of re-listens, return one entry
+// per album reflecting the user's LATEST listen (re-listens become the primary
+// review). Content/date/number come from the newest re-listen; the rating is
+// the newest *rated* listen (a re-listen with no rating falls back). Albums with
+// no re-listen are returned unchanged. Length is preserved (one per album).
+function mergeLatest(reviews, relistens) {
+  if (!relistens || !relistens.length) return reviews;
+  const byAlbum = {};
+  for (const r of relistens) {
+    const b = byAlbum[r.albumId] || (byAlbum[r.albumId] = { latest: null, latestRated: null });
+    if (!b.latest || r.number > b.latest.number) b.latest = r;
+    if (r.rating != null && (!b.latestRated || r.number > b.latestRated.number)) b.latestRated = r;
+  }
+  return reviews.map((rv) => {
+    const b = byAlbum[rv.albumId];
+    if (!b) return rv;
+    const L = b.latest;
+    return {
+      ...rv,
+      rating: b.latestRated ? b.latestRated.rating : rv.rating,
+      text: L.review || "",
+      favTrack: L.favoriteTrack || "",
+      leastFavTrack: L.leastFavoriteTrack || "",
+      date: L.createdAt ? new Date(L.createdAt).toISOString() : rv.date,
+      isRelisten: true,
+      relistenNumber: L.number,
+    };
+  });
+}
+
 // Short human date for the re-listen history ("Oct 20, 2026"). Tolerates both
 // ISO strings and the app's own timestamp format; returns "" if unparseable.
 function fmtListenDate(d) {
@@ -1301,6 +1331,7 @@ export default function SoundboardDemo() {
     return map;
   });
   const [reviews, setReviews] = useState(INITIAL_REVIEWS);
+  const [myRelistens, setMyRelistens] = useState([]); // all of my re-listens, for own profile + stats
   const [listenStatus, setListenStatus] = useState(INITIAL_LISTEN_STATUS);
   const [favorites, setFavorites] = useState(INITIAL_FAVORITES);
   const [albumMixes, setAlbumMixes] = useState(INITIAL_ALBUM_MIXES);
@@ -1880,6 +1911,16 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
           if (editing) return prev.map((x) => (x.id === editing ? d.relisten : x));
           return [...prev, d.relisten];
         });
+        // Keep the feed caches in sync: a new re-listen shows up immediately
+        // (with its badge); an edit updates the existing card in place.
+        if (editing) {
+          const patch = (prev) => prev.map((x) => (x.id === editing ? { ...x, rating: d.relisten.rating, text: d.relisten.review || "", favTrack: d.relisten.favoriteTrack || "", leastFavTrack: d.relisten.leastFavoriteTrack || "" } : x));
+          setRealFeedItems(patch); setPublicFeedItems(patch);
+        } else {
+          const card = relistenFeedCard(d.relisten);
+          setRealFeedItems((prev) => [card, ...prev]);
+          setPublicFeedItems((prev) => [card, ...prev]);
+        }
         setShowRelistenForm(false);
         setEditingRelistenId(null);
         setRlRating(0); setRlText(""); setRlFav(""); setRlLeast("");
@@ -1931,6 +1972,8 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
           // the reviews list and the album-page draft so they reflect the edit.
           setReviews((prev) => prev.map((r) => (r.albumId === albumId ? { ...r, rating: ldRating, text: ldText, favTrack: ldFav, leastFavTrack: ldLeast } : r)));
           setDraftRating(ldRating); setDraftText(ldText); setDraftFavTrack(ldFav); setDraftLeastFavTrack(ldLeast);
+          const patchReview = (prev) => prev.map((x) => (x.username === profile.username && x.albumId === albumId && !x.isRelisten ? { ...x, rating: ldRating, text: ldText, favTrack: ldFav, leastFavTrack: ldLeast } : x));
+          setRealFeedItems(patchReview); setPublicFeedItems(patchReview);
           finish();
         })
         .catch(() => { setLdError("Could not save."); setLdSaving(false); });
@@ -1944,6 +1987,8 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
         .then(({ ok, d }) => {
           if (!ok || !d.relisten) { setLdError((d && d.error) || "Could not save."); setLdSaving(false); return; }
           setRelistens((prev) => prev.map((x) => (x.id === v.listenId ? d.relisten : x)));
+          const patchRl = (prev) => prev.map((x) => (x.id === v.listenId ? { ...x, rating: d.relisten.rating, text: d.relisten.review || "", favTrack: d.relisten.favoriteTrack || "", leastFavTrack: d.relisten.leastFavoriteTrack || "" } : x));
+          setRealFeedItems(patchRl); setPublicFeedItems(patchRl);
           finish();
         })
         .catch(() => { setLdError("Could not save."); setLdSaving(false); });
@@ -1959,11 +2004,37 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
       .then(({ ok }) => {
         if (!ok) { flash("Could not delete"); return; }
         setRelistens((prev) => prev.filter((x) => x.id !== v.listenId));
+        setRealFeedItems((prev) => prev.filter((x) => x.id !== v.listenId));
+        setPublicFeedItems((prev) => prev.filter((x) => x.id !== v.listenId));
         setTimeout(() => loadAlbumAverage(v.albumId), 700);
         flash("Listen deleted");
         setView(v.from || { name: "album", id: v.albumId });
       })
       .catch(() => flash("Could not delete"));
+  }
+
+  // The album page's YOUR REVIEW editor represents your LATEST listen. Saving it
+  // edits that listen: the original review if you've never re-listened, otherwise
+  // the newest re-listen. (Older listens are edited from the history drawer.)
+  function saveCurrentListen(albumId) {
+    const latestRl = relistens.length ? relistens.reduce((a, b) => (b.number > a.number ? b : a)) : null;
+    if (!latestRl) { saveReview(albumId); return; }
+    apiFetch(`${BACKEND_URL}/api/relistens/item/${latestRl.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rating: draftRating || null, review: draftText, favoriteTrack: draftFavTrack, leastFavoriteTrack: draftLeastFavTrack }),
+    })
+      .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
+      .then(({ ok, d }) => {
+        if (!ok || !d.relisten) { flash("Could not save"); return; }
+        setRelistens((prev) => prev.map((x) => (x.id === latestRl.id ? d.relisten : x)));
+        setMyRelistens((prev) => prev.map((x) => (x.id === latestRl.id ? d.relisten : x)));
+        const patch = (prev) => prev.map((x) => (x.id === latestRl.id ? { ...x, rating: d.relisten.rating, text: d.relisten.review || "", favTrack: d.relisten.favoriteTrack || "", leastFavTrack: d.relisten.leastFavoriteTrack || "" } : x));
+        setRealFeedItems(patch); setPublicFeedItems(patch);
+        setTimeout(() => loadAlbumAverage(albumId), 700);
+        flash("Review saved");
+      })
+      .catch(() => flash("Could not save"));
   }
 
   function saveReview(albumId) {
@@ -2788,6 +2859,8 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
           const items = data.feed.map((item) => ({
             itemType: item.itemType || "review",
             id: item.id,
+            isRelisten: item.isRelisten || false,
+            relistenNumber: item.relistenNumber || null,
             username: item.username,
             albumId: item.albumId,
             songTitle: item.songTitle || "",
@@ -2803,8 +2876,9 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
             date: item.date ? new Date(item.date).toISOString() : "",
           }));
           setRealFeedItems(items);
-          // Load reactions + comments for each feed item
-          loadInteractions(items.map((i) => i.id).filter(Boolean));
+          // Load reactions + comments for each feed item (re-listens have no
+          // review thread, so skip them — their id isn't a review id).
+          loadInteractions(items.filter((i) => !i.isRelisten).map((i) => i.id).filter(Boolean));
           items.filter((i) => i.itemType === "sharemix" && i.mixId).forEach((i) => {
             apiFetch(BACKEND_URL + "/api/mixes/" + i.mixId)
               .then((r) => r.json())
@@ -2877,6 +2951,8 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
           const items = data.feed.map((item) => ({
             itemType: item.itemType || "review",
             id: item.id,
+            isRelisten: item.isRelisten || false,
+            relistenNumber: item.relistenNumber || null,
             username: item.username,
             albumId: item.albumId,
             songTitle: item.songTitle || "",
@@ -2903,8 +2979,9 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
             setPublicFeedItems(items);
           }
           setPublicFeedCursor(data.nextCursor || null);
-          // Load reactions + comments for each public feed item
-          loadInteractions(items.map((i) => i.id).filter(Boolean));
+          // Load reactions + comments for each public feed item (skip re-listens:
+          // their id isn't a review id, so there's no thread to load).
+          loadInteractions(items.filter((i) => !i.isRelisten).map((i) => i.id).filter(Boolean));
           // One batched request instead of one per album, and one state
           // update instead of N. This loop was the main source of request
           // pile-up on the backend.
@@ -2933,6 +3010,41 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authUser]);
 
+  // Keep my full re-listen list fresh for the own-profile recent reviews + stats
+  // (so the latest listen fronts each album there). Refreshed each time I open
+  // my profile, and whenever my open-album re-listens change.
+  useEffect(() => {
+    if (!authUser || view.name !== "profile") return;
+    apiFetch(`${BACKEND_URL}/api/relistens/user/${authUser.id}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d && Array.isArray(d.relistens)) setMyRelistens(d.relistens); })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authUser, view.name, relistens]);
+
+  // Keep the album page's YOUR REVIEW editor on your LATEST listen (a re-listen
+  // fronts the original). Re-syncs when the album opens or its re-listens change
+  // (add/edit/delete) — not while you type, since typing doesn't touch `relistens`.
+  useEffect(() => {
+    if (view.name !== "album" || !view.id) return;
+    const latestRl = relistens.length ? relistens.reduce((a, b) => (b.number > a.number ? b : a)) : null;
+    if (latestRl) {
+      setDraftRating(latestRl.rating || 0);
+      setDraftText(latestRl.review || "");
+      setDraftFavTrack(latestRl.favoriteTrack || "");
+      setDraftLeastFavTrack(latestRl.leastFavoriteTrack || "");
+    } else {
+      const ex = reviewFor(view.id);
+      if (ex) {
+        setDraftRating(ex.rating || 0);
+        setDraftText(ex.text || "");
+        setDraftFavTrack(ex.favTrack || "");
+        setDraftLeastFavTrack(ex.leastFavTrack || "");
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view.name, view.id, relistens]);
+
   // Delete one of the current user's reviews. Double-confirm, optimistic
   // update, then persist.
   function deleteReview(albumId) {
@@ -2940,9 +3052,36 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
     if (!window.confirm("Delete this review?")) return;
     if (!window.confirm("Are you sure? This can't be undone.")) return;
     setReviews((prev) => prev.filter((r) => r.albumId !== albumId));
+    // Deleting the review takes the album's whole listen history with it.
+    setMyRelistens((prev) => prev.filter((r) => r.albumId !== albumId));
+    setRelistens((prev) => prev.filter((r) => r.albumId !== albumId));
     setRealFeedItems((prev) => prev.filter((r) => !(r.username === profile.username && r.albumId === albumId)));
     setPublicFeedItems((prev) => prev.filter((r) => !(r.username === profile.username && r.albumId === albumId)));
     apiFetch(`${BACKEND_URL}/api/reviews/${albumId}`, { method: "DELETE" }).catch(() => {});
+  }
+
+  // Delete a feed card. A re-listen card looks like a review but is NOT one —
+  // deleting it must hit the re-listen, never the original review for the album.
+  function deleteFeedItem(c) {
+    if (typeof window === "undefined") return;
+    if (!c.isRelisten) { deleteReview(c.albumId); return; }
+    if (!window.confirm("Delete this re-listen?")) return;
+    if (!window.confirm("Are you sure? This can't be undone.")) return;
+    setRealFeedItems((prev) => prev.filter((x) => x.id !== c.id));
+    setPublicFeedItems((prev) => prev.filter((x) => x.id !== c.id));
+    setRelistens((prev) => prev.filter((x) => x.id !== c.id));
+    setTimeout(() => loadAlbumAverage(c.albumId), 700);
+    apiFetch(`${BACKEND_URL}/api/relistens/item/${c.id}`, { method: "DELETE" }).catch(() => {});
+  }
+
+  // A feed card for a newly-saved re-listen, matching the backend's feed shape.
+  function relistenFeedCard(rl) {
+    return {
+      itemType: "review", id: rl.id, isRelisten: true, relistenNumber: rl.number,
+      username: profile.username, albumId: rl.albumId, rating: rl.rating,
+      text: rl.review || "", favTrack: rl.favoriteTrack || "", leastFavTrack: rl.leastFavoriteTrack || "",
+      date: rl.createdAt || nowTimestamp(),
+    };
   }
 
   function deleteTextPost(postId) {
@@ -3040,6 +3179,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
 
   const [viewedUser, setViewedUser] = useState(null);
   const [viewedUserReviews, setViewedUserReviews] = useState([]);
+  const [viewedUserRelistens, setViewedUserRelistens] = useState([]);
   const [viewedUserFavorites, setViewedUserFavorites] = useState([]);
   const [viewedUserMixes, setViewedUserMixes] = useState([]);
   const [feedMixes, setFeedMixes] = useState({}); // mixId -> mix, for feed sharemix cards only
@@ -3198,6 +3338,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
   function openUserProfile(username) {
     setViewedUser(null);
     setViewedUserReviews([]);
+    setViewedUserRelistens([]);
     setViewedUserFavorites([]);
     setViewedUserMixes([]);
     setViewedUserQueue([]);
@@ -3226,6 +3367,11 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                 }));
               }
             })
+            .catch(() => {});
+          // Load their re-listens so their latest listen can front each album.
+          apiFetch(`${BACKEND_URL}/api/relistens/user/${data.user.id}`)
+            .then((r) => r.json())
+            .then((d) => { if (d && Array.isArray(d.relistens)) setViewedUserRelistens(d.relistens); })
             .catch(() => {});
           // Load their reviews
           apiFetch(`${BACKEND_URL}/api/reviews/user/${data.user.id}`)
@@ -4069,12 +4215,13 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
                             <Avatar username={c.username} size={26} />
                             <span className="ui-sans" style={{ fontSize: 13, fontWeight: 600, cursor: "pointer" }} onClick={() => openUserProfile(c.username)}>@{(c.username || "").toLowerCase()}</span>
+                            {c.isRelisten && <span className="ui-sans" title="re-listen" style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", whiteSpace: "nowrap", color: BLUE, border: `1px solid ${BLUE}`, borderRadius: 999, padding: "1px 7px" }}>↻ re-listen</span>}
                             <span className="ui-sans" style={{ fontSize: 11, color: MUTE, marginLeft: "auto" }}>{relativeDate(c.date)}</span>
                             {c.username === profile.username ? (
                               <button
-                                onClick={(e) => { e.stopPropagation(); deleteReview(c.albumId); }}
-                                title="Delete review"
-                                aria-label="Delete review"
+                                onClick={(e) => { e.stopPropagation(); deleteFeedItem(c); }}
+                                title={c.isRelisten ? "Delete re-listen" : "Delete review"}
+                                aria-label={c.isRelisten ? "Delete re-listen" : "Delete review"}
                                 style={{ background: "transparent", border: "none", padding: 2, cursor: "pointer", color: MUTE, display: "flex", alignItems: "center" }}
                               >
                                 <X size={14} />
@@ -4086,7 +4233,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                           <div onClick={() => openAlbum(c.albumId)} style={{ display: "flex", gap: 14, cursor: "pointer" }}>
                             <AlbumCover album={album} size={88} />
                             <div className="ui-sans" style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
-                              <div style={{ fontSize: 20, fontWeight: 700, color: BLUE, letterSpacing: "-0.01em", lineHeight: 1.1, textAlign: "left" }}>{c.rating}/10</div>
+                              {c.rating != null && <div style={{ fontSize: 20, fontWeight: 700, color: BLUE, letterSpacing: "-0.01em", lineHeight: 1.1, textAlign: "left" }}>{c.rating}/10</div>}
                               <div style={{ marginTop: 1, textAlign: "left" }}>
                                 <span style={{ fontSize: 14, fontWeight: 700 }}>{album.title}</span>
                                 <span style={{ fontSize: 13, color: MUTE, marginLeft: 6, cursor: "pointer" }} onClick={(e) => { e.stopPropagation(); openArtist(album.artist || album.artistName); }}>{album.artist || album.artistName}</span>
@@ -4100,7 +4247,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                               )}
                             </div>
                           </div>
-                          {c.id && (
+                          {c.id && !c.isRelisten && (
                             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 14, paddingTop: 14, paddingBottom: 0, borderTop: `1px solid ${LINE}` }}>
                               <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
                                 <ReactionBar
@@ -4122,7 +4269,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                               <ShareButton kind="review" album={album} username={c.username} rating={c.rating} reviewText={c.text} />
                             </div>
                           )}
-                          {c.id && expandedComments[c.id] && (
+                          {c.id && !c.isRelisten && expandedComments[c.id] && (
                             <ReviewComments
                               reviewId={c.id}
                               comments={reviewComments[c.id] || []}
@@ -4550,7 +4697,10 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                     <div key={r.id} onClick={() => openAlbum(r.albumId, album)} style={{ display: "flex", gap: 14, cursor: "pointer", border: "1px solid " + LINE, borderRadius: 0, padding: "12px 14px" }}>
                       <AlbumCover album={album} size={72} listened={listenStatus[r.albumId] === "listened"} />
                       <div className="ui-sans" style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 18, fontWeight: 700, color: BLUE }}>{r.rating}/10</div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <div style={{ fontSize: 18, fontWeight: 700, color: BLUE }}>{r.rating}/10</div>
+                          {r.isRelisten && <span className="ui-sans" title="re-listen" style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", whiteSpace: "nowrap", color: BLUE, border: `1px solid ${BLUE}`, borderRadius: 999, padding: "1px 6px" }}>↻ re-listen</span>}
+                        </div>
                         <div style={{ fontSize: 14, fontWeight: 400 }}>{album.title}</div>
                         <div style={{ fontSize: 12, color: MUTE }}>{album.artist || album.artistName}</div>
                         {r.text && <div style={{ fontSize: 13, color: INK, marginTop: 6, lineHeight: 1.5 }}>{r.text.slice(0, 120)}{r.text.length > 120 ? "..." : ""}</div>}
@@ -4701,7 +4851,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
               </div>
             );
           }
-          const userReviews = [...viewedUserReviews].sort((a, b) => (a.date !== b.date ? (a.date < b.date ? 1 : -1) : (a.id < b.id ? 1 : -1)));
+          const userReviews = [...mergeLatest(viewedUserReviews, viewedUserRelistens)].sort((a, b) => (a.date !== b.date ? (a.date < b.date ? 1 : -1) : (a.id < b.id ? 1 : -1)));
           const userAvgRating = userReviews.length ? (userReviews.reduce((s, r) => s + r.rating, 0) / userReviews.length).toFixed(1) : "--";
           if (user.profileTheme === "mspaint") {
             return (
@@ -4878,7 +5028,10 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                         <div className="ui-sans" style={{ position: "absolute", top: 0, right: 0, fontSize: 11, color: MUTE }}>{relativeDate(r.date)}</div>
                         <AlbumCover album={album} size={88} />
                         <div className="ui-sans" style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
-                          <div style={{ fontSize: 20, fontWeight: 700, color: BLUE, letterSpacing: "-0.01em", lineHeight: 1.1, textAlign: "left" }}>{r.rating}/10</div>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            <div style={{ fontSize: 20, fontWeight: 700, color: BLUE, letterSpacing: "-0.01em", lineHeight: 1.1, textAlign: "left" }}>{r.rating}/10</div>
+                            {r.isRelisten && <span className="ui-sans" title="re-listen" style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", whiteSpace: "nowrap", color: BLUE, border: `1px solid ${BLUE}`, borderRadius: 999, padding: "1px 6px" }}>↻ re-listen</span>}
+                          </div>
                           <div style={{ marginTop: 1, textAlign: "left" }}>
                             <span style={{ fontSize: 14, fontWeight: 700 }}>{album.title}</span>
                             <span style={{ fontSize: 13, color: MUTE, marginLeft: 6, cursor: "pointer" }} onClick={(e) => { e.stopPropagation(); openArtist(album.artist || album.artistName); }}>{album.artist || album.artistName}</span>
@@ -5332,7 +5485,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
 
                   <div style={{ marginTop: 18, textAlign: isMobile ? "center" : "left" }}>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap", marginBottom: 9 }}>
-                      <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE }}>your review</div>
+                      <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE }}>your review{relistens.length ? ` · listen #${1 + relistens.length}` : ""}</div>
                       {existing && !(showRelistenForm && !editingRelistenId) && (
                         <button
                           onClick={startNewRelisten}
@@ -5374,8 +5527,11 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                       </div>
                     </div>
                     <div style={{ marginTop: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <button className="sb-btn sb-btn-solid" onClick={() => saveReview(album.id)}>save review</button>
-                      {existing && <span className="ui-sans" style={{ fontSize: 11.5, color: MUTE }}>last saved {existing.date}</span>}
+                      <button className="sb-btn sb-btn-solid" onClick={() => saveCurrentListen(album.id)}>save review</button>
+                      {existing && (relistens.length
+                        ? <span className="ui-sans" style={{ fontSize: 11.5, color: MUTE }}>editing listen #{1 + relistens.length} · {fmtListenDate(relistens.reduce((a, b) => (b.number > a.number ? b : a)).createdAt)}</span>
+                        : <span className="ui-sans" style={{ fontSize: 11.5, color: MUTE }}>last saved {existing.date}</span>
+                      )}
                     </div>
 
                     {/* Re-listens — only once there's an original review to build on. */}
@@ -5394,7 +5550,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                           {showRelistenForm && (
                             <div style={{ marginTop: 16, border: `1.5px solid ${BLUE}`, padding: isMobile ? 16 : 22, textAlign: "left" }}>
                               <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 10, flexWrap: "wrap", marginBottom: 14 }}>
-                                <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE }}>{editingRelistenId ? `edit re-listen #${editingNum || ""}` : `re-listen #${relistens.length + 1}`}</div>
+                                <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE }}>{editingRelistenId ? `edit listen #${editingNum || ""}` : `new listen · #${relistens.length + 2}`}</div>
                                 <div className="ui-sans" style={{ fontSize: 11, color: MUTE }}>{fmtListenDate(nowTimestamp())} · your original review won't change</div>
                               </div>
                               <div style={{ marginBottom: 14 }}>
@@ -5489,7 +5645,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
 
           // ===== OTHER USER'S STATS — comparison layout =====
           if (!statsIsOwn) {
-            const yourByAlbum = new Map(reviews.map((r) => [r.albumId, r.rating]));
+            const yourByAlbum = new Map(mergeLatest(reviews, myRelistens).map((r) => [r.albumId, r.rating]));
             const yourAvgNum = reviews.length ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : 0;
             const shared = statsReviews
               .filter((r) => yourByAlbum.has(r.albumId))
@@ -5662,7 +5818,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                       );
                     })}
                   </div>
-                  <div className="ui-sans" style={{ textAlign: "center", fontSize: 14, fontWeight: 400, marginTop: 18, cursor: "pointer", color: BLUE }} onClick={() => setView({ name: "reviewsList", username: profile.username, userId: profile.id, reviews: reviews, isOwn: true, from: { name: "statsDetail" } })}>
+                  <div className="ui-sans" style={{ textAlign: "center", fontSize: 14, fontWeight: 400, marginTop: 18, cursor: "pointer", color: BLUE }} onClick={() => setView({ name: "reviewsList", username: profile.username, userId: profile.id, reviews: mergeLatest(reviews, myRelistens), isOwn: true, from: { name: "statsDetail" } })}>
                     see all {reviews.length} reviews &rarr;
                   </div>
                 </>
@@ -6092,7 +6248,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
               if (label === "followers") setShowFollowList({ kind: "followers", userId: authUser?.id, username: profile.username });
               else if (label === "following") setShowFollowList({ kind: "following", userId: authUser?.id, username: profile.username });
               else if (label === "listened") setView({ name: "albumList", filter: "listened" });
-              else if (label === "reviews") setView({ name: "reviewsList", username: profile.username, userId: profile.id, reviews: reviews, isOwn: true, from: view });
+              else if (label === "reviews") setView({ name: "reviewsList", username: profile.username, userId: profile.id, reviews: mergeLatest(reviews, myRelistens), isOwn: true, from: view });
             }}
             renderAvatar={(size) => avatarUrl ? <img src={avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ width: "100%", height: "100%", background: "#0a3a8a", display: "flex", alignItems: "center", justifyContent: "center" }}><User color="#fff" size={size / 2} /></div>}
             renderAlbumCover={(alb) => { const u = alb.album && alb.album.coverArtUrl && alb.album.coverArtUrl !== "none" ? alb.album.coverArtUrl.replace("http://", "https://") : null; return u ? <img src={u} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /> : <div style={{ width: "100%", height: "100%", background: "#0a3a8a" }} />; }}
@@ -6121,7 +6277,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
               else if (label === "following") setShowFollowList({ kind: "following", userId: authUser?.id, username: profile.username });
               else if (label === "listened") setView({ name: "albumList", filter: "listened" });
               else if (label === "activity") openActivity(profile.username, profile.id, true);
-              else if (label === "stats" && reviews.length > 0) setView({ name: "statsDetail" });
+              else if (label === "stats" && reviews.length > 0) setView({ name: "statsDetail", reviews: mergeLatest(reviews, myRelistens) });
             }}
             renderAvatar={(size) => avatarUrl ? <img src={avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}><User color="#fff" size={size / 2} /></div>}
             renderAlbumCover={(alb) => { const u = alb.album && alb.album.coverArtUrl && alb.album.coverArtUrl !== "none" ? alb.album.coverArtUrl.replace("http://", "https://") : null; return u ? <img src={u} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /> : <div style={{ width: "100%", height: "100%" }} />; }}
@@ -6174,7 +6330,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                     <Stat label="following" value={profileStats.following} onClick={() => setShowFollowList({ kind: "following", userId: authUser?.id, username: profile.username })} />
                     <Stat label="listened" value={listenLoaded ? listenedCount : (cachedCounts.listened ?? listenedCount)} onClick={() => setView({ name: "albumList", filter: "listened" })} />
                     <Stat label="activity" value={<PencilGlyph size={20} />} onClick={() => openActivity(profile.username, profile.id, true)} />
-                    <Stat label="stats" value={<EqualizerIcon />} onClick={reviews.length > 0 ? () => setView({ name: "statsDetail" }) : undefined} />
+                    <Stat label="stats" value={<EqualizerIcon />} onClick={reviews.length > 0 ? () => setView({ name: "statsDetail", reviews: mergeLatest(reviews, myRelistens) }) : undefined} />
                   </div>
                 )}
               </div>
@@ -6186,7 +6342,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                 <Stat label="following" value={profileStats.following} onClick={() => setShowFollowList({ kind: "following", userId: authUser?.id, username: profile.username })} />
                 <Stat label="listened" value={listenLoaded ? listenedCount : (cachedCounts.listened ?? listenedCount)} onClick={() => setView({ name: "albumList", filter: "listened" })} />
                 <Stat label="activity" value={<PencilGlyph size={20} />} onClick={() => openActivity(profile.username, profile.id, true)} />
-                <Stat label="stats" value={<EqualizerIcon />} onClick={reviews.length > 0 ? () => setView({ name: "statsDetail" }) : undefined} />
+                <Stat label="stats" value={<EqualizerIcon />} onClick={reviews.length > 0 ? () => setView({ name: "statsDetail", reviews: mergeLatest(reviews, myRelistens) }) : undefined} />
               </div>
             )}
 
@@ -6294,7 +6450,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                 <Stat label="following" value={profileStats.following} onClick={() => setShowFollowList({ kind: "following", userId: authUser?.id, username: profile.username })} />
                 <Stat label="listened" value={listenLoaded ? listenedCount : (cachedCounts.listened ?? listenedCount)} onClick={() => setView({ name: "albumList", filter: "listened" })} />
                 <Stat label="activity" value={<PencilGlyph size={20} />} onClick={() => openActivity(profile.username, profile.id, true)} />
-                <Stat label="stats" value={<EqualizerIcon />} onClick={reviews.length > 0 ? () => setView({ name: "statsDetail" }) : undefined} />
+                <Stat label="stats" value={<EqualizerIcon />} onClick={reviews.length > 0 ? () => setView({ name: "statsDetail", reviews: mergeLatest(reviews, myRelistens) }) : undefined} />
               </div>
             )}
 
@@ -6380,7 +6536,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
               <div className={profile.profileTheme ? "pf-section-wrap" : ""} style={profile.profileTheme ? { marginBottom: 14, textAlign: "left" } : {}}><span className={profile.profileTheme ? "pf-section" : ""} style={profile.profileTheme ? {} : { fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: INK, marginBottom: 14, textAlign: isMobile ? "center" : "left", fontWeight: 400, display: "block" }}>recent reviews</span></div>
               <div style={{ display: "flex", flexDirection: "column", gap: 16, alignItems: isMobile ? "center" : "flex-start" }}>
                 {(() => {
-                  const sorted = [...reviews].sort((a, b) => (a.date !== b.date ? (a.date < b.date ? 1 : -1) : (a.id < b.id ? 1 : -1)));
+                  const sorted = [...mergeLatest(reviews, myRelistens)].sort((a, b) => (a.date !== b.date ? (a.date < b.date ? 1 : -1) : (a.id < b.id ? 1 : -1)));
                   const visible = showAllOwnReviews ? sorted : sorted.slice(0, 3);
                   return visible.map((r) => {
                   const album = fetchedAlbums[r.albumId] || albumById(r.albumId);
@@ -6400,7 +6556,10 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                       </div>
                       <AlbumCover album={album} size={88} />
                       <div className="ui-sans" style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
-                        <div style={{ fontSize: 20, fontWeight: 700, color: BLUE, letterSpacing: "-0.01em", lineHeight: 1.1, textAlign: "left" }}>{r.rating}/10</div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <div style={{ fontSize: 20, fontWeight: 700, color: BLUE, letterSpacing: "-0.01em", lineHeight: 1.1, textAlign: "left" }}>{r.rating}/10</div>
+                          {r.isRelisten && <span className="ui-sans" title="re-listen" style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", whiteSpace: "nowrap", color: BLUE, border: `1px solid ${BLUE}`, borderRadius: 999, padding: "1px 6px" }}>↻ re-listen</span>}
+                        </div>
                         <div style={{ marginTop: 1, textAlign: "left" }}>
                           <span style={{ fontSize: 14, fontWeight: 700 }}>{album.title}</span>
                           <span style={{ fontSize: 13, color: MUTE, marginLeft: 6, cursor: "pointer" }} onClick={(e) => { e.stopPropagation(); openArtist(album.artist || album.artistName); }}>{album.artist || album.artistName}</span>
