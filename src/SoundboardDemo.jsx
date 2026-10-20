@@ -1329,6 +1329,13 @@ export default function SoundboardDemo() {
   const [rlError, setRlError] = useState("");
   const [listensOpen, setListensOpen] = useState(false);
   const [expandedListen, setExpandedListen] = useState(null); // relisten id, or "first"
+  // Listen-detail editor (opened by clicking a row in the listens drawer).
+  const [ldRating, setLdRating] = useState(0);
+  const [ldText, setLdText] = useState("");
+  const [ldFav, setLdFav] = useState("");
+  const [ldLeast, setLdLeast] = useState("");
+  const [ldSaving, setLdSaving] = useState(false);
+  const [ldError, setLdError] = useState("");
   const [albumTab, setAlbumTab] = useState("reviews");
   const [ownProfileMixTab, setOwnProfileMixTab] = useState("album");
   const [userProfileMixTab, setUserProfileMixTab] = useState("album");
@@ -1838,16 +1845,6 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
     setShowRelistenForm(true);
   }
 
-  function startEditRelisten(r) {
-    setEditingRelistenId(r.id);
-    setRlRating(r.rating || 0);
-    setRlText(r.review || "");
-    setRlFav(r.favoriteTrack || "");
-    setRlLeast(r.leastFavoriteTrack || "");
-    setRlError("");
-    setShowRelistenForm(true);
-  }
-
   function cancelRelistenForm() {
     setShowRelistenForm(false);
     setEditingRelistenId(null);
@@ -1896,18 +1893,77 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
       .finally(() => setRlSaving(false));
   }
 
-  function deleteRelisten(albumId, r) {
-    if (!window.confirm(`Delete re-listen #${r.number}? This can't be undone.`)) return;
-    apiFetch(`${BACKEND_URL}/api/relistens/item/${r.id}`, { method: "DELETE" })
-      .then((res) => res.json().then((d) => ({ ok: res.ok, d })))
-      .then(({ ok }) => {
-        if (!ok) { flash("Could not delete re-listen"); return; }
-        setRelistens((prev) => prev.filter((x) => x.id !== r.id));
-        if (expandedListen === r.id) setExpandedListen(null);
-        setTimeout(() => loadAlbumAverage(albumId), 700);
-        flash("Re-listen deleted");
+  // Open the full-page editor for one listen. L carries the listen's identity
+  // and current values (id "first" for the original review, else a relisten id).
+  function openListenDetail(albumId, L) {
+    setLdRating(L.rating || 0);
+    setLdText(L.text || "");
+    setLdFav(L.fav || "");
+    setLdLeast(L.least || "");
+    setLdError("");
+    setLdSaving(false);
+    setView({ name: "listenDetail", albumId, listenId: L.id, isFirst: L.isFirst, number: L.number, date: L.date, from: view });
+  }
+
+  function saveListenDetail() {
+    if (ldSaving) return;
+    const v = view;
+    const albumId = v.albumId;
+    if (v.isFirst && (!ldRating || ldRating < 1)) { setLdError("Rating must be 1–10."); return; }
+    setLdSaving(true);
+    setLdError("");
+    const finish = () => {
+      setLdSaving(false);
+      setTimeout(() => loadAlbumAverage(albumId), 700);
+      flash("Saved");
+      setView(v.from || { name: "album", id: albumId });
+    };
+    if (v.isFirst) {
+      apiFetch(`${BACKEND_URL}/api/reviews/${albumId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rating: ldRating, reviewText: ldText, favTrack: ldFav, leastFavTrack: ldLeast }),
       })
-      .catch(() => flash("Could not delete re-listen"));
+        .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
+        .then(({ ok, d }) => {
+          if (!ok || !d.review) { setLdError((d && d.error) || "Could not save."); setLdSaving(false); return; }
+          // Keep the original listen date; only the content changes. Sync both
+          // the reviews list and the album-page draft so they reflect the edit.
+          setReviews((prev) => prev.map((r) => (r.albumId === albumId ? { ...r, rating: ldRating, text: ldText, favTrack: ldFav, leastFavTrack: ldLeast } : r)));
+          setDraftRating(ldRating); setDraftText(ldText); setDraftFavTrack(ldFav); setDraftLeastFavTrack(ldLeast);
+          finish();
+        })
+        .catch(() => { setLdError("Could not save."); setLdSaving(false); });
+    } else {
+      apiFetch(`${BACKEND_URL}/api/relistens/item/${v.listenId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rating: ldRating || null, review: ldText, favoriteTrack: ldFav, leastFavoriteTrack: ldLeast }),
+      })
+        .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
+        .then(({ ok, d }) => {
+          if (!ok || !d.relisten) { setLdError((d && d.error) || "Could not save."); setLdSaving(false); return; }
+          setRelistens((prev) => prev.map((x) => (x.id === v.listenId ? d.relisten : x)));
+          finish();
+        })
+        .catch(() => { setLdError("Could not save."); setLdSaving(false); });
+    }
+  }
+
+  function deleteListenDetail() {
+    const v = view;
+    if (v.isFirst) return; // the original review is deleted from the album page, not here
+    if (!window.confirm(`Delete listen #${v.number}? This can't be undone.`)) return;
+    apiFetch(`${BACKEND_URL}/api/relistens/item/${v.listenId}`, { method: "DELETE" })
+      .then((r) => r.json().then((d) => ({ ok: r.ok })))
+      .then(({ ok }) => {
+        if (!ok) { flash("Could not delete"); return; }
+        setRelistens((prev) => prev.filter((x) => x.id !== v.listenId));
+        setTimeout(() => loadAlbumAverage(v.albumId), 700);
+        flash("Listen deleted");
+        setView(v.from || { name: "album", id: v.albumId });
+      })
+      .catch(() => flash("Could not delete"));
   }
 
   function saveReview(albumId) {
@@ -4509,6 +4565,54 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
           );
         })()}
 
+        {/* ---------------- LISTEN DETAIL (edit one listen) ---------------- */}
+        {view.name === "listenDetail" && (() => {
+          const album = fetchedAlbums[view.albumId] || albumById(view.albumId);
+          return (
+            <div style={{ maxWidth: 680, margin: "0 auto" }}>
+              <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 12.5, marginBottom: 22, cursor: "pointer" }} onClick={() => setView(view.from || { name: "album", id: view.albumId })}>
+                <ChevronLeft size={14} /> back
+              </div>
+              <div style={{ marginBottom: 4, fontSize: 24, fontWeight: 700, letterSpacing: "-0.01em" }}>listen #{view.number}</div>
+              <div className="ui-sans" style={{ fontSize: 13.5, color: MUTE, marginBottom: 2 }}>{album ? album.title : ""}{album && (album.artist || album.artistName) ? ` · ${album.artist || album.artistName}` : ""}</div>
+              <div className="ui-sans" style={{ fontSize: 12.5, color: MUTE, marginBottom: 22 }}>{view.date}{view.isFirst ? " · your original review" : ""}</div>
+
+              <div style={{ marginBottom: 18 }}>
+                <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 9 }}>rating</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <RatingBlocks value={ldRating} onChange={setLdRating} size={isMobile ? 13 : 16} />
+                  <span style={{ fontSize: 13, fontWeight: 600, color: ldRating ? BLUE : LINE }}>{ldRating || "--"}/10</span>
+                </div>
+              </div>
+
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 9 }}>review</div>
+                <MentionInput className="sb-textarea" rows={7} placeholder="what stood out to you on this one?" value={ldText} onChange={setLdText} followingUsers={followingUsers} />
+              </div>
+
+              <div style={{ display: "flex", gap: 12 }}>
+                <div style={{ flex: 1 }}>
+                  <div className="ui-sans" style={{ fontSize: 11, color: MUTE, marginBottom: 5 }}>favorite track</div>
+                  <input className="sb-input ui-sans" style={{ width: "100%" }} placeholder="e.g. track 3" value={ldFav} onChange={(e) => setLdFav(e.target.value)} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div className="ui-sans" style={{ fontSize: 11, color: MUTE, marginBottom: 5 }}>least favorite track</div>
+                  <input className="sb-input ui-sans" style={{ width: "100%" }} placeholder="e.g. track 7" value={ldLeast} onChange={(e) => setLdLeast(e.target.value)} />
+                </div>
+              </div>
+
+              {ldError && <div className="ui-sans" style={{ fontSize: 12, color: "#c0392b", marginTop: 12 }}>{ldError}</div>}
+
+              <div style={{ marginTop: 20, display: "flex", alignItems: "center", gap: 18 }}>
+                <button className="sb-btn sb-btn-solid" disabled={ldSaving} onClick={saveListenDetail}>{ldSaving ? "saving…" : "save changes"}</button>
+                {!view.isFirst && (
+                  <button onClick={deleteListenDetail} className="ui-sans" style={{ background: "transparent", border: "none", color: "#c0392b", fontSize: 13, cursor: "pointer" }}>delete this listen</button>
+                )}
+              </div>
+            </div>
+          );
+        })()}
+
         {/* ---------------- MESSAGES INBOX ---------------- */}
         {view.name === "messages" && (
           <div>
@@ -5277,9 +5381,12 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                     {/* Re-listens — only once there's an original review to build on. */}
                     {existing && (() => {
                       const count = 1 + relistens.length;
-                      const rows = [
-                        ...[...relistens].sort((a, b) => b.number - a.number).map((r) => ({ kind: "relisten", r })),
-                        { kind: "first" },
+                      // All listens as a flat list: original is listen #1, re-listens
+                      // follow in order. Display number is position (so deletes don't
+                      // leave gaps). Each row links to its editable detail page.
+                      const listenRows = [
+                        { id: "first", isFirst: true, number: 1, date: fmtListenDate(existing.date), rating: existing.rating, text: existing.text || "", fav: existing.favTrack || "", least: existing.leastFavTrack || "" },
+                        ...[...relistens].sort((a, b) => a.number - b.number).map((r, idx) => ({ id: r.id, isFirst: false, number: idx + 2, date: fmtListenDate(r.createdAt), rating: r.rating, text: r.review || "", fav: r.favoriteTrack || "", least: r.leastFavoriteTrack || "" })),
                       ];
                       const editingNum = (relistens.find((x) => x.id === editingRelistenId) || {}).number;
                       return (
@@ -5327,48 +5434,20 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
 
                             {listensOpen && (
                               <div style={{ marginTop: 12, border: `1px solid ${LINE}`, maxHeight: 420, overflowY: "auto" }}>
-                                {rows.map((row, i) => {
-                                  const isFirst = row.kind === "first";
-                                  const r = row.r;
-                                  const id = isFirst ? "first" : r.id;
-                                  const open = expandedListen === id;
-                                  const label = isFirst ? "First listen" : `Re-listen #${r.number}`;
-                                  const date = isFirst ? fmtListenDate(existing.date) : fmtListenDate(r.createdAt);
-                                  const rating = isFirst ? existing.rating : r.rating;
-                                  const text = isFirst ? (existing.text || "") : (r.review || "");
-                                  const fav = isFirst ? (existing.favTrack || "") : (r.favoriteTrack || "");
-                                  const least = isFirst ? (existing.leastFavTrack || "") : (r.leastFavoriteTrack || "");
-                                  return (
-                                    <div key={id} style={{ borderTop: i === 0 ? "none" : "1px solid #ededed" }}>
-                                      <div onClick={() => setExpandedListen(open ? null : id)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", cursor: "pointer", background: open ? "#f7f7f7" : "transparent" }}>
-                                        <span style={{ fontSize: 14, fontWeight: 700, flexShrink: 0, minWidth: isMobile ? 0 : 96 }}>{label}</span>
-                                        <span className="ui-sans" style={{ fontSize: 12.5, color: MUTE, flexShrink: 0 }}>{date}</span>
-                                        <span style={{ fontSize: 14, fontWeight: 700, color: BLUE, flexShrink: 0, minWidth: 34 }}>{rating != null ? `${rating}/10` : "—"}</span>
-                                        {!isMobile && <span className="ui-sans" style={{ fontSize: 13.5, color: INK, flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", minWidth: 0 }}>{(text || "").split("\n")[0]}</span>}
-                                        <span style={{ fontSize: 11, color: MUTE, flexShrink: 0, marginLeft: "auto" }}>{open ? "▲" : "▼"}</span>
-                                      </div>
-                                      {open && (
-                                        <div style={{ padding: "0 14px 14px", background: "#f7f7f7" }}>
-                                          {text ? <div className="ui-sans" style={{ fontSize: 14, color: INK, lineHeight: 1.55, whiteSpace: "pre-line" }}>{text}</div> : <div className="ui-sans" style={{ fontSize: 13, color: MUTE, fontStyle: "italic" }}>no written review.</div>}
-                                          {(fav || least) && (
-                                            <div className="ui-sans" style={{ fontSize: 12.5, color: MUTE, marginTop: 10, display: "flex", gap: 18, flexWrap: "wrap" }}>
-                                              {fav && <span>favorite: <span style={{ color: INK }}>{fav}</span></span>}
-                                              {least && <span>least favorite: <span style={{ color: INK }}>{least}</span></span>}
-                                            </div>
-                                          )}
-                                          {isFirst ? (
-                                            <div className="ui-sans" style={{ fontSize: 12, color: MUTE, marginTop: 12 }}>this is your original review — edit it on the page above.</div>
-                                          ) : (
-                                            <div style={{ marginTop: 12, display: "flex", gap: 16 }}>
-                                              <button onClick={(e) => { e.stopPropagation(); startEditRelisten(r); }} className="ui-sans" style={{ background: "transparent", border: "none", color: BLUE, fontSize: 13, cursor: "pointer", padding: 0 }}>edit</button>
-                                              <button onClick={(e) => { e.stopPropagation(); deleteRelisten(album.id, r); }} className="ui-sans" style={{ background: "transparent", border: "none", color: "#c0392b", fontSize: 13, cursor: "pointer", padding: 0 }}>delete</button>
-                                            </div>
-                                          )}
-                                        </div>
-                                      )}
-                                    </div>
-                                  );
-                                })}
+                                {listenRows.map((L, i) => (
+                                  <div
+                                    key={L.id}
+                                    onClick={() => openListenDetail(album.id, L)}
+                                    style={{ display: "flex", alignItems: "center", gap: 12, padding: "13px 14px", cursor: "pointer", borderTop: i === 0 ? "none" : "1px solid #ededed" }}
+                                    onMouseEnter={(e) => { e.currentTarget.style.background = "#f7f7f7"; }}
+                                    onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                                  >
+                                    <span style={{ fontSize: 14, fontWeight: 700, flexShrink: 0 }}>listen #{L.number}</span>
+                                    <span className="ui-sans" style={{ fontSize: 12.5, color: MUTE, flexShrink: 0 }}>{L.date}</span>
+                                    <span style={{ fontSize: 14, fontWeight: 700, color: BLUE, marginLeft: "auto", flexShrink: 0 }}>{L.rating != null ? `${L.rating}/10` : "—"}</span>
+                                    <ChevronRight size={15} color={MUTE} style={{ flexShrink: 0 }} />
+                                  </div>
+                                ))}
                               </div>
                             )}
                           </div>
