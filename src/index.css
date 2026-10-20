@@ -125,16 +125,3 @@ code {
   padding: 4px 8px;
   background: var(--code-bg);
 }
-
-/* ---- noteblock loader (NoteblockMark) ---- cheap: 1 composited transform + opacity only */
-@keyframes nbm-bob   { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4%); } }
-@keyframes nbm-pulse { 0%, 100% { opacity: .32; } 50% { opacity: 1; } }
-@keyframes nbm-blink { 0%, 88%, 100% { opacity: 1; } 94% { opacity: .12; } }
-.nbm-loader { will-change: transform; animation: nbm-bob 1.7s ease-in-out infinite; }
-.nbm-loader .wave { animation: nbm-pulse 1.2s ease-in-out infinite; }
-.nbm-loader .wave.w1 { animation-delay: 0s; }
-.nbm-loader .wave.w2 { animation-delay: .13s; }
-.nbm-loader .wave.w3 { animation-delay: .26s; }
-.nbm-loader .wave.w4 { animation-delay: .39s; }
-.nbm-loader .blink { animation: nbm-blink 4s ease-in-out infinite; }
-@media (prefers-reduced-motion: reduce) { .nbm-loader, .nbm-loader .wave, .nbm-loader .blink { animation: none !important; } }
