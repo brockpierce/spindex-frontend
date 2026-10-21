@@ -2040,7 +2040,9 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
     const existing = reviewFor(albumId);
     const hasRating = draftRating && draftRating >= 1;
     const hasText = draftText && draftText.trim();
-    const clear = () => { setDraftRating(0); setDraftText(""); setDraftFavTrack(""); setDraftLeastFavTrack(""); };
+    // Clear the written parts after a save, but KEEP the rating showing — it
+    // reflects your latest listen's score so you can always see what you rated it.
+    const clear = () => { setDraftText(""); setDraftFavTrack(""); setDraftLeastFavTrack(""); };
 
     if (!existing) {
       // First listen = your original review (rating required).
@@ -3069,6 +3071,20 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authUser, view.name, relistens]);
+
+  // On the album page, keep YOUR RATING showing your LATEST listen's score (a
+  // re-listen's rating, else your original review's) so you can always see what
+  // you last rated it. Only the rating — the review box stays blank for the next
+  // listen. Re-syncs when the album opens or its re-listens change; doesn't fire
+  // while you adjust the rating (that doesn't change `relistens`).
+  useEffect(() => {
+    if (view.name !== "album" || !view.id) return;
+    const latestRl = relistens.length ? relistens.reduce((a, b) => (b.number > a.number ? b : a)) : null;
+    const ex = reviewFor(view.id);
+    const latestRating = latestRl && latestRl.rating != null ? latestRl.rating : (ex ? ex.rating : 0);
+    setDraftRating(latestRating || 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view.name, view.id, relistens]);
 
   // Delete one of the current user's reviews. Double-confirm, optimistic
   // update, then persist.
@@ -5710,7 +5726,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                     <MentionInput
                       className="sb-textarea"
                       rows={4}
-                      placeholder={existing ? "another listen — what changed this time?" : "what stood out to you on this one?"}
+                      placeholder={existing ? "another listen? what changed this time?" : "what stood out to you on this one?"}
                       value={draftText}
                       onChange={setDraftText}
                       followingUsers={followingUsers}
@@ -5737,9 +5753,8 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                         />
                       </div>
                     </div>
-                    <div style={{ marginTop: 10, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                    <div style={{ marginTop: 10, display: "flex", justifyContent: "flex-start", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                       <button className="sb-btn sb-btn-solid" disabled={rlSaving} onClick={() => saveNewListen(album.id)}>{rlSaving ? "saving…" : "save review"}</button>
-                      {existing && <span className="ui-sans" style={{ fontSize: 11.5, color: MUTE }}>saving logs {relistens.length ? "another" : "a new"} listen below</span>}
                     </div>
 
                     {/* Listens — appears once you've saved your first review. Saving
@@ -5761,19 +5776,19 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                           >{count} {count === 1 ? "listen" : "listens"} {listensOpen ? "▲" : "▼"}</button>
 
                           {listensOpen && (
-                            <div style={{ marginTop: 12, border: `1px solid ${LINE}`, maxHeight: 420, overflowY: "auto" }}>
-                              {listenRows.map((L, i) => (
+                            <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 16, maxHeight: 420, overflowY: "auto" }}>
+                              {listenRows.map((L) => (
                                 <div
                                   key={L.id}
                                   onClick={() => openListenDetail(album.id, L)}
-                                  style={{ display: "flex", alignItems: "center", gap: 12, padding: "13px 14px", cursor: "pointer", borderTop: i === 0 ? "none" : "1px solid #ededed" }}
-                                  onMouseEnter={(e) => { e.currentTarget.style.background = "#f7f7f7"; }}
+                                  style={{ display: "flex", alignItems: "center", gap: isMobile ? 12 : 20, padding: isMobile ? "16px 16px" : "24px 28px", border: `1px solid ${LINE}`, cursor: "pointer" }}
+                                  onMouseEnter={(e) => { e.currentTarget.style.background = "#fafafa"; }}
                                   onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
                                 >
-                                  <span style={{ fontSize: 14, fontWeight: 700, flexShrink: 0 }}>listen #{L.number}</span>
-                                  <span className="ui-sans" style={{ fontSize: 12.5, color: MUTE, flexShrink: 0 }}>{L.date}</span>
-                                  <span style={{ fontSize: 14, fontWeight: 700, color: BLUE, marginLeft: "auto", flexShrink: 0 }}>{L.rating != null ? `${L.rating}/10` : "—"}</span>
-                                  <ChevronRight size={15} color={MUTE} style={{ flexShrink: 0 }} />
+                                  <span className="ui-sans" style={{ width: isMobile ? 62 : 100, flexShrink: 0, whiteSpace: "nowrap", fontSize: isMobile ? 11 : 15, letterSpacing: "0.08em", textTransform: "uppercase", color: MUTE }}>listen {L.number}</span>
+                                  <span className="ui-sans" style={{ flex: 1, minWidth: 0, fontSize: isMobile ? 16 : 22, color: INK, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{L.date}</span>
+                                  <span style={{ fontSize: isMobile ? 16 : 22, fontWeight: 700, color: BLUE, flexShrink: 0 }}>{L.rating != null ? `${L.rating}/10` : "—"}</span>
+                                  <ChevronRight size={isMobile ? 18 : 22} color={MUTE} style={{ flexShrink: 0 }} />
                                 </div>
                               ))}
                             </div>
