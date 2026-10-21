@@ -1,5 +1,5 @@
 {
-  "appId": "com.noteblock.app",
+  "appId": "com.mynoteblock.app",
   "appName": "noteblock",
   "webDir": "dist",
   "ios": {
