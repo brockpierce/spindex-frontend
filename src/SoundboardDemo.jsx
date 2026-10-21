@@ -2763,6 +2763,14 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                     </div>
                   )}
 
+                  {profile.username === ADMIN_USERNAME && (
+                    <div style={{ marginTop: 22, borderTop: `1px solid ${LINE}`, paddingTop: 18 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: "#6b6b74", letterSpacing: "0.01em" }}>moderation <span style={{ fontWeight: 400, color: MUTE }}>(admin)</span></div>
+                      <div style={{ fontSize: 11, color: MUTE, marginTop: 4, marginBottom: 12 }}>view and clear user reports</div>
+                      <button className="sb-btn" onClick={openAdminReports}>review reports</button>
+                    </div>
+                  )}
+
                   <div style={{ borderTop: `1px solid ${LINE}`, marginTop: 22, paddingTop: 18, display: "flex", gap: 10, alignItems: "center", justifyContent: "space-between" }}>
                     <button
                       onClick={logout}
@@ -2843,6 +2851,8 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
   const [publicFeedItems, setPublicFeedItems] = useState([]);
   // Profile activity tab
   const [activityItems, setActivityItems] = useState([]);
+  const [adminReports, setAdminReports] = useState([]);
+  const [adminReportsLoading, setAdminReportsLoading] = useState(false);
   const [activityCounts, setActivityCounts] = useState({ posts: 0, likes: 0, comments: 0 });
   const [activityFilter, setActivityFilter] = useState("reviews");
   const [activityCursor, setActivityCursor] = useState(null);
@@ -3327,6 +3337,31 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
     setActivityCursor(null);
     setView({ name: "activity", username, userId, isOwn, from: view });
     loadActivity(username, "reviews");
+  }
+
+  // Admin moderation queue.
+  function openAdminReports() {
+    setView({ name: "adminReports", from: view });
+    setAdminReportsLoading(true);
+    apiFetch(`${BACKEND_URL}/api/reports`)
+      .then((r) => (r.ok ? r.json() : { reports: [] }))
+      .then((d) => setAdminReports(Array.isArray(d.reports) ? d.reports : []))
+      .catch(() => setAdminReports([]))
+      .finally(() => setAdminReportsLoading(false));
+  }
+
+  function dismissReport(id) {
+    setAdminReports((prev) => prev.filter((r) => r.id !== id));
+    apiFetch(`${BACKEND_URL}/api/reports/${id}`, { method: "DELETE" }).catch(() => {});
+  }
+
+  // Open the reported content so the admin can act on it with existing tools.
+  function openReportTarget(r) {
+    const t = r.target;
+    if (!t) return;
+    if (t.kind === "user") openUserProfile(t.username);
+    else if (t.kind === "review" && t.albumId) openAlbum(t.albumId);
+    else if (t.username) openUserProfile(t.username);
   }
 
   function openUserProfile(username) {
@@ -4400,6 +4435,49 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
             </div>
             <div className="ui-sans" style={{ fontSize: 20, fontWeight: 400, marginBottom: 4 }}>settings</div>
             {renderProfileSettings()}
+          </div>
+        )}
+
+        {/* ---------------- ADMIN: REPORTS QUEUE ---------------- */}
+        {view.name === "adminReports" && (
+          <div style={{ maxWidth: 720, margin: "0 auto" }}>
+            <div className="ui-sans" onClick={() => setView(view.from || { name: "settings", from: { name: "profile" } })} style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 12.5, marginBottom: 16, cursor: "pointer" }}>
+              <ChevronLeft size={14} /> back
+            </div>
+            <div className="ui-sans" style={{ fontSize: 20, fontWeight: 400, marginBottom: 2 }}>reports</div>
+            <div className="ui-sans" style={{ fontSize: 12.5, color: MUTE, marginBottom: 18 }}>{adminReports.length} open · open a report to act on it, then dismiss it</div>
+            {adminReportsLoading ? (
+              <div style={{ display: "flex", justifyContent: "center", padding: "24px 0" }}><Spinner label="loading reports…" /></div>
+            ) : adminReports.length === 0 ? (
+              <div className="ui-sans" style={{ fontSize: 13.5, color: MUTE, padding: "16px 0" }}>no open reports.</div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {adminReports.map((r) => (
+                  <div key={r.id} style={{ border: `1px solid ${LINE}`, padding: "14px 16px", textAlign: "left" }}>
+                    <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
+                      <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", color: "#c0392b", border: "1px solid #c0392b", borderRadius: 999, padding: "1px 7px" }}>{r.targetType}</span>
+                      <span style={{ fontSize: 12.5, color: MUTE }}>reported by @{(r.reporter || "unknown").toLowerCase()} · {relativeDate(r.createdAt)}</span>
+                    </div>
+                    {r.reason && <div className="ui-sans" style={{ fontSize: 13.5, color: INK, marginBottom: 8 }}>"{r.reason}"</div>}
+                    <div className="ui-sans" style={{ fontSize: 13, color: INK, background: "#f7f7f7", padding: "10px 12px", marginBottom: 10 }}>
+                      {!r.target ? (
+                        <span style={{ color: MUTE, fontStyle: "italic" }}>content was already deleted</span>
+                      ) : r.target.kind === "user" ? (
+                        <span>user <b>@{(r.target.username || "").toLowerCase()}</b>{r.target.displayName ? ` (${r.target.displayName})` : ""}</span>
+                      ) : (
+                        <span><b>@{(r.target.username || "").toLowerCase()}</b>{r.target.album ? ` · ${r.target.album}` : ""}{r.target.text ? ` — "${r.target.text.slice(0, 160)}${r.target.text.length > 160 ? "…" : ""}"` : ""}</span>
+                      )}
+                    </div>
+                    <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
+                      {r.target && (
+                        <button className="ui-sans" onClick={() => openReportTarget(r)} style={{ background: "transparent", border: "none", color: BLUE, fontSize: 13, cursor: "pointer", padding: 0 }}>open {r.target.kind === "user" ? "profile" : "content"}</button>
+                      )}
+                      <button className="ui-sans" onClick={() => dismissReport(r.id)} style={{ background: "transparent", border: "none", color: MUTE, fontSize: 13, cursor: "pointer", padding: 0 }}>dismiss</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
