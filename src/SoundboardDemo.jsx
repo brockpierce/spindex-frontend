@@ -64,6 +64,42 @@ function nowTimestamp() {
   return new Date().toISOString();
 }
 
+// Collapse duplicate feed items: by id, and (since a user has one review per
+// album) by username+albumId for reviews — so an optimistic temp-id review and
+// the server's real-id copy never both show. Keeps the first (newest) occurrence.
+function dedupeFeed(items) {
+  const seenId = new Set();
+  const seenReview = new Set();
+  const out = [];
+  for (const it of items || []) {
+    if (it.id && seenId.has(it.id)) continue;
+    if (it.itemType === "review" && !it.isRelisten) {
+      const key = (it.username || "") + "|" + (it.albumId || "");
+      if (seenReview.has(key)) continue;
+      seenReview.add(key);
+    }
+    if (it.id) seenId.add(it.id);
+    out.push(it);
+  }
+  return out;
+}
+
+// Instagram-style time label for DM separators: "Today 2:30 PM", "Yesterday …",
+// "Mon …" within a week, "Oct 15, …" this year, else with the year.
+function dmSeparatorLabel(d) {
+  const dt = new Date(d);
+  if (isNaN(dt)) return "";
+  const now = new Date();
+  const sameDay = (a, b) => a.toDateString() === b.toDateString();
+  const time = dt.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  const yest = new Date(now); yest.setDate(now.getDate() - 1);
+  if (sameDay(dt, now)) return `Today ${time}`;
+  if (sameDay(dt, yest)) return `Yesterday ${time}`;
+  if (now - dt < 7 * 24 * 3600 * 1000) return `${dt.toLocaleDateString("en-US", { weekday: "short" })} ${time}`;
+  if (dt.getFullYear() === now.getFullYear()) return `${dt.toLocaleDateString("en-US", { month: "short", day: "numeric" })}, ${time}`;
+  return `${dt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}, ${time}`;
+}
+
 // Given a list of original reviews and a list of re-listens, return one entry
 // per album reflecting the user's LATEST listen (re-listens become the primary
 // review). Content/date/number come from the newest re-listen; the rating is
@@ -2046,13 +2082,15 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
     // let the write land first.
     setTimeout(() => loadAlbumAverage(albumId), 700);
     const now = nowTimestamp();
-    const todayIso = new Date().toISOString().slice(0, 10);
-    // Optimistic update to personal reviews — preserve original date if updating
-    let originalDate = todayIso;
+    // Optimistic update to personal reviews — preserve the original date when
+    // editing. A NEW review uses the full `now` timestamp (not a date-only
+    // string) so it sorts to the TOP of the feed rather than behind same-day
+    // reviews that carry full timestamps.
+    let originalDate = now;
     setReviews((prev) => {
       const exists = prev.find((r) => r.albumId === albumId);
       if (exists) {
-        originalDate = exists.date || todayIso;
+        originalDate = exists.date || now;
         return prev.map((r) =>
           r.albumId === albumId
             ? { ...r, rating: draftRating, text: draftText, favTrack: draftFavTrack, leastFavTrack: draftLeastFavTrack }
@@ -2888,7 +2926,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
             images: item.images || [],
             date: item.date ? new Date(item.date).toISOString() : "",
           }));
-          setRealFeedItems(items);
+          setRealFeedItems(dedupeFeed(items));
           // Load reactions + comments for each feed item (re-listens have no
           // review thread, so skip them — their id isn't a review id).
           loadInteractions(items.filter((i) => !i.isRelisten).map((i) => i.id).filter(Boolean));
@@ -2984,12 +3022,9 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
           // a new post while you're reading shifts everything down a slot,
           // which would otherwise repeat an item at the page boundary.
           if (cursor) {
-            setPublicFeedItems((prev) => {
-              const seen = new Set(prev.map((i) => i.id));
-              return [...prev, ...items.filter((i) => !seen.has(i.id))];
-            });
+            setPublicFeedItems((prev) => dedupeFeed([...prev, ...items]));
           } else {
-            setPublicFeedItems(items);
+            setPublicFeedItems(dedupeFeed(items));
           }
           setPublicFeedCursor(data.nextCursor || null);
           // Load reactions + comments for each public feed item (skip re-listens:
@@ -4977,11 +5012,27 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
               </div>
               <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8, paddingBottom: 16 }}>
                 {conversationMessages.length === 0 && <div className="ui-sans" style={{ color: MUTE, fontSize: 13.5, textAlign: "center", padding: "40px 0" }}>say hi!</div>}
-                {conversationMessages.map((msg) => (
-                  <div key={msg.id} style={{ display: "flex", justifyContent: msg.isOwn ? "flex-end" : "flex-start" }}>
-                    <div style={{ maxWidth: "72%", padding: "10px 14px", borderRadius: msg.isOwn ? "18px 18px 4px 18px" : "18px 18px 18px 4px", background: msg.isOwn ? BLUE : "#f0f0f0", color: msg.isOwn ? "#fff" : INK, fontSize: 15, lineHeight: 1.4, textAlign: "left" }}>{msg.text}</div>
-                  </div>
-                ))}
+                {conversationMessages.map((msg, i, arr) => {
+                  // Show a time separator before the first message and whenever
+                  // there's a gap from the previous one (new day, or 1hr+) — so a
+                  // reply after a long silence no longer looks adjacent.
+                  const ts = msg.createdAt || msg.date;
+                  const cur = ts ? new Date(ts) : null;
+                  const prev = arr[i - 1];
+                  const prevTs = prev && (prev.createdAt || prev.date);
+                  const prevDt = prevTs ? new Date(prevTs) : null;
+                  const showSep = !!cur && !isNaN(cur) && (!prevDt || isNaN(prevDt) || cur.toDateString() !== prevDt.toDateString() || (cur - prevDt) > 60 * 60 * 1000);
+                  return (
+                    <div key={msg.id}>
+                      {showSep && (
+                        <div className="ui-sans" style={{ textAlign: "center", fontSize: 11.5, color: MUTE, fontWeight: 600, margin: "12px 0 6px" }}>{dmSeparatorLabel(ts)}</div>
+                      )}
+                      <div style={{ display: "flex", justifyContent: msg.isOwn ? "flex-end" : "flex-start" }}>
+                        <div style={{ maxWidth: "72%", padding: "10px 14px", borderRadius: msg.isOwn ? "18px 18px 4px 18px" : "18px 18px 18px 4px", background: msg.isOwn ? BLUE : "#f0f0f0", color: msg.isOwn ? "#fff" : INK, fontSize: 15, lineHeight: 1.4, textAlign: "left" }}>{msg.text}</div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
               <div style={{ display: "flex", gap: 10, alignItems: "center", paddingTop: 12, borderTop: "1px solid " + LINE }}>
                 <input className="ui-sans" placeholder={"Message @" + (other && other.username || "") + "..."} value={dmInput} onChange={(e) => setDmInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); sendDM(activeConversation.id, dmInput); } }} style={{ flex: 1, border: "1px solid " + LINE, borderRadius: 0, padding: "10px 16px", fontSize: 15, outline: "none", background: BG, color: INK }} />
