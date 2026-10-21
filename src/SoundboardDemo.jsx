@@ -3340,8 +3340,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
   }
 
   // Admin moderation queue.
-  function openAdminReports() {
-    setView({ name: "adminReports", from: view });
+  function loadAdminReports() {
     setAdminReportsLoading(true);
     apiFetch(`${BACKEND_URL}/api/reports`)
       .then((r) => (r.ok ? r.json() : { reports: [] }))
@@ -3350,9 +3349,32 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
       .finally(() => setAdminReportsLoading(false));
   }
 
+  function openAdminReports() {
+    setView({ name: "adminReports", from: view });
+    loadAdminReports();
+  }
+
   function dismissReport(id) {
     setAdminReports((prev) => prev.filter((r) => r.id !== id));
     apiFetch(`${BACKEND_URL}/api/reports/${id}`, { method: "DELETE" }).catch(() => {});
+  }
+
+  // Admin: delete the reported content (and every report on it).
+  function removeReportContent(r) {
+    if (!window.confirm("Delete this content? This can't be undone.")) return;
+    apiFetch(`${BACKEND_URL}/api/reports/${r.id}/remove`, { method: "POST" })
+      .then((res) => { if (res.ok) { flash("Content removed"); loadAdminReports(); } else flash("Could not remove"); })
+      .catch(() => flash("Could not remove"));
+  }
+
+  // Admin: delete the offending user entirely — their account and all content.
+  function banReportUser(r) {
+    if (!window.confirm("Ban this user? This permanently deletes their account and ALL their content.")) return;
+    if (!window.confirm("Are you sure? This can't be undone.")) return;
+    apiFetch(`${BACKEND_URL}/api/reports/${r.id}/ban`, { method: "POST" })
+      .then((res) => res.json().then((d) => ({ ok: res.ok, d })))
+      .then(({ ok, d }) => { if (ok) { flash("User banned"); loadAdminReports(); } else flash((d && d.error) || "Could not ban"); })
+      .catch(() => flash("Could not ban"));
   }
 
   // Open the reported content so the admin can act on it with existing tools.
@@ -4043,8 +4065,10 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                               <Avatar username={c.username} size={26} />
                               <span className="ui-sans" style={{ fontSize: 13, fontWeight: 600, cursor: "pointer" }} onClick={() => openUserProfile(c.username)}>@{(c.username || "").toLowerCase()}</span>
                               <span className="ui-sans" style={{ fontSize: 11, color: MUTE, marginLeft: "auto" }}>{relativeDate(c.date)}</span>
-                              {c.username === profile.username && (
+                              {c.username === profile.username ? (
                                 <button onClick={(e) => { e.stopPropagation(); apiFetch(BACKEND_URL + "/api/mix-shares/" + c.id, { method: "DELETE" }).catch(() => {}); setMixSharePosts((prev) => prev.filter((p) => p.id !== c.id)); setPublicFeedItems((prev) => prev.filter((p) => p.id !== c.id)); }} style={{ background: "transparent", border: "none", padding: 2, cursor: "pointer", color: MUTE, display: "flex", alignItems: "center" }}><X size={14} /></button>
+                              ) : (
+                                <ReportMenu onReport={() => reportItem("mix", c.id)} />
                               )}
                             </div>
                             <div
@@ -4468,10 +4492,14 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                         <span><b>@{(r.target.username || "").toLowerCase()}</b>{r.target.album ? ` · ${r.target.album}` : ""}{r.target.text ? ` — "${r.target.text.slice(0, 160)}${r.target.text.length > 160 ? "…" : ""}"` : ""}</span>
                       )}
                     </div>
-                    <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
+                    <div style={{ display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap" }}>
                       {r.target && (
                         <button className="ui-sans" onClick={() => openReportTarget(r)} style={{ background: "transparent", border: "none", color: BLUE, fontSize: 13, cursor: "pointer", padding: 0 }}>open {r.target.kind === "user" ? "profile" : "content"}</button>
                       )}
+                      {r.target && r.target.kind !== "user" && (
+                        <button className="ui-sans" onClick={() => removeReportContent(r)} style={{ background: "transparent", border: "none", color: "#c0392b", fontSize: 13, cursor: "pointer", padding: 0, fontWeight: 600 }}>remove content</button>
+                      )}
+                      <button className="ui-sans" onClick={() => banReportUser(r)} style={{ background: "transparent", border: "none", color: "#c0392b", fontSize: 13, cursor: "pointer", padding: 0, fontWeight: 600 }}>ban user</button>
                       <button className="ui-sans" onClick={() => dismissReport(r.id)} style={{ background: "transparent", border: "none", color: MUTE, fontSize: 13, cursor: "pointer", padding: 0 }}>dismiss</button>
                     </div>
                   </div>
