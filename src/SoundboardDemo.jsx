@@ -4793,9 +4793,9 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
               <div className="ui-sans" style={{ fontSize: 20, fontWeight: 700, marginBottom: 20 }}>@{view.username} listened</div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: "20px 14px" }}>
                 {listenedAlbums.map((album) => (
-                  <div key={album.id} onClick={() => openAlbum(album.id, album)} className="sb-cover-wrap">
-                    <AlbumCover album={album} size={130} listened={true} />
-                    <div className="ui-sans" style={{ fontSize: 12.5, fontWeight: 400, marginTop: 6 }}>{album.title}</div>
+                  <div key={album.id} onClick={() => openAlbum(album.id, album)} className="sb-cover-wrap" style={{ width: "100%" }}>
+                    <AlbumCover album={album} fluid listened={true} />
+                    <div className="ui-sans" style={{ fontSize: 12.5, fontWeight: 400, marginTop: 6, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", minHeight: "2.6em" }}>{album.title}</div>
                     <div className="ui-sans" style={{ fontSize: 11, color: MUTE }}>{album.artist || album.artistName}</div>
                   </div>
                 ))}
@@ -5361,12 +5361,12 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
             {!artistLoading && artistAlbums.length === 0 && (
               <div className="ui-sans" style={{ color: MUTE, fontSize: 13 }}>no results. we may still be finding it. try again in a moment.</div>
             )}
-            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(auto-fill, minmax(140px, 1fr))", gap: "20px 14px", justifyItems: isMobile ? "center" : "stretch" }}>
+            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(auto-fill, minmax(140px, 1fr))", gap: "20px 14px" }}>
               {artistAlbums.map((album) => (
-                <div key={album.id} onClick={() => openAlbum(album.id, album, { name: "artist", artistName: view.artistName })} className="sb-cover-wrap">
-                  <AlbumCover album={fetchedAlbums[album.id] || album} size={140} listened={listenStatus[album.id] === "listened"} />
+                <div key={album.id} onClick={() => openAlbum(album.id, album, { name: "artist", artistName: view.artistName })} className="sb-cover-wrap" style={{ width: "100%", textAlign: "center" }}>
+                  <AlbumCover album={fetchedAlbums[album.id] || album} fluid listened={listenStatus[album.id] === "listened"} />
                   <div style={{ marginTop: 8 }}>
-                    <div className="ui-sans" style={{ fontSize: 13, fontWeight: 400, lineHeight: 1.3 }}>{album.title}</div>
+                    <div className="ui-sans" style={{ fontSize: 13, fontWeight: 400, lineHeight: 1.3, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", minHeight: "2.6em" }}>{album.title}</div>
                     {album.year && <div className="ui-sans" style={{ fontSize: 11.5, color: MUTE, marginTop: 2 }}>{album.year}</div>}
                   </div>
                 </div>
@@ -5603,7 +5603,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                       <AlbumCover album={displayAlbum} size={150} fluid listened={listenStatus[album.id] === "listened"} />
                     </div>
                     <div style={{ marginTop: 9 }}>
-                      <div className="ui-sans" style={{ fontSize: 13.5, fontWeight: 400, lineHeight: 1.3, wordBreak: "break-word", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{album.title}</div>
+                      <div className="ui-sans" style={{ fontSize: 13.5, fontWeight: 400, lineHeight: 1.3, wordBreak: "break-word", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", minHeight: "2.6em" }}>{album.title}</div>
                       <div className="ui-sans" style={{ fontSize: 12, color: MUTE, marginTop: 2, wordBreak: "break-word", display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{album.artist || album.artistName}{(album.year || album.releaseYear) ? ` · ${album.year || album.releaseYear}` : ""}</div>
                     </div>
                   </div>
@@ -6374,10 +6374,10 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                   {matchingAlbums.map((album) => {
                     const rev = reviews.find((r) => r.albumId === album.id);
                     return (
-                      <div key={album.id} onClick={() => openAlbum(album.id)} className="sb-cover-wrap">
-                        <AlbumCover album={album} size={130} listened={listenStatus[album.id] === "listened"} />
+                      <div key={album.id} onClick={() => openAlbum(album.id)} className="sb-cover-wrap" style={{ width: "100%" }}>
+                        <AlbumCover album={album} fluid listened={listenStatus[album.id] === "listened"} />
                         <div style={{ marginTop: 7 }}>
-                          <div className="ui-sans" style={{ fontSize: 12.5, fontWeight: 400, lineHeight: 1.3 }}>{album.title}</div>
+                          <div className="ui-sans" style={{ fontSize: 12.5, fontWeight: 400, lineHeight: 1.3, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", minHeight: "2.6em" }}>{album.title}</div>
                           <div className="ui-sans" style={{ fontSize: 11.5, color: MUTE }}>{album.artist} · {album.year}</div>
                         </div>
                       </div>
@@ -6393,10 +6393,10 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                     {byDecade[decade].map((album) => {
                       const rev = reviews.find((r) => r.albumId === album.id);
                       return (
-                        <div key={album.id} onClick={() => openAlbum(album.id)} className="sb-cover-wrap">
-                          <AlbumCover album={album} size={130} />
+                        <div key={album.id} onClick={() => openAlbum(album.id)} className="sb-cover-wrap" style={{ width: "100%" }}>
+                          <AlbumCover album={album} fluid />
                           <div style={{ marginTop: 7 }}>
-                            <div className="ui-sans" style={{ fontSize: 12.5, fontWeight: 400, lineHeight: 1.3 }}>{album.title}</div>
+                            <div className="ui-sans" style={{ fontSize: 12.5, fontWeight: 400, lineHeight: 1.3, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", minHeight: "2.6em" }}>{album.title}</div>
                             <div className="ui-sans" style={{ fontSize: 11.5, color: MUTE }}>{album.artist} · {album.year}</div>
                             {rev && (
                               <div className="ui-sans" style={{ fontSize: 11, fontWeight: 600, color: BLUE, marginTop: 2 }}>{rev.rating}/10</div>
