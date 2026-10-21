@@ -1372,16 +1372,8 @@ export default function SoundboardDemo() {
   const [draftLeastFavTrack, setDraftLeastFavTrack] = useState("");
   // Re-listens for the currently open album (the user's own later listens).
   const [relistens, setRelistens] = useState([]);
-  const [showRelistenForm, setShowRelistenForm] = useState(false);
-  const [editingRelistenId, setEditingRelistenId] = useState(null); // non-null = editing that re-listen
-  const [rlRating, setRlRating] = useState(0);
-  const [rlText, setRlText] = useState("");
-  const [rlFav, setRlFav] = useState("");
-  const [rlLeast, setRlLeast] = useState("");
-  const [rlSaving, setRlSaving] = useState(false);
-  const [rlError, setRlError] = useState("");
+  const [rlSaving, setRlSaving] = useState(false); // save-in-flight for the album review box
   const [listensOpen, setListensOpen] = useState(false);
-  const [expandedListen, setExpandedListen] = useState(null); // relisten id, or "first"
   // Listen-detail editor (opened by clicking a row in the listens drawer).
   const [ldRating, setLdRating] = useState(0);
   const [ldText, setLdText] = useState("");
@@ -1830,18 +1822,14 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
 
 
   function openAlbum(id, albumObj, from) {
-    const existing = reviewFor(id);
-    setDraftRating(existing ? existing.rating : 0);
-    setDraftText(existing ? existing.text : "");
-    setDraftFavTrack(existing ? existing.favTrack || "" : "");
-    setDraftLeastFavTrack(existing ? existing.leastFavTrack || "" : "");
-    // Reset re-listen UI and load this album's re-listens.
+    // The review box always starts blank: saving logs a new listen. Your past
+    // listens (original + re-listens) live in the drawer below.
+    setDraftRating(0);
+    setDraftText("");
+    setDraftFavTrack("");
+    setDraftLeastFavTrack("");
     setRelistens([]);
-    setShowRelistenForm(false);
-    setEditingRelistenId(null);
     setListensOpen(false);
-    setExpandedListen(null);
-    setRlRating(0); setRlText(""); setRlFav(""); setRlLeast(""); setRlError("");
     loadRelistens(id);
     setAlbumTab("reviews");
     setView({ name: "album", id, from: from || null });
@@ -1890,70 +1878,6 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => { if (d && Array.isArray(d.relistens)) setRelistens(d.relistens); })
       .catch(() => {});
-  }
-
-  function startNewRelisten() {
-    setEditingRelistenId(null);
-    setRlRating(0); setRlText(""); setRlFav(""); setRlLeast(""); setRlError("");
-    setShowRelistenForm(true);
-  }
-
-  function cancelRelistenForm() {
-    setShowRelistenForm(false);
-    setEditingRelistenId(null);
-    setRlRating(0); setRlText(""); setRlFav(""); setRlLeast(""); setRlError("");
-  }
-
-  function saveRelisten(albumId) {
-    if (rlSaving) return;
-    setRlSaving(true);
-    setRlError("");
-    const body = JSON.stringify({
-      rating: rlRating || null,
-      review: rlText,
-      favoriteTrack: rlFav,
-      leastFavoriteTrack: rlLeast,
-    });
-    const editing = editingRelistenId;
-    const url = editing
-      ? `${BACKEND_URL}/api/relistens/item/${editing}`
-      : `${BACKEND_URL}/api/relistens/${albumId}`;
-    apiFetch(url, {
-      method: editing ? "PATCH" : "POST",
-      headers: { "Content-Type": "application/json" },
-      body,
-    })
-      .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
-      .then(({ ok, d }) => {
-        if (!ok || !d || !d.relisten) {
-          setRlError((d && d.error) || "Could not save re-listen.");
-          return;
-        }
-        setRelistens((prev) => {
-          if (editing) return prev.map((x) => (x.id === editing ? d.relisten : x));
-          return [...prev, d.relisten];
-        });
-        // Keep the feed caches in sync: a new re-listen shows up immediately
-        // (with its badge); an edit updates the existing card in place.
-        if (editing) {
-          const patch = (prev) => prev.map((x) => (x.id === editing ? { ...x, rating: d.relisten.rating, text: d.relisten.review || "", favTrack: d.relisten.favoriteTrack || "", leastFavTrack: d.relisten.leastFavoriteTrack || "" } : x));
-          setRealFeedItems(patch); setPublicFeedItems(patch);
-        } else {
-          const card = relistenFeedCard(d.relisten);
-          setRealFeedItems((prev) => [card, ...prev]);
-          setPublicFeedItems((prev) => [card, ...prev]);
-        }
-        setShowRelistenForm(false);
-        setEditingRelistenId(null);
-        setRlRating(0); setRlText(""); setRlFav(""); setRlLeast("");
-        setListensOpen(true);
-        setExpandedListen(d.relisten.id);
-        // The latest rating may change the community average.
-        setTimeout(() => loadAlbumAverage(albumId), 700);
-        flash(editing ? "Re-listen updated" : "Re-listen logged");
-      })
-      .catch(() => setRlError("Could not save re-listen."))
-      .finally(() => setRlSaving(false));
   }
 
   // Open the full-page editor for one listen. L carries the listen's identity
@@ -2072,28 +1996,48 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
       .catch(() => flash("Could not delete"));
   }
 
-  // The album page's YOUR REVIEW editor represents your LATEST listen. Saving it
-  // edits that listen: the original review if you've never re-listened, otherwise
-  // the newest re-listen. (Older listens are edited from the history drawer.)
-  function saveCurrentListen(albumId) {
-    const latestRl = relistens.length ? relistens.reduce((a, b) => (b.number > a.number ? b : a)) : null;
-    if (!latestRl) { saveReview(albumId); return; }
-    apiFetch(`${BACKEND_URL}/api/relistens/item/${latestRl.id}`, {
-      method: "PATCH",
+  // The album page's review box always logs a NEW listen, then clears. The first
+  // save is your original review; every save after that is another listen. You
+  // edit past listens from the drawer, not here.
+  function saveNewListen(albumId) {
+    if (rlSaving) return;
+    const existing = reviewFor(albumId);
+    const hasRating = draftRating && draftRating >= 1;
+    const hasText = draftText && draftText.trim();
+    const clear = () => { setDraftRating(0); setDraftText(""); setDraftFavTrack(""); setDraftLeastFavTrack(""); };
+
+    if (!existing) {
+      // First listen = your original review (rating required).
+      if (!hasRating) { flash("Pick a rating 1–10 to save your review"); return; }
+      saveReview(albumId); // reads draft* synchronously; persists + optimistic update
+      clear();
+      setListensOpen(true);
+      return;
+    }
+
+    // Any later save = a new re-listen.
+    if (!hasRating && !hasText) { flash("Add a rating or a few words to log a listen"); return; }
+    setRlSaving(true);
+    apiFetch(`${BACKEND_URL}/api/relistens/${albumId}`, {
+      method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ rating: draftRating || null, review: draftText, favoriteTrack: draftFavTrack, leastFavoriteTrack: draftLeastFavTrack }),
     })
       .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
       .then(({ ok, d }) => {
-        if (!ok || !d.relisten) { flash("Could not save"); return; }
-        setRelistens((prev) => prev.map((x) => (x.id === latestRl.id ? d.relisten : x)));
-        setMyRelistens((prev) => prev.map((x) => (x.id === latestRl.id ? d.relisten : x)));
-        const patch = (prev) => prev.map((x) => (x.id === latestRl.id ? { ...x, rating: d.relisten.rating, text: d.relisten.review || "", favTrack: d.relisten.favoriteTrack || "", leastFavTrack: d.relisten.leastFavoriteTrack || "" } : x));
-        setRealFeedItems(patch); setPublicFeedItems(patch);
+        if (!ok || !d.relisten) { flash((d && d.error) || "Could not save listen"); return; }
+        setRelistens((prev) => [...prev, d.relisten]);
+        setMyRelistens((prev) => [...prev, d.relisten]);
+        const card = relistenFeedCard(d.relisten);
+        setRealFeedItems((prev) => [card, ...prev]);
+        setPublicFeedItems((prev) => [card, ...prev]);
         setTimeout(() => loadAlbumAverage(albumId), 700);
-        flash("Review saved");
+        clear();
+        setListensOpen(true);
+        flash("Listen logged");
       })
-      .catch(() => flash("Could not save"));
+      .catch(() => flash("Could not save listen"))
+      .finally(() => setRlSaving(false));
   }
 
   function saveReview(albumId) {
@@ -3080,29 +3024,6 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authUser, view.name, relistens]);
-
-  // Keep the album page's YOUR REVIEW editor on your LATEST listen (a re-listen
-  // fronts the original). Re-syncs when the album opens or its re-listens change
-  // (add/edit/delete) — not while you type, since typing doesn't touch `relistens`.
-  useEffect(() => {
-    if (view.name !== "album" || !view.id) return;
-    const latestRl = relistens.length ? relistens.reduce((a, b) => (b.number > a.number ? b : a)) : null;
-    if (latestRl) {
-      setDraftRating(latestRl.rating || 0);
-      setDraftText(latestRl.review || "");
-      setDraftFavTrack(latestRl.favoriteTrack || "");
-      setDraftLeastFavTrack(latestRl.leastFavoriteTrack || "");
-    } else {
-      const ex = reviewFor(view.id);
-      if (ex) {
-        setDraftRating(ex.rating || 0);
-        setDraftText(ex.text || "");
-        setDraftFavTrack(ex.favTrack || "");
-        setDraftLeastFavTrack(ex.leastFavTrack || "");
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [view.name, view.id, relistens]);
 
   // Delete one of the current user's reviews. Double-confirm, optimistic
   // update, then persist.
@@ -5628,22 +5549,11 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                   </div>
 
                   <div style={{ marginTop: 18, textAlign: isMobile ? "center" : "left" }}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap", marginBottom: 9 }}>
-                      <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE }}>your review{relistens.length ? ` · listen #${1 + relistens.length}` : ""}</div>
-                      {existing && !(showRelistenForm && !editingRelistenId) && (
-                        <button
-                          onClick={startNewRelisten}
-                          className="ui-sans"
-                          style={{ border: `1.5px solid ${BLUE}`, color: BLUE, background: "transparent", padding: "7px 13px", fontSize: 13, cursor: "pointer", lineHeight: 1 }}
-                          onMouseEnter={(e) => { e.currentTarget.style.background = hexToRgba(BLUE, 0.06); }}
-                          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-                        >+ log a re-listen</button>
-                      )}
-                    </div>
+                    <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 9 }}>your review</div>
                     <MentionInput
                       className="sb-textarea"
                       rows={4}
-                      placeholder="what stood out to you on this one?"
+                      placeholder={existing ? "another listen — what changed this time?" : "what stood out to you on this one?"}
                       value={draftText}
                       onChange={setDraftText}
                       followingUsers={followingUsers}
@@ -5670,88 +5580,48 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                         />
                       </div>
                     </div>
-                    <div style={{ marginTop: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <button className="sb-btn sb-btn-solid" onClick={() => saveCurrentListen(album.id)}>save review</button>
-                      {existing && (relistens.length
-                        ? <span className="ui-sans" style={{ fontSize: 11.5, color: MUTE }}>editing listen #{1 + relistens.length} · {fmtListenDate(relistens.reduce((a, b) => (b.number > a.number ? b : a)).createdAt)}</span>
-                        : <span className="ui-sans" style={{ fontSize: 11.5, color: MUTE }}>last saved {existing.date}</span>
-                      )}
+                    <div style={{ marginTop: 10, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                      <button className="sb-btn sb-btn-solid" disabled={rlSaving} onClick={() => saveNewListen(album.id)}>{rlSaving ? "saving…" : "save review"}</button>
+                      {existing && <span className="ui-sans" style={{ fontSize: 11.5, color: MUTE }}>saving logs {relistens.length ? "another" : "a new"} listen below</span>}
                     </div>
 
-                    {/* Re-listens — only once there's an original review to build on. */}
+                    {/* Listens — appears once you've saved your first review. Saving
+                        again (above) logs another listen here; edit any from the drawer. */}
                     {existing && (() => {
                       const count = 1 + relistens.length;
-                      // All listens as a flat list: original is listen #1, re-listens
-                      // follow in order. Display number is position (so deletes don't
-                      // leave gaps). Each row links to its editable detail page.
                       const listenRows = [
                         { id: "first", isFirst: true, number: 1, date: fmtListenDate(existing.date), rating: existing.rating, text: existing.text || "", fav: existing.favTrack || "", least: existing.leastFavTrack || "" },
                         ...[...relistens].sort((a, b) => a.number - b.number).map((r, idx) => ({ id: r.id, isFirst: false, number: idx + 2, date: fmtListenDate(r.createdAt), rating: r.rating, text: r.review || "", fav: r.favoriteTrack || "", least: r.leastFavoriteTrack || "" })),
                       ];
-                      const editingNum = (relistens.find((x) => x.id === editingRelistenId) || {}).number;
                       return (
-                        <>
-                          {showRelistenForm && (
-                            <div style={{ marginTop: 16, border: `1.5px solid ${BLUE}`, padding: isMobile ? 16 : 22, textAlign: "left" }}>
-                              <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 10, flexWrap: "wrap", marginBottom: 14 }}>
-                                <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE }}>{editingRelistenId ? `edit listen #${editingNum || ""}` : `new listen · #${relistens.length + 2}`}</div>
-                                <div className="ui-sans" style={{ fontSize: 11, color: MUTE }}>{fmtListenDate(nowTimestamp())} · your original review won't change</div>
-                              </div>
-                              <div style={{ marginBottom: 14 }}>
-                                <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: MUTE, marginBottom: 9 }}>rating</div>
-                                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                                  <RatingBlocks value={rlRating} onChange={setRlRating} size={isMobile ? 13 : 16} />
-                                  <span style={{ fontSize: 13, fontWeight: 600, color: rlRating ? BLUE : LINE }}>{rlRating || "--"}/10</span>
+                        <div style={{ marginTop: 18, paddingTop: 16, borderTop: `1px solid ${LINE}`, textAlign: "left" }}>
+                          <button
+                            onClick={() => setListensOpen((v) => !v)}
+                            className="ui-sans"
+                            style={{ border: `1.5px solid ${INK}`, background: "transparent", color: INK, padding: "10px 16px", fontSize: 15, cursor: "pointer", lineHeight: 1 }}
+                            onMouseEnter={(e) => { e.currentTarget.style.background = "#f5f5f5"; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                          >{count} {count === 1 ? "listen" : "listens"} {listensOpen ? "▲" : "▼"}</button>
+
+                          {listensOpen && (
+                            <div style={{ marginTop: 12, border: `1px solid ${LINE}`, maxHeight: 420, overflowY: "auto" }}>
+                              {listenRows.map((L, i) => (
+                                <div
+                                  key={L.id}
+                                  onClick={() => openListenDetail(album.id, L)}
+                                  style={{ display: "flex", alignItems: "center", gap: 12, padding: "13px 14px", cursor: "pointer", borderTop: i === 0 ? "none" : "1px solid #ededed" }}
+                                  onMouseEnter={(e) => { e.currentTarget.style.background = "#f7f7f7"; }}
+                                  onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                                >
+                                  <span style={{ fontSize: 14, fontWeight: 700, flexShrink: 0 }}>listen #{L.number}</span>
+                                  <span className="ui-sans" style={{ fontSize: 12.5, color: MUTE, flexShrink: 0 }}>{L.date}</span>
+                                  <span style={{ fontSize: 14, fontWeight: 700, color: BLUE, marginLeft: "auto", flexShrink: 0 }}>{L.rating != null ? `${L.rating}/10` : "—"}</span>
+                                  <ChevronRight size={15} color={MUTE} style={{ flexShrink: 0 }} />
                                 </div>
-                              </div>
-                              <MentionInput className="sb-textarea" rows={4} placeholder="what changed this time?" value={rlText} onChange={setRlText} followingUsers={followingUsers} />
-                              <div style={{ display: "flex", gap: 12, marginTop: 12 }}>
-                                <div style={{ flex: 1 }}>
-                                  <div className="ui-sans" style={{ fontSize: 11, color: MUTE, marginBottom: 5 }}>favorite track</div>
-                                  <input className="sb-input ui-sans" style={{ width: "100%" }} placeholder="e.g. track 3" value={rlFav} onChange={(e) => setRlFav(e.target.value)} />
-                                </div>
-                                <div style={{ flex: 1 }}>
-                                  <div className="ui-sans" style={{ fontSize: 11, color: MUTE, marginBottom: 5 }}>least favorite track</div>
-                                  <input className="sb-input ui-sans" style={{ width: "100%" }} placeholder="e.g. track 7" value={rlLeast} onChange={(e) => setRlLeast(e.target.value)} />
-                                </div>
-                              </div>
-                              {rlError && <div className="ui-sans" style={{ fontSize: 12, color: "#c0392b", marginTop: 10 }}>{rlError}</div>}
-                              <div style={{ marginTop: 14, display: "flex", alignItems: "center", gap: 16 }}>
-                                <button className="sb-btn sb-btn-solid" disabled={rlSaving} onClick={() => saveRelisten(album.id)}>{rlSaving ? "saving…" : (editingRelistenId ? "save changes" : "save re-listen")}</button>
-                                <button onClick={cancelRelistenForm} className="ui-sans" style={{ background: "transparent", border: "none", color: MUTE, fontSize: 13, cursor: "pointer" }}>discard</button>
-                              </div>
+                              ))}
                             </div>
                           )}
-
-                          <div style={{ marginTop: 18, paddingTop: 16, borderTop: `1px solid ${LINE}`, textAlign: "left" }}>
-                            <button
-                              onClick={() => setListensOpen((v) => !v)}
-                              className="ui-sans"
-                              style={{ border: `1.5px solid ${INK}`, background: "transparent", color: INK, padding: "10px 16px", fontSize: 15, cursor: "pointer", lineHeight: 1 }}
-                              onMouseEnter={(e) => { e.currentTarget.style.background = "#f5f5f5"; }}
-                              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-                            >{count} {count === 1 ? "listen" : "listens"} {listensOpen ? "▲" : "▼"}</button>
-
-                            {listensOpen && (
-                              <div style={{ marginTop: 12, border: `1px solid ${LINE}`, maxHeight: 420, overflowY: "auto" }}>
-                                {listenRows.map((L, i) => (
-                                  <div
-                                    key={L.id}
-                                    onClick={() => openListenDetail(album.id, L)}
-                                    style={{ display: "flex", alignItems: "center", gap: 12, padding: "13px 14px", cursor: "pointer", borderTop: i === 0 ? "none" : "1px solid #ededed" }}
-                                    onMouseEnter={(e) => { e.currentTarget.style.background = "#f7f7f7"; }}
-                                    onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-                                  >
-                                    <span style={{ fontSize: 14, fontWeight: 700, flexShrink: 0 }}>listen #{L.number}</span>
-                                    <span className="ui-sans" style={{ fontSize: 12.5, color: MUTE, flexShrink: 0 }}>{L.date}</span>
-                                    <span style={{ fontSize: 14, fontWeight: 700, color: BLUE, marginLeft: "auto", flexShrink: 0 }}>{L.rating != null ? `${L.rating}/10` : "—"}</span>
-                                    <ChevronRight size={15} color={MUTE} style={{ flexShrink: 0 }} />
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        </>
+                        </div>
                       );
                     })()}
                   </div>
