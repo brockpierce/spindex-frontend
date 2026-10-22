@@ -19,15 +19,25 @@ export function installKeyboardHandling() {
   Keyboard.addListener("keyboardWillShow", () => root.classList.add("kb-open")).catch(() => {});
   Keyboard.addListener("keyboardWillHide", () => root.classList.remove("kb-open")).catch(() => {});
 
-  Keyboard.addListener("keyboardDidShow", () => {
-    const el = document.activeElement;
-    if (!el || !isEditable(el)) return;
-    const r = el.getBoundingClientRect();
-    // Only nudge when the field ended up hidden; otherwise leave scroll alone.
-    if (r.bottom > window.innerHeight - 8 || r.top < 0) {
-      el.scrollIntoView({ block: "center", behavior: "smooth" });
-    }
-  }).catch(() => {});
+  // The plugin shrinks the webview ~0.2s *after* keyboardDidShow, so checking
+  // there sees the old, full height. React to the resize itself instead (plus
+  // didShow as a fallback in case the frame didn't change).
+  window.addEventListener("resize", () => {
+    if (root.classList.contains("kb-open")) revealFocusedField();
+  });
+  Keyboard.addListener("keyboardDidShow", revealFocusedField).catch(() => {});
+}
+
+// iOS only scrolls far enough to show the caret, which can leave most of a
+// textarea (and whatever sits under it) behind the keyboard.
+function revealFocusedField() {
+  const el = document.activeElement;
+  if (!el || !isEditable(el)) return;
+  const r = el.getBoundingClientRect();
+  const h = window.innerHeight;
+  if (r.bottom > h - 8 || r.top < 0) {
+    el.scrollIntoView({ block: r.height < h * 0.6 ? "center" : "start", behavior: "smooth" });
+  }
 }
 
 function isEditable(el) {
