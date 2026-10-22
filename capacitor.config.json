@@ -9,6 +9,11 @@
   "plugins": {
     "Keyboard": {
       "resize": "native"
+    },
+    "StatusBar": {
+      "overlaysWebView": false,
+      "style": "LIGHT",
+      "backgroundColor": "#ffffff"
     }
   }
 }
