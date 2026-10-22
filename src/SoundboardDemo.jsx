@@ -9530,32 +9530,36 @@ function BadgesPanel({ displayName, badges, isMobile, pal, frosted, WHITE_SH }) 
   const openDef = open ? AERO_BADGES.find((d) => d.id === open) : null;
 
   return (
-    <div style={{ ...frosted, position: "relative" }}>
-      {/* title bar */}
-      <div style={{ background: pal.bar, borderBottom: "1px solid rgba(255,255,255,.5)", padding: isMobile ? "7px 12px" : "7px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
-        <span style={{ fontWeight: 700, fontSize: isMobile ? 14 : 15, color: "#fff", textShadow: WHITE_SH, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{(displayName || "your")}'s badges</span>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
-          <span style={{ fontSize: 12, color: "rgba(255,255,255,.95)", textShadow: WHITE_SH }}>{earnedCount} of {AERO_BADGES.length}</span>
-          <div style={{ display: "flex", gap: 6 }}>
-            {pagerBtn(-1, clampPage === 0)}
-            {pagerBtn(1, clampPage >= pages - 1)}
+    // Non-clipping wrapper so the pop-up can extend past the short glass panel
+    // (the panel itself keeps overflow:hidden for its rounded glass edges).
+    <div style={{ position: "relative" }}>
+      <div style={{ ...frosted }}>
+        {/* title bar */}
+        <div style={{ background: pal.bar, borderBottom: "1px solid rgba(255,255,255,.5)", padding: isMobile ? "7px 12px" : "7px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+          <span style={{ fontWeight: 700, fontSize: isMobile ? 14 : 15, color: "#fff", textShadow: WHITE_SH, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{(displayName || "your")}'s badges</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+            <span style={{ fontSize: 12, color: "rgba(255,255,255,.95)", textShadow: WHITE_SH }}>{earnedCount} of {AERO_BADGES.length}</span>
+            <div style={{ display: "flex", gap: 6 }}>
+              {pagerBtn(-1, clampPage === 0)}
+              {pagerBtn(1, clampPage >= pages - 1)}
+            </div>
           </div>
         </div>
-      </div>
-      {/* grid */}
-      <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols},1fr)`, gridAutoRows: "minmax(0,1fr)", gap: "8px 6px", padding: isMobile ? "10px 12px 8px" : "10px 14px 8px" }}>
-        {slots.map((def, i) => {
-          if (!def) return <div key={"e" + i} aria-hidden style={{ visibility: "hidden" }}><BadgeCellInner def={{ icon: "spin", name: "." }} earned={false} isMobile={isMobile} /></div>;
-          const earned = !!state(def.id).earnedAt;
-          return (
-            <button key={def.id} onClick={(e) => openPop(def.id, e)} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", font: "inherit" }}>
-              <BadgeCellInner def={def} earned={earned} isMobile={isMobile} />
-            </button>
-          );
-        })}
+        {/* grid */}
+        <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols},1fr)`, gridAutoRows: "minmax(0,1fr)", gap: "8px 6px", padding: isMobile ? "10px 12px 8px" : "10px 14px 8px" }}>
+          {slots.map((def, i) => {
+            if (!def) return <div key={"e" + i} aria-hidden style={{ visibility: "hidden" }}><BadgeCellInner def={{ icon: "spin", name: "." }} earned={false} isMobile={isMobile} /></div>;
+            const earned = !!state(def.id).earnedAt;
+            return (
+              <button key={def.id} onClick={(e) => openPop(def.id, e)} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", font: "inherit" }}>
+                <BadgeCellInner def={def} earned={earned} isMobile={isMobile} />
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      {/* pop-up */}
+      {/* pop-up — sibling of the glass panel so it is never clipped */}
       {openDef && (() => {
         const s = state(openDef.id);
         const earned = !!s.earnedAt;
@@ -9571,12 +9575,12 @@ function BadgesPanel({ displayName, badges, isMobile, pal, frosted, WHITE_SH }) 
           pillText = "locked"; pillColor = "#5A6470"; pillBg = "#ECEEF1";
         }
         return (
-          <div onClick={closePop} style={{ position: "absolute", inset: 0, background: "rgba(14,63,107,.18)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 5, borderRadius: 12 }}>
-            <div ref={cardRef} tabIndex={-1} role="dialog" aria-label={openDef.name} onClick={(e) => e.stopPropagation()} style={{ position: "relative", maxWidth: 260, width: "calc(100% - 28px)", padding: 16, borderRadius: 14, background: "linear-gradient(180deg,rgba(255,255,255,.97),rgba(234,244,255,.95))", border: "1px solid rgba(255,255,255,.95)", boxShadow: "0 8px 24px rgba(10,60,110,.3)", display: "flex", flexDirection: "column", alignItems: "center", gap: 8, outline: "none" }}>
-              <button aria-label="Close" onClick={closePop} style={{ position: "absolute", top: 8, right: 10, background: "none", border: "none", cursor: "pointer", color: "#0E4A7A", fontSize: 16, lineHeight: 1, padding: 4 }}>×</button>
-              <BadgeMedal def={openDef} earned={earned} size={64} />
-              <div style={{ fontSize: 16, fontWeight: 700, color: "#0E3F6B" }}>{openDef.name}</div>
-              <div style={{ fontSize: 13, color: "#0E3F6B", textAlign: "center" }}>{openDef.desc}</div>
+          <div onClick={closePop} style={{ position: "absolute", inset: 0, overflow: "visible", background: "rgba(14,63,107,.22)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 5, borderRadius: 12 }}>
+            <div ref={cardRef} tabIndex={-1} role="dialog" aria-label={openDef.name} onClick={(e) => e.stopPropagation()} style={{ position: "relative", maxWidth: 250, width: "calc(100% - 24px)", padding: "14px 16px", borderRadius: 14, background: "linear-gradient(180deg,rgba(255,255,255,.98),rgba(234,244,255,.97))", border: "1px solid rgba(255,255,255,.95)", boxShadow: "0 10px 28px rgba(10,60,110,.34)", display: "flex", flexDirection: "column", alignItems: "center", gap: 7, outline: "none" }}>
+              <button aria-label="Close" onClick={closePop} style={{ position: "absolute", top: 6, right: 8, background: "none", border: "none", cursor: "pointer", color: "#0E4A7A", fontSize: 16, lineHeight: 1, padding: 4 }}>×</button>
+              <BadgeMedal def={openDef} earned={earned} size={54} />
+              <div style={{ fontSize: 16, fontWeight: 700, color: "#0E3F6B", lineHeight: 1.1 }}>{openDef.name}</div>
+              <div style={{ fontSize: 12.5, lineHeight: 1.35, color: "#0E3F6B", textAlign: "center" }}>{openDef.desc}</div>
               <div style={{ fontSize: 12, fontWeight: 700, padding: "3px 10px", borderRadius: 999, color: pillColor, background: pillBg }}>{pillText}</div>
             </div>
           </div>
