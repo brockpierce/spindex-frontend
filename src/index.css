@@ -9,9 +9,16 @@ body {
   box-sizing: border-box;
 }
 
+/* Height of the fixed bottom tab bar (native app only). While the keyboard is
+   open the tab bar is hidden (src/native/keyboard.js sets html.kb-open), so the
+   space it reserves drops to 0 and inputs get the full height above the keys. */
+html.capacitor-native { --nb-tabbar-h: calc(60px + env(safe-area-inset-bottom, 0px)); }
+html.capacitor-native.kb-open { --nb-tabbar-h: 0px; }
+html.kb-open [data-native-tabbar] { display: none !important; }
+
 /* Clear the fixed bottom nav (native app only) so the last item isn't hidden
    behind it. Mobile web has no bottom nav, so it gets no extra padding. */
-html.capacitor-native #root { padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px)); }
+html.capacitor-native #root { padding-bottom: var(--nb-tabbar-h); }
 
 :root {
   --text: #6b6375;

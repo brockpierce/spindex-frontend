@@ -3807,7 +3807,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
           )}
           {/* Per handoff spec "Bottom nav bar — 2c": text labels (no icons), navy
               accent rule for selected, outlined + post action in slot 3. */}
-          <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 80, background: BG, borderTop: `1px solid ${LINE}`, display: "grid", gridTemplateColumns: "repeat(5, 1fr)", alignItems: "stretch", padding: "16px 10px calc(env(safe-area-inset-bottom, 0px) + 8px)" }}>
+          <div data-native-tabbar style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 80, background: BG, borderTop: `1px solid ${LINE}`, display: "grid", gridTemplateColumns: "repeat(5, 1fr)", alignItems: "stretch", padding: "16px 10px calc(env(safe-area-inset-bottom, 0px) + 8px)" }}>
             {[
               { key: "home", label: "home", active: view.name === "home", go: () => setView({ name: "home" }) },
               { key: "browse", label: "browse", active: ["browse", "tagResults", "artist"].includes(view.name), go: () => setView({ name: "browse" }) },
@@ -3984,7 +3984,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
         </div>
       )}
 
-      <div style={{ maxWidth: 920, margin: "0 auto", padding: ((view.name === "profile" && (profile.profileTheme === "mspaint" || (profile.profileTheme === "bubble" && profile.username === ADMIN_USERNAME))) || (view.name === "userProfile" && viewedUser?.profileTheme === "mspaint")) ? 0 : "28px 16px 64px", minHeight: "calc(100vh - 60px)", position: "relative", background: (view.name === "profile" ? (profile.pageBackground || "") : view.name === "userProfile" ? (viewedUser?.pageBackground || "") : "") || undefined, boxShadow: (view.name === "profile" ? (profile.pageBackground || "") : view.name === "userProfile" ? (viewedUser?.pageBackground || "") : "") ? `0 0 0 100vmax ${(view.name === "profile" ? profile.pageBackground : viewedUser?.pageBackground) || "transparent"}` : undefined, clipPath: (view.name === "profile" ? (profile.pageBackground || "") : view.name === "userProfile" ? (viewedUser?.pageBackground || "") : "") ? "inset(0 -100vmax)" : undefined, transition: "background 0.2s" }}>
+      <div data-swipe-surface style={{ maxWidth: 920, margin: "0 auto", padding: ((view.name === "profile" && (profile.profileTheme === "mspaint" || (profile.profileTheme === "bubble" && profile.username === ADMIN_USERNAME))) || (view.name === "userProfile" && viewedUser?.profileTheme === "mspaint")) ? 0 : "28px 16px 64px", minHeight: "calc(100vh - 60px)", position: "relative", background: (view.name === "profile" ? (profile.pageBackground || "") : view.name === "userProfile" ? (viewedUser?.pageBackground || "") : "") || undefined, boxShadow: (view.name === "profile" ? (profile.pageBackground || "") : view.name === "userProfile" ? (viewedUser?.pageBackground || "") : "") ? `0 0 0 100vmax ${(view.name === "profile" ? profile.pageBackground : viewedUser?.pageBackground) || "transparent"}` : undefined, clipPath: (view.name === "profile" ? (profile.pageBackground || "") : view.name === "userProfile" ? (viewedUser?.pageBackground || "") : "") ? "inset(0 -100vmax)" : undefined, transition: "background 0.2s" }}>
         {/* TOAST */}
         {toast && (
           <div style={{ position: "sticky", top: 8, zIndex: 10, background: INK, color: BG, padding: "8px 14px", borderRadius: 0, fontSize: 12, marginBottom: 16, display: "inline-flex", alignItems: "center", gap: 6 }}>
@@ -5018,7 +5018,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
         {view.name === "dmThread" && activeConversation && (() => {
           const other = activeConversation.otherUser;
           return (
-            <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 120px)" }}>
+            <div style={{ display: "flex", flexDirection: "column", height: IS_NATIVE_APP ? "calc(100vh - 99px - var(--nb-tabbar-h, 0px))" : "calc(100vh - 120px)" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 12, paddingBottom: 16, borderBottom: "1px solid " + LINE, marginBottom: 16 }}>
                 <button onClick={() => { setView({ name: "messages" }); loadConversations(); }} style={{ background: "none", border: "none", cursor: "pointer", color: MUTE, padding: 0, display: "flex" }}><ChevronLeft size={20} /></button>
                 <div style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: 12 }} onClick={() => other && openUserProfile(other.username)}>
@@ -8195,7 +8195,7 @@ function TextPostModal({ onSubmit, onClose, followingUsers }) {
 
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-      <div onClick={(e) => e.stopPropagation()} style={{ background: BG, border: `1px solid ${INK}`, borderRadius: 0, padding: 24, width: "100%", maxWidth: 440 }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: BG, border: `1px solid ${INK}`, borderRadius: 0, padding: 24, width: "100%", maxWidth: 440, maxHeight: "85vh", overflowY: "auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
           <div className="ui-sans" style={{ fontSize: 15, fontWeight: 400 }}>post a thought</div>
           <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: MUTE, padding: 0 }}><X size={16} /></button>

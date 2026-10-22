@@ -18,6 +18,8 @@ if (Capacitor.isNativePlatform()) {
     // webview, so CSS padding can't compensate.)
     StatusBar.setOverlaysWebView({ overlay: false }).catch(() => {})
   }).catch(() => {})
+  // Keyboard handling + edge swipe-back (see src/native/).
+  import('./native/index.js').then(({ installNativeEnhancements }) => installNativeEnhancements()).catch(() => {})
 }
 
 createRoot(document.getElementById('root')).render(
