@@ -6470,6 +6470,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
             onRemoveFavorite={(id) => toggleFavorite(id)}
             onAddFavorite={(album) => { if (favorites.includes(album.id)) { flash("Already in your top 3"); return; } toggleFavorite(album.id); setFetchedAlbums((prev) => ({ ...prev, [album.id]: { ...album, artist: album.artistName || album.artist || "", year: album.releaseYear || album.year || null } })); }}
             onDeleteReview={(r) => deleteReview(r.albumId)}
+            onOpenBadges={() => setView({ name: "badges", userId: profile.id || authUser?.id, username: profile.username, displayName: profile.displayName, from: view })}
             onShowAllReviews={() => setView({ name: "reviewsList", username: profile.username, userId: profile.id, reviews: mergeLatest(reviews, myRelistens), isOwn: true, from: view })}
             info={{ age: profile.age, town: profile.town, country: profile.country, interests: profile.interests, mood: profile.mood }}
             mixes={albumMixes.filter((m) => m.isPublic !== false).map((m) => ({ id: m.id, title: m.title, count: m.albums.length, cover: <MixCoverStack albums={m.albums} fetchedAlbums={fetchedAlbums} albumById={albumById} size={56} /> }))}
@@ -6490,6 +6491,16 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
             renderAlbumCover={(alb) => { const u = alb.album && alb.album.coverArtUrl && alb.album.coverArtUrl !== "none" ? alb.album.coverArtUrl.replace("http://", "https://") : null; return u ? <img src={u} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /> : <div style={{ width: "100%", height: "100%" }} />; }}
           />
         </>)}
+        {view.name === "badges" && (
+          <AeroBadgesPage
+            userId={view.userId}
+            username={view.username}
+            displayName={view.displayName}
+            palette={bubblePalette}
+            isMobile={isMobile}
+            onBack={() => setView(view.from || { name: "profile" })}
+          />
+        )}
         {view.name === "profile" && profile.profileTheme !== "mspaint" && !(profile.profileTheme === "bubble" && profile.username === ADMIN_USERNAME) && (
           <div className="pf" data-theme={profile.profileTheme || ""} style={{ "--pf-navy": BLUE }}>
             {profile.profileTheme === "geocities" && (
@@ -9423,7 +9434,7 @@ const _starPath = (cx, cy, r) => "M" + Array.from({ length: 10 }, (_, k) => {
 // Inner SVG markup for each 24x24 line icon (stroke set on the <svg>).
 const BADGE_ICON_INNER = {
   spin: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/><path d="M12 6a6 6 0 0 1 6 6"/><path d="M8 16.5a6 6 0 0 1-2-3"/>',
-  quill: '<path d="M20 4C12 5 7 10 5 19"/><path d="M20 4c-1 6-5 10-11 11"/><path d="M4 20l2-2M11.5 10.5h3"/>',
+  pencil: '<path d="M4 20l1.2-4.6L16 4.6a2.1 2.1 0 0 1 3 3L8.2 18.8z"/><path d="M14.4 6.2l3.4 3.4M4 20l4.2-1.2"/>',
   cassette: '<rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="8.5" cy="11" r="1.8"/><circle cx="15.5" cy="11" r="1.8"/><path d="M10.3 11h3.4M7 18l1.5-3h7l1.5 3"/>',
   smile: '<circle cx="12" cy="12" r="9"/><path d="M7.8 14c1 1.9 2.5 2.9 4.2 2.9s3.2-1 4.2-2.9"/><path d="M9 9v1.4M15 9v1.4"/>',
   loop: '<path d="M4 12a8 8 0 0 1 13.7-5.6M18 3v4h-4M20 12a8 8 0 0 1-13.7 5.6M6 21v-4h4"/><circle cx="12" cy="12" r="2"/>',
@@ -9437,12 +9448,13 @@ const BADGE_ICON_INNER = {
 
 // 11 badges in display order. (globetrotter, tastemaker, earlybird are omitted:
 // the data to compute them doesn't exist yet — see backend lib/badges.js.)
+// Names are title case; `cat` maps to a badge type panel (see AERO_BADGE_TYPES).
 const AERO_BADGES = [
-  { id: "first_spin",  name: "First spin",  cat: "blue",   icon: "spin",     desc: "Log your first album." },
-  { id: "critic",      name: "Critic",      cat: "blue",   icon: "quill",    desc: "Write 25 reviews.",                       unit: "reviews" },
+  { id: "first_spin",  name: "First Spin",  cat: "blue",   icon: "spin",     desc: "Log your first album." },
+  { id: "critic",      name: "Critic",      cat: "blue",   icon: "pencil",   desc: "Write 25 reviews.",                       unit: "reviews" },
   { id: "mixer",       name: "Mixer",       cat: "blue",   icon: "cassette", desc: "Make 5 mixes.",                           unit: "mixes" },
   { id: "superfan",    name: "Superfan",    cat: "blue",   icon: "smile",    desc: "Give an album a 10/10." },
-  { id: "second_take", name: "Second take", cat: "pink",   icon: "loop",     desc: "Log your first re-listen." },
+  { id: "second_take", name: "Second Take", cat: "pink",   icon: "loop",     desc: "Log your first re-listen." },
   { id: "ninja",       name: "Ninja",       cat: "pink",   icon: "ninja",    desc: "Rate 10 albums without writing a review.", unit: "silent ratings" },
   { id: "hater",       name: "Hater",       cat: "lime",   icon: "cracked",  desc: "Give 10 albums a rating of 3 or lower.",  unit: "low ratings" },
   { id: "trendsetter", name: "Trendsetter", cat: "orange", icon: "peak",     desc: "Review an album before it has 10 ratings." },
@@ -9450,6 +9462,25 @@ const AERO_BADGES = [
   { id: "celeb",       name: "Celeb",       cat: "orange", icon: "stars",    desc: "Reach 100 followers.",                    unit: "followers" },
   { id: "chatty",      name: "Chatty",      cat: "orange", icon: "chat",     desc: "Leave 5 comments.",                       unit: "comments" },
 ];
+
+// Badge type panels (page groups badges by category). Order per handoff.
+const AERO_BADGE_TYPES = [
+  { key: "milestones", name: "Milestone Badges", cat: "blue" },
+  { key: "habits",     name: "Habit Badges",     cat: "pink" },
+  { key: "taste",      name: "Taste Badges",     cat: "lime" },
+  { key: "social",     name: "Social Badges",    cat: "orange" },
+  { key: "limited",    name: "Limited Badges",   cat: "lavender" },
+];
+
+// Status pill text/colors for a badge given its server state ({earnedAt,progress,goal}).
+function badgeStatusPill(def, s) {
+  if (s && s.earnedAt) {
+    const dt = new Date(s.earnedAt);
+    return { text: "earned " + (isNaN(dt) ? "" : dt.toLocaleDateString("en-US", { month: "short", year: "numeric" })), color: "#2E6B14", bg: "#E4F7C8" };
+  }
+  if (def.unit && s && s.goal) return { text: `${(s && s.progress) || 0} of ${s.goal} ${def.unit}`, color: "#5A6470", bg: "#ECEEF1" };
+  return { text: "locked", color: "#5A6470", bg: "#ECEEF1" };
+}
 
 function BadgeIcon({ icon, size = 20 }) {
   return (
@@ -9476,116 +9507,241 @@ function BadgeMedal({ def, earned, size }) {
   );
 }
 
-// Badges panel — replaces the info box on the Aero theme. Paged, with a pop-up.
-function BadgesPanel({ displayName, badges, isMobile, pal, frosted, WHITE_SH }) {
-  const [page, setPage] = React.useState(0);
-  const [open, setOpen] = React.useState(null); // badge id of open pop-up
-  const cardRef = React.useRef(null);
-  const lastFocus = React.useRef(null);
-
-  const byId = React.useMemo(() => {
-    const m = {}; (badges || []).forEach((b) => { m[b.id] = b; }); return m;
-  }, [badges]);
-  const state = (id) => byId[id] || { earnedAt: null };
-  const earnedCount = AERO_BADGES.reduce((n, d) => n + (state(d.id).earnedAt ? 1 : 0), 0);
-
-  const perPage = isMobile ? 8 : 10;
-  const cols = isMobile ? 4 : 5;
-  const pages = Math.max(1, Math.ceil(AERO_BADGES.length / perPage));
-  const clampPage = Math.min(page, pages - 1);
-  const start = clampPage * perPage;
-  const pageItems = AERO_BADGES.slice(start, start + perPage);
-  // Pad to a full page so the panel height never jumps.
-  const slots = [...pageItems, ...Array(perPage - pageItems.length).fill(null)];
-
-  React.useEffect(() => {
-    if (!open) return;
-    const onKey = (e) => { if (e.key === "Escape") closePop(); };
-    window.addEventListener("keydown", onKey);
-    if (cardRef.current) cardRef.current.focus();
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open]);
-
-  const openPop = (id, e) => { lastFocus.current = e && e.currentTarget; setOpen(id); };
-  const closePop = () => { setOpen(null); if (lastFocus.current) { try { lastFocus.current.focus(); } catch (_) {} } };
-
-  const pagerBtn = (dir, disabled) => (
-    <button
-      aria-label={dir < 0 ? "Previous badges" : "Next badges"}
-      disabled={disabled}
-      onClick={() => setPage((p) => Math.min(pages - 1, Math.max(0, p + dir)))}
-      style={{
-        width: 20, height: 20, borderRadius: "50%", padding: 0, flexShrink: 0,
-        background: "linear-gradient(180deg,#FFF 0%,#EAF4FF 50%,#D4E9FA 51%,#F2F8FF 100%)",
-        border: "1px solid rgba(255,255,255,.95)", boxShadow: "0 1px 4px rgba(10,60,110,.2)",
-        color: "#0E4A7A", fontSize: 12, lineHeight: 1, cursor: disabled ? "default" : "pointer",
-        opacity: disabled ? 0.4 : 1, display: "flex", alignItems: "center", justifyContent: "center",
-        position: "relative",
-      }}
-    >
-      <span style={{ position: isMobile ? "absolute" : "static", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", width: isMobile ? 44 : undefined, height: isMobile ? 44 : undefined, left: isMobile ? "50%" : undefined, top: isMobile ? "50%" : undefined, transform: isMobile ? "translate(-50%,-50%)" : undefined }}>{dir < 0 ? "‹" : "›"}</span>
-    </button>
-  );
-
-  const openDef = open ? AERO_BADGES.find((d) => d.id === open) : null;
-
+// Badges pill — profile header. Shows the 3 most-recently-earned badges and a
+// count; opens the full badges page. Visitors see it too (opens that user's page).
+function BadgesPill({ badges, isMobile, onOpen, fullWidth }) {
+  const earned = (badges || []).filter((b) => b.earnedAt);
+  const latest = [...earned].sort((a, b) => new Date(b.earnedAt) - new Date(a.earnedAt)).slice(0, 3);
+  const defById = (id) => AERO_BADGES.find((d) => d.id === id);
   return (
-    // Non-clipping wrapper so the pop-up can extend past the short glass panel
-    // (the panel itself keeps overflow:hidden for its rounded glass edges).
-    <div style={{ position: "relative" }}>
-      <div style={{ ...frosted }}>
-        {/* title bar */}
-        <div style={{ background: pal.bar, borderBottom: "1px solid rgba(255,255,255,.5)", padding: isMobile ? "7px 12px" : "7px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
-          <span style={{ fontWeight: 700, fontSize: isMobile ? 14 : 15, color: "#fff", textShadow: WHITE_SH, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{(displayName || "your")}'s badges</span>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
-            <span style={{ fontSize: 12, color: "rgba(255,255,255,.95)", textShadow: WHITE_SH }}>{earnedCount} of {AERO_BADGES.length}</span>
-            <div style={{ display: "flex", gap: 6 }}>
-              {pagerBtn(-1, clampPage === 0)}
-              {pagerBtn(1, clampPage >= pages - 1)}
-            </div>
-          </div>
-        </div>
-        {/* grid */}
-        <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols},1fr)`, gridAutoRows: "minmax(0,1fr)", gap: "8px 6px", padding: isMobile ? "10px 12px 8px" : "10px 14px 8px" }}>
-          {slots.map((def, i) => {
-            if (!def) return <div key={"e" + i} aria-hidden style={{ visibility: "hidden" }}><BadgeCellInner def={{ icon: "spin", name: "." }} earned={false} isMobile={isMobile} /></div>;
-            const earned = !!state(def.id).earnedAt;
+    <button onClick={onOpen} aria-label="View badges" style={{
+      background: "linear-gradient(180deg,#FFFFFF 0%,#EAF4FF 50%,#D4E9FA 51%,#F2F8FF 100%)",
+      border: "1px solid rgba(255,255,255,.9)", boxShadow: "0 2px 6px rgba(10,60,110,.2)", borderRadius: 9999,
+      padding: "4px 10px 4px 6px", display: "flex", alignItems: "center", gap: 6, cursor: "pointer",
+      fontFamily: '"Helvetica Neue",Helvetica,Arial,sans-serif',
+      width: fullWidth ? "100%" : "auto", justifyContent: fullWidth ? "center" : "flex-start",
+      minHeight: isMobile ? 44 : undefined,
+    }}>
+      {latest.length > 0 ? (
+        <span style={{ display: "inline-flex", alignItems: "center" }}>
+          {latest.map((b, i) => {
+            const d = defById(b.id);
             return (
-              <button key={def.id} onClick={(e) => openPop(def.id, e)} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", font: "inherit" }}>
-                <BadgeCellInner def={def} earned={earned} isMobile={isMobile} />
-              </button>
+              <span key={b.id} style={{ marginLeft: i === 0 ? 0 : -6, position: "relative", zIndex: 3 - i, width: 18, height: 18, borderRadius: "50%", boxSizing: "border-box", border: "1.5px solid rgba(255,255,255,.95)", background: BADGE_CAT[d ? d.cat : "blue"], display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                <BadgeIcon icon={d ? d.icon : "spin"} size={10} />
+              </span>
             );
           })}
+        </span>
+      ) : (
+        <span style={{ width: 18, height: 18, borderRadius: "50%", boxSizing: "border-box", border: "1.5px solid rgba(255,255,255,.95)", background: BADGE_LOCKED_BG, filter: "grayscale(1)", opacity: 0.6 }} />
+      )}
+      <span style={{ fontSize: 12, fontWeight: 700, color: "#0E4A7A", whiteSpace: "nowrap" }}>{earned.length > 0 ? `${earned.length} badges` : "badges"}</span>
+    </button>
+  );
+}
+
+// Dedicated badges page (Aero theme). Groups badges into type panels, with
+// filters and a tap-to-open detail sheet (mobile) / modal (desktop).
+function AeroBadgesPage({ userId, username, displayName, palette, isMobile, onBack }) {
+  const [badges, setBadges] = React.useState([]);
+  const [filter, setFilter] = React.useState("all"); // all | earned | locked
+  const [sel, setSel] = React.useState(null); // selected badge def id
+  const cardRef = React.useRef(null);
+  const touch = React.useRef({ y0: 0, dy: 0 });
+
+  React.useEffect(() => {
+    if (!userId) return;
+    let alive = true;
+    apiFetch(`${BACKEND_URL}/api/users/${userId}/badges`)
+      .then((r) => r.json())
+      .then((data) => { if (alive && Array.isArray(data)) setBadges(data); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, [userId]);
+
+  React.useEffect(() => {
+    if (!sel) return;
+    const onKey = (e) => { if (e.key === "Escape") setSel(null); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [sel]);
+
+  const pal = AERO_PALETTES[palette] || AERO_PALETTES.aqua;
+  const WHITE_SH = "0 1px 3px rgba(0,20,50,.5)";
+  const NAME_SH = "0 2px 6px rgba(0,20,50,.5), 0 1px 0 rgba(255,255,255,.25)";
+  const frosted = { background: "rgba(255,255,255,.4)", border: "1px solid rgba(255,255,255,.8)", backdropFilter: "blur(16px) saturate(1.1)", WebkitBackdropFilter: "blur(16px) saturate(1.1)", boxShadow: "0 4px 14px rgba(0,20,50,.14), inset 0 1px 0 rgba(255,255,255,.6)", borderRadius: 12, overflow: "hidden" };
+  const name = displayName || username || "";
+
+  const byId = {}; (badges || []).forEach((b) => { byId[b.id] = b; });
+  const stateOf = (id) => byId[id] || { earnedAt: null };
+  const total = AERO_BADGES.length;
+  const earnedCount = AERO_BADGES.reduce((n, d) => n + (stateOf(d.id).earnedAt ? 1 : 0), 0);
+  const pct = total ? Math.round((earnedCount / total) * 100) : 0;
+
+  const latest = [...(badges || [])].filter((b) => b.earnedAt).sort((a, b) => new Date(b.earnedAt) - new Date(a.earnedAt)).slice(0, 3);
+  const latestDef = latest[0] ? AERO_BADGES.find((d) => d.id === latest[0].id) : null;
+  const latestWhen = latest[0] ? new Date(latest[0].earnedAt) : null;
+
+  const passesFilter = (d) => filter === "all" || (filter === "earned" ? !!stateOf(d.id).earnedAt : !stateOf(d.id).earnedAt);
+
+  const FILL = "linear-gradient(180deg,#9DD6F7,#3A93D6 50%,#2A80C2 51%,#6CB8EA)";
+  const progressBar = (w) => (
+    <div style={{ width: w || "100%", height: 10, borderRadius: 999, background: "rgba(14,74,122,.15)", overflow: "hidden" }}>
+      <div style={{ height: "100%", width: `${pct}%`, background: FILL, borderRadius: 999 }} />
+    </div>
+  );
+
+  const filterPill = (key, label) => {
+    const active = filter === key;
+    return (
+      <button key={key} onClick={() => setFilter(key)} style={{
+        padding: isMobile ? "5px 14px" : "6px 16px", fontSize: isMobile ? 13 : 14, fontWeight: 700, borderRadius: 9999, cursor: "pointer",
+        border: active ? "1px solid rgba(255,255,255,.5)" : "1px solid rgba(255,255,255,.9)",
+        background: active ? pal.bar : "linear-gradient(180deg,#FFFFFF 0%,#EAF4FF 50%,#D4E9FA 51%,#F2F8FF 100%)",
+        color: active ? "#fff" : "#0E4A7A", textShadow: active ? WHITE_SH : "none",
+        fontFamily: '"Helvetica Neue",Helvetica,Arial,sans-serif',
+      }}>{label}</button>
+    );
+  };
+
+  const Bar = ({ left, right }) => (
+    <div style={{ background: pal.bar, borderBottom: "1px solid rgba(255,255,255,.5)", padding: isMobile ? "7px 12px" : "7px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+      <span style={{ fontWeight: 700, fontSize: isMobile ? 14 : 15, color: "#fff", textShadow: WHITE_SH }}>{left}</span>
+      <span style={{ fontSize: 12, color: "rgba(255,255,255,.95)", textShadow: WHITE_SH }}>{right}</span>
+    </div>
+  );
+
+  const badgeCell = (d, circle) => {
+    const earned = !!stateOf(d.id).earnedAt;
+    return (
+      <button key={d.id} onClick={() => setSel(d.id)} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", font: "inherit" }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+          <BadgeMedal def={d} earned={earned} size={circle} />
+          <div style={{ fontSize: isMobile ? 11 : 12, fontWeight: 700, lineHeight: 1.2, textAlign: "center", color: earned ? "#0E4A7A" : "rgba(14,63,107,.45)" }}>{d.name}</div>
+        </div>
+      </button>
+    );
+  };
+
+  // Type panels (hide ones with no badges at all, or emptied by the filter).
+  const typePanels = AERO_BADGE_TYPES.map((t) => {
+    const all = AERO_BADGES.filter((d) => d.cat === t.cat);
+    if (all.length === 0) return null;
+    const shown = all.filter(passesFilter);
+    if (shown.length === 0) return null;
+    const earnedInType = all.reduce((n, d) => n + (stateOf(d.id).earnedAt ? 1 : 0), 0);
+    return (
+      <div key={t.key} style={{ ...frosted }}>
+        <Bar left={t.name} right={`${earnedInType} of ${all.length}`} />
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(4,1fr)" : "repeat(5,1fr)", gap: isMobile ? "12px 6px" : "14px 8px", padding: 14 }}>
+          {shown.map((d) => badgeCell(d, isMobile ? 52 : 56))}
         </div>
       </div>
+    );
+  }).filter(Boolean);
 
-      {/* pop-up — sibling of the glass panel so it is never clipped */}
-      {openDef && (() => {
-        const s = state(openDef.id);
-        const earned = !!s.earnedAt;
-        let pillText, pillColor, pillBg;
-        if (earned) {
-          const dt = new Date(s.earnedAt);
-          pillText = "earned " + (isNaN(dt) ? "" : dt.toLocaleDateString("en-US", { month: "short", year: "numeric" }));
-          pillColor = "#2E6B14"; pillBg = "#E4F7C8";
-        } else if (openDef.unit && s.goal) {
-          pillText = `${s.progress || 0} of ${s.goal} ${openDef.unit}`;
-          pillColor = "#5A6470"; pillBg = "#ECEEF1";
-        } else {
-          pillText = "locked"; pillColor = "#5A6470"; pillBg = "#ECEEF1";
-        }
-        return (
-          <div onClick={closePop} style={{ position: "absolute", inset: 0, overflow: "visible", background: "rgba(14,63,107,.22)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 5, borderRadius: 12 }}>
-            <div ref={cardRef} tabIndex={-1} role="dialog" aria-label={openDef.name} onClick={(e) => e.stopPropagation()} style={{ position: "relative", maxWidth: 250, width: "calc(100% - 24px)", padding: "14px 16px", borderRadius: 14, background: "linear-gradient(180deg,rgba(255,255,255,.98),rgba(234,244,255,.97))", border: "1px solid rgba(255,255,255,.95)", boxShadow: "0 10px 28px rgba(10,60,110,.34)", display: "flex", flexDirection: "column", alignItems: "center", gap: 7, outline: "none" }}>
-              <button aria-label="Close" onClick={closePop} style={{ position: "absolute", top: 6, right: 8, background: "none", border: "none", cursor: "pointer", color: "#0E4A7A", fontSize: 16, lineHeight: 1, padding: 4 }}>×</button>
-              <BadgeMedal def={openDef} earned={earned} size={54} />
-              <div style={{ fontSize: 16, fontWeight: 700, color: "#0E3F6B", lineHeight: 1.1 }}>{openDef.name}</div>
-              <div style={{ fontSize: 12.5, lineHeight: 1.35, color: "#0E3F6B", textAlign: "center" }}>{openDef.desc}</div>
-              <div style={{ fontSize: 12, fontWeight: 700, padding: "3px 10px", borderRadius: 999, color: pillColor, background: pillBg }}>{pillText}</div>
+  const selDef = sel ? AERO_BADGES.find((d) => d.id === sel) : null;
+  const selState = selDef ? stateOf(selDef.id) : null;
+  const selPill = selDef ? badgeStatusPill(selDef, selState) : null;
+
+  const bub = (t, l, sz, dur) => (
+    <div className="aero-bubble" style={{ position: "absolute", top: t, left: l, width: sz, height: sz, borderRadius: 9999, background: "radial-gradient(circle at 32% 28%,rgba(255,255,255,.92),rgba(255,255,255,.18) 45%,rgba(255,255,255,.04) 70%)", border: "1px solid rgba(255,255,255,.5)", animation: `aeroFloat ${dur}s ease-in-out infinite`, pointerEvents: "none" }} />
+  );
+  const pad = isMobile ? 16 : 48;
+
+  return (
+    <div className="ui-sans" style={{ position: "relative", fontFamily: '"Helvetica Neue",Helvetica,Arial,sans-serif' }}>
+      <div aria-hidden style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: "100vw", height: "100%", background: pal.bg, zIndex: 0 }}>
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "55%", background: "radial-gradient(130% 85% at 50% -16%, rgba(255,255,255,.5), rgba(255,255,255,0) 64%)", pointerEvents: "none" }} />
+        {bub("16%", "78%", isMobile ? 70 : 120, 8)}
+        {bub("40%", "8%", isMobile ? 90 : 150, 7)}
+        {bub("74%", "70%", isMobile ? 80 : 110, 9)}
+      </div>
+
+      <div style={{ position: "relative", zIndex: 1, maxWidth: 1000, margin: "0 auto", padding: isMobile ? "16px 16px 28px" : "24px 48px 40px", display: "flex", flexDirection: "column", gap: isMobile ? 14 : 18 }}>
+        {/* back link */}
+        <button onClick={onBack} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", alignSelf: "flex-start", fontSize: isMobile ? 14 : 15, fontWeight: 700, color: "#fff", textShadow: WHITE_SH, fontFamily: "inherit" }}>‹ {isMobile ? name : `back to ${name}`}</button>
+
+        {isMobile ? (
+          <>
+            {/* summary panel */}
+            <div style={{ ...frosted, padding: 14, display: "flex", flexDirection: "column", gap: 10 }}>
+              <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 10 }}>
+                <span style={{ fontSize: 24, fontWeight: 700, color: "#fff", textShadow: NAME_SH }}>{name}'s badges</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: "#0E4A7A", whiteSpace: "nowrap" }}>{earnedCount} of {total} earned</span>
+              </div>
+              {progressBar()}
+              {latest.length > 0 && (
+                <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "#2F6E9E", flexWrap: "wrap" }}>
+                  <span>latest</span>
+                  <span style={{ display: "inline-flex", alignItems: "center" }}>
+                    {latest.map((b, i) => { const d = AERO_BADGES.find((x) => x.id === b.id); return (
+                      <span key={b.id} style={{ marginLeft: i === 0 ? 0 : -6, position: "relative", zIndex: 3 - i, width: 22, height: 22, borderRadius: "50%", boxSizing: "border-box", border: "1.5px solid rgba(255,255,255,.95)", background: BADGE_CAT[d ? d.cat : "blue"], display: "inline-flex", alignItems: "center", justifyContent: "center" }}><BadgeIcon icon={d ? d.icon : "spin"} size={12} /></span>
+                    ); })}
+                  </span>
+                  {latestDef && <span style={{ fontWeight: 700, color: "#0E4A7A" }}>{latestDef.name} · {latestWhen ? latestWhen.toLocaleDateString("en-US", { month: "short", year: "numeric" }) : ""}</span>}
+                </div>
+              )}
             </div>
+            {/* filters */}
+            <div style={{ display: "flex", gap: 6 }}>{filterPill("all", "all")}{filterPill("earned", "earned")}{filterPill("locked", "locked")}</div>
+            {/* type panels */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>{typePanels}</div>
+          </>
+        ) : (
+          <>
+            {/* header row */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr auto", alignItems: "flex-end", gap: 20 }}>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 40, fontWeight: 700, color: "#fff", letterSpacing: "-.02em", lineHeight: 1, textShadow: NAME_SH }}>{name}'s badges</div>
+                <div style={{ fontSize: 15, color: "#E6F3FC", textShadow: WHITE_SH, margin: "8px 0 10px" }}>{earnedCount} of {total} earned</div>
+                {progressBar(420)}
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>{filterPill("all", "all")}{filterPill("earned", "earned")}{filterPill("locked", "locked")}</div>
+            </div>
+            <div style={{ height: 1, background: "rgba(255,255,255,.7)" }} />
+            {/* type panels, 2 columns */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, alignItems: "start" }}>{typePanels}</div>
+          </>
+        )}
+      </div>
+
+      {/* detail: bottom sheet (mobile) / centered modal (desktop) */}
+      {selDef && (
+        <div
+          onClick={() => setSel(null)}
+          style={{ position: "fixed", inset: 0, background: isMobile ? "rgba(14,63,107,.28)" : "rgba(14,63,107,.28)", zIndex: 1000, display: "flex", alignItems: isMobile ? "flex-end" : "center", justifyContent: "center" }}
+        >
+          <div
+            ref={cardRef}
+            role="dialog"
+            aria-label={selDef.name}
+            onClick={(e) => e.stopPropagation()}
+            onTouchStart={isMobile ? (e) => { touch.current = { y0: e.touches[0].clientY, dy: 0 }; } : undefined}
+            onTouchMove={isMobile ? (e) => { touch.current.dy = e.touches[0].clientY - touch.current.y0; } : undefined}
+            onTouchEnd={isMobile ? () => { if (touch.current.dy > 60) setSel(null); } : undefined}
+            style={isMobile ? {
+              width: "100%", maxWidth: 560, borderRadius: "20px 20px 0 0", background: "linear-gradient(180deg,rgba(255,255,255,.98),rgba(234,244,255,.97))",
+              padding: "12px 20px calc(32px + env(safe-area-inset-bottom,0px))", display: "flex", flexDirection: "column", alignItems: "center", gap: 10, boxShadow: "0 -8px 28px rgba(10,60,110,.3)",
+            } : {
+              width: 300, borderRadius: 16, background: "linear-gradient(180deg,rgba(255,255,255,.98),rgba(234,244,255,.97))", border: "1px solid rgba(255,255,255,.95)",
+              padding: 22, display: "flex", flexDirection: "column", alignItems: "center", gap: 10, position: "relative", boxShadow: "0 12px 32px rgba(10,60,110,.34)",
+            }}
+          >
+            {isMobile
+              ? <div style={{ width: 40, height: 4, borderRadius: 999, background: "rgba(14,74,122,.25)" }} />
+              : <button aria-label="Close" onClick={() => setSel(null)} style={{ position: "absolute", top: 12, right: 14, background: "none", border: "none", cursor: "pointer", color: "#0E4A7A", fontSize: 18, lineHeight: 1, padding: 4 }}>×</button>}
+            <BadgeMedal def={selDef} earned={!!selState.earnedAt} size={80} />
+            <div style={{ fontSize: 20, fontWeight: 700, color: "#0E3F6B", lineHeight: 1.1 }}>{selDef.name}</div>
+            <div style={{ fontSize: 14, lineHeight: 1.4, color: "#0E3F6B", textAlign: "center", maxWidth: 320 }}>{selDef.desc}</div>
+            <div style={{ fontSize: 12, fontWeight: 700, padding: "3px 10px", borderRadius: 999, color: selPill.color, background: selPill.bg }}>{selPill.text}</div>
+            {isMobile && (
+              <button onClick={() => setSel(null)} style={{ marginTop: 2, background: "linear-gradient(180deg,#FFFFFF 0%,#EAF4FF 50%,#D4E9FA 51%,#F2F8FF 100%)", border: "1px solid rgba(255,255,255,.9)", boxShadow: "0 2px 6px rgba(10,60,110,.2)", borderRadius: 9999, padding: "7px 22px", fontWeight: 700, fontSize: 14, color: "#0E4A7A", cursor: "pointer", fontFamily: "inherit" }}>close</button>
+            )}
           </div>
-        );
-      })()}
+        </div>
+      )}
     </div>
   );
 }
@@ -9600,7 +9756,7 @@ function BadgeCellInner({ def, earned, isMobile }) {
 }
 
 function BubbleProfile({ displayName, username, bio, isMobile, palette, stats, albums, reviews, info, mixes, queued,
-                         userId, isOwn = true, onRemoveFavorite, onAddFavorite, onDeleteReview,
+                         userId, isOwn = true, onRemoveFavorite, onAddFavorite, onDeleteReview, onOpenBadges,
                          onOpenSettings, onOpenAlbum, onOpenMix, onShowAllQueued, onShowAllReviews, onStatClick, onNeedAlbum, renderAvatar, renderAlbumCover }) {
   // Pull album details for any favorite/review/queued cover we don't have yet.
   React.useEffect(() => {
@@ -9728,9 +9884,6 @@ function BubbleProfile({ displayName, username, bio, isMobile, palette, stats, a
     </div>
   );
 
-  const BadgesBlock = (
-    <BadgesPanel displayName={displayName || username} badges={badges} isMobile={isMobile} pal={pal} frosted={frosted} WHITE_SH={WHITE_SH} />
-  );
 
   // Recent review card (shared desktop/mobile; owner gets a ✕ delete).
   const reviewCard = (r, i) => (
@@ -9811,8 +9964,9 @@ function BubbleProfile({ displayName, username, bio, isMobile, palette, stats, a
             <div style={{ fontSize: isMobile ? 13 : 15, color: "#E6F3FC", textShadow: WHITE_SH, marginTop: 6 }}>@{(username || "").toLowerCase()}</div>
             {bio && <div style={{ ...pill, marginTop: 4, cursor: "default", padding: isMobile ? "3px 10px" : "5px 14px", fontSize: isMobile ? 12 : 14, whiteSpace: isMobile ? "nowrap" : "normal", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%" }}>{bio}</div>}
           </div>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 10 }}>
-            <button onClick={onOpenSettings} style={{ ...pill, padding: isMobile ? "5px 12px" : "6px 16px", fontSize: isMobile ? 12 : 14, alignSelf: "start" }}>settings</button>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: isMobile ? "stretch" : "flex-end", gap: isMobile ? 8 : 10 }}>
+            <button onClick={onOpenSettings} style={{ ...pill, padding: isMobile ? "5px 12px" : "6px 16px", fontSize: isMobile ? 12 : 14, textAlign: "center" }}>settings</button>
+            <BadgesPill badges={badges} isMobile={isMobile} fullWidth={isMobile} onOpen={onOpenBadges} />
             {!isMobile && StatStrip}
           </div>
         </div>
@@ -9825,18 +9979,14 @@ function BubbleProfile({ displayName, username, bio, isMobile, palette, stats, a
 
         {!isMobile ? (
           <>
-            {/* desktop: badges | top 3 */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, alignItems: "start" }}>
-              {BadgesBlock}
-              {Top3Block}
-            </div>
+            {/* desktop: full-width Top 3, then reviews */}
+            {Top3Block}
             {ReviewsBlock}
           </>
         ) : (
           <>
-            {/* mobile: top 3, then badges, then reviews */}
+            {/* mobile: top 3, then reviews */}
             <div style={{ marginTop: 16 }}>{Top3Block}</div>
-            <div style={{ marginTop: 16 }}>{BadgesBlock}</div>
             {ReviewsBlock}
           </>
         )}
