@@ -160,6 +160,21 @@ function fmtListenDate(d) {
   return dt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
+// Compact relative time for cards: "now", "3d", "2w", "5mo", "1y".
+function fmtAgo(d) {
+  if (!d) return "";
+  const dt = new Date(d);
+  if (isNaN(dt)) return "";
+  const s = Math.max(0, (Date.now() - dt.getTime()) / 1000);
+  if (s < 60) return "now";
+  const m = s / 60; if (m < 60) return Math.floor(m) + "m";
+  const h = m / 60; if (h < 24) return Math.floor(h) + "h";
+  const dd = h / 24; if (dd < 7) return Math.floor(dd) + "d";
+  const w = dd / 7; if (w < 4.345) return Math.floor(w) + "w";
+  const mo = dd / 30.44; if (mo < 12) return Math.floor(mo) + "mo";
+  return Math.floor(dd / 365.25) + "y";
+}
+
 // Resize and re-encode an image File to a JPEG data URL.
 //   maxDim  — longest edge in px. Never upscales (a smaller source keeps its size).
 //   quality — JPEG quality 0-1.
@@ -6449,7 +6464,12 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
             palette={bubblePalette}
             stats={{ followers: profileStats.followers, following: profileStats.following, listened: listenLoaded ? listenedCount : (cachedCounts.listened ?? listenedCount), reviews: reviewsLoaded ? reviews.length : (cachedCounts.reviews ?? reviews.length) }}
             albums={favorites.map((id) => { const a = fetchedAlbums[id] || albumById(id); return { id, title: a && a.title !== "Unknown Album" ? a.title : "", album: a }; })}
-            reviews={[...reviews].sort((a, b) => (a.date !== b.date ? (a.date < b.date ? 1 : -1) : (a.id < b.id ? 1 : -1))).slice(0, 3).map((r) => { const a = fetchedAlbums[r.albumId] || albumById(r.albumId); return { score: r.rating, albumTitle: a && a.title !== "Unknown Album" ? a.title : "", artist: a ? (a.artist || a.artistName || "") : "", body: r.text || r.reviewText || r.body || "", favoriteTrack: r.favTrack || r.favoriteTrack || "", leastFavoriteTrack: r.leastFavTrack || r.leastFavoriteTrack || "", albumId: r.albumId, album: a }; })}
+            reviews={[...reviews].sort((a, b) => (a.date !== b.date ? (a.date < b.date ? 1 : -1) : (a.id < b.id ? 1 : -1))).slice(0, 3).map((r) => { const a = fetchedAlbums[r.albumId] || albumById(r.albumId); return { score: r.rating, albumTitle: a && a.title !== "Unknown Album" ? a.title : "", artist: a ? (a.artist || a.artistName || "") : "", body: r.text || r.reviewText || r.body || "", favoriteTrack: r.favTrack || r.favoriteTrack || "", leastFavoriteTrack: r.leastFavTrack || r.leastFavoriteTrack || "", albumId: r.albumId, album: a, date: r.date || r.createdAt }; })}
+            userId={profile.id || authUser?.id}
+            isOwn={true}
+            onRemoveFavorite={(id) => toggleFavorite(id)}
+            onAddFavorite={(album) => { if (favorites.includes(album.id)) { flash("Already in your top 3"); return; } toggleFavorite(album.id); setFetchedAlbums((prev) => ({ ...prev, [album.id]: { ...album, artist: album.artistName || album.artist || "", year: album.releaseYear || album.year || null } })); }}
+            onDeleteReview={(r) => deleteReview(r.albumId)}
             onShowAllReviews={() => setView({ name: "reviewsList", username: profile.username, userId: profile.id, reviews: mergeLatest(reviews, myRelistens), isOwn: true, from: view })}
             info={{ age: profile.age, town: profile.town, country: profile.country, interests: profile.interests, mood: profile.mood }}
             mixes={albumMixes.filter((m) => m.isPublic !== false).map((m) => ({ id: m.id, title: m.title, count: m.albums.length, cover: <MixCoverStack albums={m.albums} fetchedAlbums={fetchedAlbums} albumById={albumById} size={56} /> }))}
@@ -9383,7 +9403,200 @@ const AERO_PALETTES = {
 };
 const AERO_MOOD = { chill: "8)", flirty: ";)", happy: ":)", angry: ">:(", sad: ":(", bored: "-_-", hyper: "^_^" };
 
+// ---- Profile badges (Aero theme) --------------------------------------------
+// Category gradients for earned badges; locked badges use the gray gradient.
+const BADGE_CAT = {
+  blue:     "linear-gradient(180deg,#9DD6F7,#3A93D6 50%,#2A80C2 51%,#6CB8EA)",
+  pink:     "linear-gradient(180deg,#FFE0EE,#FF9CC8 50%,#F47FB3 51%,#FFC0DC)",
+  lime:     "linear-gradient(180deg,#F0FFC2,#B8E84A 50%,#9DD62A 51%,#D4F27A)",
+  orange:   "linear-gradient(180deg,#FFE6C8,#FFB870 50%,#F9A050 51%,#FFD09A)",
+  lavender: "linear-gradient(180deg,#F0E6FF,#C4A8F5 50%,#AE8EEA 51%,#D8C6FA)",
+};
+const BADGE_LOCKED_BG = "linear-gradient(180deg,#F2F2F2,#C8CCD2 50%,#B4B9C0 51%,#DADDE2)";
+
+// Five-point star path (for the celeb icon), from the design file.
+const _starPath = (cx, cy, r) => "M" + Array.from({ length: 10 }, (_, k) => {
+  const a = -Math.PI / 2 + k * Math.PI / 5, rr = k % 2 ? r * 0.45 : r;
+  return (cx + rr * Math.cos(a)).toFixed(2) + " " + (cy + rr * Math.sin(a)).toFixed(2);
+}).join("L") + "Z";
+
+// Inner SVG markup for each 24x24 line icon (stroke set on the <svg>).
+const BADGE_ICON_INNER = {
+  spin: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/><path d="M12 6a6 6 0 0 1 6 6"/><path d="M8 16.5a6 6 0 0 1-2-3"/>',
+  quill: '<path d="M20 4C12 5 7 10 5 19"/><path d="M20 4c-1 6-5 10-11 11"/><path d="M4 20l2-2M11.5 10.5h3"/>',
+  cassette: '<rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="8.5" cy="11" r="1.8"/><circle cx="15.5" cy="11" r="1.8"/><path d="M10.3 11h3.4M7 18l1.5-3h7l1.5 3"/>',
+  smile: '<circle cx="12" cy="12" r="9"/><path d="M7.8 14c1 1.9 2.5 2.9 4.2 2.9s3.2-1 4.2-2.9"/><path d="M9 9v1.4M15 9v1.4"/>',
+  loop: '<path d="M4 12a8 8 0 0 1 13.7-5.6M18 3v4h-4M20 12a8 8 0 0 1-13.7 5.6M6 21v-4h4"/><circle cx="12" cy="12" r="2"/>',
+  cracked: '<path d="M12 20.5C6 16.5 3 13 3 9.2 3 6.3 5.2 4.2 7.8 4.2c1.7 0 3.2.9 4.2 2.3"/><path d="M12 20.5c6-4 9-7.5 9-11.3 0-2.9-2.2-5-4.8-5-1.7 0-3.2.9-4.2 2.3"/><path d="M12 6.5l-1.8 3.8 3 2.2-2.4 3.4 1.2 4.6"/>',
+  peak: '<path d="M2 20l7-11 4 6 3-4 6 9z"/><path d="M9 9V3l5 2-5 2"/>',
+  tower: '<path d="M12 10v11M9 21h6"/><circle cx="12" cy="8" r="2"/><path d="M8.5 4.5a5 5 0 0 0 0 7M15.5 4.5a5 5 0 0 1 0 7M5.5 2a9 9 0 0 0 0 12M18.5 2a9 9 0 0 1 0 12"/>',
+  stars: '<path d="' + _starPath(12, 14, 6) + _starPath(4.8, 6.5, 3) + _starPath(19.2, 6.5, 3) + '"/>',
+  chat: '<path d="M4 4h10a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H9l-4 3v-3H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><path d="M19 8h1a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-1v3l-4-3h-3"/>',
+  ninja: '<circle cx="12" cy="12" r="8.5"/><path d="M3.6 10h16.8v4H3.6z"/><path d="M8 12h2.5M13.5 12H16"/><path d="M20.4 10.5l2.3-2M20.4 13.5l2.3 1.8"/>',
+};
+
+// 11 badges in display order. (globetrotter, tastemaker, earlybird are omitted:
+// the data to compute them doesn't exist yet — see backend lib/badges.js.)
+const AERO_BADGES = [
+  { id: "first_spin",  name: "First spin",  cat: "blue",   icon: "spin",     desc: "Log your first album." },
+  { id: "critic",      name: "Critic",      cat: "blue",   icon: "quill",    desc: "Write 25 reviews.",                       unit: "reviews" },
+  { id: "mixer",       name: "Mixer",       cat: "blue",   icon: "cassette", desc: "Make 5 mixes.",                           unit: "mixes" },
+  { id: "superfan",    name: "Superfan",    cat: "blue",   icon: "smile",    desc: "Give an album a 10/10." },
+  { id: "second_take", name: "Second take", cat: "pink",   icon: "loop",     desc: "Log your first re-listen." },
+  { id: "ninja",       name: "Ninja",       cat: "pink",   icon: "ninja",    desc: "Rate 10 albums without writing a review.", unit: "silent ratings" },
+  { id: "hater",       name: "Hater",       cat: "lime",   icon: "cracked",  desc: "Give 10 albums a rating of 3 or lower.",  unit: "low ratings" },
+  { id: "trendsetter", name: "Trendsetter", cat: "orange", icon: "peak",     desc: "Review an album before it has 10 ratings." },
+  { id: "socialite",   name: "Socialite",   cat: "orange", icon: "tower",    desc: "Reach 50 followers.",                     unit: "followers" },
+  { id: "celeb",       name: "Celeb",       cat: "orange", icon: "stars",    desc: "Reach 100 followers.",                    unit: "followers" },
+  { id: "chatty",      name: "Chatty",      cat: "orange", icon: "chat",     desc: "Leave 5 comments.",                       unit: "comments" },
+];
+
+function BadgeIcon({ icon, size = 20 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.7"
+      strokeLinecap="round" strokeLinejoin="round"
+      style={{ filter: "drop-shadow(0 1px 1px rgba(0,0,0,.3))" }}
+      dangerouslySetInnerHTML={{ __html: BADGE_ICON_INNER[icon] || "" }} />
+  );
+}
+
+// Circular badge medallion (shared by grid cells and the pop-up).
+function BadgeMedal({ def, earned, size }) {
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: "50%", boxSizing: "border-box",
+      border: "2px solid rgba(255,255,255,.95)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      background: earned ? BADGE_CAT[def.cat] : BADGE_LOCKED_BG,
+      filter: earned ? "none" : "grayscale(1)", opacity: earned ? 1 : 0.5,
+      boxShadow: earned ? "0 3px 8px rgba(10,60,110,.25), inset 0 -3px 6px rgba(255,255,255,.35)" : "none",
+    }}>
+      <BadgeIcon icon={def.icon} size={Math.round(size * 0.5)} />
+    </div>
+  );
+}
+
+// Badges panel — replaces the info box on the Aero theme. Paged, with a pop-up.
+function BadgesPanel({ displayName, badges, isMobile, pal, frosted, WHITE_SH }) {
+  const [page, setPage] = React.useState(0);
+  const [open, setOpen] = React.useState(null); // badge id of open pop-up
+  const cardRef = React.useRef(null);
+  const lastFocus = React.useRef(null);
+
+  const byId = React.useMemo(() => {
+    const m = {}; (badges || []).forEach((b) => { m[b.id] = b; }); return m;
+  }, [badges]);
+  const state = (id) => byId[id] || { earnedAt: null };
+  const earnedCount = AERO_BADGES.reduce((n, d) => n + (state(d.id).earnedAt ? 1 : 0), 0);
+
+  const perPage = isMobile ? 8 : 10;
+  const cols = isMobile ? 4 : 5;
+  const pages = Math.max(1, Math.ceil(AERO_BADGES.length / perPage));
+  const clampPage = Math.min(page, pages - 1);
+  const start = clampPage * perPage;
+  const pageItems = AERO_BADGES.slice(start, start + perPage);
+  // Pad to a full page so the panel height never jumps.
+  const slots = [...pageItems, ...Array(perPage - pageItems.length).fill(null)];
+
+  React.useEffect(() => {
+    if (!open) return;
+    const onKey = (e) => { if (e.key === "Escape") closePop(); };
+    window.addEventListener("keydown", onKey);
+    if (cardRef.current) cardRef.current.focus();
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  const openPop = (id, e) => { lastFocus.current = e && e.currentTarget; setOpen(id); };
+  const closePop = () => { setOpen(null); if (lastFocus.current) { try { lastFocus.current.focus(); } catch (_) {} } };
+
+  const pagerBtn = (dir, disabled) => (
+    <button
+      aria-label={dir < 0 ? "Previous badges" : "Next badges"}
+      disabled={disabled}
+      onClick={() => setPage((p) => Math.min(pages - 1, Math.max(0, p + dir)))}
+      style={{
+        width: 20, height: 20, borderRadius: "50%", padding: 0, flexShrink: 0,
+        background: "linear-gradient(180deg,#FFF 0%,#EAF4FF 50%,#D4E9FA 51%,#F2F8FF 100%)",
+        border: "1px solid rgba(255,255,255,.95)", boxShadow: "0 1px 4px rgba(10,60,110,.2)",
+        color: "#0E4A7A", fontSize: 12, lineHeight: 1, cursor: disabled ? "default" : "pointer",
+        opacity: disabled ? 0.4 : 1, display: "flex", alignItems: "center", justifyContent: "center",
+        position: "relative",
+      }}
+    >
+      <span style={{ position: isMobile ? "absolute" : "static", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", width: isMobile ? 44 : undefined, height: isMobile ? 44 : undefined, left: isMobile ? "50%" : undefined, top: isMobile ? "50%" : undefined, transform: isMobile ? "translate(-50%,-50%)" : undefined }}>{dir < 0 ? "‹" : "›"}</span>
+    </button>
+  );
+
+  const openDef = open ? AERO_BADGES.find((d) => d.id === open) : null;
+
+  return (
+    <div style={{ ...frosted, position: "relative" }}>
+      {/* title bar */}
+      <div style={{ background: pal.bar, borderBottom: "1px solid rgba(255,255,255,.5)", padding: isMobile ? "7px 12px" : "7px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+        <span style={{ fontWeight: 700, fontSize: isMobile ? 14 : 15, color: "#fff", textShadow: WHITE_SH, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{(displayName || "your")}'s badges</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+          <span style={{ fontSize: 12, color: "rgba(255,255,255,.95)", textShadow: WHITE_SH }}>{earnedCount} of {AERO_BADGES.length}</span>
+          <div style={{ display: "flex", gap: 6 }}>
+            {pagerBtn(-1, clampPage === 0)}
+            {pagerBtn(1, clampPage >= pages - 1)}
+          </div>
+        </div>
+      </div>
+      {/* grid */}
+      <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols},1fr)`, gridAutoRows: "minmax(0,1fr)", gap: "8px 6px", padding: isMobile ? "10px 12px 8px" : "10px 14px 8px" }}>
+        {slots.map((def, i) => {
+          if (!def) return <div key={"e" + i} aria-hidden style={{ visibility: "hidden" }}><BadgeCellInner def={{ icon: "spin", name: "." }} earned={false} isMobile={isMobile} /></div>;
+          const earned = !!state(def.id).earnedAt;
+          return (
+            <button key={def.id} onClick={(e) => openPop(def.id, e)} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", font: "inherit" }}>
+              <BadgeCellInner def={def} earned={earned} isMobile={isMobile} />
+            </button>
+          );
+        })}
+      </div>
+
+      {/* pop-up */}
+      {openDef && (() => {
+        const s = state(openDef.id);
+        const earned = !!s.earnedAt;
+        let pillText, pillColor, pillBg;
+        if (earned) {
+          const dt = new Date(s.earnedAt);
+          pillText = "earned " + (isNaN(dt) ? "" : dt.toLocaleDateString("en-US", { month: "short", year: "numeric" }));
+          pillColor = "#2E6B14"; pillBg = "#E4F7C8";
+        } else if (openDef.unit && s.goal) {
+          pillText = `${s.progress || 0} of ${s.goal} ${openDef.unit}`;
+          pillColor = "#5A6470"; pillBg = "#ECEEF1";
+        } else {
+          pillText = "locked"; pillColor = "#5A6470"; pillBg = "#ECEEF1";
+        }
+        return (
+          <div onClick={closePop} style={{ position: "absolute", inset: 0, background: "rgba(14,63,107,.18)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 5, borderRadius: 12 }}>
+            <div ref={cardRef} tabIndex={-1} role="dialog" aria-label={openDef.name} onClick={(e) => e.stopPropagation()} style={{ position: "relative", maxWidth: 260, width: "calc(100% - 28px)", padding: 16, borderRadius: 14, background: "linear-gradient(180deg,rgba(255,255,255,.97),rgba(234,244,255,.95))", border: "1px solid rgba(255,255,255,.95)", boxShadow: "0 8px 24px rgba(10,60,110,.3)", display: "flex", flexDirection: "column", alignItems: "center", gap: 8, outline: "none" }}>
+              <button aria-label="Close" onClick={closePop} style={{ position: "absolute", top: 8, right: 10, background: "none", border: "none", cursor: "pointer", color: "#0E4A7A", fontSize: 16, lineHeight: 1, padding: 4 }}>×</button>
+              <BadgeMedal def={openDef} earned={earned} size={64} />
+              <div style={{ fontSize: 16, fontWeight: 700, color: "#0E3F6B" }}>{openDef.name}</div>
+              <div style={{ fontSize: 13, color: "#0E3F6B", textAlign: "center" }}>{openDef.desc}</div>
+              <div style={{ fontSize: 12, fontWeight: 700, padding: "3px 10px", borderRadius: 999, color: pillColor, background: pillBg }}>{pillText}</div>
+            </div>
+          </div>
+        );
+      })()}
+    </div>
+  );
+}
+
+function BadgeCellInner({ def, earned, isMobile }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5 }}>
+      <BadgeMedal def={def} earned={earned} size={40} />
+      <div style={{ fontSize: isMobile ? 10 : 11, fontWeight: 700, lineHeight: 1.2, textAlign: "center", color: earned ? "#0E4A7A" : "rgba(14,63,107,.45)" }}>{def.name}</div>
+    </div>
+  );
+}
+
 function BubbleProfile({ displayName, username, bio, isMobile, palette, stats, albums, reviews, info, mixes, queued,
+                         userId, isOwn = true, onRemoveFavorite, onAddFavorite, onDeleteReview,
                          onOpenSettings, onOpenAlbum, onOpenMix, onShowAllQueued, onShowAllReviews, onStatClick, onNeedAlbum, renderAvatar, renderAlbumCover }) {
   // Pull album details for any favorite/review/queued cover we don't have yet.
   React.useEffect(() => {
@@ -9392,6 +9605,19 @@ function BubbleProfile({ displayName, username, bio, isMobile, palette, stats, a
     reviews.forEach((r) => { if (r && r.albumId && (!r.album || r.album.title === "Unknown Album")) onNeedAlbum(r.albumId); });
     queued.forEach((a) => { if (a && (!a.album || a.album.title === "Unknown Album")) onNeedAlbum(a.id); });
   }, [albums, reviews, queued, onNeedAlbum]);
+
+  // Badges for this user (Aero theme only). Degrades silently on error.
+  const [badges, setBadges] = React.useState([]);
+  const [showPicker, setShowPicker] = React.useState(false);
+  React.useEffect(() => {
+    if (!userId) return;
+    let alive = true;
+    apiFetch(`${BACKEND_URL}/api/users/${userId}/badges`)
+      .then((r) => r.json())
+      .then((data) => { if (alive && Array.isArray(data)) setBadges(data); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, [userId]);
 
   const pal = AERO_PALETTES[palette] || AERO_PALETTES.aqua;
 
@@ -9405,7 +9631,8 @@ function BubbleProfile({ displayName, username, bio, isMobile, palette, stats, a
     <div style={{ background: pal.bar, borderBottom: "1px solid rgba(255,255,255,.5)", padding: "9px 16px", fontWeight: 700, fontSize: 16, color: "#fff", textShadow: WHITE_SH, fontFamily: '"Helvetica Neue",Helvetica,Arial,sans-serif' }}>{children}</div>
   );
   const pad = isMobile ? 16 : 28;
-  const av = isMobile ? 96 : 140;
+  const av = isMobile ? 88 : 128;
+  const avRing = isMobile ? 3 : 4;
   const bub = (t, l, sz, dur) => (
     <div className="aero-bubble" style={{ position: "absolute", top: t, left: l, width: sz, height: sz, borderRadius: 9999, background: "radial-gradient(circle at 32% 28%,rgba(255,255,255,.92),rgba(255,255,255,.18) 45%,rgba(255,255,255,.04) 70%)", border: "1px solid rgba(255,255,255,.5)", animation: `aeroFloat ${dur}s ease-in-out infinite`, pointerEvents: "none" }} />
   );
@@ -9426,6 +9653,22 @@ function BubbleProfile({ displayName, username, bio, isMobile, palette, stats, a
       <StatCell icon={<EqualizerIcon />} label="stats" onClick={() => onStatClick("stats")} />
     </div>
   );
+  // Mobile stats: plain 5-column row with top/bottom rules (no tiles).
+  const MRow = ({ num, label, icon, onClick }) => (
+    <div onClick={onClick} style={{ textAlign: "center", cursor: onClick ? "pointer" : "default", minWidth: 0 }}>
+      <div style={{ height: 22, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, fontWeight: 700, color: "#fff", textShadow: NAME_SH, lineHeight: 1 }}>{icon || num}</div>
+      <div style={{ fontSize: 9, letterSpacing: ".03em", textTransform: "uppercase", color: "rgba(255,255,255,.92)", textShadow: WHITE_SH, marginTop: 3 }}>{label}</div>
+    </div>
+  );
+  const StatsRowMobile = (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 4, padding: "10px 0", borderTop: "1px solid rgba(255,255,255,.7)", borderBottom: "1px solid rgba(255,255,255,.7)" }}>
+      <MRow num={stats.followers} label="followers" onClick={() => onStatClick("followers")} />
+      <MRow num={stats.following} label="following" onClick={() => onStatClick("following")} />
+      <MRow num={stats.listened} label="listened" onClick={() => onStatClick("listened")} />
+      <MRow icon={<Pencil size={16} color="#fff" strokeWidth={2} />} label="activity" onClick={() => onStatClick("activity")} />
+      <MRow icon={<EqualizerIcon />} label="stats" onClick={() => onStatClick("stats")} />
+    </div>
+  );
 
   const Cover = ({ item, radius = 8 }) => (
     <div style={{ padding: 3, borderRadius: radius, background: "rgba(255,255,255,.85)", boxShadow: "0 3px 10px rgba(0,20,50,.22)" }}>
@@ -9433,6 +9676,109 @@ function BubbleProfile({ displayName, username, bio, isMobile, palette, stats, a
         {renderAlbumCover(item)}
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg,rgba(255,255,255,.35),transparent 40%)", pointerEvents: "none" }} />
       </div>
+    </div>
+  );
+
+  // Top 3 albums: 3 slots, owner gets a remove ✕ and "+ add album" empty slots.
+  const Top3Block = (
+    <div style={{ ...frosted }}>
+      <Bar>top 3 albums</Bar>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 12, padding: isMobile ? "12px 12px 10px" : "12px 14px" }}>
+        {[0, 1, 2].map((i) => {
+          const a = albums[i];
+          if (a) {
+            return (
+              <div key={a.id} style={{ position: "relative" }}>
+                <div onClick={() => onOpenAlbum(a.id)} style={{ cursor: "pointer", textAlign: "center" }}>
+                  <Cover item={a} radius={8} />
+                  <div style={{ fontSize: isMobile ? 12 : 13, fontWeight: 700, color: "#fff", textShadow: WHITE_SH, marginTop: 6, overflowWrap: "anywhere", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{a.title || "…"}</div>
+                </div>
+                {isOwn && onRemoveFavorite && (
+                  <div role="button" aria-label="Remove from top 3" title="Remove" onClick={(e) => { e.stopPropagation(); onRemoveFavorite(a.id); }}
+                    style={{ position: "absolute", top: -7, right: -7, width: 22, height: 22, borderRadius: "50%", background: "rgba(14,74,122,.8)", border: "1px solid #fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 2 }}>
+                    <span style={{ color: "#fff", fontSize: 13, lineHeight: 1 }}>×</span>
+                  </div>
+                )}
+              </div>
+            );
+          }
+          return (
+            <div key={"empty" + i} onClick={isOwn ? () => setShowPicker(true) : undefined} style={{ textAlign: "center", cursor: isOwn ? "pointer" : "default" }}>
+              <div style={{ aspectRatio: "1/1", borderRadius: 6, border: "2px dashed rgba(255,255,255,.95)", background: "rgba(255,255,255,.25)", display: "flex", alignItems: "center", justifyContent: "center", minHeight: 44 }}>
+                {isOwn && <div style={{ fontSize: isMobile ? 12 : 13, fontWeight: 700, color: "#fff", textShadow: WHITE_SH }}>{isMobile ? "+ add" : "+ add album"}</div>}
+              </div>
+              <div style={{ fontSize: 12, color: "#2F6E9E", marginTop: 6 }}>empty slot</div>
+            </div>
+          );
+        })}
+      </div>
+      {isOwn && showPicker && albums.length < 3 && (
+        <div style={{ padding: isMobile ? "0 12px 12px" : "0 14px 14px" }}>
+          <AlbumSearchPicker
+            onPick={(album) => { if (onAddFavorite) onAddFavorite(album); setShowPicker(false); }}
+            onCancel={() => setShowPicker(false)}
+            placeholder="search for an album to add to top 3..."
+          />
+        </div>
+      )}
+    </div>
+  );
+
+  const BadgesBlock = (
+    <BadgesPanel displayName={displayName || username} badges={badges} isMobile={isMobile} pal={pal} frosted={frosted} WHITE_SH={WHITE_SH} />
+  );
+
+  // Recent review card (shared desktop/mobile; owner gets a ✕ delete).
+  const reviewCard = (r, i) => (
+    <div key={i} onClick={() => onOpenAlbum(r.albumId)} style={{ ...frosted, boxShadow: "none", padding: isMobile ? 10 : 12, display: "grid", gridTemplateColumns: isMobile ? "56px 1fr" : "80px 1fr", gap: isMobile ? 10 : 14, cursor: "pointer", textAlign: "left" }}>
+      <div style={{ width: isMobile ? 56 : 80, aspectRatio: "1/1", flexShrink: 0, borderRadius: 6, overflow: "hidden", background: pal.ink, alignSelf: "start" }}>{renderAlbumCover(r)}</div>
+      <div style={{ minWidth: 0 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
+          <div style={{ minWidth: 0, display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
+            <span style={{ fontSize: isMobile ? 16 : 18, fontWeight: 700, color: pal.ink, lineHeight: 1 }}>{r.score}/10</span>
+            {!isMobile && (
+              <span style={{ minWidth: 0 }}>
+                <span style={{ fontSize: 15, fontWeight: 700, color: pal.ink, overflowWrap: "anywhere" }}>{r.albumTitle}</span>
+                {r.artist && <span style={{ fontSize: 15, color: pal.ink, opacity: 0.65, marginLeft: 6 }}>{r.artist}</span>}
+              </span>
+            )}
+          </div>
+          <div style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 8 }}>
+            {r.date && <span style={{ fontSize: isMobile ? 11 : 12, color: pal.ink, opacity: 0.6, whiteSpace: "nowrap" }}>{fmtAgo(r.date)}</span>}
+            {isOwn && onDeleteReview && (
+              <span role="button" aria-label="Delete review" title="Delete" onClick={(e) => { e.stopPropagation(); onDeleteReview(r); }} style={{ fontSize: isMobile ? 14 : 15, color: pal.ink, opacity: 0.6, cursor: "pointer", lineHeight: 1, padding: "2px 2px" }}>×</span>
+            )}
+          </div>
+        </div>
+        {isMobile && (
+          <div style={{ marginTop: 3 }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: pal.ink, overflowWrap: "anywhere" }}>{r.albumTitle}</span>
+            {r.artist && <span style={{ fontSize: 13, color: pal.ink, opacity: 0.65, marginLeft: 6 }}>{r.artist}</span>}
+          </div>
+        )}
+        {r.body && <div style={{ fontSize: isMobile ? 13 : 14, lineHeight: isMobile ? 1.45 : 1.5, color: pal.ink, opacity: 0.9, marginTop: 5, overflowWrap: "anywhere", ...(isMobile ? { display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" } : {}) }}>{r.body}</div>}
+        {(r.favoriteTrack || r.leastFavoriteTrack) && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 14, marginTop: 7, fontSize: isMobile ? 11 : 12, color: pal.ink, opacity: 0.65 }}>
+            {r.favoriteTrack && <span style={{ whiteSpace: "nowrap" }}>♡ {r.favoriteTrack}</span>}
+            {r.leastFavoriteTrack && <span style={{ whiteSpace: "nowrap" }}>× {r.leastFavoriteTrack}</span>}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  const ReviewsBlock = (
+    <div style={{ marginTop: isMobile ? 16 : 20 }}>
+      <div style={{ fontSize: isMobile ? 14 : 15, fontWeight: 700, color: "#fff", textShadow: WHITE_SH, marginBottom: 12 }}>recent reviews</div>
+      <div style={{ display: "flex", flexDirection: "column", gap: isMobile ? 8 : 10 }}>
+        {reviews.map((r, i) => reviewCard(r, i))}
+        {reviews.length === 0 && <div style={{ color: "rgba(255,255,255,.92)", textShadow: WHITE_SH, fontSize: 14 }}>no reviews yet.</div>}
+      </div>
+      {onShowAllReviews && reviews.length >= 3 && (
+        <div style={{ textAlign: "center", marginTop: 12 }}>
+          <button onClick={onShowAllReviews} style={{ ...pill, padding: isMobile ? "5px 14px" : "6px 16px", fontSize: isMobile ? 13 : 14 }}>see all reviews</button>
+        </div>
+      )}
     </div>
   );
 
@@ -9451,77 +9797,45 @@ function BubbleProfile({ displayName, username, bio, isMobile, palette, stats, a
       </div>
 
       <div style={{ position: "relative", zIndex: 1, maxWidth: 1000, margin: "0 auto", padding: `${pad}px ${pad}px ${pad + 30}px` }}>
-        {/* header: 140 | 1fr | auto — settings pill + stats strip on the right */}
-        <div style={{ display: isMobile ? "flex" : "grid", gridTemplateColumns: isMobile ? undefined : "140px 1fr auto", flexDirection: isMobile ? "column" : undefined, alignItems: isMobile ? "flex-start" : "center", gap: isMobile ? 14 : 28 }}>
-          <div style={{ padding: 4, borderRadius: "50%", background: "rgba(255,255,255,.85)", boxShadow: "0 4px 14px rgba(0,20,50,.3)", flexShrink: 0 }}>
-            <div style={{ width: av, height: av, borderRadius: "50%", overflow: "hidden", background: pal.ink }}>{renderAvatar(av)}</div>
+        {/* header: avatar | name | (settings pill + stats strip on desktop) */}
+        <div style={{ display: "grid", gridTemplateColumns: `${av}px 1fr auto`, alignItems: isMobile ? "start" : "center", gap: isMobile ? 14 : 28 }}>
+          <div style={{ padding: avRing, borderRadius: "50%", background: "rgba(255,255,255,.9)", boxShadow: isMobile ? "0 3px 10px rgba(10,60,110,.3)" : "0 4px 14px rgba(10,60,110,.3)", flexShrink: 0, boxSizing: "border-box", width: av, height: av }}>
+            <div style={{ width: "100%", height: "100%", borderRadius: "50%", overflow: "hidden", background: pal.ink }}>{renderAvatar(av)}</div>
           </div>
           <div style={{ minWidth: 0, textAlign: "left" }}>
-            <div style={{ fontSize: isMobile ? 32 : 40, fontWeight: 700, color: "#fff", letterSpacing: "-.02em", lineHeight: 1.05, textShadow: NAME_SH, overflowWrap: "anywhere" }}>{displayName || username}</div>
-            <div style={{ fontSize: 15, color: "rgba(255,255,255,.9)", textShadow: WHITE_SH, marginTop: 4 }}>@{(username || "").toLowerCase()}</div>
-            {bio && <div style={{ ...pill, marginTop: 8, cursor: "default", padding: "5px 14px" }}>{bio}</div>}
+            <div style={{ fontSize: isMobile ? 28 : 40, fontWeight: 700, color: "#fff", letterSpacing: "-.02em", lineHeight: 1, textShadow: NAME_SH, overflowWrap: "anywhere" }}>{displayName || username}</div>
+            <div style={{ fontSize: isMobile ? 13 : 15, color: "#E6F3FC", textShadow: WHITE_SH, marginTop: 6 }}>@{(username || "").toLowerCase()}</div>
+            {bio && <div style={{ ...pill, marginTop: 4, cursor: "default", padding: isMobile ? "3px 10px" : "5px 14px", fontSize: isMobile ? 12 : 14, whiteSpace: isMobile ? "nowrap" : "normal", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%" }}>{bio}</div>}
           </div>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: isMobile ? "stretch" : "flex-end", gap: 10, width: isMobile ? "100%" : "auto" }}>
-            <button onClick={onOpenSettings} style={{ ...pill, alignSelf: isMobile ? "flex-start" : "flex-end" }}>settings</button>
-            {StatStrip}
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 10 }}>
+            <button onClick={onOpenSettings} style={{ ...pill, padding: isMobile ? "5px 12px" : "6px 16px", fontSize: isMobile ? 12 : 14, alignSelf: "start" }}>settings</button>
+            {!isMobile && StatStrip}
           </div>
         </div>
 
-        {/* divider */}
-        <div style={{ height: 1, background: "rgba(255,255,255,.7)", margin: "16px 0" }} />
+        {/* mobile: stats row under the header */}
+        {isMobile && <div style={{ marginTop: 14 }}>{StatsRowMobile}</div>}
 
-        {/* info + top 3 — two equal columns */}
-        <div style={{ display: isMobile ? "block" : "grid", gridTemplateColumns: isMobile ? undefined : "1fr 1fr", gap: isMobile ? 16 : 24, alignItems: "start" }}>
-          <div style={{ ...frosted, marginBottom: isMobile ? 16 : 0 }}>
-            <Bar>{displayName || username}'s info</Bar>
-            {[["Age", info.age], ["Town", info.town], ["Country", info.country], ["Interests", info.interests], ["Mood", info.mood ? (AERO_MOOD[info.mood] || info.mood) : ""]].map(([label, val], i) => (
-              <div key={label} style={{ display: "grid", gridTemplateColumns: "110px 1fr", padding: "9px 16px", fontSize: 15, borderTop: i === 0 ? "none" : "1px solid rgba(255,255,255,.45)" }}>
-                <div style={{ fontWeight: 700, color: pal.ink }}>{label}</div>
-                <div style={{ color: "#12384f", overflowWrap: "anywhere" }}>{val || "—"}</div>
-              </div>
-            ))}
-          </div>
-          <div style={{ ...frosted }}>
-            <Bar>top 3 albums</Bar>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 14, padding: 14 }}>
-              {albums.slice(0, 3).map((a) => (
-                <div key={a.id} onClick={() => onOpenAlbum(a.id)} style={{ cursor: "pointer", textAlign: "center" }}>
-                  <Cover item={a} radius={8} />
-                  <div style={{ fontSize: 12, fontWeight: 700, color: "#fff", textShadow: WHITE_SH, marginTop: 6, overflowWrap: "anywhere", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{a.title || "…"}</div>
-                </div>
-              ))}
-              {albums.length === 0 && <div style={{ gridColumn: "1 / -1", color: "rgba(255,255,255,.9)", textShadow: WHITE_SH, fontSize: 13, textAlign: "center" }}>no top albums yet.</div>}
+        {/* divider (desktop) */}
+        {!isMobile && <div style={{ height: 1, background: "rgba(255,255,255,.7)", margin: "16px 0" }} />}
+
+        {!isMobile ? (
+          <>
+            {/* desktop: badges | top 3 */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, alignItems: "start" }}>
+              {BadgesBlock}
+              {Top3Block}
             </div>
-          </div>
-        </div>
-
-        {/* recent reviews — full width, left-aligned */}
-        <div style={{ marginTop: 16 }}>
-          <div style={{ ...pill, marginBottom: 12, cursor: "default" }}>recent reviews</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {reviews.map((r, i) => (
-              <div key={i} onClick={() => onOpenAlbum(r.albumId)} style={{ ...frosted, padding: 14, display: "grid", gridTemplateColumns: isMobile ? "72px 1fr" : "104px 1fr", gap: isMobile ? 12 : 18, cursor: "pointer", textAlign: "left" }}>
-                <div style={{ width: isMobile ? 72 : 104, aspectRatio: "1/1", flexShrink: 0, borderRadius: 6, overflow: "hidden", background: pal.ink, alignSelf: "start" }}>{renderAlbumCover(r)}</div>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: 24, fontWeight: 700, color: pal.ink, lineHeight: 1 }}>{r.score}/10</div>
-                  <div style={{ marginTop: 3 }}>
-                    <span style={{ fontSize: 16, fontWeight: 700, color: "#12384f", overflowWrap: "anywhere" }}>{r.albumTitle}</span>
-                    {r.artist && <span style={{ fontSize: 14, color: "#4E7A34", marginLeft: 6 }}>{r.artist}</span>}
-                  </div>
-                  {r.body && <div style={{ fontSize: 15, lineHeight: 1.5, color: "#1E3D10", marginTop: 5 }}>{r.body}</div>}
-                  {(r.favoriteTrack || r.leastFavoriteTrack) && (
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 16, marginTop: 7, fontSize: 13, color: "#4E7A34" }}>
-                      {r.favoriteTrack && <span style={{ whiteSpace: "nowrap" }}>♡ {r.favoriteTrack}</span>}
-                      {r.leastFavoriteTrack && <span style={{ whiteSpace: "nowrap" }}>× {r.leastFavoriteTrack}</span>}
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-            {reviews.length === 0 && <div style={{ color: "rgba(255,255,255,.92)", textShadow: WHITE_SH, fontSize: 14 }}>no reviews yet.</div>}
-          </div>
-          {onShowAllReviews && reviews.length >= 3 && <button onClick={onShowAllReviews} style={{ ...pill, marginTop: 12 }}>see all reviews</button>}
-        </div>
+            {ReviewsBlock}
+          </>
+        ) : (
+          <>
+            {/* mobile: top 3, then badges, then reviews */}
+            <div style={{ marginTop: 16 }}>{Top3Block}</div>
+            <div style={{ marginTop: 16 }}>{BadgesBlock}</div>
+            {ReviewsBlock}
+          </>
+        )}
 
         {/* mixes */}
         {mixes.length > 0 && (
