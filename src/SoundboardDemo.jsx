@@ -2718,8 +2718,8 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                               title={a.name}
                               aria-label={`Use ${a.name} accent`}
                               style={{
-                                width: 44, height: 44, background: a.value, cursor: "pointer", padding: 0, boxSizing: "border-box",
-                                border: on ? "4px solid #000" : "1px solid #D0D0D0",
+                                width: 34, height: 34, background: a.value, cursor: "pointer", padding: 0, boxSizing: "border-box",
+                                border: on ? "3px solid #000" : "1px solid #D0D0D0",
                               }}
                             />
                           );
@@ -2727,10 +2727,10 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                         <label
                           title="Pick a custom color"
                           style={{
-                            position: "relative", width: 44, height: 44, cursor: "pointer",
+                            position: "relative", width: 34, height: 34, cursor: "pointer",
                             display: "inline-flex", alignItems: "center", justifyContent: "center",
                             background: isCustom ? BLUE : "#fff", color: isCustom ? "#fff" : "#6b6b74",
-                            border: isCustom ? "4px solid #000" : "1px dashed #b8b8bf", boxSizing: "border-box",
+                            border: isCustom ? "3px solid #000" : "1px dashed #b8b8bf", boxSizing: "border-box",
                           }}
                         >
                           <span style={{ fontSize: 16, lineHeight: 1 }}>+</span>
@@ -2771,9 +2771,9 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                             title={bg.name}
                             aria-label={bg.name}
                             style={{
-                              width: 44, height: 44, cursor: "pointer", padding: 0, boxSizing: "border-box",
+                              width: 34, height: 34, cursor: "pointer", padding: 0, boxSizing: "border-box",
                               background: bg.value || "#ffffff",
-                              border: on ? "4px solid #000" : "1px solid #D0D0D0",
+                              border: on ? "3px solid #000" : "1px solid #D0D0D0",
                             }}
                           />
                         );
