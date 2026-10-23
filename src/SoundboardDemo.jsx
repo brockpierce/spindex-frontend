@@ -1310,6 +1310,10 @@ export default function SoundboardDemo() {
   const [draftDisplayName, setDraftDisplayName] = useState(PROFILE.displayName);
   const [draftUsername, setDraftUsername] = useState(PROFILE.username);
   const [draftBio, setDraftBio] = useState(PROFILE.bio);
+  // Theme + bubble palette are chosen in settings but only applied on "save
+  // changes" (or when previewing) — not live as you click.
+  const [draftTheme, setDraftTheme] = useState(PROFILE.profileTheme || "");
+  const [draftBubblePalette, setDraftBubblePalette] = useState("aqua");
   // Avatar is stored as a data URL (the image encoded directly as text) --
   // this only lives in memory for the session, same as everything else in
   // the demo. There's no file storage here, so it won't survive a reload,
@@ -2714,10 +2718,8 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                               title={a.name}
                               aria-label={`Use ${a.name} accent`}
                               style={{
-                                width: 34, height: 34, background: a.value, cursor: "pointer", padding: 0,
-                                border: on ? `2px solid ${INK}` : "1px solid rgba(0,0,0,.12)",
-                                outline: on ? "2px solid #fff" : "none", outlineOffset: -4,
-                                boxShadow: on ? `0 0 0 1px ${INK}` : "none",
+                                width: 44, height: 44, background: a.value, cursor: "pointer", padding: 0, boxSizing: "border-box",
+                                border: on ? "4px solid #000" : "1px solid #D0D0D0",
                               }}
                             />
                           );
@@ -2725,10 +2727,10 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                         <label
                           title="Pick a custom color"
                           style={{
-                            position: "relative", width: 34, height: 34, cursor: "pointer",
+                            position: "relative", width: 44, height: 44, cursor: "pointer",
                             display: "inline-flex", alignItems: "center", justifyContent: "center",
                             background: isCustom ? BLUE : "#fff", color: isCustom ? "#fff" : "#6b6b74",
-                            border: isCustom ? `2px solid ${INK}` : "1px dashed #b8b8bf", boxSizing: "border-box",
+                            border: isCustom ? "4px solid #000" : "1px dashed #b8b8bf", boxSizing: "border-box",
                           }}
                         >
                           <span style={{ fontSize: 16, lineHeight: 1 }}>+</span>
@@ -2747,8 +2749,13 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                   })()}
 
                   <div style={{ marginTop: 22 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: "#6b6b74", marginBottom: 12, letterSpacing: "0.01em" }}>page background</div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 6 }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: "#6b6b74", letterSpacing: "0.01em" }}>page background</div>
+                      <div style={{ fontSize: 14, color: "#8E8E8E" }}>
+                        {({ "": "White", "#f7f4ee": "Cream", "#eceef1": "Soft Gray", "#fbeef2": "Baby Pink" })[profile.pageBackground || ""] || "White"}
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                       {[
                         { name: "White", value: "" },
                         { name: "Cream", value: "#f7f4ee" },
@@ -2764,59 +2771,68 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                             title={bg.name}
                             aria-label={bg.name}
                             style={{
-                              width: 34, height: 34, borderRadius: "50%", cursor: "pointer", padding: 0,
+                              width: 44, height: 44, cursor: "pointer", padding: 0, boxSizing: "border-box",
                               background: bg.value || "#ffffff",
-                              border: on ? `2px solid ${INK}` : "1px solid rgba(0,0,0,.15)",
-                              outline: on ? "2px solid #fff" : "none", outlineOffset: -4,
-                              boxShadow: on ? `0 0 0 1px ${INK}` : "none",
+                              border: on ? "4px solid #000" : "1px solid #D0D0D0",
                             }}
                           />
                         );
                       })}
-                      <span style={{ fontSize: 14, color: "#8a8a92", marginLeft: 4 }}>
-                        {({ "": "White", "#f7f4ee": "Cream", "#eceef1": "Soft Gray", "#fbeef2": "Baby Pink" })[profile.pageBackground || ""] || "White"}
-                      </span>
                     </div>
                   </div>
 
                   <div style={{ marginTop: 22 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: "#6b6b74", marginBottom: 10, letterSpacing: "0.01em" }}>profile theme</div>
-                    <select
-                      value={profile.profileTheme === "bubble" ? "" : (profile.profileTheme || "")}
-                      onChange={(e) => saveProfileTheme(e.target.value)}
-                      style={{ fontFamily: "inherit", fontSize: 14, padding: "8px 12px", border: `1px solid ${LINE}`, background: BG, color: INK, cursor: "pointer", borderRadius: 0, minWidth: 160 }}
-                    >
-                      <option value="">default</option>
-                      <option value="web2003">web2003</option>
-                      <option value="terminal">terminal</option>
-                      <option value="geocities">netscape</option>
-                    </select>
-                    <div style={{ fontSize: 11, color: MUTE, marginTop: 8 }}>how your profile looks to visitors</div>
-                  </div>
-
-                  {profile.username === ADMIN_USERNAME && (
-                    <div style={{ marginTop: 22, borderTop: `1px solid ${LINE}`, paddingTop: 18 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: "#6b6b74", letterSpacing: "0.01em" }}>bubble <span style={{ fontWeight: 400, color: MUTE }}>(admin test)</span></div>
-                      <div style={{ fontSize: 11, color: MUTE, marginTop: 4, marginBottom: 12 }}>frutiger aero theme — pick a palette to apply it</div>
-                      <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-                        {Object.keys(AERO_PALETTES).map((k) => {
-                          const on = profile.profileTheme === "bubble" && bubblePalette === k;
-                          return (
-                            <button
-                              key={k}
-                              onClick={() => { chooseBubblePalette(k); if (profile.profileTheme !== "bubble") saveProfileTheme("bubble"); }}
-                              title={AERO_PALETTES[k].label}
-                              aria-label={`Bubble ${AERO_PALETTES[k].label} palette`}
-                              style={{ width: 34, height: 34, borderRadius: 9999, background: AERO_PALETTES[k].swatch, cursor: "pointer", padding: 0, border: on ? `2px solid ${INK}` : "1px solid rgba(0,0,0,.15)", outline: on ? "2px solid #fff" : "none", outlineOffset: -4, boxShadow: on ? `0 0 0 1px ${INK}` : "none" }}
-                            />
-                          );
-                        })}
-                        {profile.profileTheme === "bubble" && (
-                          <button className="sb-btn" onClick={() => saveProfileTheme("")} style={{ marginLeft: 6 }}>turn off</button>
-                        )}
-                      </div>
+                    <div style={{ fontSize: 17, fontWeight: 700, color: "#4A4A4A", marginBottom: 12 }}>profile theme</div>
+                    <div style={{ border: "1px solid #D0D0D0" }}>
+                      {THEME_ROWS.filter((t) => !t.adminOnly || profile.username === ADMIN_USERNAME).map((t, i) => {
+                        const sel = (draftTheme || "") === t.key;
+                        return (
+                          <div key={t.key || "default"} style={{ borderTop: i === 0 ? "none" : "1px solid #E3E3E3", background: sel ? "#F5F7FB" : "transparent" }}>
+                            <div
+                              role="button"
+                              tabIndex={0}
+                              onClick={() => setDraftTheme(t.key)}
+                              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setDraftTheme(t.key); } }}
+                              style={{ display: "grid", gridTemplateColumns: "20px 64px 1fr", gap: 14, alignItems: "center", padding: "12px 14px", minHeight: 44, cursor: "pointer" }}
+                            >
+                              <div style={{ width: 20, height: 20, border: "2px solid #000", boxSizing: "border-box", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                {sel && <div style={{ width: 10, height: 10, background: "#1F388A" }} />}
+                              </div>
+                              <div style={{ width: 64, height: 40, border: "1px solid #D0D0D0", boxSizing: "border-box", display: "flex", overflow: "hidden" }}>
+                                {t.strip.map((c, j) => <div key={j} style={{ flex: 1, background: c }} />)}
+                              </div>
+                              <div style={{ minWidth: 0 }}>
+                                <div style={{ fontSize: 15, fontWeight: 700, color: INK }}>{t.name}</div>
+                                <div style={{ fontSize: 13, color: "#8E8E8E", marginTop: 2 }}>{t.sub}</div>
+                              </div>
+                            </div>
+                            {t.key === "bubble" && sel && (
+                              <div style={{ padding: "0 14px 14px 48px", background: "#F5F7FB" }}>
+                                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                                  {BUBBLE_SWATCHES.map((s) => {
+                                    const on = draftBubblePalette === s.key;
+                                    return (
+                                      <button
+                                        key={s.key}
+                                        onClick={(e) => { e.stopPropagation(); setDraftBubblePalette(s.key); }}
+                                        title={s.key}
+                                        aria-label={`Bubble ${s.key} palette`}
+                                        style={{ width: 36, height: 36, background: s.color, boxSizing: "border-box", cursor: "pointer", padding: 0, border: on ? "4px solid #000" : "1px solid #D0D0D0" }}
+                                      />
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
-                  )}
+                    <button
+                      onClick={previewProfile}
+                      style={{ marginTop: 14, fontFamily: "inherit", fontSize: 15, fontWeight: 600, padding: "10px 18px", background: BG, color: INK, border: "1.5px solid #000", borderRadius: 0, cursor: "pointer" }}
+                    >preview my profile</button>
+                  </div>
 
                   {profile.username === ADMIN_USERNAME && (
                     <div style={{ marginTop: 22, borderTop: `1px solid ${LINE}`, paddingTop: 18 }}>
@@ -2861,7 +2877,18 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
     setDraftUsername(profile.username);
     setDraftBio(profile.bio);
     setDraftAvatarUrl(avatarUrl);
+    setDraftTheme(profile.profileTheme || "");
+    setDraftBubblePalette(bubblePalette);
     setView({ name: "settings", from: view });
+  }
+
+  // Preview the profile with the UNSAVED theme selection (applied locally only,
+  // not persisted to the backend). Reopening settings or reloading reflects the
+  // still-saved value unless the user hit "save changes".
+  function previewProfile() {
+    setProfile((prev) => ({ ...prev, profileTheme: draftTheme || null }));
+    setBubblePalette(draftBubblePalette);
+    setView({ name: "profile" });
   }
 
   function closeSettings() { setView(view && view.from ? view.from : { name: "profile" }); }
@@ -2873,6 +2900,10 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
     }
     setProfile((prev) => ({ ...prev, displayName: draftDisplayName.trim(), username: draftUsername.trim(), bio: draftBio }));
     setAvatarUrl(draftAvatarUrl);
+    // Apply the theme chosen in the list (deferred until now), and keep the
+    // bubble palette choice even when another theme is selected.
+    saveProfileField({ profileTheme: draftTheme || "" });
+    chooseBubblePalette(draftBubblePalette);
     setView(view && view.from ? view.from : { name: "profile" });
     flash("Profile updated");
     // Persist to backend
@@ -9414,6 +9445,24 @@ const AERO_PALETTES = {
 };
 const AERO_MOOD = { chill: "8)", flirty: ";)", happy: ":)", angry: ">:(", sad: ":(", bored: "-_-", hyper: "^_^" };
 
+// Profile theme rows for the settings theme list. `key` is the stored
+// profileTheme value ("" = default; netscape is stored as "geocities").
+const THEME_ROWS = [
+  { key: "",          name: "default",  sub: "it's just classic",               strip: ["#FFFFFF", "#000000", "#1F388A", "#F5F5F5"] },
+  { key: "web2003",   name: "web2003",  sub: "the coolest early 2000s webpage",  strip: ["#1B2F55", "#9DB0D4", "#DEE5F2", "#E5E5E5"] },
+  { key: "terminal",  name: "terminal", sub: "keep it sleek",                    strip: ["#000000", "#3CFF5A", "#2BC444", "#1A1A1A"] },
+  { key: "geocities", name: "netscape", sub: "the coolest 90s website ever",     strip: ["#C0C0C0", "#000080", "#D4D0C8", "#808080"] },
+  { key: "bubble",    name: "bubble",   sub: "the webpage of the future",        strip: ["#8CC6EA", "#3A93D6", "#FFFFFF", "#7CC43A"], adminOnly: true },
+];
+// Inline bubble palette swatches (keys map to AERO_PALETTES).
+const BUBBLE_SWATCHES = [
+  { key: "aqua", color: "#3AA8E0" },
+  { key: "navy", color: "#4A68C4" },
+  { key: "lime", color: "#7CC43A" },
+  { key: "pink", color: "#F090C0" },
+  { key: "red",  color: "#E04838" },
+];
+
 // ---- Profile badges (Aero theme) --------------------------------------------
 // Category gradients for earned badges; locked badges use the gray gradient.
 const BADGE_CAT = {
@@ -9792,7 +9841,6 @@ function BubbleProfile({ displayName, username, bio, isMobile, palette, stats, a
   );
   const pad = isMobile ? 16 : 28;
   const av = isMobile ? 88 : 128;
-  const avRing = isMobile ? 3 : 4;
   const bub = (t, l, sz, dur) => (
     <div className="aero-bubble" style={{ position: "absolute", top: t, left: l, width: sz, height: sz, borderRadius: 9999, background: "radial-gradient(circle at 32% 28%,rgba(255,255,255,.92),rgba(255,255,255,.18) 45%,rgba(255,255,255,.04) 70%)", border: "1px solid rgba(255,255,255,.5)", animation: `aeroFloat ${dur}s ease-in-out infinite`, pointerEvents: "none" }} />
   );
@@ -9956,8 +10004,12 @@ function BubbleProfile({ displayName, username, bio, isMobile, palette, stats, a
       <div style={{ position: "relative", zIndex: 1, maxWidth: 1000, margin: "0 auto", padding: `${pad}px ${pad}px ${pad + 30}px` }}>
         {/* header: avatar | name | (settings pill + stats strip on desktop) */}
         <div style={{ display: "grid", gridTemplateColumns: `${av}px 1fr auto`, alignItems: isMobile ? "start" : "center", gap: isMobile ? 14 : 28 }}>
-          <div style={{ padding: avRing, borderRadius: "50%", background: "rgba(255,255,255,.9)", boxShadow: isMobile ? "0 3px 10px rgba(10,60,110,.3)" : "0 4px 14px rgba(10,60,110,.3)", flexShrink: 0, boxSizing: "border-box", width: av, height: av }}>
-            <div style={{ width: "100%", height: "100%", borderRadius: "50%", overflow: "hidden", background: pal.ink }}>{renderAvatar(av)}</div>
+          {/* glass orb avatar — overlays sit on top of the round photo */}
+          <div style={{ position: "relative", width: av, height: av, borderRadius: "50%", flexShrink: 0, boxShadow: "0 6px 18px rgba(10,60,110,.3), 0 0 0 2px rgba(255,255,255,.9)" }}>
+            <div style={{ position: "absolute", inset: 0, width: "100%", height: "100%", borderRadius: "50%", overflow: "hidden", background: pal.ink }}>{renderAvatar(av)}</div>
+            <span style={{ position: "absolute", inset: 0, borderRadius: "50%", pointerEvents: "none", boxShadow: "inset 0 -8px 16px rgba(10,60,110,.35), inset 0 2px 4px rgba(255,255,255,.6)" }} />
+            <span style={{ position: "absolute", left: "10%", right: "10%", top: "3%", height: "48%", pointerEvents: "none", borderRadius: "50% 50% 45% 45% / 60% 60% 40% 40%", background: "linear-gradient(180deg,rgba(255,255,255,.85) 0%,rgba(255,255,255,.35) 55%,rgba(255,255,255,0) 100%)" }} />
+            <span style={{ position: "absolute", left: "20%", right: "20%", bottom: "6%", height: "16%", pointerEvents: "none", borderRadius: "50%", background: "radial-gradient(ellipse at 50% 100%,rgba(160,220,255,.6),rgba(160,220,255,0) 70%)" }} />
           </div>
           <div style={{ minWidth: 0, textAlign: "left" }}>
             <div style={{ fontSize: isMobile ? 28 : 40, fontWeight: 700, color: "#fff", letterSpacing: "-.02em", lineHeight: 1, textShadow: NAME_SH, overflowWrap: "anywhere" }}>{displayName || username}</div>
