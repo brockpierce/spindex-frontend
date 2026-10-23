@@ -53,16 +53,8 @@ export default function NativeSplash() {
         fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif',
       }}
     >
-      {/* logo mark — tinted to nb-blue via a mask so it's exactly #1F388A */}
-      <div
-        style={{
-          width: 168, height: 110, background: '#1F388A',
-          WebkitMaskImage: 'url(/spindex-logo.svg)', maskImage: 'url(/spindex-logo.svg)',
-          WebkitMaskSize: 'contain', maskSize: 'contain',
-          WebkitMaskRepeat: 'no-repeat', maskRepeat: 'no-repeat',
-          WebkitMaskPosition: 'center', maskPosition: 'center',
-        }}
-      />
+      {/* logo mark — the noteblock headphone, matching the app icon + launch screen */}
+      <img src="/noteblock-mark.png" alt="" width={168} style={{ height: 'auto', display: 'block' }} />
       {/* wordmark */}
       <div style={{ marginTop: 28, fontSize: 40, lineHeight: 1, letterSpacing: '-0.02em', color: '#1A1A1A', fontWeight: 400 }}>
         noteblock
