@@ -2709,7 +2709,6 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                   </div>
                 </div>
                 <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
-                  <button className="sb-btn sb-btn-solid" onClick={saveSettings}>save changes</button>
                   <button className="sb-btn" onClick={closeSettings}>cancel</button>
                 </div>
 
@@ -2805,18 +2804,15 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                               tabIndex={0}
                               onClick={() => setDraftTheme(t.key)}
                               onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setDraftTheme(t.key); } }}
-                              style={{ display: "grid", gridTemplateColumns: "16px 44px 1fr", gap: 10, alignItems: "center", padding: "7px 12px", cursor: "pointer" }}
+                              style={{ display: "grid", gridTemplateColumns: "16px 1fr", gap: 10, alignItems: "center", padding: "7px 12px", cursor: "pointer" }}
                             >
                               <div style={{ width: 16, height: 16, border: "2px solid #000", boxSizing: "border-box", display: "flex", alignItems: "center", justifyContent: "center" }}>
                                 {sel && <div style={{ width: 8, height: 8, background: "#1F388A" }} />}
                               </div>
-                              <div style={{ width: 44, height: 26, border: "1px solid #D0D0D0", boxSizing: "border-box", display: "flex", overflow: "hidden" }}>
-                                {t.strip.map((c, j) => <div key={j} style={{ flex: 1, background: c }} />)}
-                              </div>
                               <div style={{ fontSize: 14, fontWeight: 700, color: INK, minWidth: 0 }}>{t.name}</div>
                             </div>
                             {t.key === "bubble" && sel && (
-                              <div style={{ padding: "0 12px 10px 70px" }}>
+                              <div style={{ padding: "0 12px 10px 38px" }}>
                                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                                   {BUBBLE_SWATCHES.map((s) => {
                                     const on = draftBubblePalette === s.key;
@@ -2866,6 +2862,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                     >
                       delete account
                     </button>
+                    <button className="sb-btn sb-btn-solid" onClick={saveSettings}>save changes</button>
                   </div>
 
                   {false && (
