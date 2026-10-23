@@ -1736,9 +1736,21 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
     return () => clearInterval(interval);
   }, [authUser]);
 
-  function openArtist(artistName) {
+  function openArtist(artistName, from) {
     if (!artistName) return;
-    setView({ name: "artist", artistName });
+    setView({ name: "artist", artistName, from: from === undefined ? view : from });
+  }
+
+  // Back navigation: return to the page you came from (view.from). A userProfile
+  // loads imperatively (not from view state), so it must be re-opened to refetch;
+  // every other view restores correctly from its own view object.
+  function goBack(fallback) {
+    const f = view.from;
+    // userProfile and album load imperatively (not purely from view state), so
+    // re-open them to refetch; every other view restores from its view object.
+    if (f && f.name === "userProfile" && f.username) { openUserProfile(f.username, f.from); return; }
+    if (f && f.name === "album" && f.id) { openAlbum(f.id, undefined, f.from); return; }
+    setView(f || fallback || { name: "home" });
   }
 
   useEffect(() => {
@@ -1887,7 +1899,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
     setListensOpen(false);
     loadRelistens(id);
     setAlbumTab("reviews");
-    setView({ name: "album", id, from: from || null });
+    setView({ name: "album", id, from: from || view });
     // Real community average for this album — the local calculation only ever
     // saw mock friend data plus your own rating.
     loadAlbumAverage(id);
@@ -3476,7 +3488,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
     else if (t.username) openUserProfile(t.username);
   }
 
-  function openUserProfile(username) {
+  function openUserProfile(username, from) {
     setViewedUser(null);
     setViewedUserReviews([]);
     setViewedUserRelistens([]);
@@ -3486,7 +3498,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
     setViewedUserListened([]);
     setViewedUserListenedCount(0);
     setShowAllUserReviews(false);
-    setView({ name: "userProfile", username });
+    setView({ name: "userProfile", username, from: from === undefined ? view : from });
     apiFetch(`${BACKEND_URL}/api/users/${username}`)
       .then((r) => r.json())
       .then((data) => {
@@ -5102,7 +5114,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
           const user = viewedUser;
           if (!user) return (
             <div>
-              <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 12.5, marginBottom: 22, cursor: "pointer" }} onClick={() => setView({ name: "home" })}>
+              <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 12.5, marginBottom: 22, cursor: "pointer" }} onClick={() => goBack({ name: "profile" })}>
                 <ChevronLeft size={14} /> back
               </div>
               <div style={{ display: "flex", justifyContent: "center" }}><Spinner label="loading profile…" /></div>
@@ -5111,7 +5123,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
           if (user.blocked) {
             return (
               <div>
-                <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 12.5, marginBottom: 22, cursor: "pointer" }} onClick={() => setView({ name: "home" })}>
+                <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 12.5, marginBottom: 22, cursor: "pointer" }} onClick={() => goBack({ name: "profile" })}>
                   <ChevronLeft size={14} /> back
                 </div>
                 <div style={{ textAlign: "center", padding: "56px 20px" }}>
@@ -5153,7 +5165,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                 }}
                 renderAvatar={(size) => <Avatar username={user.username} size={size} />}
                 renderAlbumCover={(alb) => { const u = alb.album && alb.album.coverArtUrl && alb.album.coverArtUrl !== "none" ? alb.album.coverArtUrl.replace("http://", "https://") : null; return u ? <img src={u} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /> : <div style={{ width: "100%", height: "100%", background: "#0a3a8a" }} />; }}
-                backButton={<div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 6, color: "#fff", fontSize: 12.5, cursor: "pointer" }} onClick={() => setView({ name: "home" })}><ChevronLeft size={14} /> back</div>}
+                backButton={<div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 6, color: "#fff", fontSize: 12.5, cursor: "pointer" }} onClick={() => goBack({ name: "profile" })}><ChevronLeft size={14} /> back</div>}
               />
             );
           }
@@ -5167,7 +5179,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                   $ ./profile --user {user.username}<span className="pf-cursor"></span>
                 </div>
               )}
-              <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 12.5, marginBottom: 22, cursor: "pointer" }} onClick={() => setView({ name: "home" })}>
+              <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 12.5, marginBottom: 22, cursor: "pointer" }} onClick={() => goBack({ name: "profile" })}>
                 <ChevronLeft size={14} /> back
               </div>
               <div style={{ display: "flex", alignItems: isMobile ? "center" : "stretch", justifyContent: "space-between", gap: isMobile ? 18 : 24, paddingBottom: 22, borderBottom: `1px solid ${INK}` }}>
@@ -5380,7 +5392,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
         {/* ---------------- ARTIST PAGE ---------------- */}
         {view.name === "artist" && (
           <div>
-            <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 12.5, marginBottom: 22, cursor: "pointer" }} onClick={() => setView({ name: "browse" })}>
+            <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 12.5, marginBottom: 22, cursor: "pointer" }} onClick={() => goBack({ name: "browse" })}>
               <ChevronLeft size={14} /> browse
             </div>
             <div style={{ marginBottom: 28 }}>
@@ -5441,7 +5453,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
           const shownAlbums = tagDecade ? matchedAlbums.filter((a) => decadeOf(a.year) === tagDecade) : matchedAlbums;
           return (
             <div>
-              <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 12.5, marginBottom: 22, cursor: "pointer" }} onClick={() => setView({ name: "browse" })}>
+              <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 12.5, marginBottom: 22, cursor: "pointer" }} onClick={() => goBack({ name: "browse" })}>
                 <ChevronLeft size={14} /> back to browse
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
@@ -5695,7 +5707,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
 
           return (
             <div style={{ maxWidth: "100%", overflowX: "hidden" }}>
-              <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 12.5, marginBottom: 22, cursor: "pointer" }} onClick={() => setView(view.from || { name: "browse" })}>
+              <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 12.5, marginBottom: 22, cursor: "pointer" }} onClick={() => goBack({ name: "browse" })}>
                 <ChevronLeft size={14} /> back
               </div>
               <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 16 : 26, alignItems: isMobile ? "center" : "flex-start" }}>
@@ -5889,7 +5901,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
 
             return (
               <div style={{ textAlign: "left" }}>
-                <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 12.5, marginBottom: 22, cursor: "pointer" }} onClick={() => setView(view.from || { name: "profile" })}>
+                <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 12.5, marginBottom: 22, cursor: "pointer" }} onClick={() => goBack({ name: "profile" })}>
                   <ChevronLeft size={14} /> back
                 </div>
 
