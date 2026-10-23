@@ -2782,7 +2782,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                   </div>
 
                   <div style={{ marginTop: 22 }}>
-                    <div style={{ fontSize: 17, fontWeight: 700, color: "#4A4A4A", marginBottom: 12 }}>profile theme</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: "#6b6b74", marginBottom: 12, letterSpacing: "0.01em" }}>profile theme</div>
                     <div style={{ border: "1px solid #D0D0D0" }}>
                       {THEME_ROWS.filter((t) => !t.adminOnly || profile.username === ADMIN_USERNAME).map((t, i) => {
                         const sel = (draftTheme || "") === t.key;
@@ -2793,21 +2793,18 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                               tabIndex={0}
                               onClick={() => setDraftTheme(t.key)}
                               onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setDraftTheme(t.key); } }}
-                              style={{ display: "grid", gridTemplateColumns: "20px 64px 1fr", gap: 14, alignItems: "center", padding: "12px 14px", minHeight: 44, cursor: "pointer" }}
+                              style={{ display: "grid", gridTemplateColumns: "16px 44px 1fr", gap: 10, alignItems: "center", padding: "7px 12px", cursor: "pointer" }}
                             >
-                              <div style={{ width: 20, height: 20, border: "2px solid #000", boxSizing: "border-box", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                {sel && <div style={{ width: 10, height: 10, background: "#1F388A" }} />}
+                              <div style={{ width: 16, height: 16, border: "2px solid #000", boxSizing: "border-box", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                {sel && <div style={{ width: 8, height: 8, background: "#1F388A" }} />}
                               </div>
-                              <div style={{ width: 64, height: 40, border: "1px solid #D0D0D0", boxSizing: "border-box", display: "flex", overflow: "hidden" }}>
+                              <div style={{ width: 44, height: 26, border: "1px solid #D0D0D0", boxSizing: "border-box", display: "flex", overflow: "hidden" }}>
                                 {t.strip.map((c, j) => <div key={j} style={{ flex: 1, background: c }} />)}
                               </div>
-                              <div style={{ minWidth: 0 }}>
-                                <div style={{ fontSize: 15, fontWeight: 700, color: INK }}>{t.name}</div>
-                                <div style={{ fontSize: 13, color: "#8E8E8E", marginTop: 2 }}>{t.sub}</div>
-                              </div>
+                              <div style={{ fontSize: 14, fontWeight: 700, color: INK, minWidth: 0 }}>{t.name}</div>
                             </div>
                             {t.key === "bubble" && sel && (
-                              <div style={{ padding: "0 14px 14px 48px", background: "#F5F7FB" }}>
+                              <div style={{ padding: "0 12px 10px 70px" }}>
                                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                                   {BUBBLE_SWATCHES.map((s) => {
                                     const on = draftBubblePalette === s.key;
@@ -2817,7 +2814,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                                         onClick={(e) => { e.stopPropagation(); setDraftBubblePalette(s.key); }}
                                         title={s.key}
                                         aria-label={`Bubble ${s.key} palette`}
-                                        style={{ width: 36, height: 36, background: s.color, boxSizing: "border-box", cursor: "pointer", padding: 0, border: on ? "4px solid #000" : "1px solid #D0D0D0" }}
+                                        style={{ width: 30, height: 30, background: s.color, boxSizing: "border-box", cursor: "pointer", padding: 0, border: on ? "3px solid #000" : "1px solid #D0D0D0" }}
                                       />
                                     );
                                   })}
@@ -2828,10 +2825,6 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                         );
                       })}
                     </div>
-                    <button
-                      onClick={previewProfile}
-                      style={{ marginTop: 14, fontFamily: "inherit", fontSize: 15, fontWeight: 600, padding: "10px 18px", background: BG, color: INK, border: "1.5px solid #000", borderRadius: 0, cursor: "pointer" }}
-                    >preview my profile</button>
                   </div>
 
                   {profile.username === ADMIN_USERNAME && (
