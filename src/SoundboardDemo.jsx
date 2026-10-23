@@ -10011,7 +10011,8 @@ function BubbleProfile({ displayName, username, bio, isMobile, palette, stats, a
           </div>
           <div style={{ display: "flex", flexDirection: "column", alignItems: isMobile ? "stretch" : "flex-end", gap: isMobile ? 8 : 10 }}>
             <button onClick={onOpenSettings} style={{ ...pill, padding: isMobile ? "5px 12px" : "6px 16px", fontSize: isMobile ? 12 : 14, textAlign: "center" }}>settings</button>
-            <BadgesPill badges={badges} isMobile={isMobile} fullWidth={isMobile} onOpen={onOpenBadges} />
+            {/* badges pill hidden for now (feature parked, not removed) */}
+            {false && <BadgesPill badges={badges} isMobile={isMobile} fullWidth={isMobile} onOpen={onOpenBadges} />}
             {!isMobile && StatStrip}
           </div>
         </div>
