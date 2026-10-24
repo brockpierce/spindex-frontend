@@ -1304,16 +1304,12 @@ export default function SoundboardDemo() {
     return { ...PROFILE, profileTheme: cachedTheme, pageBackground: cachedBg };
   });
   const [showSettings, setShowSettings] = useState(false);
-  // Selected palette for the admin-only "bubble" theme (persisted client-side).
-  const [bubblePalette, setBubblePalette] = useState(() => { try { return localStorage.getItem("nb_bubble_palette") || "aqua"; } catch (e) { return "aqua"; } });
-  function chooseBubblePalette(k) { setBubblePalette(k); try { localStorage.setItem("nb_bubble_palette", k); } catch (e) {} }
   const [draftDisplayName, setDraftDisplayName] = useState(PROFILE.displayName);
   const [draftUsername, setDraftUsername] = useState(PROFILE.username);
   const [draftBio, setDraftBio] = useState(PROFILE.bio);
-  // Theme + bubble palette are chosen in settings but only applied on "save
-  // changes" (or when previewing) — not live as you click.
+  // Theme is chosen in settings but only applied on "save changes" (or when
+  // previewing) — not live as you click. Bubble's color is the normal accent.
   const [draftTheme, setDraftTheme] = useState(PROFILE.profileTheme || "");
-  const [draftBubblePalette, setDraftBubblePalette] = useState("aqua");
   // Avatar is stored as a data URL (the image encoded directly as text) --
   // this only lives in memory for the session, same as everything else in
   // the demo. There's no file storage here, so it won't survive a reload,
@@ -1363,17 +1359,15 @@ export default function SoundboardDemo() {
   }, []);
   const theme = useMemo(() => {
     const surfaces = darkMode ? SURFACES.dark : SURFACES.light;
-    // While the admin-only bubble theme is active, its palette drives the site accent.
-    const bubbleAccent = (profile.profileTheme === "bubble" && profile.username === ADMIN_USERNAME && AERO_PALETTES[bubblePalette] && AERO_PALETTES[bubblePalette].accent) || null;
     return {
-      BLUE: bubbleAccent || customAccent || ACCENTS[accentKey].value,
+      BLUE: customAccent || ACCENTS[accentKey].value,
       INK: surfaces.ink,
       LINE: surfaces.line,
       MUTE: surfaces.mute,
       BG: surfaces.bg,
       darkMode,
     };
-  }, [accentKey, customAccent, darkMode, profile.profileTheme, profile.username, bubblePalette]);
+  }, [accentKey, customAccent, darkMode]);
   const [query, setQuery] = useState("");
   const [liveAlbums, setLiveAlbums] = useState([]);
   const [trendingAlbums, setTrendingAlbums] = useState([]);
@@ -2759,6 +2753,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                     );
                   })()}
 
+                  {draftTheme !== "bubble" && (
                   <div style={{ marginTop: 22 }}>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
                       <div style={{ fontSize: 13, fontWeight: 600, color: "#6b6b74", letterSpacing: "0.01em" }}>page background</div>
@@ -2791,6 +2786,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                       })}
                     </div>
                   </div>
+                  )}
 
                   <div style={{ marginTop: 22 }}>
                     <div style={{ fontSize: 13, fontWeight: 600, color: "#6b6b74", marginBottom: 12, letterSpacing: "0.01em" }}>profile theme</div>
@@ -2811,24 +2807,6 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                               </div>
                               <div style={{ fontSize: 14, fontWeight: 700, color: INK, minWidth: 0 }}>{t.name}</div>
                             </div>
-                            {t.key === "bubble" && sel && (
-                              <div style={{ padding: "0 12px 10px 38px" }}>
-                                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                                  {BUBBLE_SWATCHES.map((s) => {
-                                    const on = draftBubblePalette === s.key;
-                                    return (
-                                      <button
-                                        key={s.key}
-                                        onClick={(e) => { e.stopPropagation(); setDraftBubblePalette(s.key); }}
-                                        title={s.key}
-                                        aria-label={`Bubble ${s.key} palette`}
-                                        style={{ width: 30, height: 30, background: s.color, boxSizing: "border-box", cursor: "pointer", padding: 0, border: on ? "3px solid #000" : "1px solid #D0D0D0" }}
-                                      />
-                                    );
-                                  })}
-                                </div>
-                              </div>
-                            )}
                           </div>
                         );
                       })}
@@ -2880,7 +2858,6 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
     setDraftBio(profile.bio);
     setDraftAvatarUrl(avatarUrl);
     setDraftTheme(profile.profileTheme || "");
-    setDraftBubblePalette(bubblePalette);
     setView({ name: "settings", from: view });
   }
 
@@ -2889,7 +2866,6 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
   // still-saved value unless the user hit "save changes".
   function previewProfile() {
     setProfile((prev) => ({ ...prev, profileTheme: draftTheme || null }));
-    setBubblePalette(draftBubblePalette);
     setView({ name: "profile" });
   }
 
@@ -2902,10 +2878,8 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
     }
     setProfile((prev) => ({ ...prev, displayName: draftDisplayName.trim(), username: draftUsername.trim(), bio: draftBio }));
     setAvatarUrl(draftAvatarUrl);
-    // Apply the theme chosen in the list (deferred until now), and keep the
-    // bubble palette choice even when another theme is selected.
+    // Apply the theme chosen in the list (deferred until now).
     saveProfileField({ profileTheme: draftTheme || "" });
-    chooseBubblePalette(draftBubblePalette);
     setView(view && view.from ? view.from : { name: "profile" });
     flash("Profile updated");
     // Persist to backend
@@ -6494,7 +6468,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
             username={profile.username}
             bio={profile.bio}
             isMobile={isMobile}
-            palette={bubblePalette}
+            accent={BLUE}
             stats={{ followers: profileStats.followers, following: profileStats.following, listened: listenLoaded ? listenedCount : (cachedCounts.listened ?? listenedCount), reviews: reviewsLoaded ? reviews.length : (cachedCounts.reviews ?? reviews.length) }}
             albums={favorites.map((id) => { const a = fetchedAlbums[id] || albumById(id); return { id, title: a && a.title !== "Unknown Album" ? a.title : "", album: a }; })}
             reviews={[...reviews].sort((a, b) => (a.date !== b.date ? (a.date < b.date ? 1 : -1) : (a.id < b.id ? 1 : -1))).slice(0, 3).map((r) => { const a = fetchedAlbums[r.albumId] || albumById(r.albumId); return { score: r.rating, albumTitle: a && a.title !== "Unknown Album" ? a.title : "", artist: a ? (a.artist || a.artistName || "") : "", body: r.text || r.reviewText || r.body || "", favoriteTrack: r.favTrack || r.favoriteTrack || "", leastFavoriteTrack: r.leastFavTrack || r.leastFavoriteTrack || "", albumId: r.albumId, album: a, date: r.date || r.createdAt }; })}
@@ -6529,7 +6503,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
             userId={view.userId}
             username={view.username}
             displayName={view.displayName}
-            palette={bubblePalette}
+            accent={BLUE}
             isMobile={isMobile}
             onBack={() => setView(view.from || { name: "profile" })}
           />
@@ -9427,25 +9401,52 @@ function AlbumCommunitySection({ albumId, albumTab, setAlbumTab, openAlbum, revi
 // - `inline=true`: rendered inside the main app (navigated to from footer)
 // - `inline=false/undefined`: full-page, rendered from AuthScreen
 // ---------------- bubble (Frutiger Aero) profile theme ----------------
-// Admin-only test theme. Five palettes; everything derives from the selected one.
-const AERO_PALETTES = {
-  aqua: { label: "aqua", swatch: "#39A9DE", ink: "#0B4C86", accent: "#1E86C8",
-    bg: "linear-gradient(180deg,#45A0D6 0%,#68B9E2 26%,#93D4ED 58%,#C1E9F3 82%,#EAF9FB 100%)",
-    bar: "linear-gradient(180deg,rgba(69,160,214,.82) 0%,rgba(69,160,214,.62) 49%,rgba(40,120,180,.74) 51%,rgba(104,185,226,.7) 100%)" },
-  navy: { label: "navy", swatch: "#4E6BC4", ink: "#33469A", accent: "#3E58B4",
-    bg: "linear-gradient(180deg,#5568B6 0%,#6A7DCA 28%,#94A8E2 60%,#CBD6F3 84%,#F2F4FB 100%)",
-    bar: "linear-gradient(180deg,rgba(85,104,182,.82) 0%,rgba(85,104,182,.64) 49%,rgba(58,76,150,.76) 51%,rgba(120,146,220,.7) 100%)" },
-  lime: { label: "lime", swatch: "#7BC63A", ink: "#3E7C1B", accent: "#4E9E1F",
-    bg: "linear-gradient(180deg,#7DC63C 0%,#98D65C 26%,#B6E588 58%,#D6F1B4 82%,#F1FBE2 100%)",
-    bar: "linear-gradient(180deg,rgba(125,198,60,.82) 0%,rgba(125,198,60,.62) 49%,rgba(84,150,32,.76) 51%,rgba(152,214,92,.7) 100%)" },
-  pink: { label: "baby pink", swatch: "#F294C0", ink: "#B0426F", accent: "#D0568E",
-    bg: "linear-gradient(180deg,#E687B2 0%,#F0A2C8 26%,#F7BFDB 58%,#FCDFEC 82%,#FEF4F8 100%)",
-    bar: "linear-gradient(180deg,rgba(230,135,178,.82) 0%,rgba(230,135,178,.62) 49%,rgba(188,90,134,.76) 51%,rgba(240,162,200,.7) 100%)" },
-  red: { label: "red", swatch: "#E24B3C", ink: "#A82420", accent: "#D0392B",
-    bg: "linear-gradient(180deg,#E5675A 0%,#EE8578 26%,#F4A89A 58%,#F9CCC0 82%,#FDECE6 100%)",
-    bar: "linear-gradient(180deg,rgba(229,103,90,.82) 0%,rgba(229,103,90,.62) 49%,rgba(188,60,48,.76) 51%,rgba(238,133,120,.7) 100%)" },
-};
+// Admin-only test theme. Its whole look derives from the user's accent colour
+// via aeroFromAccent() below — same accent picker as every other theme.
 const AERO_MOOD = { chill: "8)", flirty: ";)", happy: ":)", angry: ">:(", sad: ":(", bored: "-_-", hyper: "^_^" };
+
+// Parse "#rrggbb" (or "#rgb") to {h,s,l} in degrees/percent, or null.
+function hexToHsl(hex) {
+  if (!hex) return null;
+  const m = String(hex).replace("#", "");
+  const n = m.length === 3 ? m.split("").map((c) => c + c).join("") : m;
+  if (n.length !== 6 || /[^0-9a-f]/i.test(n)) return null;
+  const r = parseInt(n.slice(0, 2), 16) / 255, g = parseInt(n.slice(2, 4), 16) / 255, b = parseInt(n.slice(4, 6), 16) / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min;
+  let h = 0; const l = (max + min) / 2; const s = d === 0 ? 0 : (l > 0.5 ? d / (2 - max - min) : d / (max + min));
+  if (d) {
+    if (max === r) h = (g - b) / d + (g < b ? 6 : 0);
+    else if (max === g) h = (b - r) / d + 2;
+    else h = (r - g) / d + 4;
+    h *= 60;
+  }
+  return { h: Math.round(h), s: Math.round(s * 100), l: Math.round(l * 100) };
+}
+
+// hsl -> "rgb()"/"rgba()" string (so we can add alpha for the glossy title bar).
+function hslToRgbStr(h, s, l, a) {
+  s /= 100; l /= 100;
+  const k = (nn) => (nn + h / 30) % 12;
+  const f = (nn) => l - s * Math.min(l, 1 - l) * Math.max(-1, Math.min(k(nn) - 3, 9 - k(nn), 1));
+  const r = Math.round(255 * f(0)), g = Math.round(255 * f(8)), b = Math.round(255 * f(4));
+  return a == null ? `rgb(${r},${g},${b})` : `rgba(${r},${g},${b},${a})`;
+}
+
+// Build a full Aero palette (light-to-tint page gradient, glossy title bar, ink
+// text) from a single accent hex, so bubble can use the normal accent picker.
+function aeroFromAccent(hex) {
+  const base = hexToHsl(hex) || { h: 212, s: 60, l: 35 };
+  const H = base.h, S = base.s;
+  const cl = (v) => Math.max(0, Math.min(100, v));
+  const hsl = (s, l) => `hsl(${H}, ${cl(s)}%, ${cl(l)}%)`;
+  const ba = (l, a) => hslToRgbStr(H, cl(S), cl(l), a);
+  return {
+    accent: hex,
+    ink: `hsl(${H}, ${cl(S + 6)}%, 28%)`,
+    bg: `linear-gradient(180deg,${hsl(S * 0.9, 56)} 0%,${hsl(S * 0.8, 66)} 26%,${hsl(S * 0.62, 78)} 58%,${hsl(S * 0.48, 88)} 82%,${hsl(S * 0.4, 96)} 100%)`,
+    bar: `linear-gradient(180deg,${ba(56, 0.82)} 0%,${ba(56, 0.62)} 49%,${ba(42, 0.76)} 51%,${ba(66, 0.7)} 100%)`,
+  };
+}
 
 // Profile theme rows for the settings theme list. `key` is the stored
 // profileTheme value ("" = default; netscape is stored as "geocities").
@@ -9456,15 +9457,6 @@ const THEME_ROWS = [
   { key: "geocities", name: "netscape", sub: "the coolest 90s website ever",     strip: ["#C0C0C0", "#000080", "#D4D0C8", "#808080"] },
   { key: "bubble",    name: "bubble",   sub: "the webpage of the future",        strip: ["#8CC6EA", "#3A93D6", "#FFFFFF", "#7CC43A"], adminOnly: true },
 ];
-// Inline bubble palette swatches (keys map to AERO_PALETTES).
-const BUBBLE_SWATCHES = [
-  { key: "aqua", color: "#3AA8E0" },
-  { key: "navy", color: "#4A68C4" },
-  { key: "lime", color: "#7CC43A" },
-  { key: "pink", color: "#F090C0" },
-  { key: "red",  color: "#E04838" },
-];
-
 // ---- Profile badges (Aero theme) --------------------------------------------
 // Category gradients for earned badges; locked badges use the gray gradient.
 const BADGE_CAT = {
@@ -9594,7 +9586,7 @@ function BadgesPill({ badges, isMobile, onOpen, fullWidth }) {
 
 // Dedicated badges page (Aero theme). Groups badges into type panels, with
 // filters and a tap-to-open detail sheet (mobile) / modal (desktop).
-function AeroBadgesPage({ userId, username, displayName, palette, isMobile, onBack }) {
+function AeroBadgesPage({ userId, username, displayName, accent, isMobile, onBack }) {
   const [badges, setBadges] = React.useState([]);
   const [filter, setFilter] = React.useState("all"); // all | earned | locked
   const [sel, setSel] = React.useState(null); // selected badge def id
@@ -9618,7 +9610,7 @@ function AeroBadgesPage({ userId, username, displayName, palette, isMobile, onBa
     return () => window.removeEventListener("keydown", onKey);
   }, [sel]);
 
-  const pal = AERO_PALETTES[palette] || AERO_PALETTES.aqua;
+  const pal = aeroFromAccent(accent || "#1F388A");
   const WHITE_SH = "0 1px 3px rgba(0,20,50,.5)";
   const NAME_SH = "0 2px 6px rgba(0,20,50,.5), 0 1px 0 rgba(255,255,255,.25)";
   const frosted = { background: "rgba(255,255,255,.4)", border: "1px solid rgba(255,255,255,.8)", backdropFilter: "blur(16px) saturate(1.1)", WebkitBackdropFilter: "blur(16px) saturate(1.1)", boxShadow: "0 4px 14px rgba(0,20,50,.14), inset 0 1px 0 rgba(255,255,255,.6)", borderRadius: 12, overflow: "hidden" };
@@ -9806,7 +9798,7 @@ function BadgeCellInner({ def, earned, isMobile }) {
   );
 }
 
-function BubbleProfile({ displayName, username, bio, isMobile, palette, stats, albums, reviews, info, mixes, queued,
+function BubbleProfile({ displayName, username, bio, isMobile, accent, stats, albums, reviews, info, mixes, queued,
                          userId, isOwn = true, onRemoveFavorite, onAddFavorite, onDeleteReview, onOpenBadges,
                          onOpenSettings, onOpenAlbum, onOpenMix, onShowAllQueued, onShowAllReviews, onStatClick, onNeedAlbum, renderAvatar, renderAlbumCover }) {
   // Pull album details for any favorite/review/queued cover we don't have yet.
@@ -9830,7 +9822,7 @@ function BubbleProfile({ displayName, username, bio, isMobile, palette, stats, a
     return () => { alive = false; };
   }, [userId]);
 
-  const pal = AERO_PALETTES[palette] || AERO_PALETTES.aqua;
+  const pal = aeroFromAccent(accent || "#1F388A");
 
   const NAME_SH = "0 2px 6px rgba(0,20,50,.5), 0 1px 0 rgba(255,255,255,.25)";
   const WHITE_SH = "0 1px 3px rgba(0,20,50,.5)";
