@@ -10003,7 +10003,7 @@ function BubbleProfile({ displayName, username, bio, isMobile, accent, stats, al
             <div style={{ position: "absolute", inset: 0, width: "100%", height: "100%", borderRadius: "50%", overflow: "hidden", background: pal.ink }}>{renderAvatar(av)}</div>
             <span style={{ position: "absolute", inset: 0, borderRadius: "50%", pointerEvents: "none", boxShadow: "inset 0 -8px 16px rgba(10,60,110,.35), inset 0 2px 4px rgba(255,255,255,.6)" }} />
             <span style={{ position: "absolute", left: "10%", right: "10%", top: "3%", height: "48%", pointerEvents: "none", borderRadius: "50% 50% 45% 45% / 60% 60% 40% 40%", background: "linear-gradient(180deg,rgba(255,255,255,.85) 0%,rgba(255,255,255,.35) 55%,rgba(255,255,255,0) 100%)" }} />
-            <span style={{ position: "absolute", left: "20%", right: "20%", bottom: "6%", height: "16%", pointerEvents: "none", borderRadius: "50%", background: "radial-gradient(ellipse at 50% 100%,rgba(160,220,255,.6),rgba(160,220,255,0) 70%)" }} />
+            <span style={{ position: "absolute", left: "10%", right: "10%", bottom: 0, height: "34%", pointerEvents: "none", borderRadius: "50%", background: "radial-gradient(ellipse at 50% 108%,rgba(160,220,255,.7),rgba(160,220,255,0) 72%)" }} />
           </div>
           <div style={{ minWidth: 0, textAlign: "left" }}>
             <div style={{ fontSize: isMobile ? 28 : 40, fontWeight: 700, color: "#fff", letterSpacing: "-.02em", lineHeight: 1, textShadow: NAME_SH, overflowWrap: "anywhere" }}>{displayName || username}</div>
