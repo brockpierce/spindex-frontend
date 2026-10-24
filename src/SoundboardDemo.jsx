@@ -4006,7 +4006,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
         </div>
       )}
 
-      <div data-swipe-surface style={{ maxWidth: 920, margin: "0 auto", padding: ((view.name === "profile" && (profile.profileTheme === "mspaint" || (profile.profileTheme === "bubble" && profile.username === ADMIN_USERNAME))) || (view.name === "userProfile" && viewedUser?.profileTheme === "mspaint")) ? 0 : "28px 16px 64px", minHeight: "calc(100vh - 60px)", position: "relative", background: (view.name === "profile" ? (profile.pageBackground || "") : view.name === "userProfile" ? (viewedUser?.pageBackground || "") : "") || undefined, boxShadow: (view.name === "profile" ? (profile.pageBackground || "") : view.name === "userProfile" ? (viewedUser?.pageBackground || "") : "") ? `0 0 0 100vmax ${(view.name === "profile" ? profile.pageBackground : viewedUser?.pageBackground) || "transparent"}` : undefined, clipPath: (view.name === "profile" ? (profile.pageBackground || "") : view.name === "userProfile" ? (viewedUser?.pageBackground || "") : "") ? "inset(0 -100vmax)" : undefined, transition: "background 0.2s" }}>
+      <div data-swipe-surface style={{ maxWidth: 920, margin: "0 auto", padding: ((view.name === "profile" && (profile.profileTheme === "mspaint" || ((profile.profileTheme === "bubble" || profile.profileTheme === "channel") && profile.username === ADMIN_USERNAME))) || (view.name === "userProfile" && viewedUser?.profileTheme === "mspaint")) ? 0 : "28px 16px 64px", minHeight: "calc(100vh - 60px)", position: "relative", background: (view.name === "profile" ? (profile.pageBackground || "") : view.name === "userProfile" ? (viewedUser?.pageBackground || "") : "") || undefined, boxShadow: (view.name === "profile" ? (profile.pageBackground || "") : view.name === "userProfile" ? (viewedUser?.pageBackground || "") : "") ? `0 0 0 100vmax ${(view.name === "profile" ? profile.pageBackground : viewedUser?.pageBackground) || "transparent"}` : undefined, clipPath: (view.name === "profile" ? (profile.pageBackground || "") : view.name === "userProfile" ? (viewedUser?.pageBackground || "") : "") ? "inset(0 -100vmax)" : undefined, transition: "background 0.2s" }}>
         {/* TOAST */}
         {toast && (
           <div style={{ position: "sticky", top: 8, zIndex: 10, background: INK, color: BG, padding: "8px 14px", borderRadius: 0, fontSize: 12, marginBottom: 16, display: "inline-flex", alignItems: "center", gap: 6 }}>
@@ -6498,6 +6498,37 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
             renderAlbumCover={(alb) => { const u = alb.album && alb.album.coverArtUrl && alb.album.coverArtUrl !== "none" ? alb.album.coverArtUrl.replace("http://", "https://") : null; return u ? <img src={u} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /> : <div style={{ width: "100%", height: "100%" }} />; }}
           />
         </>)}
+        {view.name === "profile" && profile.profileTheme === "channel" && profile.username === ADMIN_USERNAME && (
+          <ChannelProfile
+            displayName={profile.displayName}
+            username={profile.username}
+            bio={profile.bio}
+            isMobile={isMobile}
+            isOwn={true}
+            stats={{ followers: profileStats.followers, following: profileStats.following, listened: listenLoaded ? listenedCount : (cachedCounts.listened ?? listenedCount), reviews: reviewsLoaded ? reviews.length : (cachedCounts.reviews ?? reviews.length) }}
+            albums={favorites.map((id) => { const a = fetchedAlbums[id] || albumById(id); return { id, title: a && a.title !== "Unknown Album" ? a.title : "", album: a }; })}
+            reviews={[...reviews].sort((a, b) => (a.date !== b.date ? (a.date < b.date ? 1 : -1) : (a.id < b.id ? 1 : -1))).slice(0, 5).map((r) => { const a = fetchedAlbums[r.albumId] || albumById(r.albumId); return { score: r.rating, albumTitle: a && a.title !== "Unknown Album" ? a.title : "", artist: a ? (a.artist || a.artistName || "") : "", body: r.text || r.reviewText || r.body || "", favoriteTrack: r.favTrack || r.favoriteTrack || "", leastFavoriteTrack: r.leastFavTrack || r.leastFavoriteTrack || "", albumId: r.albumId, album: a, date: r.date || r.createdAt }; })}
+            mixes={albumMixes.filter((m) => m.isPublic !== false).map((m) => ({ id: m.id, title: m.title, count: m.albums.length, cover: <MixCoverStack albums={m.albums} fetchedAlbums={fetchedAlbums} albumById={albumById} size={64} /> }))}
+            queued={Object.entries(listenStatus).filter(([, s]) => s === "want_to_listen").map(([id]) => { const a = fetchedAlbums[id] || albumById(id); return { id, title: a && a.title !== "Unknown Album" ? a.title : "", album: a }; })}
+            onOpenSettings={openSettings}
+            onOpenMix={(id) => setView({ name: "albumMixDetail", id })}
+            onShowAllQueued={() => setView({ name: "albumList", filter: "want_to_listen" })}
+            onShowAllReviews={() => setView({ name: "reviewsList", username: profile.username, userId: profile.id, reviews: mergeLatest(reviews, myRelistens), isOwn: true, from: view })}
+            onOpenAlbum={(id) => openAlbum(id)}
+            onRemoveFavorite={(id) => toggleFavorite(id)}
+            onAddFavorite={(album) => { if (favorites.includes(album.id)) { flash("Already in your top 3"); return; } toggleFavorite(album.id); setFetchedAlbums((prev) => ({ ...prev, [album.id]: { ...album, artist: album.artistName || album.artist || "", year: album.releaseYear || album.year || null } })); }}
+            onNeedAlbum={(id) => { if (!fetchedAlbums[id]) { apiFetch(`${BACKEND_URL}/api/albums/${id}`).then((r) => r.json()).then((data) => { if (data.album) { const a = data.album; setFetchedAlbums((prev) => ({ ...prev, [id]: { ...a, artist: a.artistName || "", year: a.releaseYear || null } })); } }).catch(() => {}); } }}
+            onStatClick={(label) => {
+              if (label === "followers") setShowFollowList({ kind: "followers", userId: authUser?.id, username: profile.username });
+              else if (label === "following") setShowFollowList({ kind: "following", userId: authUser?.id, username: profile.username });
+              else if (label === "listened") setView({ name: "albumList", filter: "listened" });
+              else if (label === "activity") openActivity(profile.username, profile.id, true);
+              else if (label === "stats" && reviews.length > 0) setView({ name: "statsDetail", reviews: mergeLatest(reviews, myRelistens) });
+            }}
+            renderAvatar={(size) => avatarUrl ? <img src={avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "#e4e9f0" }}><User color="#6d7f94" size={size / 2} /></div>}
+            renderAlbumCover={(alb) => { const u = alb.album && alb.album.coverArtUrl && alb.album.coverArtUrl !== "none" ? alb.album.coverArtUrl.replace("http://", "https://") : null; return u ? <img src={u} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /> : <div style={{ width: "100%", height: "100%", background: "#e4e9f0" }} />; }}
+          />
+        )}
         {view.name === "badges" && (
           <AeroBadgesPage
             userId={view.userId}
@@ -6508,7 +6539,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
             onBack={() => setView(view.from || { name: "profile" })}
           />
         )}
-        {view.name === "profile" && profile.profileTheme !== "mspaint" && !(profile.profileTheme === "bubble" && profile.username === ADMIN_USERNAME) && (
+        {view.name === "profile" && profile.profileTheme !== "mspaint" && !((profile.profileTheme === "bubble" || profile.profileTheme === "channel") && profile.username === ADMIN_USERNAME) && (
           <div className="pf" data-theme={profile.profileTheme || ""} style={{ "--pf-navy": BLUE }}>
             {profile.profileTheme === "geocities" && (
               <div style={{ textAlign: "center", marginBottom: 18, fontFamily: "'Times New Roman', serif", fontWeight: 700, fontSize: 16, color: BLUE, cursor: "pointer", textDecoration: "underline" }} onClick={() => setView({ name: "guestbook", username: profile.username, displayName: profile.displayName, isOwn: true, from: view })}>✎ Sign My Guestbook! ✎</div>
@@ -9456,6 +9487,7 @@ const THEME_ROWS = [
   { key: "terminal",  name: "terminal", sub: "keep it sleek",                    strip: ["#000000", "#3CFF5A", "#2BC444", "#1A1A1A"] },
   { key: "geocities", name: "netscape", sub: "the coolest 90s website ever",     strip: ["#C0C0C0", "#000080", "#D4D0C8", "#808080"] },
   { key: "bubble",    name: "bubble",   sub: "the webpage of the future",        strip: ["#8CC6EA", "#3A93D6", "#FFFFFF", "#7CC43A"], adminOnly: true },
+  { key: "channel",   name: "channel",  sub: "your 2007 video channel",          strip: ["#9FB3C8", "#C9D6E8", "#FFB400", "#1F388A"], adminOnly: true },
 ];
 // ---- Profile badges (Aero theme) --------------------------------------------
 // Category gradients for earned badges; locked badges use the gray gradient.
@@ -9794,6 +9826,224 @@ function BadgeCellInner({ def, earned, isMobile }) {
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5 }}>
       <BadgeMedal def={def} earned={earned} size={40} />
       <div style={{ fontSize: isMobile ? 10 : 11, fontWeight: 700, lineHeight: 1.2, textAlign: "center", color: earned ? "#0E4A7A" : "rgba(14,63,107,.45)" }}>{def.name}</div>
+    </div>
+  );
+}
+
+// ---------------- channel (2007 video channel) profile theme ----------------
+// Admin-only test theme. Restyles the profile body only (nav bar unchanged).
+function ChannelProfile({ displayName, username, bio, isMobile, isOwn = true, stats, albums, reviews, mixes, queued,
+                          onOpenSettings, onOpenMix, onShowAllQueued, onShowAllReviews, onOpenAlbum, onRemoveFavorite, onAddFavorite, onNeedAlbum, onStatClick,
+                          onFollow, onMessage, isFollowing, renderAvatar, renderAlbumCover }) {
+  React.useEffect(() => {
+    if (!onNeedAlbum) return;
+    albums.forEach((a) => { if (a && (!a.album || a.album.title === "Unknown Album")) onNeedAlbum(a.id); });
+    reviews.forEach((r) => { if (r && r.albumId && (!r.album || r.album.title === "Unknown Album")) onNeedAlbum(r.albumId); });
+    queued.forEach((a) => { if (a && (!a.album || a.album.title === "Unknown Album")) onNeedAlbum(a.id); });
+  }, [albums, reviews, queued, onNeedAlbum]);
+  const [showPicker, setShowPicker] = React.useState(false);
+
+  const A = ({ onClick, children, style }) => {
+    const [h, setH] = React.useState(false);
+    return <span onClick={onClick} onMouseEnter={() => setH(true)} onMouseLeave={() => setH(false)} style={{ color: h ? "#cc0000" : "#0033cc", textDecoration: "underline", cursor: "pointer", ...style }}>{children}</span>;
+  };
+  const Box = ({ title, right, children, pad }) => (
+    <div style={{ background: "#fff", border: "1px solid #6d7f94", marginBottom: isMobile ? 10 : 12 }}>
+      <div style={{ background: "linear-gradient(#e9eff8,#c9d6e8)", borderBottom: "1px solid #8fa1b6", padding: isMobile ? "8px 10px" : "6px 10px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+        <span style={{ color: "#1F388A", fontWeight: 700, fontSize: isMobile ? 15 : 14 }}>{title}</span>
+        {right}
+      </div>
+      <div style={{ padding: pad != null ? pad : (isMobile ? 10 : 12) }}>{children}</div>
+    </div>
+  );
+  const Stars = ({ score }) => {
+    const n = Math.max(0, Math.min(10, Math.round(score || 0)));
+    return (
+      <span style={{ display: "inline-flex", alignItems: "center", fontSize: 14, lineHeight: 1 }}>
+        {Array.from({ length: 10 }).map((_, i) => <span key={i} style={{ color: i < n ? "#ff9900" : "#d0d0d0" }}>★</span>)}
+        <span style={{ marginLeft: 6, fontWeight: 700, color: "#333", fontSize: 13 }}>{score}/10</span>
+      </span>
+    );
+  };
+  const btnPrimary = { background: "linear-gradient(#ffe48a,#ffb400)", border: "1px solid #c98a00", color: "#4d3300", fontWeight: 700, borderRadius: 4, cursor: "pointer", fontFamily: "inherit", fontSize: 13, padding: isMobile ? "0 14px" : "5px 14px", minHeight: isMobile ? 44 : undefined };
+  const btnSecondary = { background: "linear-gradient(#ffffff,#dddddd)", border: "1px solid #999", color: "#0033cc", fontWeight: 700, borderRadius: 4, cursor: "pointer", fontFamily: "inherit", fontSize: 13, padding: isMobile ? "0 14px" : "5px 12px", minHeight: isMobile ? 44 : undefined };
+  const avWrap = (size) => (
+    <div style={{ padding: 2, background: "#fff", border: "1px solid #999", width: size, height: size, boxSizing: "border-box", flexShrink: 0 }}>
+      <div style={{ width: "100%", height: "100%", overflow: "hidden", background: "#e4e9f0" }}>{renderAvatar(size)}</div>
+    </div>
+  );
+
+  const ChannelBox = (
+    <Box title={`${displayName || username}'s Channel`} right={isMobile && isOwn ? <A onClick={onOpenSettings} style={{ fontSize: 13 }}>settings</A> : null}>
+      <div style={{ display: "flex", gap: isMobile ? 12 : 10, alignItems: "flex-start", flexDirection: isMobile ? "row" : "column" }}>
+        <div style={{ display: "flex", justifyContent: isMobile ? "flex-start" : "center", width: isMobile ? "auto" : "100%" }}>{avWrap(isMobile ? 88 : 96)}</div>
+        <div style={{ minWidth: 0, flex: 1, textAlign: isMobile ? "left" : "center" }}>
+          <div style={{ fontSize: isMobile ? 20 : 18, fontWeight: 700, color: "#333", overflowWrap: "anywhere" }}>{displayName || username}</div>
+          <div><A style={{ fontSize: 12 }}>@{(username || "").toLowerCase()}</A></div>
+          {bio && <div style={{ fontStyle: "italic", color: "#666", fontSize: isMobile ? 13 : 12, marginTop: 4, overflowWrap: "anywhere" }}>{bio}</div>}
+        </div>
+      </div>
+      {!isOwn && (
+        <div style={{ display: "flex", gap: 6, marginTop: 10, alignItems: "stretch" }}>
+          <button style={{ ...btnPrimary, flex: isMobile ? 1 : "0 0 auto" }} onClick={onFollow}>{isFollowing ? "Following" : "Follow"}</button>
+          <button aria-label={`Message ${username}`} title={`Message ${username}`} style={{ ...btnSecondary, width: isMobile ? 52 : 30, padding: 0, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={onMessage}>
+            <svg width={isMobile ? 22 : 16} height={isMobile ? 16 : 12} viewBox="0 0 22 16" fill="none" stroke="#0033cc" strokeWidth="1.5"><rect x="1" y="1" width="20" height="14" /><path d="M1 2l10 7 10-7" /></svg>
+          </button>
+        </div>
+      )}
+      {isMobile ? (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 1, marginTop: 10, background: "#c9d6e8", border: "1px solid #c9d6e8" }}>
+          {[["Followers", "followers", stats.followers], ["Following", "following", stats.following], ["Listened", "listened", stats.listened]].map(([lab, key, val]) => (
+            <div key={key} onClick={() => onStatClick(key)} style={{ background: "#f3f6fb", padding: "10px 4px", textAlign: "center", cursor: "pointer" }}>
+              <div style={{ fontSize: 17, fontWeight: 700, color: "#333" }}>{val}</div>
+              <div style={{ fontSize: 12, color: "#666" }}>{lab}</div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div style={{ marginTop: 10 }}>
+          {[["Followers", "followers", stats.followers], ["Following", "following", stats.following], ["Listened", "listened", stats.listened], ["Reviews", "reviews", stats.reviews]].map(([lab, key, val]) => (
+            <div key={key} onClick={() => onStatClick(key)} style={{ display: "flex", justifyContent: "space-between", padding: "3px 0", cursor: "pointer", fontSize: 12 }}>
+              <span style={{ color: "#666" }}>{lab}</span><span style={{ fontWeight: 700, color: "#333" }}>{val}</span>
+            </div>
+          ))}
+        </div>
+      )}
+      <div style={{ borderTop: "1px dotted #aaa", marginTop: 10, paddingTop: 10 }}>
+        {isMobile ? (
+          <div style={{ display: "flex", gap: 6 }}>
+            <button style={{ ...btnSecondary, flex: 1 }} onClick={() => onStatClick("activity")}>Activity</button>
+            <button style={{ ...btnSecondary, flex: 1 }} onClick={() => onStatClick("stats")}>Stats</button>
+          </div>
+        ) : (
+          <div style={{ fontSize: 12, display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
+            <A onClick={() => onStatClick("activity")}>Activity</A><span style={{ color: "#aaa" }}>|</span>
+            <A onClick={() => onStatClick("stats")}>Stats</A>
+            {isOwn && <><span style={{ color: "#aaa" }}>|</span><A onClick={onOpenSettings}>settings</A></>}
+          </div>
+        )}
+      </div>
+    </Box>
+  );
+
+  const Top3Box = (
+    <Box title="Top 3 Albums">
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: isMobile ? 8 : 10 }}>
+        {[0, 1, 2].map((i) => {
+          const a = albums[i];
+          if (a) return (
+            <div key={a.id} style={{ position: "relative", textAlign: "center" }}>
+              <div onClick={() => onOpenAlbum(a.id)} style={{ cursor: "pointer", padding: 2, background: "#fff", border: "1px solid #999", boxSizing: "border-box" }}>
+                <div style={{ aspectRatio: "1/1", overflow: "hidden", background: "#e4e9f0" }}>{renderAlbumCover(a)}</div>
+              </div>
+              <div style={{ marginTop: 4, fontSize: 12 }}><A onClick={() => onOpenAlbum(a.id)} style={{ fontWeight: 700 }}>{a.title || "…"}</A></div>
+              {a.album && (a.album.artist || a.album.artistName) && <div style={{ fontSize: 12, color: "#666", overflowWrap: "anywhere" }}>{a.album.artist || a.album.artistName}</div>}
+              {isOwn && onRemoveFavorite && <div role="button" title="Remove" onClick={(e) => { e.stopPropagation(); onRemoveFavorite(a.id); }} style={{ position: "absolute", top: -6, right: -6, width: 18, height: 18, borderRadius: "50%", background: "#c0392b", color: "#fff", fontSize: 12, lineHeight: "16px", textAlign: "center", border: "1px solid #fff", cursor: "pointer" }}>×</div>}
+            </div>
+          );
+          return (
+            <div key={"e" + i} onClick={isOwn ? () => setShowPicker(true) : undefined} style={{ textAlign: "center", cursor: isOwn ? "pointer" : "default" }}>
+              <div style={{ aspectRatio: "1/1", border: "1px dashed #999", background: "#eef2f7", display: "flex", alignItems: "center", justifyContent: "center", color: "#6d7f94", fontSize: 12 }}>{isOwn ? "+ add" : ""}</div>
+            </div>
+          );
+        })}
+      </div>
+      {isOwn && showPicker && albums.length < 3 && (
+        <div style={{ marginTop: 10 }}>
+          <AlbumSearchPicker onPick={(album) => { if (onAddFavorite) onAddFavorite(album); setShowPicker(false); }} onCancel={() => setShowPicker(false)} placeholder="search for an album to add to top 3..." />
+        </div>
+      )}
+    </Box>
+  );
+
+  const ReviewsBox = (
+    <Box title="Recent Reviews" right={!isMobile ? <A onClick={onShowAllReviews} style={{ fontSize: 12 }}>see all reviews ({stats.reviews})</A> : null}>
+      {reviews.length === 0 ? <div style={{ fontSize: 13, color: "#666" }}>no reviews yet.</div> :
+        reviews.map((r, i) => (
+          <div key={i} style={{ paddingTop: i ? 10 : 0, marginTop: i ? 10 : 0, borderTop: i ? "1px dotted #aaa" : "none" }}>
+            <div style={{ display: "grid", gridTemplateColumns: (isMobile ? "72px" : "120px") + " 1fr", gap: isMobile ? 10 : 12 }}>
+              <div onClick={() => onOpenAlbum(r.albumId)} style={{ cursor: "pointer", border: "1px solid #999", width: isMobile ? 72 : 120, alignSelf: "start" }}>
+                <div style={{ aspectRatio: "1/1", overflow: "hidden", background: "#e4e9f0" }}>{renderAlbumCover(r)}</div>
+              </div>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "baseline" }}>
+                  <div style={{ minWidth: 0 }}>
+                    <A onClick={() => onOpenAlbum(r.albumId)} style={{ fontSize: 15, fontWeight: 700 }}>{r.albumTitle}</A>
+                    {r.artist && <span style={{ fontSize: 12, color: "#666", marginLeft: 6 }}>{r.artist}</span>}
+                  </div>
+                  {r.date && <span style={{ fontSize: 12, color: "#888", whiteSpace: "nowrap" }}>{fmtAgo(r.date)}</span>}
+                </div>
+                <div style={{ marginTop: 4 }}><Stars score={r.score} /></div>
+                {r.body && <div style={{ fontSize: isMobile ? 14 : 13, lineHeight: 1.45, color: "#333", marginTop: 4, overflowWrap: "anywhere" }}>{r.body}</div>}
+                {(r.favoriteTrack || r.leastFavoriteTrack) && (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 14, marginTop: 5, fontSize: 12, color: "#666" }}>
+                    {r.favoriteTrack && <span>♥ {r.favoriteTrack}</span>}
+                    {r.leastFavoriteTrack && <span>✕ {r.leastFavoriteTrack}</span>}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        ))
+      }
+      {isMobile && reviews.length > 0 && <button style={{ ...btnSecondary, width: "100%", marginTop: 10 }} onClick={onShowAllReviews}>see all reviews ({stats.reviews})</button>}
+    </Box>
+  );
+
+  const MixesBox = mixes.length > 0 ? (
+    <Box title={`Mixes (${mixes.length})`}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {mixes.map((m) => (
+          <div key={m.id} onClick={() => onOpenMix(m.id)} style={{ display: "flex", gap: 10, alignItems: "center", cursor: "pointer" }}>
+            <div style={{ flexShrink: 0, lineHeight: 0, border: "1px solid #999" }}>{m.cover}</div>
+            <div style={{ minWidth: 0 }}>
+              <A style={{ fontSize: 13, fontWeight: 700 }}>{m.title}</A>
+              <div style={{ fontSize: 12, color: "#666" }}>{m.count} album{m.count !== 1 ? "s" : ""}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </Box>
+  ) : null;
+
+  const QueuedBox = queued.length > 0 ? (
+    <Box title="Queued">
+      {isMobile ? (
+        <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4 }}>
+          {queued.map((a) => (
+            <div key={a.id} onClick={() => onOpenAlbum(a.id)} style={{ cursor: "pointer", flexShrink: 0, width: 96, border: "1px solid #999" }}>
+              <div style={{ aspectRatio: "1/1", overflow: "hidden", background: "#e4e9f0" }}>{renderAlbumCover(a)}</div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8 }}>
+            {queued.slice(0, 9).map((a) => (
+              <div key={a.id} onClick={() => onOpenAlbum(a.id)} style={{ cursor: "pointer", border: "1px solid #999" }}>
+                <div style={{ aspectRatio: "1/1", overflow: "hidden", background: "#e4e9f0" }}>{renderAlbumCover(a)}</div>
+              </div>
+            ))}
+          </div>
+          {queued.length > 9 && <div style={{ marginTop: 8 }}><A onClick={onShowAllQueued} style={{ fontSize: 12 }}>show all queued ({queued.length})</A></div>}
+        </>
+      )}
+    </Box>
+  ) : null;
+
+  return (
+    <div style={{ fontFamily: "Arial, Helvetica, sans-serif", position: "relative", minHeight: "100%" }}>
+      <div aria-hidden style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: "100vw", height: "100%", background: "#9fb3c8", zIndex: 0 }} />
+      <div style={{ position: "relative", zIndex: 1, maxWidth: 980, margin: "0 auto", padding: isMobile ? "10px" : "16px 10px 40px" }}>
+        {isMobile ? (
+          <>{ChannelBox}{Top3Box}{ReviewsBox}{MixesBox}{QueuedBox}</>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "300px 1fr", gap: 12, alignItems: "start" }}>
+            <div>{ChannelBox}{MixesBox}{QueuedBox}</div>
+            <div>{Top3Box}{ReviewsBox}</div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
