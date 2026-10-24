@@ -10038,7 +10038,7 @@ function ChannelProfile({ displayName, username, bio, isMobile, isOwn = true, ac
   return (
     <div style={{ fontFamily: "Arial, Helvetica, sans-serif", position: "relative", minHeight: "100%" }}>
       <div aria-hidden style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: "100vw", height: "100%", background: bg, zIndex: 0 }} />
-      <div style={{ position: "relative", zIndex: 1, maxWidth: 980, margin: "0 auto", padding: isMobile ? "10px" : "16px 10px 40px" }}>
+      <div style={{ position: "relative", zIndex: 1, maxWidth: 980, margin: "0 auto", padding: isMobile ? "10px" : "16px 10px 40px", textAlign: "left" }}>
         {isMobile ? (
           <>{ChannelBox}{Top3Box}{ReviewsBox}{MixesBox}{QueuedBox}</>
         ) : (
