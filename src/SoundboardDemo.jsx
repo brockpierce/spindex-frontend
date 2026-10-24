@@ -10096,6 +10096,15 @@ function BubbleProfile({ displayName, username, bio, isMobile, accent, stats, al
     return () => { alive = false; };
   }, [userId]);
 
+  // Two-column desktop layout (3b) only at ≥900px; collapse to one column below.
+  const [narrow, setNarrow] = React.useState(() => typeof window !== "undefined" && window.innerWidth < 900);
+  React.useEffect(() => {
+    const h = () => setNarrow(window.innerWidth < 900);
+    window.addEventListener("resize", h);
+    return () => window.removeEventListener("resize", h);
+  }, []);
+  const twoCol = !isMobile && !narrow;
+
   const pal = aeroFromAccent(accent || "#1F388A");
 
   const NAME_SH = "0 2px 6px rgba(0,20,50,.5), 0 1px 0 rgba(255,255,255,.25)";
@@ -10241,9 +10250,9 @@ function BubbleProfile({ displayName, username, bio, isMobile, accent, stats, al
   );
 
   const ReviewsBlock = (
-    <div style={{ marginTop: isMobile ? 16 : 20 }}>
+    <div>
       <div style={{ fontSize: isMobile ? 14 : 15, fontWeight: 700, color: "#fff", textShadow: WHITE_SH, marginBottom: 12 }}>recent reviews</div>
-      <div style={{ display: "flex", flexDirection: "column", gap: isMobile ? 8 : 10 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: isMobile ? 8 : 12 }}>
         {reviews.map((r, i) => reviewCard(r, i))}
         {reviews.length === 0 && <div style={{ color: "rgba(255,255,255,.92)", textShadow: WHITE_SH, fontSize: 14 }}>no reviews yet.</div>}
       </div>
@@ -10254,6 +10263,42 @@ function BubbleProfile({ displayName, username, bio, isMobile, accent, stats, al
       )}
     </div>
   );
+
+  const MixesBlock = mixes.length > 0 ? (
+    <div style={{ ...frosted }}>
+      <Bar>mixes</Bar>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: 12 }}>
+        {mixes.map((m) => (
+          <div key={m.id} onClick={() => onOpenMix(m.id)} style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer", background: "rgba(255,255,255,.22)", border: "1px solid rgba(255,255,255,.5)", borderRadius: 10, padding: "8px 10px" }}>
+            <div style={{ flexShrink: 0, lineHeight: 0 }}>{m.cover}</div>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: "#1d3f63", overflowWrap: "anywhere" }}>{m.title}</div>
+              <div style={{ fontSize: 12, color: "#3d6a94", marginTop: 2 }}>{m.count} album{m.count !== 1 ? "s" : ""}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  ) : null;
+
+  const QueuedBlock = queued.length > 0 ? (
+    <div style={{ ...frosted }}>
+      <Bar>queued</Bar>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "12px 10px", padding: 12 }}>
+        {queued.slice(0, 12).map((a) => (
+          <div key={a.id} onClick={() => onOpenAlbum(a.id)} style={{ cursor: "pointer", textAlign: "center", minWidth: 0 }}>
+            <Cover item={a} radius={6} />
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#fff", textShadow: WHITE_SH, marginTop: 5, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{a.title || "…"}</div>
+          </div>
+        ))}
+      </div>
+      {queued.length > 12 && (
+        <div style={{ padding: "0 12px 12px", textAlign: "center" }}>
+          <button onClick={onShowAllQueued} style={{ ...pill, cursor: "pointer" }}>show all queued ({queued.length})</button>
+        </div>
+      )}
+    </div>
+  ) : null;
 
   return (
     <div className="ui-sans" style={{ position: "relative", fontFamily: '"Helvetica Neue",Helvetica,Arial,sans-serif' }}>
@@ -10269,7 +10314,7 @@ function BubbleProfile({ displayName, username, bio, isMobile, accent, stats, al
         {!isMobile && bub("88%", "58%", 84, 7)}
       </div>
 
-      <div style={{ position: "relative", zIndex: 1, maxWidth: 1000, margin: "0 auto", padding: `${pad}px ${pad}px ${pad + 30}px` }}>
+      <div style={{ position: "relative", zIndex: 1, maxWidth: 864, margin: "0 auto", padding: `${pad}px ${pad}px ${pad + 30}px` }}>
         {/* header: avatar | name | (settings pill + stats strip on desktop) */}
         <div style={{ display: "grid", gridTemplateColumns: `${av}px 1fr auto`, alignItems: isMobile ? "start" : "center", gap: isMobile ? 14 : 28 }}>
           {/* glass orb avatar — overlays sit on top of the round photo */}
@@ -10298,56 +10343,24 @@ function BubbleProfile({ displayName, username, bio, isMobile, accent, stats, al
         {/* divider (desktop) */}
         {!isMobile && <div style={{ height: 1, background: "rgba(255,255,255,.7)", margin: "16px 0" }} />}
 
-        {!isMobile ? (
-          <>
-            {/* desktop: full-width Top 3, then reviews */}
-            {Top3Block}
-            {ReviewsBlock}
-          </>
+        {twoCol ? (
+          /* desktop 3b: 320px sidebar (Top 3 / Mixes / Queued) + reviews column */
+          <div style={{ display: "grid", gridTemplateColumns: "320px minmax(0,1fr)", gap: 18, alignItems: "start", marginTop: 20 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+              {Top3Block}
+              {MixesBlock}
+              {QueuedBlock}
+            </div>
+            <div>{ReviewsBlock}</div>
+          </div>
         ) : (
+          /* single column (mobile + tweener): Top 3 → Reviews → Mixes → Queued */
           <>
-            {/* mobile: top 3, then reviews */}
-            <div style={{ marginTop: 16 }}>{Top3Block}</div>
-            {ReviewsBlock}
+            <div style={{ marginTop: isMobile ? 16 : 20 }}>{Top3Block}</div>
+            <div style={{ marginTop: 16 }}>{ReviewsBlock}</div>
+            {MixesBlock && <div style={{ marginTop: 16 }}>{MixesBlock}</div>}
+            {QueuedBlock && <div style={{ marginTop: 16 }}>{QueuedBlock}</div>}
           </>
-        )}
-
-        {/* mixes */}
-        {mixes.length > 0 && (
-          <div style={{ ...frosted, marginTop: 16 }}>
-            <Bar>mixes</Bar>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: isMobile ? 12 : 16 }}>
-              {mixes.map((m) => (
-                <div key={m.id} onClick={() => onOpenMix(m.id)} style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer", background: "rgba(255,255,255,.22)", border: "1px solid rgba(255,255,255,.5)", borderRadius: 10, padding: "10px 12px" }}>
-                  <div style={{ flexShrink: 0, lineHeight: 0 }}>{m.cover}</div>
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: isMobile ? 14 : 15, fontWeight: 700, color: "#12384f", overflowWrap: "anywhere" }}>{m.title}</div>
-                    <div style={{ fontSize: 12, color: "#3f6a86", marginTop: 2 }}>{m.count} album{m.count !== 1 ? "s" : ""}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* queued — small assortment + show-all to the full page */}
-        {queued.length > 0 && (
-          <div style={{ ...frosted, marginTop: 16 }}>
-            <Bar>queued</Bar>
-            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(3,1fr)" : "repeat(6,1fr)", gap: isMobile ? 11 : 14, padding: isMobile ? 14 : 16 }}>
-              {queued.slice(0, isMobile ? 6 : 12).map((a) => (
-                <div key={a.id} onClick={() => onOpenAlbum(a.id)} style={{ cursor: "pointer", textAlign: "center" }}>
-                  <Cover item={a} radius={6} />
-                  <div style={{ fontSize: 13, fontWeight: 700, color: "#fff", textShadow: WHITE_SH, marginTop: 6, overflowWrap: "anywhere", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{a.title || "…"}</div>
-                </div>
-              ))}
-            </div>
-            {queued.length > (isMobile ? 6 : 12) && (
-              <div style={{ padding: isMobile ? "0 14px 16px" : "0 18px 18px" }}>
-                <button onClick={onShowAllQueued} style={{ ...pill, cursor: "pointer" }}>show all queued ({queued.length})</button>
-              </div>
-            )}
-          </div>
         )}
       </div>
     </div>
