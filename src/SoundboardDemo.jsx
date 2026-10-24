@@ -9875,9 +9875,9 @@ function ChannelProfile({ displayName, username, bio, isMobile, isOwn = true, st
 
   const ChannelBox = (
     <Box title={`${displayName || username}'s Channel`} right={isMobile && isOwn ? <A onClick={onOpenSettings} style={{ fontSize: 13 }}>settings</A> : null}>
-      <div style={{ display: "flex", gap: isMobile ? 12 : 10, alignItems: "flex-start", flexDirection: isMobile ? "row" : "column" }}>
-        <div style={{ display: "flex", justifyContent: isMobile ? "flex-start" : "center", width: isMobile ? "auto" : "100%" }}>{avWrap(isMobile ? 88 : 96)}</div>
-        <div style={{ minWidth: 0, flex: 1, textAlign: isMobile ? "left" : "center" }}>
+      <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+        <div style={{ flexShrink: 0 }}>{avWrap(isMobile ? 88 : 96)}</div>
+        <div style={{ minWidth: 0, flex: 1, textAlign: "left" }}>
           <div style={{ fontSize: isMobile ? 20 : 18, fontWeight: 700, color: "#333", overflowWrap: "anywhere" }}>{displayName || username}</div>
           <div><A style={{ fontSize: 12 }}>@{(username || "").toLowerCase()}</A></div>
           {bio && <div style={{ fontStyle: "italic", color: "#666", fontSize: isMobile ? 13 : 12, marginTop: 4, overflowWrap: "anywhere" }}>{bio}</div>}
