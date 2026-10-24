@@ -9850,28 +9850,37 @@ function ChannelProfile({ displayName, username, bio, isMobile, isOwn = true, ac
   const boxBorder = _hs(Math.min(_S * 0.3, 26), 56);
   const stripCell = _hs(Math.min(_S * 0.5, 40), 97);
   const stripBorder = _hs(Math.min(_S * 0.45, 36), 85);
+  // Fetch each missing album at most once (a ref guard across re-renders), so
+  // re-renders never re-request albums and never flood the backend.
+  const requested = React.useRef(new Set());
   React.useEffect(() => {
     if (!onNeedAlbum) return;
-    albums.forEach((a) => { if (a && (!a.album || a.album.title === "Unknown Album")) onNeedAlbum(a.id); });
-    reviews.forEach((r) => { if (r && r.albumId && (!r.album || r.album.title === "Unknown Album")) onNeedAlbum(r.albumId); });
-    queued.forEach((a) => { if (a && (!a.album || a.album.title === "Unknown Album")) onNeedAlbum(a.id); });
+    const need = (id) => { if (id && !requested.current.has(id)) { requested.current.add(id); onNeedAlbum(id); } };
+    albums.forEach((a) => { if (a && (!a.album || a.album.title === "Unknown Album")) need(a.id); });
+    reviews.forEach((r) => { if (r && r.albumId && (!r.album || r.album.title === "Unknown Album")) need(r.albumId); });
+    queued.forEach((a) => { if (a && (!a.album || a.album.title === "Unknown Album")) need(a.id); });
   }, [albums, reviews, queued, onNeedAlbum]);
   const [showPicker, setShowPicker] = React.useState(false);
 
-  const A = ({ onClick, children, style }) => {
+  // Sub-components are memoized so their identity is stable across re-renders.
+  // Defining them inline would make React remount the whole box subtree (and
+  // re-download every album cover) on every render.
+  const A = React.useMemo(() => function A({ onClick, children, style }) {
     const [h, setH] = React.useState(false);
     return <span onClick={onClick} onMouseEnter={() => setH(true)} onMouseLeave={() => setH(false)} style={{ color: h ? "#cc0000" : "#0033cc", textDecoration: "underline", cursor: "pointer", ...style }}>{children}</span>;
-  };
-  const Box = ({ title, right, children, pad }) => (
-    <div style={{ background: "#fff", border: `1px solid ${boxBorder}`, marginBottom: isMobile ? 10 : 12 }}>
-      <div style={{ background: headerBg, borderBottom: `1px solid ${headerBorder}`, padding: isMobile ? "8px 10px" : "6px 10px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-        <span style={{ color: headColor, fontWeight: 700, fontSize: isMobile ? 15 : 14 }}>{title}</span>
-        {right}
+  }, []);
+  const Box = React.useMemo(() => function Box({ title, right, children, pad }) {
+    return (
+      <div style={{ background: "#fff", border: `1px solid ${boxBorder}`, marginBottom: isMobile ? 10 : 12 }}>
+        <div style={{ background: headerBg, borderBottom: `1px solid ${headerBorder}`, padding: isMobile ? "8px 10px" : "6px 10px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+          <span style={{ color: headColor, fontWeight: 700, fontSize: isMobile ? 15 : 14 }}>{title}</span>
+          {right}
+        </div>
+        <div style={{ padding: pad != null ? pad : (isMobile ? 10 : 12) }}>{children}</div>
       </div>
-      <div style={{ padding: pad != null ? pad : (isMobile ? 10 : 12) }}>{children}</div>
-    </div>
-  );
-  const Stars = ({ score }) => {
+    );
+  }, [boxBorder, headerBg, headerBorder, headColor, isMobile]);
+  const Stars = React.useMemo(() => function Stars({ score }) {
     const n = Math.max(0, Math.min(10, Math.round(score || 0)));
     return (
       <span style={{ display: "inline-flex", alignItems: "center", fontSize: 14, lineHeight: 1 }}>
@@ -9879,7 +9888,7 @@ function ChannelProfile({ displayName, username, bio, isMobile, isOwn = true, ac
         <span style={{ marginLeft: 6, fontWeight: 700, color: "#333", fontSize: 13 }}>{score}/10</span>
       </span>
     );
-  };
+  }, []);
   const btnPrimary = { background: "linear-gradient(#ffe48a,#ffb400)", border: "1px solid #c98a00", color: "#4d3300", fontWeight: 700, borderRadius: 4, cursor: "pointer", fontFamily: "inherit", fontSize: 13, padding: isMobile ? "0 14px" : "5px 14px", minHeight: isMobile ? 44 : undefined };
   const btnSecondary = { background: "linear-gradient(#ffffff,#dddddd)", border: "1px solid #999", color: "#0033cc", fontWeight: 700, borderRadius: 4, cursor: "pointer", fontFamily: "inherit", fontSize: 13, padding: isMobile ? "0 14px" : "5px 12px", minHeight: isMobile ? 44 : undefined };
   const avWrap = (size) => (
