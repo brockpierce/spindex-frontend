@@ -9839,6 +9839,17 @@ function ChannelProfile({ displayName, username, bio, isMobile, isOwn = true, ac
                           onFollow, onMessage, isFollowing, renderAvatar, renderAlbumCover }) {
   const headColor = accent || "#1F388A";
   const bg = pageBg || "#9fb3c8";
+  // Box chrome (header strip, borders, stat strip) is tinted from the accent so
+  // changing the accent recolors the boxes, not just the title text.
+  const _h = hexToHsl(accent) || { h: 222, s: 64, l: 33 };
+  const _cl = (v) => Math.max(0, Math.min(100, v));
+  const _hs = (s, l) => `hsl(${_h.h}, ${_cl(s)}%, ${_cl(l)}%)`;
+  const _S = _h.s;
+  const headerBg = `linear-gradient(${_hs(Math.min(_S * 0.8, 55), 94)}, ${_hs(Math.min(_S * 0.65, 45), 85)})`;
+  const headerBorder = _hs(Math.min(_S * 0.35, 30), 66);
+  const boxBorder = _hs(Math.min(_S * 0.3, 26), 56);
+  const stripCell = _hs(Math.min(_S * 0.5, 40), 97);
+  const stripBorder = _hs(Math.min(_S * 0.45, 36), 85);
   React.useEffect(() => {
     if (!onNeedAlbum) return;
     albums.forEach((a) => { if (a && (!a.album || a.album.title === "Unknown Album")) onNeedAlbum(a.id); });
@@ -9852,8 +9863,8 @@ function ChannelProfile({ displayName, username, bio, isMobile, isOwn = true, ac
     return <span onClick={onClick} onMouseEnter={() => setH(true)} onMouseLeave={() => setH(false)} style={{ color: h ? "#cc0000" : "#0033cc", textDecoration: "underline", cursor: "pointer", ...style }}>{children}</span>;
   };
   const Box = ({ title, right, children, pad }) => (
-    <div style={{ background: "#fff", border: "1px solid #6d7f94", marginBottom: isMobile ? 10 : 12 }}>
-      <div style={{ background: "linear-gradient(#e9eff8,#c9d6e8)", borderBottom: "1px solid #8fa1b6", padding: isMobile ? "8px 10px" : "6px 10px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+    <div style={{ background: "#fff", border: `1px solid ${boxBorder}`, marginBottom: isMobile ? 10 : 12 }}>
+      <div style={{ background: headerBg, borderBottom: `1px solid ${headerBorder}`, padding: isMobile ? "8px 10px" : "6px 10px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
         <span style={{ color: headColor, fontWeight: 700, fontSize: isMobile ? 15 : 14 }}>{title}</span>
         {right}
       </div>
@@ -9896,9 +9907,9 @@ function ChannelProfile({ displayName, username, bio, isMobile, isOwn = true, ac
         </div>
       )}
       {isMobile ? (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 1, marginTop: 10, background: "#c9d6e8", border: "1px solid #c9d6e8" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 1, marginTop: 10, background: stripBorder, border: `1px solid ${stripBorder}` }}>
           {[["Followers", "followers", stats.followers], ["Following", "following", stats.following], ["Listened", "listened", stats.listened]].map(([lab, key, val]) => (
-            <div key={key} onClick={() => onStatClick(key)} style={{ background: "#f3f6fb", padding: "10px 4px", textAlign: "center", cursor: "pointer" }}>
+            <div key={key} onClick={() => onStatClick(key)} style={{ background: stripCell, padding: "10px 4px", textAlign: "center", cursor: "pointer" }}>
               <div style={{ fontSize: 17, fontWeight: 700, color: "#333" }}>{val}</div>
               <div style={{ fontSize: 12, color: "#666" }}>{lab}</div>
             </div>
