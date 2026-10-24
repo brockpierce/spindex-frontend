@@ -6505,6 +6505,8 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
             bio={profile.bio}
             isMobile={isMobile}
             isOwn={true}
+            accent={BLUE}
+            pageBg={profile.pageBackground || ""}
             stats={{ followers: profileStats.followers, following: profileStats.following, listened: listenLoaded ? listenedCount : (cachedCounts.listened ?? listenedCount), reviews: reviewsLoaded ? reviews.length : (cachedCounts.reviews ?? reviews.length) }}
             albums={favorites.map((id) => { const a = fetchedAlbums[id] || albumById(id); return { id, title: a && a.title !== "Unknown Album" ? a.title : "", album: a }; })}
             reviews={[...reviews].sort((a, b) => (a.date !== b.date ? (a.date < b.date ? 1 : -1) : (a.id < b.id ? 1 : -1))).slice(0, 5).map((r) => { const a = fetchedAlbums[r.albumId] || albumById(r.albumId); return { score: r.rating, albumTitle: a && a.title !== "Unknown Album" ? a.title : "", artist: a ? (a.artist || a.artistName || "") : "", body: r.text || r.reviewText || r.body || "", favoriteTrack: r.favTrack || r.favoriteTrack || "", leastFavoriteTrack: r.leastFavTrack || r.leastFavoriteTrack || "", albumId: r.albumId, album: a, date: r.date || r.createdAt }; })}
@@ -9832,9 +9834,11 @@ function BadgeCellInner({ def, earned, isMobile }) {
 
 // ---------------- channel (2007 video channel) profile theme ----------------
 // Admin-only test theme. Restyles the profile body only (nav bar unchanged).
-function ChannelProfile({ displayName, username, bio, isMobile, isOwn = true, stats, albums, reviews, mixes, queued,
+function ChannelProfile({ displayName, username, bio, isMobile, isOwn = true, accent, pageBg, stats, albums, reviews, mixes, queued,
                           onOpenSettings, onOpenMix, onShowAllQueued, onShowAllReviews, onOpenAlbum, onRemoveFavorite, onAddFavorite, onNeedAlbum, onStatClick,
                           onFollow, onMessage, isFollowing, renderAvatar, renderAlbumCover }) {
+  const headColor = accent || "#1F388A";
+  const bg = pageBg || "#9fb3c8";
   React.useEffect(() => {
     if (!onNeedAlbum) return;
     albums.forEach((a) => { if (a && (!a.album || a.album.title === "Unknown Album")) onNeedAlbum(a.id); });
@@ -9850,7 +9854,7 @@ function ChannelProfile({ displayName, username, bio, isMobile, isOwn = true, st
   const Box = ({ title, right, children, pad }) => (
     <div style={{ background: "#fff", border: "1px solid #6d7f94", marginBottom: isMobile ? 10 : 12 }}>
       <div style={{ background: "linear-gradient(#e9eff8,#c9d6e8)", borderBottom: "1px solid #8fa1b6", padding: isMobile ? "8px 10px" : "6px 10px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-        <span style={{ color: "#1F388A", fontWeight: 700, fontSize: isMobile ? 15 : 14 }}>{title}</span>
+        <span style={{ color: headColor, fontWeight: 700, fontSize: isMobile ? 15 : 14 }}>{title}</span>
         {right}
       </div>
       <div style={{ padding: pad != null ? pad : (isMobile ? 10 : 12) }}>{children}</div>
@@ -10033,7 +10037,7 @@ function ChannelProfile({ displayName, username, bio, isMobile, isOwn = true, st
 
   return (
     <div style={{ fontFamily: "Arial, Helvetica, sans-serif", position: "relative", minHeight: "100%" }}>
-      <div aria-hidden style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: "100vw", height: "100%", background: "#9fb3c8", zIndex: 0 }} />
+      <div aria-hidden style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: "100vw", height: "100%", background: bg, zIndex: 0 }} />
       <div style={{ position: "relative", zIndex: 1, maxWidth: 980, margin: "0 auto", padding: isMobile ? "10px" : "16px 10px 40px" }}>
         {isMobile ? (
           <>{ChannelBox}{Top3Box}{ReviewsBox}{MixesBox}{QueuedBox}</>
