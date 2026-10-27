@@ -1186,7 +1186,7 @@ function AlbumCover({ album, size = 92, listened = false, fluid = false, bordere
           loading="lazy"
           decoding="async"
           onError={() => setImgFailed(true)}
-          style={fluid ? { width: "100%", height: "100%", borderRadius: radius, objectFit: "cover", display: "block" } : { width: size, height: size, borderRadius: radius, objectFit: "cover", display: "block" }}
+          style={{ width: "100%", height: "100%", borderRadius: radius, objectFit: "cover", display: "block" }}
         />
         {pill}
       </div>
