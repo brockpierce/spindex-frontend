@@ -10752,7 +10752,6 @@ function NBRatingCarousel({ cardW, gap, scoreSize, metaSize, titleSize, labelSiz
                 <span style={{ fontSize: scoreSize, fontWeight: 700, color: "#1F388A" }}>{r.score}/10</span>
                 <span style={{ fontSize: metaSize, color: "#5C5C5C", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>@{r.username}</span>
               </div>
-              <div style={{ fontSize: titleSize, fontWeight: 700, color: "#000", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{r.albumTitle}</div>
             </div>
           ))}
         </div>
@@ -10889,14 +10888,10 @@ function LandingPage({ onAuthed }) {
     return (
       <div style={{ fontFamily: FONT, background: "#fff", minHeight: "100vh", display: "flex", flexDirection: "column", color: NB.ink }}>
         {marqueeStyle}
-        {/* top bar — logo only */}
-        <div style={{ height: 64, display: "flex", alignItems: "center", padding: "0 20px", flexShrink: 0 }}>
-          <img src="/noteblock-mark.png" alt="noteblock" style={{ height: 30, width: "auto", display: "block" }} />
-        </div>
         {/* hero */}
-        <div style={{ padding: "20px 20px 0" }}>
+        <div style={{ padding: "28px 20px 0" }}>
           <img src="/noteblock-mark.png" alt="" style={{ width: 190, marginLeft: -12, display: "block" }} />
-          <div style={{ fontSize: 76, fontWeight: 400, letterSpacing: "-0.04em", lineHeight: 0.9, color: "#1F388A", marginTop: 8 }}>noteblock</div>
+          <div style={{ fontSize: 76, fontWeight: 400, letterSpacing: "-0.04em", lineHeight: 0.9, color: "#000", marginTop: 8 }}>noteblock</div>
           <div style={{ fontSize: 24, fontWeight: 400, lineHeight: 1.25, letterSpacing: "-0.01em", color: "#000", marginTop: 18 }}>keep a record of every record.</div>
           <div style={{ fontSize: 16, lineHeight: 1.4, color: "#5C5C5C", marginTop: 8 }}>review albums, discover new music, and connect with others</div>
         </div>
@@ -10922,10 +10917,10 @@ function LandingPage({ onAuthed }) {
     <div style={{ fontFamily: FONT, minHeight: "100vh", display: "grid", gridTemplateColumns: "7fr 5fr", color: NB.ink, background: "#fff" }}>
       {marqueeStyle}
       {/* left — hero + ratings carousel */}
-      <div style={{ containerType: "inline-size", display: "flex", flexDirection: "column", justifyContent: "center", gap: "max(40px, 6.4cqw)", padding: "48px 64px 44px", overflow: "hidden", borderRight: "1px solid #E3E3E3" }}>
+      <div style={{ containerType: "inline-size", display: "flex", flexDirection: "column", justifyContent: "center", gap: "max(22px, 3cqw)", padding: "48px 64px 44px", overflow: "hidden", borderRight: "1px solid #E3E3E3" }}>
         <div>
           <img src="/noteblock-mark.png" alt="" style={{ display: "block", width: "min(620px, 45.6cqw)", marginLeft: "-2.7cqw" }} />
-          <div style={{ fontSize: "clamp(56px, 16cqw, 220px)", fontWeight: 400, letterSpacing: "-0.04em", lineHeight: 0.9, color: "#1F388A", marginTop: "max(6px, 0.8cqw)" }}>noteblock</div>
+          <div style={{ fontSize: "clamp(56px, 16cqw, 220px)", fontWeight: 400, letterSpacing: "-0.04em", lineHeight: 0.9, color: "#000", marginTop: "max(6px, 0.8cqw)" }}>noteblock</div>
           <div style={{ fontSize: "clamp(24px, 4.6cqw, 60px)", fontWeight: 400, lineHeight: 1.25, letterSpacing: "-0.01em", color: "#000", marginTop: 24 }}>keep a record of every record.</div>
           <div style={{ fontSize: "clamp(17px, 2.55cqw, 32px)", color: "#5C5C5C", marginTop: 10 }}>review albums, discover new music, and connect with others</div>
         </div>
@@ -11128,9 +11123,11 @@ function AuthScreen({ backendUrl, onAuthed, embedded }) {
       `}</style>
 
       <div style={{ width: "100%", maxWidth: 360, margin: "0 auto", boxSizing: "border-box" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 9, justifyContent: "center", marginBottom: 28 }}>
-          <img src="/spindex-logo.svg" alt="Spindex" style={{ height: 48, width: "auto" }} />
-        </div>
+        {!embedded && (
+          <div style={{ display: "flex", alignItems: "center", gap: 9, justifyContent: "center", marginBottom: 28 }}>
+            <img src="/spindex-logo.svg" alt="Spindex" style={{ height: 48, width: "auto" }} />
+          </div>
+        )}
 
         <div style={{ display: "flex", border: `1px solid ${INK}`, borderRadius: 0, marginBottom: 22, overflow: "hidden" }}>
           <button
