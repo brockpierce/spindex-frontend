@@ -10861,6 +10861,7 @@ function ShowcaseCompact() {
 function LandingPage({ onAuthed }) {
   const isMobile = typeof window !== "undefined" && window.innerWidth < 900;
   const [showAuth, setShowAuth] = React.useState(false);
+  const [legalTab, setLegalTab] = React.useState(null); // null | "terms" | "privacy"
 
   // The app shell (#root) is a 1126px centered column with centered text and
   // side borders. The landing wants the full viewport, left-aligned — so lift
@@ -10879,6 +10880,10 @@ function LandingPage({ onAuthed }) {
   // Mobile: the CTA buttons route to the full-page existing AuthScreen.
   if (isMobile && showAuth) {
     return <AuthScreen backendUrl={BACKEND_URL} onAuthed={onAuthed} />;
+  }
+  // Mobile: footer links open the legal screen.
+  if (isMobile && legalTab) {
+    return <TermsScreen onBack={() => setLegalTab(null)} initialTab={legalTab} />;
   }
 
   const FONT = "'Helvetica Neue', Helvetica, Arial, sans-serif";
@@ -10906,7 +10911,11 @@ function LandingPage({ onAuthed }) {
         </div>
         {/* footer */}
         <div style={{ padding: "20px 20px 32px", marginTop: "auto" }}>
-          <div style={{ fontSize: 13, color: "#5C5C5C", textAlign: "center" }}>terms of service · privacy policy</div>
+          <div style={{ fontSize: 13, color: "#5C5C5C", textAlign: "center" }}>
+            <span onClick={() => setLegalTab("terms")} style={{ cursor: "pointer", textDecoration: "underline" }}>terms of service</span>
+            {" · "}
+            <span onClick={() => setLegalTab("privacy")} style={{ cursor: "pointer", textDecoration: "underline" }}>privacy policy</span>
+          </div>
         </div>
       </div>
     );
