@@ -10906,7 +10906,7 @@ function LandingPage({ onAuthed }) {
         </div>
         {/* footer */}
         <div style={{ padding: "20px 20px 32px", marginTop: "auto" }}>
-          <div style={{ fontSize: 13, color: "#5C5C5C" }}>terms of service · privacy policy</div>
+          <div style={{ fontSize: 13, color: "#5C5C5C", textAlign: "center" }}>terms of service · privacy policy</div>
         </div>
       </div>
     );
