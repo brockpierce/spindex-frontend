@@ -10888,8 +10888,13 @@ function LandingPage({ onAuthed }) {
     return (
       <div style={{ fontFamily: FONT, background: "#fff", minHeight: "100vh", display: "flex", flexDirection: "column", color: NB.ink }}>
         {marqueeStyle}
+        {/* sticky top bar — compact auth buttons, always visible */}
+        <div style={{ position: "sticky", top: 0, zIndex: 20, background: "#fff", display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 8, padding: "12px 20px 10px" }}>
+          <button onClick={() => setShowAuth(true)} style={{ height: 36, padding: "0 16px", background: "#fff", color: "#000", border: "1px solid #000", fontSize: 15, fontWeight: 400, cursor: "pointer", fontFamily: "inherit", borderRadius: 0 }}>log in</button>
+          <button onClick={() => setShowAuth(true)} style={{ height: 36, padding: "0 16px", background: "#1F388A", color: "#fff", border: "none", fontSize: 15, fontWeight: 400, cursor: "pointer", fontFamily: "inherit", borderRadius: 0 }}>sign up</button>
+        </div>
         {/* hero */}
-        <div style={{ padding: "28px 20px 0" }}>
+        <div style={{ padding: "8px 20px 0" }}>
           <img src="/noteblock-mark.png" alt="" style={{ width: 190, marginLeft: -12, display: "block" }} />
           <div style={{ fontSize: 76, fontWeight: 400, letterSpacing: "-0.04em", lineHeight: 0.9, color: "#000", marginTop: 8 }}>noteblock</div>
           <div style={{ fontSize: 24, fontWeight: 400, lineHeight: 1.25, letterSpacing: "-0.01em", color: "#000", marginTop: 18 }}>keep a record of every record.</div>
@@ -10899,13 +10904,8 @@ function LandingPage({ onAuthed }) {
         <div style={{ marginTop: 36, paddingLeft: 20 }}>
           <NBRatingCarousel cardW={120} gap={14} scoreSize={18} metaSize={12} titleSize={13} labelSize={12} bleedRight={0} />
         </div>
-        {/* buttons */}
-        <div style={{ padding: "36px 20px 0", display: "flex", flexDirection: "column", gap: 12 }}>
-          <button onClick={() => setShowAuth(true)} style={{ height: 50, background: "#1F388A", color: "#fff", border: "none", fontSize: 17, fontWeight: 400, cursor: "pointer", fontFamily: "inherit", borderRadius: 0 }}>sign up</button>
-          <button onClick={() => setShowAuth(true)} style={{ height: 50, background: "#fff", color: "#000", border: "1px solid #000", fontSize: 17, fontWeight: 400, cursor: "pointer", fontFamily: "inherit", borderRadius: 0 }}>log in</button>
-        </div>
         {/* footer */}
-        <div style={{ padding: "8px 20px 32px", marginTop: "auto" }}>
+        <div style={{ padding: "20px 20px 32px", marginTop: "auto" }}>
           <div style={{ fontSize: 13, color: "#5C5C5C" }}>terms of service · privacy policy</div>
         </div>
       </div>
