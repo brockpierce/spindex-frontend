@@ -10706,30 +10706,30 @@ function NBCarousel({ tileSize, gap, duration, maskAt }) {
 // 10), the username, and the album title you want featured. `cover` is the
 // album's cover-art URL. (Seeded with placeholder scores/usernames.)
 const FEATURED_RATINGS = [
-  { cover: "https://spindex-backend.onrender.com/api/albums/covers/dfb85157-313b-3f5f-8739-a5162bcb6345", albumTitle: "Either/Or", score: 10, username: "shalen" },
-  { cover: "https://spindex-backend.onrender.com/api/albums/covers/cec81633-5419-4f92-b0ac-6e9c508a042f", albumTitle: "U", score: 7, username: "cirette" },
-  { cover: "https://spindex-backend.onrender.com/api/albums/covers/970604f0-59e8-36d0-922f-0b7459192c9b", albumTitle: "Oh, Inverted World", score: 8, username: "littleone" },
-  { cover: "https://spindex-backend.onrender.com/api/albums/covers/24fd0887-9e83-42e3-b27e-e7f89ead4c03", albumTitle: "Norman Fucking Rockwell!", score: 10, username: "mairead" },
-  { cover: "https://spindex-backend.onrender.com/api/albums/covers/3c18308c-9072-4810-b26e-0c573e46fb07", albumTitle: "Getting Killed", score: 7, username: "gabelewis" },
-  { cover: "https://spindex-backend.onrender.com/api/albums/covers/b1392450-e666-3926-a536-22c65f834433", albumTitle: "OK Computer", score: 10, username: "catroad" },
-  { cover: "https://spindex-backend.onrender.com/api/albums/covers/9ba97882-489e-41c1-a0b4-a7c7749716e7", albumTitle: "Some Rap Songs", score: 9, username: "aaron" },
-  { cover: "https://spindex-backend.onrender.com/api/albums/covers/df8630a6-e0b5-3504-92d3-9f8c474c2da1", albumTitle: "Delaware", score: 4, username: "george" },
-  { cover: "https://spindex-backend.onrender.com/api/albums/covers/77cf47ba-58cd-3f3d-a5f9-79bf89860421", albumTitle: "A Love Supreme", score: 8, username: "ahmed" },
-  { cover: "https://spindex-backend.onrender.com/api/albums/covers/225de0e3-30af-3698-9a8f-e393a6abd0bf", albumTitle: "Ask Me Tomorrow", score: 8, username: "babyspice666" },
-  { cover: "https://spindex-backend.onrender.com/api/albums/covers/18564a20-d557-4f7c-81e7-8d1d40a1be55", albumTitle: "Be the Cowboy", score: 2, username: "ambent" },
-  { cover: "https://spindex-backend.onrender.com/api/albums/covers/99b74f6b-49e6-37a9-8caf-e4d03533622d", albumTitle: "You’d Prefer an Astronaut", score: 9, username: "supasus" },
-  { cover: "https://spindex-backend.onrender.com/api/albums/covers/5436e902-e53d-3ab8-82b7-3b96a04d6f40", albumTitle: "Prince", score: 9, username: "cami" },
-  { cover: "https://spindex-backend.onrender.com/api/albums/covers/778e2320-736e-4634-ae65-354d408c40e9", albumTitle: "Essex Honey", score: 8, username: "s" },
-  { cover: "https://spindex-backend.onrender.com/api/albums/covers/d2a139bb-26ec-4ee9-b277-ab5bcd0d1127", albumTitle: "Who’s the Clown?", score: 8, username: "yesenia" },
-  { cover: "https://spindex-backend.onrender.com/api/albums/covers/40a8bbb9-667a-4878-beb7-05b4fdffa92d", albumTitle: "Oh yeah?", score: 6, username: "nintendog" },
-  { cover: "https://spindex-backend.onrender.com/api/albums/covers/95f2ba4b-2dd9-38d1-8158-a416a391489c", albumTitle: "Yankee Hotel Foxtrot", score: 8, username: "arlen" },
-  { cover: "https://spindex-backend.onrender.com/api/albums/covers/a9b6e76b-190b-4802-b120-ddef0fd852b7", albumTitle: "Heavy Metal", score: 10, username: "matthew" },
-  { cover: "https://spindex-backend.onrender.com/api/albums/covers/cf75fd5a-ca84-4371-94d7-27410360f06b", albumTitle: "Punisher", score: 7, username: "trey" },
-  { cover: "https://spindex-backend.onrender.com/api/albums/covers/5cbcdd9f-4b7d-3b3c-b9f2-6b0e75971157", albumTitle: "Sound of Silver", score: 10, username: "brock" },
-  { cover: "https://spindex-backend.onrender.com/api/albums/covers/e0fdb431-0109-420d-8a37-f99eaeb4d671", albumTitle: "brat", score: 9, username: "aoster" },
-  { cover: "https://spindex-backend.onrender.com/api/albums/covers/84d79dbe-7ac1-3ebc-9b36-238ddfb8229c", albumTitle: "Richard D. James Album", score: 9, username: "trey" },
-  { cover: "https://spindex-backend.onrender.com/api/albums/covers/f08d9681-9870-35ca-adcc-6a830f9650f9", albumTitle: "Love Is Overtaking Me", score: 8, username: "jamie" },
-  { cover: "https://spindex-backend.onrender.com/api/albums/covers/1b26af73-11ba-407b-95c2-1a0b3c09b9ea", albumTitle: "HOSONO HOUSE", score: 10, username: "peeman" },
+  { cover: "/featured/dfb85157-313b-3f5f-8739-a5162bcb6345.jpg", albumTitle: "Either/Or", score: 10, username: "shalen" },
+  { cover: "/featured/cec81633-5419-4f92-b0ac-6e9c508a042f.jpg", albumTitle: "U", score: 7, username: "cirette" },
+  { cover: "/featured/970604f0-59e8-36d0-922f-0b7459192c9b.jpg", albumTitle: "Oh, Inverted World", score: 8, username: "littleone" },
+  { cover: "/featured/24fd0887-9e83-42e3-b27e-e7f89ead4c03.jpg", albumTitle: "Norman Fucking Rockwell!", score: 10, username: "mairead" },
+  { cover: "/featured/3c18308c-9072-4810-b26e-0c573e46fb07.jpg", albumTitle: "Getting Killed", score: 7, username: "gabelewis" },
+  { cover: "/featured/b1392450-e666-3926-a536-22c65f834433.jpg", albumTitle: "OK Computer", score: 10, username: "catroad" },
+  { cover: "/featured/9ba97882-489e-41c1-a0b4-a7c7749716e7.jpg", albumTitle: "Some Rap Songs", score: 9, username: "aaron" },
+  { cover: "/featured/df8630a6-e0b5-3504-92d3-9f8c474c2da1.jpg", albumTitle: "Delaware", score: 4, username: "george" },
+  { cover: "/featured/77cf47ba-58cd-3f3d-a5f9-79bf89860421.jpg", albumTitle: "A Love Supreme", score: 8, username: "ahmed" },
+  { cover: "/featured/225de0e3-30af-3698-9a8f-e393a6abd0bf.jpg", albumTitle: "Ask Me Tomorrow", score: 8, username: "babyspice666" },
+  { cover: "/featured/18564a20-d557-4f7c-81e7-8d1d40a1be55.jpg", albumTitle: "Be the Cowboy", score: 2, username: "ambent" },
+  { cover: "/featured/99b74f6b-49e6-37a9-8caf-e4d03533622d.jpg", albumTitle: "You’d Prefer an Astronaut", score: 9, username: "supasus" },
+  { cover: "/featured/5436e902-e53d-3ab8-82b7-3b96a04d6f40.jpg", albumTitle: "Prince", score: 9, username: "cami" },
+  { cover: "/featured/778e2320-736e-4634-ae65-354d408c40e9.jpg", albumTitle: "Essex Honey", score: 8, username: "s" },
+  { cover: "/featured/d2a139bb-26ec-4ee9-b277-ab5bcd0d1127.jpg", albumTitle: "Who’s the Clown?", score: 8, username: "yesenia" },
+  { cover: "/featured/40a8bbb9-667a-4878-beb7-05b4fdffa92d.jpg", albumTitle: "Oh yeah?", score: 6, username: "nintendog" },
+  { cover: "/featured/95f2ba4b-2dd9-38d1-8158-a416a391489c.jpg", albumTitle: "Yankee Hotel Foxtrot", score: 8, username: "arlen" },
+  { cover: "/featured/a9b6e76b-190b-4802-b120-ddef0fd852b7.jpg", albumTitle: "Heavy Metal", score: 10, username: "matthew" },
+  { cover: "/featured/cf75fd5a-ca84-4371-94d7-27410360f06b.jpg", albumTitle: "Punisher", score: 7, username: "trey" },
+  { cover: "/featured/5cbcdd9f-4b7d-3b3c-b9f2-6b0e75971157.jpg", albumTitle: "Sound of Silver", score: 10, username: "brock" },
+  { cover: "/featured/e0fdb431-0109-420d-8a37-f99eaeb4d671.jpg", albumTitle: "brat", score: 9, username: "aoster" },
+  { cover: "/featured/84d79dbe-7ac1-3ebc-9b36-238ddfb8229c.jpg", albumTitle: "Richard D. James Album", score: 9, username: "trey" },
+  { cover: "/featured/f08d9681-9870-35ca-adcc-6a830f9650f9.jpg", albumTitle: "Love Is Overtaking Me", score: 8, username: "jamie" },
+  { cover: "/featured/1b26af73-11ba-407b-95c2-1a0b3c09b9ea.jpg", albumTitle: "HOSONO HOUSE", score: 10, username: "peeman" },
 ];
 
 // Ratings carousel for the landing hero. Continuous marquee (pauses on hover,
@@ -10746,7 +10746,7 @@ function NBRatingCarousel({ cardW, gap, scoreSize, metaSize, titleSize, labelSiz
           {items.map((r, i) => (
             <div key={i} style={{ width: cardW, flex: "0 0 auto", display: "flex", flexDirection: "column", gap: 6 }}>
               <div style={{ width: "100%", aspectRatio: "1/1", border: "1px solid #E3E3E3", background: NB.boxLoad, overflow: "hidden" }}>
-                <img src={r.cover} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} loading="lazy" />
+                <img src={r.cover} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} loading="eager" decoding="async" />
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 6 }}>
                 <span style={{ fontSize: scoreSize, fontWeight: 700, color: "#1F388A" }}>{r.score}/10</span>
