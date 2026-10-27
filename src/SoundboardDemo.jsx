@@ -1138,13 +1138,14 @@ function RatingBlocks({ value, onChange, size = 14 }) {
   );
 }
 
-function AlbumCover({ album, size = 92, listened = false, fluid = false }) {
+function AlbumCover({ album, size = 92, listened = false, fluid = false, bordered = false }) {
   const { BLUE } = useTheme();
   const rawUrl = album?.coverArtUrl && album.coverArtUrl !== "none" ? album.coverArtUrl.replace("http://", "https://") : null;
   const [imgFailed, setImgFailed] = useState(false);
   useEffect(() => { setImgFailed(false); }, [rawUrl]);
   const coverUrl = imgFailed ? null : rawUrl;
   const radius = 0; // squared per redesign
+  const edge = bordered ? { border: "1px solid #000" } : null; // 1px black border (default-theme profile covers)
   const offset = Math.round(size * 0.06);
   const pill = listened ? (
     <span
@@ -1178,7 +1179,7 @@ function AlbumCover({ album, size = 92, listened = false, fluid = false }) {
 
   if (coverUrl) {
     return (
-      <div style={fluid ? { position: "relative", width: "100%", aspectRatio: "1 / 1" } : { position: "relative", width: size, height: size, flexShrink: 0 }}>
+      <div style={fluid ? { position: "relative", width: "100%", aspectRatio: "1 / 1", ...edge } : { position: "relative", width: size, height: size, flexShrink: 0, ...edge }}>
         <img
           src={coverUrl}
           alt=""
@@ -1212,6 +1213,7 @@ function AlbumCover({ album, size = 92, listened = false, fluid = false }) {
         alignItems: "center",
         justifyContent: "center",
         flexShrink: 0,
+        ...edge,
       }}
     >
       <HeadphoneMark size={size * 0.4} color="#fff" />
@@ -5268,7 +5270,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                           {(user.profileTheme === "terminal" || user.profileTheme === "geocities") ? (
                             <div className="pf-card" style={{ display: "inline-block", lineHeight: 0 }}><AlbumCover album={fAlbum} size={favSize} /></div>
                           ) : (
-                            <AlbumCover album={fAlbum} size={favSize} />
+                            <AlbumCover album={fAlbum} size={favSize} bordered={!user.profileTheme} />
                           )}
                           <div className="ui-sans" style={{ fontSize: isMobile ? 11.5 : 13, fontWeight: 400, marginTop: 8 }}>{fAlbum.title}</div>
                         </div>
@@ -5286,7 +5288,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                     return (
                       <div key={i} onClick={() => openListenEntry(r, viewedUser && authUser && viewedUser.id === authUser.id)} style={{ display: "flex", gap: 14, cursor: "pointer", position: "relative" }}>
                         <div className="ui-sans" style={{ position: "absolute", top: 0, right: 0, fontSize: 11, color: MUTE }}>{relativeDate(r.date)}</div>
-                        <AlbumCover album={album} size={88} />
+                        <AlbumCover album={album} size={88} bordered={!user.profileTheme} />
                         <div className="ui-sans" style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                             <div style={{ fontSize: 20, fontWeight: 700, color: BLUE, letterSpacing: "-0.01em", lineHeight: 1.1, textAlign: "left" }}>{r.rating}/10</div>
@@ -6737,7 +6739,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                         {(profile.profileTheme === "terminal" || profile.profileTheme === "geocities") ? (
                           <div className="pf-card" style={{ display: "inline-block", lineHeight: 0 }}><AlbumCover album={album} size={favSize} /></div>
                         ) : (
-                          <AlbumCover album={album} size={favSize} />
+                          <AlbumCover album={album} size={favSize} bordered={!profile.profileTheme} />
                         )}
                       </div>
                       <div
@@ -6812,7 +6814,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                           <X size={14} />
                         </button>
                       </div>
-                      <AlbumCover album={album} size={88} />
+                      <AlbumCover album={album} size={88} bordered={!profile.profileTheme} />
                       <div className="ui-sans" style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                           <div style={{ fontSize: 20, fontWeight: 700, color: BLUE, letterSpacing: "-0.01em", lineHeight: 1.1, textAlign: "left" }}>{r.rating}/10</div>
@@ -10700,6 +10702,65 @@ function NBCarousel({ tileSize, gap, duration, maskAt }) {
   );
 }
 
+// Handpicked ratings for the landing carousel. EDIT THIS: set the score (out of
+// 10), the username, and the album title you want featured. `cover` is the
+// album's cover-art URL. (Seeded with placeholder scores/usernames.)
+const FEATURED_RATINGS = [
+  { cover: "https://spindex-backend.onrender.com/api/albums/covers/dfb85157-313b-3f5f-8739-a5162bcb6345", albumTitle: "Either/Or", score: 10, username: "shalen" },
+  { cover: "https://spindex-backend.onrender.com/api/albums/covers/cec81633-5419-4f92-b0ac-6e9c508a042f", albumTitle: "U", score: 7, username: "cirette" },
+  { cover: "https://spindex-backend.onrender.com/api/albums/covers/970604f0-59e8-36d0-922f-0b7459192c9b", albumTitle: "Oh, Inverted World", score: 8, username: "littleone" },
+  { cover: "https://spindex-backend.onrender.com/api/albums/covers/24fd0887-9e83-42e3-b27e-e7f89ead4c03", albumTitle: "Norman Fucking Rockwell!", score: 10, username: "mairead" },
+  { cover: "https://spindex-backend.onrender.com/api/albums/covers/3c18308c-9072-4810-b26e-0c573e46fb07", albumTitle: "Getting Killed", score: 7, username: "gabelewis" },
+  { cover: "https://spindex-backend.onrender.com/api/albums/covers/b1392450-e666-3926-a536-22c65f834433", albumTitle: "OK Computer", score: 10, username: "catroad" },
+  { cover: "https://spindex-backend.onrender.com/api/albums/covers/9ba97882-489e-41c1-a0b4-a7c7749716e7", albumTitle: "Some Rap Songs", score: 9, username: "aaron" },
+  { cover: "https://spindex-backend.onrender.com/api/albums/covers/df8630a6-e0b5-3504-92d3-9f8c474c2da1", albumTitle: "Delaware", score: 4, username: "george" },
+  { cover: "https://spindex-backend.onrender.com/api/albums/covers/77cf47ba-58cd-3f3d-a5f9-79bf89860421", albumTitle: "A Love Supreme", score: 8, username: "ahmed" },
+  { cover: "https://spindex-backend.onrender.com/api/albums/covers/225de0e3-30af-3698-9a8f-e393a6abd0bf", albumTitle: "Ask Me Tomorrow", score: 8, username: "babyspice666" },
+  { cover: "https://spindex-backend.onrender.com/api/albums/covers/18564a20-d557-4f7c-81e7-8d1d40a1be55", albumTitle: "Be the Cowboy", score: 2, username: "ambent" },
+  { cover: "https://spindex-backend.onrender.com/api/albums/covers/99b74f6b-49e6-37a9-8caf-e4d03533622d", albumTitle: "You’d Prefer an Astronaut", score: 9, username: "supasus" },
+  { cover: "https://spindex-backend.onrender.com/api/albums/covers/5436e902-e53d-3ab8-82b7-3b96a04d6f40", albumTitle: "Prince", score: 9, username: "cami" },
+  { cover: "https://spindex-backend.onrender.com/api/albums/covers/778e2320-736e-4634-ae65-354d408c40e9", albumTitle: "Essex Honey", score: 8, username: "s" },
+  { cover: "https://spindex-backend.onrender.com/api/albums/covers/d2a139bb-26ec-4ee9-b277-ab5bcd0d1127", albumTitle: "Who’s the Clown?", score: 8, username: "yesenia" },
+  { cover: "https://spindex-backend.onrender.com/api/albums/covers/40a8bbb9-667a-4878-beb7-05b4fdffa92d", albumTitle: "Oh yeah?", score: 6, username: "nintendog" },
+  { cover: "https://spindex-backend.onrender.com/api/albums/covers/95f2ba4b-2dd9-38d1-8158-a416a391489c", albumTitle: "Yankee Hotel Foxtrot", score: 8, username: "arlen" },
+  { cover: "https://spindex-backend.onrender.com/api/albums/covers/a9b6e76b-190b-4802-b120-ddef0fd852b7", albumTitle: "Heavy Metal", score: 10, username: "matthew" },
+  { cover: "https://spindex-backend.onrender.com/api/albums/covers/cf75fd5a-ca84-4371-94d7-27410360f06b", albumTitle: "Punisher", score: 7, username: "trey" },
+  { cover: "https://spindex-backend.onrender.com/api/albums/covers/5cbcdd9f-4b7d-3b3c-b9f2-6b0e75971157", albumTitle: "Sound of Silver", score: 10, username: "brock" },
+  { cover: "https://spindex-backend.onrender.com/api/albums/covers/e0fdb431-0109-420d-8a37-f99eaeb4d671", albumTitle: "brat", score: 9, username: "aoster" },
+  { cover: "https://spindex-backend.onrender.com/api/albums/covers/84d79dbe-7ac1-3ebc-9b36-238ddfb8229c", albumTitle: "Richard D. James Album", score: 9, username: "trey" },
+  { cover: "https://spindex-backend.onrender.com/api/albums/covers/f08d9681-9870-35ca-adcc-6a830f9650f9", albumTitle: "Love Is Overtaking Me", score: 8, username: "jamie" },
+  { cover: "https://spindex-backend.onrender.com/api/albums/covers/1b26af73-11ba-407b-95c2-1a0b3c09b9ea", albumTitle: "HOSONO HOUSE", score: 10, username: "peeman" },
+];
+
+// Ratings carousel for the landing hero. Continuous marquee (pauses on hover,
+// stops under prefers-reduced-motion). Track bleeds off the right edge.
+function NBRatingCarousel({ cardW, gap, scoreSize, metaSize, titleSize, labelSize, bleedRight }) {
+  const items = [...FEATURED_RATINGS, ...FEATURED_RATINGS];
+  const dur = Math.max(28, Math.round(FEATURED_RATINGS.length * 2.6));
+  const rightMask = "linear-gradient(90deg, #000 86%, transparent)";
+  return (
+    <div style={{ marginRight: bleedRight ? -bleedRight : 0 }}>
+      <div style={{ fontSize: labelSize, letterSpacing: "0.08em", color: "#5C5C5C", fontWeight: 400 }}>RATED ON NOTEBLOCK</div>
+      <div className="nb-carousel" style={{ overflow: "hidden", marginTop: 14, WebkitMaskImage: rightMask, maskImage: rightMask }}>
+        <div className="nb-track nb-no-motion" style={{ display: "flex", gap, width: "max-content", animation: `nb-marquee ${dur}s linear infinite` }}>
+          {items.map((r, i) => (
+            <div key={i} style={{ width: cardW, flex: "0 0 auto", display: "flex", flexDirection: "column", gap: 6 }}>
+              <div style={{ width: "100%", aspectRatio: "1/1", border: "1px solid #E3E3E3", background: NB.boxLoad, overflow: "hidden" }}>
+                <img src={r.cover} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} loading="lazy" />
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 6 }}>
+                <span style={{ fontSize: scoreSize, fontWeight: 700, color: "#1F388A" }}>{r.score}/10</span>
+                <span style={{ fontSize: metaSize, color: "#5C5C5C", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>@{r.username}</span>
+              </div>
+              <div style={{ fontSize: titleSize, fontWeight: 700, color: "#000", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{r.albumTitle}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Fetches real avatars live and renders the curated showcase (feature review,
 // real thread, compact review). Avatars load progressively (large base64 blobs).
 function useShowcaseAvatars() {
@@ -10801,71 +10862,78 @@ function ShowcaseCompact() {
 function LandingPage({ onAuthed }) {
   const isMobile = typeof window !== "undefined" && window.innerWidth < 900;
   const [showAuth, setShowAuth] = React.useState(false);
-  const avatars = useShowcaseAvatars();
 
-  // Mobile: CTA routes to the full-page existing AuthScreen
+  // The app shell (#root) is a 1126px centered column with centered text and
+  // side borders. The landing wants the full viewport, left-aligned — so lift
+  // those constraints while it's shown, and restore them on login.
+  React.useEffect(() => {
+    const root = document.getElementById("root");
+    if (!root) return;
+    const prev = { width: root.style.width, maxWidth: root.style.maxWidth, textAlign: root.style.textAlign, borderInline: root.style.borderInline };
+    root.style.width = "100%";
+    root.style.maxWidth = "100%";
+    root.style.textAlign = "left";
+    root.style.borderInline = "none";
+    return () => { Object.assign(root.style, prev); };
+  }, []);
+
+  // Mobile: the CTA buttons route to the full-page existing AuthScreen.
   if (isMobile && showAuth) {
     return <AuthScreen backendUrl={BACKEND_URL} onAuthed={onAuthed} />;
   }
 
-  const wordmark = (nameSize) => (
-    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-      <img src="/spindex-logo.svg" alt="noteblock" style={{ width: 30, height: 30, objectFit: "contain" }} />
-    </div>
-  );
-
-  const marqueeStyle = <style>{`@keyframes nb-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } } @media (prefers-reduced-motion: reduce) { .nb-no-motion { animation: none !important; } }`}</style>;
+  const FONT = "'Helvetica Neue', Helvetica, Arial, sans-serif";
+  const marqueeStyle = <style>{`@keyframes nb-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } } .nb-carousel:hover .nb-track { animation-play-state: paused; } @media (prefers-reduced-motion: reduce) { .nb-no-motion { animation: none !important; } }`}</style>;
 
   if (isMobile) {
     return (
-      <div style={{ fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", background: NB.page, minHeight: "100vh", display: "flex", flexDirection: "column", color: NB.ink }}>
+      <div style={{ fontFamily: FONT, background: "#fff", minHeight: "100vh", display: "flex", flexDirection: "column", color: NB.ink }}>
         {marqueeStyle}
-        <div style={{ padding: "20px 22px 0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          {wordmark(17)}
-          <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
-            <span onClick={() => setShowAuth(true)} style={{ fontSize: 15, color: NB.ink, textDecoration: "underline", cursor: "pointer" }}>log in</span>
-            <span onClick={() => setShowAuth(true)} style={{ fontSize: 15, color: NB.ink, textDecoration: "underline", cursor: "pointer" }}>sign up</span>
-          </div>
+        {/* top bar — logo only */}
+        <div style={{ height: 64, display: "flex", alignItems: "center", padding: "0 20px", flexShrink: 0 }}>
+          <img src="/noteblock-mark.png" alt="noteblock" style={{ height: 30, width: "auto", display: "block" }} />
         </div>
-        <div style={{ padding: "30px 22px 16px", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 14 }}>
-          <span style={{ fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontWeight: 400, fontSize: 22, letterSpacing: "-0.02em", color: "#111112" }}>noteblock</span>
-          <h1 style={{ fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontWeight: 700, color: "#000000", fontSize: 34, lineHeight: 1.0, letterSpacing: "-0.03em", margin: 0 }}>keep a record of<br/>every record</h1>
-          <p style={{ fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontSize: 11, lineHeight: 1.4, color: NB.body, margin: 0, textAlign: "center", whiteSpace: "nowrap" }}>review albums, discover new music, and connect with others</p>
+        {/* hero */}
+        <div style={{ padding: "20px 20px 0" }}>
+          <img src="/noteblock-mark.png" alt="" style={{ width: 190, marginLeft: -12, display: "block" }} />
+          <div style={{ fontSize: 76, fontWeight: 400, letterSpacing: "-0.04em", lineHeight: 0.9, color: "#1F388A", marginTop: 8 }}>noteblock</div>
+          <div style={{ fontSize: 24, fontWeight: 400, lineHeight: 1.25, letterSpacing: "-0.01em", color: "#000", marginTop: 18 }}>keep a record of every record.</div>
+          <div style={{ fontSize: 16, lineHeight: 1.4, color: "#5C5C5C", marginTop: 8 }}>review albums, discover new music, and connect with others</div>
         </div>
-        <div style={{ padding: "2px 0 18px" }}><NBCarousel tileSize={100} gap={9} duration={28} maskAt={10} /></div>
-        <div style={{ padding: "0 22px 18px", flex: 1, display: "flex", flexDirection: "column", gap: 10 }}>
-          <ShowcaseFeedReview avatars={avatars} />
-          <ShowcaseThread avatars={avatars} />
+        {/* carousel (bleeds off the right edge) */}
+        <div style={{ marginTop: 36, paddingLeft: 20 }}>
+          <NBRatingCarousel cardW={120} gap={14} scoreSize={18} metaSize={12} titleSize={13} labelSize={12} bleedRight={0} />
         </div>
-
+        {/* buttons */}
+        <div style={{ padding: "36px 20px 0", display: "flex", flexDirection: "column", gap: 12 }}>
+          <button onClick={() => setShowAuth(true)} style={{ height: 50, background: "#1F388A", color: "#fff", border: "none", fontSize: 17, fontWeight: 400, cursor: "pointer", fontFamily: "inherit", borderRadius: 0 }}>sign up</button>
+          <button onClick={() => setShowAuth(true)} style={{ height: 50, background: "#fff", color: "#000", border: "1px solid #000", fontSize: 17, fontWeight: 400, cursor: "pointer", fontFamily: "inherit", borderRadius: 0 }}>log in</button>
+        </div>
+        {/* footer */}
+        <div style={{ padding: "8px 20px 32px", marginTop: "auto" }}>
+          <div style={{ fontSize: 13, color: "#5C5C5C" }}>terms of service · privacy policy</div>
+        </div>
       </div>
     );
   }
 
-  // Desktop 4a
+  // Desktop: full-viewport two columns (7fr hero / 5fr auth form).
   return (
-    <div style={{ fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", background: NB.page, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: NB.ink }}>
+    <div style={{ fontFamily: FONT, minHeight: "100vh", display: "grid", gridTemplateColumns: "7fr 5fr", color: NB.ink, background: "#fff" }}>
       {marqueeStyle}
-      <div style={{ display: "grid", gridTemplateColumns: "1.15fr 1fr", minHeight: 760, width: "100%", maxWidth: 1160, border: `1px solid ${NB.border}` }}>
-        <div style={{ display: "flex", flexDirection: "column", borderRight: `1px solid ${NB.hair}`, overflow: "hidden" }}>
-          <div style={{ padding: "44px 44px 0" }}>{wordmark(19)}</div>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", padding: "40px 44px 0" }}>
-            <span style={{ fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontWeight: 400, fontSize: 36, letterSpacing: "-0.02em", color: "#111112" }}>noteblock</span>
-            <h1 style={{ fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontWeight: 700, color: "#000000", fontSize: 64, lineHeight: 0.95, letterSpacing: "-0.035em", margin: "18px 0 0" }}>keep a record of<br/>every record</h1>
-            <p style={{ fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontSize: 15, lineHeight: 1.5, color: NB.body, margin: "18px 0 0", textAlign: "center", whiteSpace: "nowrap" }}>review albums, discover new music, and connect with others</p>
-          </div>
-          <div style={{ padding: "28px 0 32px" }}><NBCarousel tileSize={104} gap={10} duration={34} maskAt={7} /></div>
-          <div style={{ padding: "0 44px 44px", flex: 1, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-            <ShowcaseFeature />
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              <ShowcaseThread avatars={avatars} />
-              <ShowcaseFeedReview avatars={avatars} />
-            </div>
-          </div>
+      {/* left — hero + ratings carousel */}
+      <div style={{ containerType: "inline-size", display: "flex", flexDirection: "column", justifyContent: "center", gap: "max(40px, 6.4cqw)", padding: "48px 64px 44px", overflow: "hidden", borderRight: "1px solid #E3E3E3" }}>
+        <div>
+          <img src="/noteblock-mark.png" alt="" style={{ display: "block", width: "min(620px, 45.6cqw)", marginLeft: "-2.7cqw" }} />
+          <div style={{ fontSize: "clamp(56px, 16cqw, 220px)", fontWeight: 400, letterSpacing: "-0.04em", lineHeight: 0.9, color: "#1F388A", marginTop: "max(6px, 0.8cqw)" }}>noteblock</div>
+          <div style={{ fontSize: "clamp(24px, 4.6cqw, 60px)", fontWeight: 400, lineHeight: 1.25, letterSpacing: "-0.01em", color: "#000", marginTop: 24 }}>keep a record of every record.</div>
+          <div style={{ fontSize: "clamp(17px, 2.55cqw, 32px)", color: "#5C5C5C", marginTop: 10 }}>review albums, discover new music, and connect with others</div>
         </div>
-        <div style={{ background: "#fff", padding: 44, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
-          <AuthScreen backendUrl={BACKEND_URL} onAuthed={onAuthed} embedded />
-        </div>
+        <NBRatingCarousel cardW="max(120px, 18.23cqw)" gap="max(14px, 2.41cqw)" scoreSize="max(18px, 2.68cqw)" metaSize="max(12px, 1.74cqw)" titleSize="max(13px, 1.88cqw)" labelSize="max(12px, 1.74cqw)" bleedRight={64} />
+      </div>
+      {/* right — existing auth form */}
+      <div style={{ containerType: "inline-size", background: "#fff", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: 48 }}>
+        <AuthScreen backendUrl={BACKEND_URL} onAuthed={onAuthed} embedded />
       </div>
     </div>
   );
