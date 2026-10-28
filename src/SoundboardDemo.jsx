@@ -660,7 +660,7 @@ function MixCoverStack({ albums = [], fetchedAlbums = {}, albumById, size = 80 }
     <div style={{ position: "relative", width: size, height: size, flexShrink: 0 }}>
       {covers.map((a, idx) => (
         <div key={a.albumId} style={{ position: "absolute", left: idx * offset, top: idx * offset, zIndex: 3 - idx, borderRadius: 0, overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,0.15)", width: cardSize, height: cardSize }}>
-          <AlbumCover album={(fetchedAlbums[a.albumId] || (albumById && albumById(a.albumId)))} size={cardSize} />
+          <AlbumCover album={(fetchedAlbums[a.albumId] || a.album || (albumById && albumById(a.albumId)))} size={cardSize} />
         </div>
       ))}
       {covers.length === 0 && <div style={{ width: cardSize, height: cardSize, background: "#ddd", borderRadius: 0 }} />}
