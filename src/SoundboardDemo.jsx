@@ -216,6 +216,115 @@ function compressImageFile(file, maxDim = 400, quality = 0.82) {
   });
 }
 
+// Instagram/Twitter-style avatar cropper. Drag to pan, slider (or wheel) to
+// zoom, circular guide shows the final crop. Outputs a centered square JPEG so
+// it reads correctly in both the round and square (themed) avatar frames.
+function AvatarCropModal({ src, onCancel, onApply }) {
+  const { BLUE, INK, MUTE, LINE, BG } = useTheme();
+  const VIEW = useMemo(() => Math.min(300, (typeof window !== "undefined" ? window.innerWidth : 360) - 72), []);
+  const OUT = 400;
+  const [img, setImg] = useState(null);
+  const [minScale, setMinScale] = useState(1);
+  const [scale, setScale] = useState(1);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const drag = useRef(null);
+
+  const clamp = (off, s) => {
+    if (!img) return off;
+    const w = img.naturalWidth * s, h = img.naturalHeight * s;
+    return { x: Math.min(0, Math.max(VIEW - w, off.x)), y: Math.min(0, Math.max(VIEW - h, off.y)) };
+  };
+
+  useEffect(() => {
+    if (!src) return;
+    const image = new Image();
+    image.onload = () => {
+      const cover = Math.max(VIEW / image.naturalWidth, VIEW / image.naturalHeight);
+      setImg(image);
+      setMinScale(cover);
+      setScale(cover);
+      setOffset({ x: (VIEW - image.naturalWidth * cover) / 2, y: (VIEW - image.naturalHeight * cover) / 2 });
+    };
+    image.src = src;
+  }, [src, VIEW]);
+
+  function zoomTo(next) {
+    if (!img) return;
+    const s = Math.max(minScale, Math.min(minScale * 4, next));
+    const ratio = s / scale;
+    const c = VIEW / 2;
+    const nx = c - (c - offset.x) * ratio;
+    const ny = c - (c - offset.y) * ratio;
+    setScale(s);
+    setOffset(clamp({ x: nx, y: ny }, s));
+  }
+
+  function onDown(e) {
+    e.preventDefault();
+    try { e.currentTarget.setPointerCapture(e.pointerId); } catch (_) {}
+    drag.current = { x: e.clientX, y: e.clientY, bx: offset.x, by: offset.y };
+  }
+  function onMove(e) {
+    if (!drag.current) return;
+    setOffset(clamp({ x: drag.current.bx + (e.clientX - drag.current.x), y: drag.current.by + (e.clientY - drag.current.y) }, scale));
+  }
+  function onUp() { drag.current = null; }
+
+  function apply() {
+    if (!img) return;
+    const canvas = document.createElement("canvas");
+    canvas.width = OUT; canvas.height = OUT;
+    const ctx = canvas.getContext("2d");
+    const sx = -offset.x / scale, sy = -offset.y / scale, sSize = VIEW / scale;
+    ctx.drawImage(img, sx, sy, sSize, sSize, 0, 0, OUT, OUT);
+    onApply(canvas.toDataURL("image/jpeg", 0.85));
+  }
+
+  return (
+    <div onClick={onCancel} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      <div onClick={(e) => e.stopPropagation()} className="ui-sans" style={{ background: BG, border: "1px solid " + INK, borderRadius: 0, padding: 20, width: "100%", maxWidth: VIEW + 40, boxSizing: "border-box" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+          <div style={{ fontSize: 14, fontWeight: 400, color: INK }}>crop photo</div>
+          <button onClick={onCancel} style={{ background: "none", border: "none", cursor: "pointer", color: MUTE, padding: 0 }}><X size={16} /></button>
+        </div>
+        <div
+          onPointerDown={onDown}
+          onPointerMove={onMove}
+          onPointerUp={onUp}
+          onPointerCancel={onUp}
+          onWheel={(e) => { zoomTo(scale * (e.deltaY < 0 ? 1.08 : 0.92)); }}
+          style={{ position: "relative", width: VIEW, height: VIEW, margin: "0 auto", overflow: "hidden", background: "#000", touchAction: "none", cursor: drag.current ? "grabbing" : "grab", userSelect: "none" }}
+        >
+          {img && (
+            <img
+              src={src}
+              alt=""
+              draggable={false}
+              style={{ position: "absolute", left: offset.x, top: offset.y, width: img.naturalWidth * scale, height: img.naturalHeight * scale, maxWidth: "none", pointerEvents: "none", display: "block" }}
+            />
+          )}
+          {/* circular crop guide — dims everything outside the circle */}
+          <div style={{ position: "absolute", inset: 0, borderRadius: "50%", boxShadow: "0 0 0 9999px rgba(0,0,0,0.45)", pointerEvents: "none" }} />
+          <div style={{ position: "absolute", inset: 0, borderRadius: "50%", border: "2px solid rgba(255,255,255,0.9)", pointerEvents: "none" }} />
+        </div>
+        <input
+          type="range"
+          min={minScale}
+          max={minScale * 4}
+          step={minScale / 100}
+          value={scale}
+          onChange={(e) => zoomTo(parseFloat(e.target.value))}
+          style={{ width: VIEW, display: "block", margin: "16px auto 0", accentColor: BLUE }}
+        />
+        <div style={{ display: "flex", gap: 8, marginTop: 16, justifyContent: "flex-end" }}>
+          <button className="sb-btn" onClick={onCancel}>cancel</button>
+          <button className="sb-btn sb-btn-solid" onClick={apply}>save photo</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Same as compressImageFile but also returns the output pixel dimensions, so
 // callers can store width/height for feed layout. Used for post images.
 async function compressImageWithDims(file, maxDim = 1200, quality = 0.8) {
@@ -1318,21 +1427,25 @@ export default function SoundboardDemo() {
   // and the real backend doesn't have an upload endpoint for this yet.
   const [avatarUrl, setAvatarUrl] = useState(null);
   const [draftAvatarUrl, setDraftAvatarUrl] = useState(null);
+  const [avatarCropSrc, setAvatarCropSrc] = useState(null); // image awaiting crop
   const avatarFileInputRef = useRef(null);
 
   function handleAvatarFile(e) {
     const file = e.target.files && e.target.files[0];
+    if (e.target) e.target.value = ""; // let the same file be re-picked later
     if (!file) return;
     if (!file.type.startsWith("image/")) {
       flash("Please choose an image file");
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      flash("Image is too large -- try one under 5MB");
+    if (file.size > 10 * 1024 * 1024) {
+      flash("Image is too large -- try one under 10MB");
       return;
     }
-    compressImageFile(file, 400, 0.82)
-      .then((dataUrl) => setDraftAvatarUrl(dataUrl))
+    // Pre-scale to a crop-friendly size, then open the cropper. The cropper
+    // outputs the final centered 400px square.
+    compressImageFile(file, 1200, 0.92)
+      .then((dataUrl) => setAvatarCropSrc(dataUrl))
       .catch((err) => flash(err.message || "Couldn't read that image -- try a different file"));
   }
   // Accent + dark mode apply immediately on click rather than needing a
@@ -2680,6 +2793,13 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                     )}
                   </div>
                 </div>
+                {avatarCropSrc && (
+                  <AvatarCropModal
+                    src={avatarCropSrc}
+                    onCancel={() => setAvatarCropSrc(null)}
+                    onApply={(dataUrl) => { setDraftAvatarUrl(dataUrl); setAvatarCropSrc(null); }}
+                  />
+                )}
 
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                   <div>
