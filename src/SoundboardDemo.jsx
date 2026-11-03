@@ -3700,14 +3700,21 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
     setView({ name: "home" });
   }
 
-  // Terms-of-use acceptance gate (Apple Guideline 1.2 for user-generated content).
+  // Terms-of-use acceptance gate (Apple Guideline 1.2 for user-generated
+  // content). Acceptance is remembered on the account (authUser.termsVersion),
+  // so it persists across devices, the native app, and Safari storage eviction
+  // — bumping TERMS_VERSION re-prompts everyone.
   useEffect(() => {
     if (!authUser) { setNeedsTerms(false); return; }
-    try { setNeedsTerms(!localStorage.getItem(`nb_terms_${TERMS_VERSION}_${authUser.id}`)); } catch (e) { setNeedsTerms(false); }
+    setNeedsTerms(authUser.termsVersion !== TERMS_VERSION);
   }, [authUser]);
   function acceptTerms() {
-    try { if (authUser) localStorage.setItem(`nb_terms_${TERMS_VERSION}_${authUser.id}`, new Date().toISOString()); } catch (e) {}
     setNeedsTerms(false);
+    setAuthUser((u) => (u ? { ...u, termsVersion: TERMS_VERSION } : u));
+    apiFetch(`${BACKEND_URL}/api/auth/accept-terms`, {
+      method: "POST",
+      body: JSON.stringify({ version: TERMS_VERSION }),
+    }).catch(() => {});
   }
 
   const [deletingAccount, setDeletingAccount] = useState(false);
