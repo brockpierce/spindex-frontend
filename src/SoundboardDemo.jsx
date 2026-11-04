@@ -1371,7 +1371,12 @@ export default function SoundboardDemo() {
     // was rejected; a network error means the server was unreachable, and the
     // session should survive it. Retries cover a backend restart.
     const hasToken = !!getToken();
-    const MAX_ATTEMPTS = hasToken ? 3 : 0; // ~2.8s of backoff, or none if signed out
+    // Signed out: there's no session to verify and /api/auth/me would just
+    // return null, so resolve immediately. This keeps the landing from blocking
+    // on a round-trip — a cold backend otherwise leaves a new visitor staring at
+    // a blank screen for 30-60s before the (fully static) landing can paint.
+    if (!hasToken) { setAuthUser(null); setAuthChecked(true); return; }
+    const MAX_ATTEMPTS = 3; // ~2.8s of backoff across a backend restart
 
     async function checkAuth(attempt) {
       try {
@@ -2224,6 +2229,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
     // let the write land first.
     setTimeout(() => loadAlbumAverage(albumId), 700);
     const now = nowTimestamp();
+    const wasNew = !reviews.some((r) => r.albumId === albumId);
     // Optimistic update to personal reviews — preserve the original date when
     // editing. A NEW review uses the full `now` timestamp (not a date-only
     // string) so it sorts to the TOP of the feed rather than behind same-day
@@ -2263,7 +2269,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ rating: draftRating, reviewText: draftText, favTrack: draftFavTrack, leastFavTrack: draftLeastFavTrack }),
     })
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
       .then((data) => {
         if (data.review) {
           // Update with real ID + real date from server
@@ -2279,7 +2285,15 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
           ));
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        // A brand-new review that never saved shouldn't linger as if it had.
+        if (wasNew) {
+          setReviews((prev) => prev.filter((r) => r.albumId !== albumId));
+          setPublicFeedItems((prev) => prev.filter((r) => !(r.username === profile.username && r.albumId === albumId)));
+          setRealFeedItems((prev) => prev.filter((r) => !(r.username === profile.username && r.albumId === albumId)));
+        }
+        flash("Couldn't save your review — check your connection and try again.");
+      });
   }
 
   function toggleStatus(albumId, status) {
@@ -2501,6 +2515,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
   function submitQuickReview(albumId, rating, text, favTrack, leastFavTrack) {
     if (!rating) return;
     const id = "r" + Date.now();
+    const wasNew = !reviews.some((r) => r.albumId === albumId);
     const newReview = { id, albumId, rating, text: text.trim(), date: nowTimestamp(), favTrack: favTrack.trim(), leastFavTrack: leastFavTrack.trim(), username: profile.username };
     setReviews((prev) => {
       const without = prev.filter((r) => r.albumId !== albumId);
@@ -2515,11 +2530,14 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ rating, reviewText: text.trim(), favTrack: favTrack.trim(), leastFavTrack: leastFavTrack.trim() }),
     })
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
       .then((data) => {
         if (data.review) setReviews((prev) => prev.map((r) => r.albumId === albumId ? { ...r, id: data.review.id } : r));
       })
-      .catch(() => {});
+      .catch(() => {
+        if (wasNew) setReviews((prev) => prev.filter((r) => r.id !== id));
+        flash("Couldn't post your review — check your connection and try again.");
+      });
   }
 
   function submitMixShare(mixType, mixId, caption) {
@@ -2528,7 +2546,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ mixId, mixType, caption: caption || "" }),
     })
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
       .then((data) => {
         if (data.share) {
           const item = { itemType: "sharemix", id: data.share.id, username: data.share.username, mixId: data.share.mixId, mixType: data.share.mixType, date: nowTimestamp() };
@@ -2536,7 +2554,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
           setPublicFeedItems((prev) => [item, ...prev]);
         }
       })
-      .catch(() => {});
+      .catch(() => { flash("Couldn't share the mix — check your connection and try again."); });
     setShowShareMixModal(false);
     flash("Mix shared to your feed");
   }
@@ -4066,14 +4084,19 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ text, images: imgs }),
           })
-            .then((r) => r.json())
+            .then((r) => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
             .then((data) => {
               if (data.post) {
                 setPublicFeedItems((prev) => prev.map((r) => r.id === tempId ? { ...r, id: data.post.id } : r));
                 setRealFeedItems((prev) => prev.map((r) => r.id === tempId ? { ...r, id: data.post.id } : r));
               }
             })
-            .catch(() => {});
+            .catch(() => {
+              // Roll back the optimistic insert so a failed post doesn't look posted.
+              setPublicFeedItems((prev) => prev.filter((r) => r.id !== tempId));
+              setRealFeedItems((prev) => prev.filter((r) => r.id !== tempId));
+              flash("Couldn't post — check your connection and try again.");
+            });
           setShowTextPostModal(false);
           flash("Posted");
         }} onClose={() => setShowTextPostModal(false)} />
