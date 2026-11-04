@@ -4126,8 +4126,8 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
       )}
 
       {view.name === "deleteAccount" && (
-        <div style={{ position: "fixed", inset: 0, background: BG, zIndex: 70, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-          <div className="ui-sans" style={{ maxWidth: 440, width: "100%", textAlign: "center" }}>
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 70, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+          <div className="ui-sans" style={{ maxWidth: 400, width: "100%", textAlign: "center", background: BG, border: `1px solid ${INK}`, borderRadius: 0, padding: "32px 28px", boxSizing: "border-box", boxShadow: "0 12px 48px rgba(0,0,0,0.25)" }}>
             <div style={{ fontSize: 40, marginBottom: 16 }}>⚠️</div>
             <div style={{ fontSize: 20, fontWeight: 700, color: INK, marginBottom: 12 }}>Warning: this cannot be undone.</div>
             <div style={{ fontSize: 14.5, color: INK, lineHeight: 1.6, marginBottom: 10 }}>
