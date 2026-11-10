@@ -11010,7 +11010,7 @@ function ShowcaseCompact() {
 
 function LandingPage({ onAuthed }) {
   const isMobile = typeof window !== "undefined" && window.innerWidth < 900;
-  const [showAuth, setShowAuth] = React.useState(false);
+  const [showAuth, setShowAuth] = React.useState(null); // null | "login" | "signup"
   const [legalTab, setLegalTab] = React.useState(null); // null | "terms" | "privacy"
 
   // The app shell (#root) is a 1126px centered column with centered text and
@@ -11027,9 +11027,10 @@ function LandingPage({ onAuthed }) {
     return () => { Object.assign(root.style, prev); };
   }, []);
 
-  // Mobile: the CTA buttons route to the full-page existing AuthScreen.
+  // Mobile: the CTA buttons route to the full-page existing AuthScreen,
+  // opening it on the mode (login/signup) that was tapped.
   if (isMobile && showAuth) {
-    return <AuthScreen backendUrl={BACKEND_URL} onAuthed={onAuthed} />;
+    return <AuthScreen backendUrl={BACKEND_URL} onAuthed={onAuthed} initialMode={showAuth} />;
   }
   // Mobile: footer links open the legal screen.
   if (isMobile && legalTab) {
@@ -11041,30 +11042,31 @@ function LandingPage({ onAuthed }) {
 
   if (isMobile) {
     return (
-      <div style={{ fontFamily: FONT, background: "#fff", minHeight: "100vh", display: "flex", flexDirection: "column", color: NB.ink }}>
+      <div style={{ fontFamily: FONT, background: "#fff", minHeight: "100dvh", display: "flex", flexDirection: "column", color: NB.ink }}>
         {marqueeStyle}
-        {/* sticky top bar — compact auth buttons, always visible */}
-        <div style={{ position: "sticky", top: 0, zIndex: 20, background: "#fff", display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 8, padding: "12px 20px 10px" }}>
-          <button onClick={() => setShowAuth(true)} style={{ height: 36, padding: "0 16px", background: "#fff", color: "#000", border: "1px solid #000", fontSize: 15, fontWeight: 400, cursor: "pointer", fontFamily: "inherit", borderRadius: 0 }}>log in</button>
-          <button onClick={() => setShowAuth(true)} style={{ height: 36, padding: "0 16px", background: "#1F388A", color: "#fff", border: "none", fontSize: 15, fontWeight: 400, cursor: "pointer", fontFamily: "inherit", borderRadius: 0 }}>sign up</button>
-        </div>
-        {/* hero */}
-        <div style={{ padding: "8px 20px 0" }}>
-          <img src="/noteblock-mark.png" alt="" style={{ width: 190, marginLeft: -12, display: "block" }} />
-          <div style={{ fontSize: 76, fontWeight: 400, letterSpacing: "-0.04em", lineHeight: 0.9, color: "#000", marginTop: 8 }}>noteblock</div>
-          <div style={{ fontSize: 24, fontWeight: 400, lineHeight: 1.25, letterSpacing: "-0.01em", color: "#000", marginTop: 18 }}>keep a record of every record.</div>
-          <div style={{ fontSize: 16, lineHeight: 1.4, color: "#5C5C5C", marginTop: 8 }}>review albums, discover new music, and connect with others</div>
+        <style>{`.nb-cta-primary:hover{background:#182C6E !important}`}</style>
+        {/* hero — centered column, auth CTAs directly under the tagline */}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "40px 28px 0" }}>
+          <img src="/noteblock-mark.png" alt="" style={{ width: 150, height: "auto", display: "block" }} />
+          <div style={{ fontSize: 64, fontWeight: 400, letterSpacing: "-0.04em", lineHeight: 1, color: "#000", marginTop: 8, textAlign: "center" }}>noteblock</div>
+          <div style={{ fontSize: 22, fontWeight: 400, lineHeight: 1.25, color: "#000", marginTop: 20, textAlign: "center" }}>keep a record of every record.</div>
+          <div style={{ fontSize: 17, lineHeight: 1.35, color: "#5C5C5C", marginTop: 8, textAlign: "center", textWrap: "pretty" }}>review albums, discover new music, and connect with others</div>
+          {/* full-width stacked auth CTAs */}
+          <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 12, marginTop: 32 }}>
+            <button className="nb-cta-primary" onClick={() => setShowAuth("signup")} style={{ height: 52, background: "#1F388A", color: "#fff", border: "none", fontSize: 19, fontWeight: 400, cursor: "pointer", fontFamily: "inherit", borderRadius: 0 }}>sign up</button>
+            <button onClick={() => setShowAuth("login")} style={{ height: 52, background: "transparent", color: "#000", border: "1.5px solid #000", boxSizing: "border-box", fontSize: 19, fontWeight: 400, cursor: "pointer", fontFamily: "inherit", borderRadius: 0 }}>log in</button>
+          </div>
         </div>
         {/* carousel (bleeds off the right edge) */}
-        <div style={{ marginTop: 36, paddingLeft: 20 }}>
-          <NBRatingCarousel cardW={120} gap={14} scoreSize={18} metaSize={12} titleSize={13} labelSize={12} bleedRight={0} />
+        <div style={{ padding: "36px 0 0 28px" }}>
+          <NBRatingCarousel cardW={112} gap={14} scoreSize={17} metaSize={12} titleSize={13} labelSize={13} bleedRight={0} />
         </div>
-        {/* footer */}
-        <div style={{ padding: "20px 20px 32px", marginTop: "auto" }}>
-          <div style={{ fontSize: 13, color: "#5C5C5C", textAlign: "center" }}>
-            <span onClick={() => setLegalTab("terms")} style={{ cursor: "pointer", textDecoration: "underline" }}>terms of service</span>
+        {/* footer — fills remaining height so the links sit at the bottom */}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end", padding: "20px 28px 28px" }}>
+          <div style={{ fontSize: 13, color: "#8E8E8E", textAlign: "center" }}>
+            <span onClick={() => setLegalTab("terms")} style={{ cursor: "pointer", textDecoration: "underline", color: "#8E8E8E" }}>terms of service</span>
             {" · "}
-            <span onClick={() => setLegalTab("privacy")} style={{ cursor: "pointer", textDecoration: "underline" }}>privacy policy</span>
+            <span onClick={() => setLegalTab("privacy")} style={{ cursor: "pointer", textDecoration: "underline", color: "#8E8E8E" }}>privacy policy</span>
           </div>
         </div>
       </div>
@@ -11093,10 +11095,10 @@ function LandingPage({ onAuthed }) {
   );
 }
 
-function AuthScreen({ backendUrl, onAuthed, embedded }) {
+function AuthScreen({ backendUrl, onAuthed, embedded, initialMode }) {
   const theme = useTheme();
   const { BLUE, INK, LINE, MUTE } = theme;
-  const [mode, setMode] = useState("login"); // "login" | "signup"
+  const [mode, setMode] = useState(initialMode === "signup" ? "signup" : "login"); // "login" | "signup"
   const [birthday, setBirthday] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
