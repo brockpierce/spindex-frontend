@@ -10,6 +10,7 @@
     "preview": "vite preview",
     "ios": "vite build && cap sync ios && cap open ios",
     "sync:ios": "vite build && cap sync ios",
+    "ios:release": "scripts/ios-release.sh",
     "icons": "capacitor-assets generate --ios --iconBackgroundColor '#ffffff' --iconBackgroundColorDark '#ffffff' --splashBackgroundColor '#ffffff' --splashBackgroundColorDark '#ffffff'"
   },
   "dependencies": {
