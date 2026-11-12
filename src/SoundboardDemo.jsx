@@ -57,7 +57,39 @@ function apiFetch(url, options = {}) {
   const headers = { ...(options.headers || {}) };
   if (token) headers["Authorization"] = `Bearer ${token}`;
   if (options.body && typeof options.body === "string") headers["Content-Type"] = "application/json";
-  return fetch(url, { ...options, headers });
+  return fetch(url, { ...options, headers }).then((res) => {
+    // The server rejected our token (expired, password reset, account removed):
+    // drop it and let the app sign out, instead of every later write failing
+    // silently. Only when a token was sent -- a 401 from login is a wrong password.
+    if (res.status === 401 && token && getToken() === token) {
+      setToken(null);
+      window.dispatchEvent(new Event("noteblock:session-expired"));
+    }
+    return res;
+  });
+}
+
+// For writes: resolves with the parsed body on a 2xx, otherwise rejects with the
+// server's error message (err.status set), so callers can roll back optimistic
+// updates and tell the user instead of showing success for a failed request.
+async function apiJson(url, options = {}) {
+  let res;
+  try {
+    res = await apiFetch(url, options);
+  } catch (e) {
+    throw new Error("Couldn't reach noteblock. Check your connection and try again.");
+  }
+  let data = {};
+  try { data = await res.json(); } catch (e) {}
+  if (!res.ok) {
+    // A 401 also signs the app out (see apiFetch); word it the same way so the
+    // caller's error toast doesn't contradict the sign-out message.
+    const msg = res.status === 401 ? "Your session expired. Please log in again." : data.error;
+    const err = new Error(msg || "Something went wrong. Please try again.");
+    err.status = res.status;
+    throw err;
+  }
+  return data;
 }
 
 function nowTimestamp() {
@@ -1393,6 +1425,9 @@ export default function SoundboardDemo() {
         }
         if (!res.ok) throw new Error("HTTP " + res.status);
         const data = await res.json();
+        // 200 with no user = the token is no longer valid; forget it so the next
+        // launch shows the landing instantly instead of re-checking it.
+        if (!data.user) setToken(null);
         if (!cancelled) { setAuthUser(data.user || null); setAuthChecked(true); }
       } catch (err) {
         if (attempt < MAX_ATTEMPTS) {
@@ -1407,6 +1442,16 @@ export default function SoundboardDemo() {
 
     checkAuth(0);
     return () => { cancelled = true; };
+  }, []);
+
+  // apiFetch fires this when the server rejects our token mid-session.
+  useEffect(() => {
+    function onSessionExpired() {
+      clearSession();
+      flash("Your session expired. Please log in again.", 4000);
+    }
+    window.addEventListener("noteblock:session-expired", onSessionExpired);
+    return () => window.removeEventListener("noteblock:session-expired", onSessionExpired);
   }, []);
 
   const [view, setView] = useState({ name: "home" });
@@ -1497,7 +1542,8 @@ export default function SoundboardDemo() {
   const [popularTags, setPopularTags] = useState([]);
   const [matchingTags, setMatchingTags] = useState([]); // tags matching the search box
   const [tagDecade, setTagDecade] = useState(null); // decade filter on the tag page
-  const [tagVisible, setTagVisible] = useState(24); // how many tag-page albums are rendered (show-more)
+  // Tag page paging: the backend returns one page at a time; "show more" loads the next.
+  const [tagPage, setTagPage] = useState({ total: 0, totalAll: 0, nextOffset: null, decades: [], loadingMore: false });
   const [reviewComments, setReviewComments] = useState(INITIAL_REVIEW_COMMENTS);
   const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS);
   const [reviewReactions, setReviewReactions] = useState(INITIAL_REVIEW_REACTIONS);
@@ -1571,7 +1617,8 @@ export default function SoundboardDemo() {
   const [showFollowList, setShowFollowList] = useState(null); // null | { kind: "followers" | "following", userId, username }
 
   // Persist a profile theme / info field to the backend (optimistic)
-  function saveProfileField(fields) {
+  function saveProfileField(fields, successMsg) {
+    const before = Object.fromEntries(Object.keys(fields).map((k) => [k, profile[k]]));
     setProfile((prev) => ({ ...prev, ...fields }));
     if (fields.profileTheme !== undefined) {
       try { localStorage.setItem("spindex_profile_theme", fields.profileTheme || ""); } catch (e) {}
@@ -1579,11 +1626,17 @@ export default function SoundboardDemo() {
     if (fields.pageBackground !== undefined) {
       try { localStorage.setItem("spindex_page_bg", fields.pageBackground || ""); } catch (e) {}
     }
-    apiFetch(`${BACKEND_URL}/api/users/profile`, {
+    apiJson(`${BACKEND_URL}/api/users/profile`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(fields),
-    }).catch(() => {});
+    })
+      .then(() => { if (successMsg) flash(successMsg); })
+      .catch((err) => {
+        // Rejected (e.g. drawing too large): put the old values back.
+        setProfile((prev) => ({ ...prev, ...before }));
+        flash(err.message);
+      });
   }
   function saveProfileTheme(theme) { saveProfileField({ profileTheme: theme }); }
 
@@ -1979,9 +2032,9 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
     return () => clearTimeout(timer);
   }, [query]);
 
-  function flash(msg) {
+  function flash(msg, ms = 1800) {
     setToast(msg);
-    setTimeout(() => setToast(null), 1800);
+    setTimeout(() => setToast(null), ms);
   }
 
   function reviewFor(albumId) {
@@ -2230,6 +2283,11 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
     setTimeout(() => loadAlbumAverage(albumId), 700);
     const now = nowTimestamp();
     const wasNew = !reviews.some((r) => r.albumId === albumId);
+    // Pre-edit copies, to restore if the save fails.
+    const prevReview = reviews.find((r) => r.albumId === albumId);
+    const isMine = (r) => r.username === profile.username && r.albumId === albumId;
+    const prevPublic = publicFeedItems.find(isMine);
+    const prevReal = realFeedItems.find(isMine);
     // Optimistic update to personal reviews — preserve the original date when
     // editing. A NEW review uses the full `now` timestamp (not a date-only
     // string) so it sorts to the TOP of the feed rather than behind same-day
@@ -2264,12 +2322,11 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
     if (draftRating > 0 || (draftText && draftText.trim())) markListenedFromReview(albumId);
     flash("Review saved");
     // Persist to backend
-    apiFetch(`${BACKEND_URL}/api/reviews/${albumId}`, {
+    apiJson(`${BACKEND_URL}/api/reviews/${albumId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ rating: draftRating, reviewText: draftText, favTrack: draftFavTrack, leastFavTrack: draftLeastFavTrack }),
     })
-      .then((r) => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
       .then((data) => {
         if (data.review) {
           // Update with real ID + real date from server
@@ -2285,14 +2342,19 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
           ));
         }
       })
-      .catch(() => {
-        // A brand-new review that never saved shouldn't linger as if it had.
+      .catch((err) => {
+        // A brand-new review that never saved shouldn't linger as if it had,
+        // and a failed edit goes back to what was saved.
         if (wasNew) {
           setReviews((prev) => prev.filter((r) => r.albumId !== albumId));
-          setPublicFeedItems((prev) => prev.filter((r) => !(r.username === profile.username && r.albumId === albumId)));
-          setRealFeedItems((prev) => prev.filter((r) => !(r.username === profile.username && r.albumId === albumId)));
+          setPublicFeedItems((prev) => prev.filter((r) => !isMine(r)));
+          setRealFeedItems((prev) => prev.filter((r) => !isMine(r)));
+        } else {
+          setReviews((prev) => prev.map((r) => (r.albumId === albumId && prevReview ? prevReview : r)));
+          setPublicFeedItems((prev) => prev.filter((r) => !isMine(r)).concat(prevPublic ? [prevPublic] : []));
+          setRealFeedItems((prev) => prev.filter((r) => !isMine(r)).concat(prevReal ? [prevReal] : []));
         }
-        flash("Couldn't save your review — check your connection and try again.");
+        flash(err.message ? `Couldn't save your review: ${err.message}` : "Couldn't save your review — try again.");
       });
   }
 
@@ -2307,18 +2369,18 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
       return next;
     });
     // Persist to backend — DELETE to clear, PUT to set
+    const revert = (err) => {
+      setListenStatus((prev) => ({ ...prev, [albumId]: current || undefined }));
+      flash(err.message);
+    };
     if (!newStatus) {
-      apiFetch(`${BACKEND_URL}/api/listen-status/${albumId}`, { method: "DELETE" }).catch(() => {
-        setListenStatus((prev) => ({ ...prev, [albumId]: current || undefined }));
-      });
+      apiJson(`${BACKEND_URL}/api/listen-status/${albumId}`, { method: "DELETE" }).catch(revert);
     } else {
-      apiFetch(`${BACKEND_URL}/api/listen-status/${albumId}`, {
+      apiJson(`${BACKEND_URL}/api/listen-status/${albumId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
-      }).catch(() => {
-        setListenStatus((prev) => ({ ...prev, [albumId]: current || undefined }));
-      });
+      }).catch(revert);
     }
   }
 
@@ -2344,11 +2406,14 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
     // Optimistic update
     setFavorites((prev) => isFav ? prev.filter((id) => id !== albumId) : [...prev, albumId]);
     // Persist to backend
-    apiFetch(`${BACKEND_URL}/api/favorites/${albumId}`, {
+    apiJson(`${BACKEND_URL}/api/favorites/${albumId}`, {
       method: isFav ? "DELETE" : "POST",
-    }).catch(() => {
+    }).catch((err) => {
+      // 409 = it's already a favorite on the server, so the local state is right.
+      if (err.status === 409) return;
       // Revert on failure
       setFavorites((prev) => isFav ? [...prev, albumId] : prev.filter((id) => id !== albumId));
+      flash(err.message);
     });
   }
 
@@ -2400,26 +2465,28 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
     }).catch(() => {});
   }
 
-  function createAlbumMix() {
-    if (!newMixTitle.trim()) return;
-    const tempId = "am" + Date.now();
-    setAlbumMixes((prev) => [...prev, { id: tempId, title: newMixTitle.trim(), description: "", albums: [] }]);
-    setNewMixTitle("");
-    setShowNewMix(null);
-    setView({ name: "albumMixDetail", id: tempId });
-    apiFetch(`${BACKEND_URL}/api/mixes`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: newMixTitle.trim() }),
-    })
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.mix) {
-          setAlbumMixes((prev) => prev.map((m) => m.id === tempId ? { ...m, id: data.mix.id } : m));
-          setView((v) => v.name === "albumMixDetail" && v.id === tempId ? { ...v, id: data.mix.id } : v);
-        }
-      })
-      .catch(() => {});
+  // Waits for the server's id before opening the new mix: anything done to it
+  // under a temporary id went to /api/mixes/am…, 404'd silently and was lost.
+  const creatingMix = useRef(false);
+  async function createAlbumMix() {
+    const title = newMixTitle.trim();
+    if (!title || creatingMix.current) return;
+    creatingMix.current = true;
+    try {
+      const data = await apiJson(`${BACKEND_URL}/api/mixes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title }),
+      });
+      setAlbumMixes((prev) => [...prev, { id: data.mix.id, title: data.mix.title, description: "", albums: [] }]);
+      setNewMixTitle("");
+      setShowNewMix(null);
+      setView({ name: "albumMixDetail", id: data.mix.id });
+    } catch (err) {
+      flash(err.message);
+    } finally {
+      creatingMix.current = false;
+    }
   }
 
   function addToAlbumMix(mixId, albumId) {
@@ -2431,11 +2498,15 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
       )
     );
     flash("Added to album mix");
-    apiFetch(`${BACKEND_URL}/api/mixes/${mixId}/albums`, {
+    apiJson(`${BACKEND_URL}/api/mixes/${mixId}/albums`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ albumId }),
-    }).catch(() => {});
+    }).catch((err) => {
+      if (err.status === 409) return; // already in the mix on the server
+      setAlbumMixes((prev) => prev.map((m) => (m.id === mixId ? { ...m, albums: m.albums.filter((a) => a.albumId !== albumId) } : m)));
+      flash(err.message);
+    });
   }
 
   function removeFromAlbumMix(mixId, albumId) {
@@ -2541,12 +2612,11 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
   }
 
   function submitMixShare(mixType, mixId, caption) {
-    apiFetch(BACKEND_URL + "/api/mix-shares", {
+    apiJson(BACKEND_URL + "/api/mix-shares", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ mixId, mixType, caption: caption || "" }),
     })
-      .then((r) => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
       .then((data) => {
         if (data.share) {
           const item = { itemType: "sharemix", id: data.share.id, username: data.share.username, mixId: data.share.mixId, mixType: data.share.mixType, date: nowTimestamp() };
@@ -2554,7 +2624,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
           setPublicFeedItems((prev) => [item, ...prev]);
         }
       })
-      .catch(() => { flash("Couldn't share the mix — check your connection and try again."); });
+      .catch((err) => { flash(`Couldn't share the mix: ${err.message}`); });
     setShowShareMixModal(false);
     flash("Mix shared to your feed");
   }
@@ -2585,18 +2655,21 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
       return { ...prev, [reviewId]: next };
     });
     // Persist to backend
-    apiFetch(`${BACKEND_URL}/api/interactions/reactions/${reviewId}`, {
+    apiJson(`${BACKEND_URL}/api/interactions/reactions/${reviewId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ kind }),
     })
-      .then((r) => r.json())
       .then((data) => {
         if (data.heart || data.frown) {
           setReviewReactions((prev) => ({ ...prev, [reviewId]: { heart: data.heart || [], frown: data.frown || [] } }));
         }
       })
-      .catch(() => {});
+      .catch((err) => {
+        // Re-read the real reactions rather than guessing the old state back.
+        loadCommentReactions([reviewId]);
+        flash(err.message);
+      });
   }
 
   // Load only reactions for comment/reply IDs — lightweight, no nested comment fetching
@@ -2605,7 +2678,10 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
       const rm = (cs) => cs.filter((x) => x.id !== commentId).map((x) => ({...x, replies: rm(x.replies||[])}));
       return {...prev, [reviewId]: rm(prev[reviewId]||[])};
     });
-    apiFetch(BACKEND_URL + "/api/interactions/comments/" + commentId, {method:"DELETE"}).catch(()=>{});
+    apiJson(BACKEND_URL + "/api/interactions/comments/" + commentId, {method:"DELETE"}).catch((err) => {
+      loadInteractions([reviewId]); // put the comment back from the server
+      flash(err.message);
+    });
   }
 
   function loadCommentReactions(commentIds) {
@@ -2696,12 +2772,11 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
     const comment = { id: tempId, username: profile.username, text: text.trim(), date: nowTimestamp(), replies: [] };
     setReviewComments((prev) => ({ ...prev, [reviewId]: [...(prev[reviewId] || []), comment] }));
     // Persist to backend
-    apiFetch(`${BACKEND_URL}/api/interactions/comments/${reviewId}`, {
+    apiJson(`${BACKEND_URL}/api/interactions/comments/${reviewId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text: text.trim() }),
     })
-      .then((r) => r.json())
       .then((data) => {
         if (data.comment) {
           // Replace temp ID with real one
@@ -2711,7 +2786,11 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
           }));
         }
       })
-      .catch(() => {});
+      .catch((err) => {
+        // Not posted (blocked, too long, offline): take it back off the screen.
+        setReviewComments((prev) => ({ ...prev, [reviewId]: (prev[reviewId] || []).filter((c) => c.id !== tempId) }));
+        flash(err.message);
+      });
   }
 
   // Recursively inserts a reply under the target comment anywhere in the tree
@@ -2732,12 +2811,11 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
       [reviewId]: insertReply(prev[reviewId] || [], parentCommentId, reply),
     }));
     // Persist to backend
-    apiFetch(`${BACKEND_URL}/api/interactions/comments/${reviewId}`, {
+    apiJson(`${BACKEND_URL}/api/interactions/comments/${reviewId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text: text.trim(), parentId: parentCommentId }),
     })
-      .then((r) => r.json())
       .then((data) => {
         if (data.comment) {
           // Replace temp ID with real one (deep in the tree)
@@ -2751,7 +2829,13 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
           });
         }
       })
-      .catch(() => {});
+      .catch((err) => {
+        setReviewComments((prev) => {
+          const rm = (cs) => cs.filter((x) => x.id !== tempId).map((x) => ({ ...x, replies: rm(x.replies || []) }));
+          return { ...prev, [reviewId]: rm(prev[reviewId] || []) };
+        });
+        flash(err.message);
+      });
   }
 
   function updateAlbumTags(albumId, tags) {
@@ -2980,7 +3064,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                     >
                       delete account
                     </button>
-                    <button className="sb-btn sb-btn-solid" onClick={saveSettings}>save changes</button>
+                    <button className="sb-btn sb-btn-solid" onClick={saveSettings} disabled={savingSettings}>{savingSettings ? "saving…" : "save changes"}</button>
                   </div>
 
                   {false && (
@@ -3011,18 +3095,13 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
 
   function closeSettings() { setView(view && view.from ? view.from : { name: "profile" }); }
 
-  function saveSettings() {
+  const [savingSettings, setSavingSettings] = useState(false);
+  async function saveSettings() {
+    if (savingSettings) return;
     if (!draftDisplayName.trim() || !draftUsername.trim()) {
       flash("Display name and username can't be empty");
       return;
     }
-    setProfile((prev) => ({ ...prev, displayName: draftDisplayName.trim(), username: draftUsername.trim(), bio: draftBio }));
-    setAvatarUrl(draftAvatarUrl);
-    // Apply the theme chosen in the list (deferred until now).
-    saveProfileField({ profileTheme: draftTheme || "" });
-    setView(view && view.from ? view.from : { name: "profile" });
-    flash("Profile updated");
-    // Persist to backend
     const body = {
       displayName: draftDisplayName.trim(),
       username: draftUsername.trim(),
@@ -3035,11 +3114,29 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
     if (draftAvatarUrl !== avatarUrl) {
       body.avatarUrl = draftAvatarUrl || null;
     }
-    apiFetch(`${BACKEND_URL}/api/auth/profile`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    }).catch(() => {});
+    // Apply nothing until the server accepts it: it rejects taken or reserved
+    // usernames and oversized avatars, and the app used to show "Profile
+    // updated" (and the new name) for a save that never happened.
+    setSavingSettings(true);
+    try {
+      const data = await apiJson(`${BACKEND_URL}/api/auth/profile`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const u = data.user || {};
+      // The server's copy, e.g. the username lowercased the way it was stored.
+      setProfile((prev) => ({ ...prev, displayName: u.displayName ?? body.displayName, username: u.username ?? body.username, bio: u.bio ?? draftBio }));
+      setAvatarUrl(draftAvatarUrl);
+      // Apply the theme chosen in the list (deferred until now).
+      saveProfileField({ profileTheme: draftTheme || "" });
+      setView(view && view.from ? view.from : { name: "profile" });
+      flash("Profile updated");
+    } catch (err) {
+      flash(err.message);
+    } finally {
+      setSavingSettings(false);
+    }
   }
 
   const avgRating = reviews.length ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1) : "--";
@@ -3254,13 +3351,19 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
     if (typeof window === "undefined") return;
     if (!window.confirm("Delete this review?")) return;
     if (!window.confirm("Are you sure? This can't be undone.")) return;
+    // Server first: a delete that failed (offline, expired session) used to
+    // vanish here and reappear, still public, on the next launch.
+    apiJson(`${BACKEND_URL}/api/reviews/${albumId}`, { method: "DELETE" })
+      .then(() => removeReviewLocally(albumId))
+      .catch((err) => flash(`Couldn't delete: ${err.message}`));
+  }
+  function removeReviewLocally(albumId) {
     setReviews((prev) => prev.filter((r) => r.albumId !== albumId));
     // Deleting the review takes the album's whole listen history with it.
     setMyRelistens((prev) => prev.filter((r) => r.albumId !== albumId));
     setRelistens((prev) => prev.filter((r) => r.albumId !== albumId));
     setRealFeedItems((prev) => prev.filter((r) => !(r.username === profile.username && r.albumId === albumId)));
     setPublicFeedItems((prev) => prev.filter((r) => !(r.username === profile.username && r.albumId === albumId)));
-    apiFetch(`${BACKEND_URL}/api/reviews/${albumId}`, { method: "DELETE" }).catch(() => {});
   }
 
   // Delete a feed card. A re-listen card looks like a review but is NOT one —
@@ -3271,12 +3374,15 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
     if (typeof window === "undefined") return;
     if (!r.isRelisten) { deleteReview(r.albumId); return; }
     if (!window.confirm("Delete this re-listen?")) return;
-    setRelistens((prev) => prev.filter((x) => x.id !== r.id));
-    setMyRelistens((prev) => prev.filter((x) => x.id !== r.id));
-    setRealFeedItems((prev) => prev.filter((x) => x.id !== r.id));
-    setPublicFeedItems((prev) => prev.filter((x) => x.id !== r.id));
-    setTimeout(() => loadAlbumAverage(r.albumId), 700);
-    apiFetch(`${BACKEND_URL}/api/relistens/item/${r.id}`, { method: "DELETE" }).catch(() => {});
+    apiJson(`${BACKEND_URL}/api/relistens/item/${r.id}`, { method: "DELETE" })
+      .then(() => {
+        setRelistens((prev) => prev.filter((x) => x.id !== r.id));
+        setMyRelistens((prev) => prev.filter((x) => x.id !== r.id));
+        setRealFeedItems((prev) => prev.filter((x) => x.id !== r.id));
+        setPublicFeedItems((prev) => prev.filter((x) => x.id !== r.id));
+        loadAlbumAverage(r.albumId);
+      })
+      .catch((err) => flash(`Couldn't delete: ${err.message}`));
   }
 
   function deleteFeedItem(c) {
@@ -3284,11 +3390,14 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
     if (!c.isRelisten) { deleteReview(c.albumId); return; }
     if (!window.confirm("Delete this re-listen?")) return;
     if (!window.confirm("Are you sure? This can't be undone.")) return;
-    setRealFeedItems((prev) => prev.filter((x) => x.id !== c.id));
-    setPublicFeedItems((prev) => prev.filter((x) => x.id !== c.id));
-    setRelistens((prev) => prev.filter((x) => x.id !== c.id));
-    setTimeout(() => loadAlbumAverage(c.albumId), 700);
-    apiFetch(`${BACKEND_URL}/api/relistens/item/${c.id}`, { method: "DELETE" }).catch(() => {});
+    apiJson(`${BACKEND_URL}/api/relistens/item/${c.id}`, { method: "DELETE" })
+      .then(() => {
+        setRealFeedItems((prev) => prev.filter((x) => x.id !== c.id));
+        setPublicFeedItems((prev) => prev.filter((x) => x.id !== c.id));
+        setRelistens((prev) => prev.filter((x) => x.id !== c.id));
+        loadAlbumAverage(c.albumId);
+      })
+      .catch((err) => flash(`Couldn't delete: ${err.message}`));
   }
 
   // A feed card for a newly-saved re-listen, matching the backend's feed shape.
@@ -3305,9 +3414,12 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
     if (typeof window === "undefined") return;
     if (!window.confirm("Delete this post?")) return;
     if (!window.confirm("Are you sure? This can't be undone.")) return;
-    setPublicFeedItems((prev) => prev.filter((r) => r.id !== postId));
-    setRealFeedItems((prev) => prev.filter((r) => r.id !== postId));
-    apiFetch(`${BACKEND_URL}/api/posts/${postId}`, { method: "DELETE" }).catch(() => {});
+    apiJson(`${BACKEND_URL}/api/posts/${postId}`, { method: "DELETE" })
+      .then(() => {
+        setPublicFeedItems((prev) => prev.filter((r) => r.id !== postId));
+        setRealFeedItems((prev) => prev.filter((r) => r.id !== postId));
+      })
+      .catch((err) => flash(`Couldn't delete: ${err.message}`));
   }
 
   // Delete an album mix. Double-confirm and navigate back to the mixes list
@@ -3316,9 +3428,12 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
     if (typeof window === "undefined") return;
     if (!window.confirm("Delete this mix?")) return;
     if (!window.confirm("Are you sure? This can't be undone.")) return;
-    setAlbumMixes((prev) => prev.filter((m) => m.id !== mixId));
-    setView({ name: "mixes" });
-    apiFetch(`${BACKEND_URL}/api/mixes/${mixId}`, { method: "DELETE" }).catch(() => {});
+    apiJson(`${BACKEND_URL}/api/mixes/${mixId}`, { method: "DELETE" })
+      .then(() => {
+        setAlbumMixes((prev) => prev.filter((m) => m.id !== mixId));
+        setView({ name: "mixes" });
+      })
+      .catch((err) => flash(`Couldn't delete: ${err.message}`));
   }
 
   // Delete a song mix. Same pattern.
@@ -3377,20 +3492,14 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
     const wasFollowing = followState[username];
     setFollowState((prev) => ({ ...prev, [username]: !prev[username] }));
     // Persist to backend — look up user by username first
-    apiFetch(`${BACKEND_URL}/api/users/${username}`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (!data.user) return;
-        const userId = data.user.id;
-        apiFetch(`${BACKEND_URL}/api/follows/${userId}`, {
-          method: wasFollowing ? "DELETE" : "POST",
-        }).catch(() => {
-          // Revert on failure
-          setFollowState((prev) => ({ ...prev, [username]: wasFollowing }));
-        });
-      })
-      .catch(() => {
+    apiJson(`${BACKEND_URL}/api/users/${username}`)
+      .then((data) => apiJson(`${BACKEND_URL}/api/follows/${data.user.id}`, {
+        method: wasFollowing ? "DELETE" : "POST",
+      }))
+      .catch((err) => {
+        // Revert on failure (e.g. blocked, or the locked founder follow)
         setFollowState((prev) => ({ ...prev, [username]: wasFollowing }));
+        flash(err.message);
       });
   }
 
@@ -3536,14 +3645,39 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
     const tempMsg = { id: "tmp" + Date.now(), text: text.trim(), senderUsername: profile.username, createdAt: new Date().toISOString(), isOwn: true };
     setConversationMessages((prev) => [...prev, tempMsg]);
     setDmInput("");
-    apiFetch(BACKEND_URL + "/api/messages/conversations/" + convId, {
+    apiJson(BACKEND_URL + "/api/messages/conversations/" + convId, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text: text.trim() }),
-    }).then((r) => r.json()).then((data) => {
+    }).then((data) => {
       if (data.message) setConversationMessages((prev) => prev.map((m) => m.id === tempMsg.id ? data.message : m));
-    }).catch(() => {});
+    }).catch((err) => {
+      // Not delivered (e.g. a block): don't leave it looking sent; give the
+      // text back so it can be retried.
+      setConversationMessages((prev) => prev.filter((m) => m.id !== tempMsg.id));
+      setDmInput(text);
+      flash(err.message);
+    });
   }
+
+  // An open thread re-fetches every few seconds so the other person's replies
+  // appear without leaving and re-entering it. Sends still in flight (tmp ids)
+  // are kept on screen.
+  useEffect(() => {
+    if (view.name !== "dmThread" || !view.convId) return;
+    const convId = view.convId;
+    const timer = setInterval(() => {
+      if (document.hidden) return;
+      apiFetch(BACKEND_URL + "/api/messages/conversations/" + convId)
+        .then((r) => r.json())
+        .then((data) => {
+          if (!data.messages) return;
+          setConversationMessages((prev) => [...data.messages, ...prev.filter((m) => String(m.id).startsWith("tmp"))]);
+        })
+        .catch(() => {});
+    }, 8000);
+    return () => clearInterval(timer);
+  }, [view.name, view.convId]);
 
   function openActivity(username, userId, isOwn) {
     setActivityFilter("reviews");
@@ -3710,12 +3844,24 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
       .catch(() => {});
   }
 
-  function logout() {
-    apiFetch(`${BACKEND_URL}/api/auth/logout`, { method: "POST" }).catch(() => {});
+  // Forget everything tied to the signed-in account, so the next person to log
+  // in on this device doesn't inherit their follow buttons, accent or cached
+  // profile counts.
+  function clearSession() {
     setToken(null);
+    for (const k of ["spindex_accent", "spindex_counts", "spindex_page_bg", "spindex_profile_theme", "spindex_stats"]) {
+      try { localStorage.removeItem(k); } catch (e) {}
+    }
+    setFollowState({});
+    setCustomAccent(null);
     setAuthUser(null);
     setProfile(PROFILE);
     setView({ name: "home" });
+  }
+
+  function logout() {
+    apiFetch(`${BACKEND_URL}/api/auth/logout`, { method: "POST" }).catch(() => {});
+    clearSession();
   }
 
   // Terms-of-use acceptance gate (Apple Guideline 1.2 for user-generated
@@ -3729,10 +3875,10 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
   function acceptTerms() {
     setNeedsTerms(false);
     setAuthUser((u) => (u ? { ...u, termsVersion: TERMS_VERSION } : u));
-    apiFetch(`${BACKEND_URL}/api/auth/accept-terms`, {
+    apiJson(`${BACKEND_URL}/api/auth/accept-terms`, {
       method: "POST",
       body: JSON.stringify({ version: TERMS_VERSION }),
-    }).catch(() => {});
+    }).catch(() => flash("Couldn't save your acceptance — you may be asked again next time."));
   }
 
   const [deletingAccount, setDeletingAccount] = useState(false);
@@ -3743,11 +3889,8 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
       const r = await apiFetch(`${BACKEND_URL}/api/auth/account`, { method: "DELETE" });
       if (r.ok) {
         // Wipe the local session and drop back to the landing page.
-        setToken(null);
-        setAuthUser(null);
-        setProfile(PROFILE);
-        setView({ name: "home" });
-        try { flash("Your account has been permanently deleted."); } catch (e) {}
+        clearSession();
+        try { flash("Your account has been permanently deleted.", 4000); } catch (e) {}
       } else {
         try { flash("Could not delete your account. Please try again."); } catch (e) {}
       }
@@ -3805,15 +3948,14 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
       .catch(() => {});
   }, [view.name]);
 
-  // Load albums for the tag results view whenever a tag is opened.
-  // Backend-driven so tags persist across users and sessions.
-  useEffect(() => {
-    if (view.name !== "tagResults" || !view.tag) return;
-    setTagDecade(null);
-    setTagVisible(24);
-    setTagResultLoading(true);
-    setTagResultAlbums([]);
-    apiFetch(`${BACKEND_URL}/api/tags/${encodeURIComponent(view.tag)}/albums`)
+  // Load one page of a tag's albums. offset 0 replaces the list (tag opened or
+  // decade changed); later offsets append ("show more"). Backend-driven so tags
+  // persist across users and sessions.
+  function loadTagPage(tag, decade, offset) {
+    if (offset === 0) { setTagResultLoading(true); setTagResultAlbums([]); }
+    else setTagPage((p) => ({ ...p, loadingMore: true }));
+    const qs = `offset=${offset}&limit=48${decade ? `&decade=${decade}` : ""}`;
+    apiFetch(`${BACKEND_URL}/api/tags/${encodeURIComponent(tag)}/albums?${qs}`)
       .then((r) => r.json())
       .then((data) => {
         const albums = (data.albums || []).map((a) => ({
@@ -3821,15 +3963,33 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
           artist: a.artistName || a.artist || "",
           year: a.releaseYear || a.year || null,
         }));
-        setTagResultAlbums(albums);
+        setTagResultAlbums((prev) => (offset === 0 ? albums : [...prev, ...albums]));
+        setTagPage((p) => ({
+          total: data.total ?? albums.length,
+          // The header count and decade chips describe the whole tag, so they
+          // only change when the unfiltered first page loads.
+          totalAll: offset === 0 && !decade ? (data.total ?? albums.length) : p.totalAll,
+          decades: offset === 0 && !decade && data.decades ? data.decades : p.decades,
+          nextOffset: data.nextOffset ?? null,
+          loadingMore: false,
+        }));
         // Prefetch into fetchedAlbums so cover art shows immediately when
         // clicking through to an album detail page.
         albums.forEach((a) => {
           setFetchedAlbums((prev) => prev[a.id] ? prev : { ...prev, [a.id]: a });
         });
       })
-      .catch(() => setTagResultAlbums([]))
-      .finally(() => setTagResultLoading(false));
+      .catch(() => { if (offset === 0) setTagResultAlbums([]); setTagPage((p) => ({ ...p, loadingMore: false })); })
+      .finally(() => { if (offset === 0) setTagResultLoading(false); });
+  }
+
+  // Load albums for the tag results view whenever a tag is opened.
+  useEffect(() => {
+    if (view.name !== "tagResults" || !view.tag) return;
+    setTagDecade(null);
+    setTagPage({ total: 0, totalAll: 0, nextOffset: null, decades: [], loadingMore: false });
+    loadTagPage(view.tag, null, 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view.name, view.tag]);
 
   // Still waiting to hear back from the server about whether someone's
@@ -3870,6 +4030,13 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
     return (
       <ThemeContext.Provider value={theme}>
         <LandingPage onAuthed={setAuthUser} />
+        {/* Messages that land here on the way out ("account deleted", "session
+            expired") weren't shown: the toast below only renders when signed in. */}
+        {toast && (
+          <div role="status" style={{ position: "fixed", left: 16, right: 16, bottom: "calc(24px + env(safe-area-inset-bottom, 0px))", zIndex: 100, display: "flex", justifyContent: "center", pointerEvents: "none" }}>
+            <div style={{ background: INK, color: BG, padding: "10px 16px", borderRadius: 0, fontSize: 13, maxWidth: 420, textAlign: "center" }}>{toast}</div>
+          </div>
+        )}
       </ThemeContext.Provider>
     );
   }
@@ -4048,7 +4215,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
       {showSongReviewModal && (
         <SongReviewModal
           onSubmit={(albumId, songTitle, rating, reviewText) => {
-            apiFetch(`${BACKEND_URL}/api/song-reviews`, {
+            return apiFetch(`${BACKEND_URL}/api/song-reviews`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ albumId, songTitle, rating: rating || null, reviewText }),
@@ -4275,7 +4442,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                       <div style={{ display: "flex", justifyContent: "center" }}><Spinner label="loading your feed…" /></div>
                     )}
                     {isEveryone && !publicFeedLoading && displayItems.length === 0 && (
-                      <div className="ui-sans" style={{ fontSize: 13, color: MUTE, textAlign: "center", padding: "20px 0" }}>no posts yet. (backend needs to expose /api/feed/public for this tab.)</div>
+                      <div className="ui-sans" style={{ fontSize: 13, color: MUTE, textAlign: "center", padding: "20px 0" }}>no posts yet.</div>
                     )}
                     {displayItems.map((c, i) => {
                       if (c.itemType === "sharemix") {
@@ -4291,7 +4458,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                               <span className="ui-sans" style={{ fontSize: 13, fontWeight: 600, cursor: "pointer" }} onClick={() => openUserProfile(c.username)}>@{(c.username || "").toLowerCase()}</span>
                               <span className="ui-sans" style={{ fontSize: 11, color: MUTE, marginLeft: "auto" }}>{relativeDate(c.date)}</span>
                               {c.username === profile.username ? (
-                                <button onClick={(e) => { e.stopPropagation(); apiFetch(BACKEND_URL + "/api/mix-shares/" + c.id, { method: "DELETE" }).catch(() => {}); setMixSharePosts((prev) => prev.filter((p) => p.id !== c.id)); setPublicFeedItems((prev) => prev.filter((p) => p.id !== c.id)); }} style={{ background: "transparent", border: "none", padding: 2, cursor: "pointer", color: MUTE, display: "flex", alignItems: "center" }}><X size={14} /></button>
+                                <button onClick={(e) => { e.stopPropagation(); apiJson(BACKEND_URL + "/api/mix-shares/" + c.id, { method: "DELETE" }).then(() => { setMixSharePosts((prev) => prev.filter((p) => p.id !== c.id)); setPublicFeedItems((prev) => prev.filter((p) => p.id !== c.id)); }).catch((err) => flash(`Couldn't delete: ${err.message}`)); }} style={{ background: "transparent", border: "none", padding: 2, cursor: "pointer", color: MUTE, display: "flex", alignItems: "center" }}><X size={14} /></button>
                               ) : (
                                 <ReportMenu onReport={() => reportItem("mix", c.id)} />
                               )}
@@ -4348,7 +4515,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                                 <span className="ui-sans" style={{ fontSize: 14, fontWeight: 400, color: "#9aa0a8" }}>{relativeDate(c.date)}</span>
                                 {c.username === profile.username && (
-                                  <button onClick={(e) => { e.stopPropagation(); apiFetch(BACKEND_URL + "/api/song-reviews/" + c.id, { method: "DELETE" }).catch(() => {}); setRealFeedItems((prev) => prev.filter((p) => p.id !== c.id)); setPublicFeedItems((prev) => prev.filter((p) => p.id !== c.id)); }} style={{ background: "transparent", border: "none", padding: 2, cursor: "pointer", color: "#9aa0a8", display: "flex", alignItems: "center" }}><X size={14} /></button>
+                                  <button onClick={(e) => { e.stopPropagation(); apiJson(BACKEND_URL + "/api/song-reviews/" + c.id, { method: "DELETE" }).then(() => { setRealFeedItems((prev) => prev.filter((p) => p.id !== c.id)); setPublicFeedItems((prev) => prev.filter((p) => p.id !== c.id)); }).catch((err) => flash(`Couldn't delete: ${err.message}`)); }} style={{ background: "transparent", border: "none", padding: 2, cursor: "pointer", color: "#9aa0a8", display: "flex", alignItems: "center" }}><X size={14} /></button>
                                 )}
                               </div>
                             </div>
@@ -5570,10 +5737,10 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
           const matchedAlbum = allAlbumMixes.filter((m) => (m.tags || []).includes(tag));
           const matchedSong = allSongMixes.filter((m) => (m.tags || []).includes(tag));
           const totalCount = matchedAlbums.length + matchedAlbum.length + matchedSong.length;
-          // Decade filter: chips for the decades actually present, filtering the album grid.
-          const decadeOf = (y) => (y ? Math.floor(Number(y) / 10) * 10 : null);
-          const decadesPresent = [...new Set(matchedAlbums.map((a) => decadeOf(a.year)).filter(Boolean))].sort((a, b) => a - b);
-          const shownAlbums = tagDecade ? matchedAlbums.filter((a) => decadeOf(a.year) === tagDecade) : matchedAlbums;
+          // Decade filter: chips for the decades present across the whole tag
+          // (from the backend); the backend also does the filtering.
+          const decadesPresent = tagPage.decades;
+          const shownAlbums = matchedAlbums;
           return (
             <div>
               <div className="ui-sans" style={{ display: "flex", alignItems: "center", gap: 6, color: MUTE, fontSize: 12.5, marginBottom: 22, cursor: "pointer" }} onClick={() => goBack({ name: "browse" })}>
@@ -5583,7 +5750,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                 <div className="ui-sans" style={{ fontSize: 22, fontWeight: 400 }}>#{tag}</div>
               </div>
               <div className="ui-sans" style={{ fontSize: 13, color: MUTE, marginBottom: 28 }}>
-                {matchedAlbums.length} album{matchedAlbums.length !== 1 ? "s" : ""} · {matchedAlbum.length + matchedSong.length} mix{matchedAlbum.length + matchedSong.length !== 1 ? "es" : ""}
+                {tagPage.totalAll} album{tagPage.totalAll !== 1 ? "s" : ""} · {matchedAlbum.length + matchedSong.length} mix{matchedAlbum.length + matchedSong.length !== 1 ? "es" : ""}
               </div>
 
               {matchedAlbums.length > 0 && (
@@ -5597,7 +5764,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                           return (
                             <button
                               key={d === null ? "all" : d}
-                              onClick={() => { setTagDecade(d); setTagVisible(24); }}
+                              onClick={() => { setTagDecade(d); loadTagPage(tag, d, 0); }}
                               className="ui-sans"
                               style={{ fontFamily: "inherit", fontSize: 11.5, padding: "3px 9px", borderRadius: 0, cursor: "pointer", background: active ? INK : "transparent", color: active ? BG : MUTE, border: `1px solid ${active ? INK : LINE}` }}
                             >
@@ -5609,7 +5776,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                     )}
                   </div>
                   <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, minmax(0, 1fr))" : "repeat(auto-fill, minmax(140px, 1fr))", gap: "20px 16px" }}>
-                    {shownAlbums.slice(0, tagVisible).map((album) => {
+                    {shownAlbums.map((album) => {
                       const rev = reviews.find((r) => r.albumId === album.id);
                       return (
                         <div key={album.id} onClick={() => openAlbum(album.id, album)} style={{ minWidth: 0 }}>
@@ -5630,14 +5797,15 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                       );
                     })}
                   </div>
-                  {shownAlbums.length > tagVisible && (
+                  {tagPage.nextOffset != null && (
                     <div style={{ display: "flex", justifyContent: "center", marginTop: 26 }}>
                       <button
-                        onClick={() => setTagVisible((n) => n + 24)}
+                        onClick={() => { if (!tagPage.loadingMore) loadTagPage(tag, tagDecade, tagPage.nextOffset); }}
+                        disabled={tagPage.loadingMore}
                         className="ui-sans"
                         style={{ fontFamily: "inherit", fontSize: 12.5, padding: "9px 20px", borderRadius: 0, cursor: "pointer", background: "transparent", color: INK, border: `1px solid ${INK}` }}
                       >
-                        show more ({shownAlbums.length - tagVisible} more)
+                        {tagPage.loadingMore ? "loading…" : `show more (${tagPage.total - shownAlbums.length} more)`}
                       </button>
                     </div>
                   )}
@@ -6600,7 +6768,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
             albums={favorites.map((id) => { const a = fetchedAlbums[id] || albumById(id); return { id, title: a ? a.title : "", album: a }; })}
             reviews={reviews.slice(0, 3).map((r) => { const a = fetchedAlbums[r.albumId] || albumById(r.albumId); return { score: r.rating, albumTitle: a ? a.title : "", artist: a ? (a.artist || a.artistName || "") : "", body: r.text || r.reviewText || r.body || "", albumId: r.albumId, album: a, favoriteTrack: r.favoriteTrack || "", renderCover: (size) => { const u = a && a.coverArtUrl && a.coverArtUrl !== "none" ? a.coverArtUrl.replace("http://", "https://") : null; return u ? <img src={u} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /> : <div style={{ width: "100%", height: "100%", background: "#0a3a8a" }} />; } }; })}
             initialDrawing={profile.profileDrawing}
-            onSaveDrawing={(dataUrl) => { saveProfileField({ profileDrawing: dataUrl }); flash("Drawing saved"); }}
+            onSaveDrawing={(dataUrl) => saveProfileField({ profileDrawing: dataUrl }, "Drawing saved")}
             onOpenSettings={openSettings}
             onOpenAlbum={(id) => openAlbum(id)}
             onOpenReview={(r) => openAlbum(r.albumId)}
@@ -8479,9 +8647,15 @@ function SongReviewModal({ onSubmit, onClose }) {
   const [songTitle, setSongTitle] = React.useState("");
   const [rating, setRating] = React.useState(0);
   const [text, setText] = React.useState("");
+  const [posting, setPosting] = React.useState(false);
   React.useEffect(() => { const fn = (e) => { if (e.key === "Escape") onClose(); }; window.addEventListener("keydown", fn); return () => window.removeEventListener("keydown", fn); }, [onClose]);
 
-  const canPost = pickedAlbum && songTitle.trim() && text.trim();
+  const canPost = pickedAlbum && songTitle.trim() && text.trim() && !posting;
+  // Disabled while the request is in flight, so a double tap can't post twice.
+  const post = () => {
+    setPosting(true);
+    Promise.resolve(onSubmit(pickedAlbum.id, songTitle.trim(), rating, text.trim())).finally(() => setPosting(false));
+  };
 
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
@@ -8537,7 +8711,7 @@ function SongReviewModal({ onSubmit, onClose }) {
             </div>
 
             <div style={{ display: "flex", gap: 8 }}>
-              <button className="sb-btn sb-btn-solid" disabled={!canPost} onClick={() => onSubmit(pickedAlbum.id, songTitle.trim(), rating, text.trim())}>post review</button>
+              <button className="sb-btn sb-btn-solid" disabled={!canPost} onClick={post}>{posting ? "posting…" : "post review"}</button>
               <button className="sb-btn" onClick={onClose}>cancel</button>
             </div>
           </div>
@@ -11246,10 +11420,7 @@ function AuthScreen({ backendUrl, onAuthed, embedded, initialMode }) {
       if (data.token) setToken(data.token);
       onAuthed(data.user);
     } catch (err) {
-      // Most likely cause during local dev: the backend server isn't
-      // running, or CORS is misconfigured -- give a specific hint rather
-      // than a generic network error, since that's the actual common case.
-      setError("Couldn't reach the server. Is it running? (npm run dev in the backend folder)");
+      setError("Couldn't reach noteblock. Check your connection and try again.");
       setLoading(false);
     }
   }
