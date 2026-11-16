@@ -4352,7 +4352,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
         </div>
       )}
 
-      <div data-swipe-surface style={{ maxWidth: 920, margin: "0 auto", padding: ((view.name === "profile" && (profile.profileTheme === "mspaint" || ((profile.profileTheme === "bubble" || profile.profileTheme === "channel") && profile.username === ADMIN_USERNAME))) || (view.name === "userProfile" && viewedUser?.profileTheme === "mspaint")) ? 0 : "28px 16px 64px", minHeight: "calc(100vh - 60px)", position: "relative", background: (view.name === "profile" ? (profile.pageBackground || "") : view.name === "userProfile" ? (viewedUser?.pageBackground || "") : "") || undefined, boxShadow: (view.name === "profile" ? (profile.pageBackground || "") : view.name === "userProfile" ? (viewedUser?.pageBackground || "") : "") ? `0 0 0 100vmax ${(view.name === "profile" ? profile.pageBackground : viewedUser?.pageBackground) || "transparent"}` : undefined, clipPath: (view.name === "profile" ? (profile.pageBackground || "") : view.name === "userProfile" ? (viewedUser?.pageBackground || "") : "") ? "inset(0 -100vmax)" : undefined, transition: "background 0.2s" }}>
+      <div data-swipe-surface style={{ maxWidth: 920, margin: "0 auto", padding: ((view.name === "profile" && (profile.profileTheme === "mspaint" || ((profile.profileTheme === "bubble" || profile.profileTheme === "channel") && profile.username === ADMIN_USERNAME))) || (view.name === "userProfile" && (viewedUser?.profileTheme === "mspaint" || viewedUser?.profileTheme === "bubble" || viewedUser?.profileTheme === "channel"))) ? 0 : "28px 16px 64px", minHeight: "calc(100vh - 60px)", position: "relative", background: (view.name === "profile" ? (profile.pageBackground || "") : view.name === "userProfile" ? (viewedUser?.pageBackground || "") : "") || undefined, boxShadow: (view.name === "profile" ? (profile.pageBackground || "") : view.name === "userProfile" ? (viewedUser?.pageBackground || "") : "") ? `0 0 0 100vmax ${(view.name === "profile" ? profile.pageBackground : viewedUser?.pageBackground) || "transparent"}` : undefined, clipPath: (view.name === "profile" ? (profile.pageBackground || "") : view.name === "userProfile" ? (viewedUser?.pageBackground || "") : "") ? "inset(0 -100vmax)" : undefined, transition: "background 0.2s" }}>
         {/* TOAST */}
         {toast && (
           <div style={{ position: "sticky", top: 8, zIndex: 10, background: INK, color: BG, padding: "8px 14px", borderRadius: 0, fontSize: 12, marginBottom: 16, display: "inline-flex", alignItems: "center", gap: 6 }}>
@@ -5459,6 +5459,48 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
           // Per-album (latest listen) for the average + stats, so re-listens don't double-count.
           const userLatest = mergeLatest(viewedUserReviews, viewedUserRelistens);
           const userAvgRating = userLatest.length ? (userLatest.reduce((s, r) => s + (r.rating || 0), 0) / userLatest.length).toFixed(1) : "--";
+          // bubble / channel are hidden themes: only the admin can pick them (see
+          // THEME_ROWS adminOnly), but anyone visiting that profile sees them.
+          if (user.profileTheme === "bubble" || user.profileTheme === "channel") {
+            const ThemeComp = user.profileTheme === "bubble" ? BubbleProfile : ChannelProfile;
+            const toAlbum = (id) => { const a = fetchedAlbums[id] || albumById(id); return { id, title: a && a.title !== "Unknown Album" ? a.title : "", album: a }; };
+            return (
+              <ThemeComp
+                displayName={user.displayName || user.username}
+                username={user.username}
+                bio={user.bio}
+                isMobile={isMobile}
+                isOwn={false}
+                accent={user.accentColor || BLUE}
+                pageBg={user.pageBackground || ""}
+                userId={user.id}
+                info={{ age: user.age, town: user.town, country: user.country, interests: user.interests, mood: user.mood }}
+                stats={{ followers: user.followerCount || 0, following: user.followingCount || 0, listened: viewedUserListenedCount, reviews: userLatest.length }}
+                albums={viewedUserFavorites.map(toAlbum)}
+                reviews={userReviews.slice(0, user.profileTheme === "bubble" ? 3 : 5).map((r) => { const a = fetchedAlbums[r.albumId] || albumById(r.albumId); return { score: r.rating, albumTitle: a && a.title !== "Unknown Album" ? a.title : "", artist: a ? (a.artist || a.artistName || "") : "", body: r.text || "", favoriteTrack: r.favTrack || r.favoriteTrack || "", leastFavoriteTrack: r.leastFavTrack || r.leastFavoriteTrack || "", albumId: r.albumId, album: a, date: r.date }; })}
+                mixes={viewedUserMixes.map((m) => ({ id: m.id, title: m.title, count: (m.albums || []).length, cover: <MixCoverStack albums={m.albums || []} fetchedAlbums={fetchedAlbums} albumById={albumById} size={user.profileTheme === "bubble" ? 56 : 64} /> }))}
+                queued={viewedUserQueue.map(toAlbum)}
+                isFollowing={!!followState[user.username]}
+                onFollow={() => toggleFollow(user.username)}
+                onMessage={() => startConversationWith(user.username)}
+                onOpenAlbum={(id) => openAlbum(id)}
+                onOpenMix={(id) => { const m = viewedUserMixes.find((x) => x.id === id); setView({ name: "albumMixDetail", id, mix: m ? { ...m, owner: user.username } : undefined, from: view }); }}
+                onShowAllReviews={() => setView({ name: "reviewsList", username: user.username, userId: user.id, reviews: userReviews, from: view })}
+                onNeedAlbum={(id) => { if (!fetchedAlbums[id]) { apiFetch(`${BACKEND_URL}/api/albums/${id}`).then((r) => r.json()).then((data) => { if (data.album) { const a = data.album; setFetchedAlbums((prev) => ({ ...prev, [id]: { ...a, artist: a.artistName || "", year: a.releaseYear || null } })); } }).catch(() => {}); } }}
+                onStatClick={(label) => {
+                  if (label === "followers") setShowFollowList({ kind: "followers", userId: user.id, username: user.username });
+                  else if (label === "following") setShowFollowList({ kind: "following", userId: user.id, username: user.username });
+                  else if (label === "listened") setView({ name: "listenedList", username: user.username, userId: user.id, listenedIds: viewedUserListened, from: view });
+                  else if (label === "reviews") setView({ name: "reviewsList", username: user.username, userId: user.id, reviews: userReviews, from: view });
+                  else if (label === "activity") openActivity(user.username, user.id, false);
+                  else if (label === "stats" && userLatest.length > 0) setView({ name: "statsDetail", reviews: userLatest, username: user.username, from: view });
+                }}
+                renderAvatar={(size) => <Avatar username={user.username} size={size} />}
+                renderAlbumCover={(alb) => { const u = alb.album && alb.album.coverArtUrl && alb.album.coverArtUrl !== "none" ? alb.album.coverArtUrl.replace("http://", "https://") : null; return u ? <img src={u} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /> : <div style={{ width: "100%", height: "100%", background: user.profileTheme === "bubble" ? "#0a3a8a" : "#e4e9f0" }} />; }}
+                backButton={<div className="ui-sans" style={{ display: "inline-flex", alignItems: "center", gap: 6, color: user.profileTheme === "bubble" ? "#fff" : "#0033cc", fontSize: 12.5, cursor: "pointer" }} onClick={() => goBack({ name: "profile" })}><ChevronLeft size={14} /> back</div>}
+              />
+            );
+          }
           if (user.profileTheme === "mspaint") {
             return (
               <MSPaintProfile
@@ -10189,7 +10231,7 @@ function BadgeCellInner({ def, earned, isMobile }) {
 // Admin-only test theme. Restyles the profile body only (nav bar unchanged).
 function ChannelProfile({ displayName, username, bio, isMobile, isOwn = true, accent, pageBg, stats, albums, reviews, mixes, queued,
                           onOpenSettings, onOpenMix, onShowAllQueued, onShowAllReviews, onOpenAlbum, onRemoveFavorite, onAddFavorite, onNeedAlbum, onStatClick,
-                          onFollow, onMessage, isFollowing, renderAvatar, renderAlbumCover }) {
+                          onFollow, onMessage, isFollowing, backButton, renderAvatar, renderAlbumCover }) {
   const headColor = accent || "#1F388A";
   const bg = pageBg || "#9fb3c8";
   // Box chrome (header strip, borders, stat strip) is tinted from the accent so
@@ -10402,7 +10444,7 @@ function ChannelProfile({ displayName, username, bio, isMobile, isOwn = true, ac
               </div>
             ))}
           </div>
-          {queued.length > 9 && <div style={{ marginTop: 8 }}><A onClick={onShowAllQueued} style={{ fontSize: 12 }}>show all queued ({queued.length})</A></div>}
+          {queued.length > 9 && onShowAllQueued && <div style={{ marginTop: 8 }}><A onClick={onShowAllQueued} style={{ fontSize: 12 }}>show all queued ({queued.length})</A></div>}
         </>
       )}
     </Box>
@@ -10412,6 +10454,7 @@ function ChannelProfile({ displayName, username, bio, isMobile, isOwn = true, ac
     <div style={{ fontFamily: "Arial, Helvetica, sans-serif", position: "relative", minHeight: "100%" }}>
       <div aria-hidden style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: "100vw", height: "100%", background: bg, zIndex: 0 }} />
       <div style={{ position: "relative", zIndex: 1, maxWidth: 980, margin: "0 auto", padding: isMobile ? "10px" : "16px 10px 40px", textAlign: "left" }}>
+        {backButton && <div style={{ marginBottom: 8 }}>{backButton}</div>}
         {isMobile ? (
           <>{ChannelBox}{Top3Box}{ReviewsBox}{MixesBox}{QueuedBox}</>
         ) : (
@@ -10427,7 +10470,8 @@ function ChannelProfile({ displayName, username, bio, isMobile, isOwn = true, ac
 
 function BubbleProfile({ displayName, username, bio, isMobile, accent, stats, albums, reviews, info, mixes, queued,
                          userId, isOwn = true, onRemoveFavorite, onAddFavorite, onDeleteReview, onOpenBadges,
-                         onOpenSettings, onOpenAlbum, onOpenMix, onShowAllQueued, onShowAllReviews, onStatClick, onNeedAlbum, renderAvatar, renderAlbumCover }) {
+                         onOpenSettings, onOpenAlbum, onOpenMix, onShowAllQueued, onShowAllReviews, onStatClick, onNeedAlbum, renderAvatar, renderAlbumCover,
+                         onFollow, onMessage, isFollowing, backButton }) {
   // Pull album details for any favorite/review/queued cover we don't have yet.
   React.useEffect(() => {
     if (!onNeedAlbum) return;
@@ -10645,7 +10689,7 @@ function BubbleProfile({ displayName, username, bio, isMobile, accent, stats, al
           </div>
         ))}
       </div>
-      {queued.length > 12 && (
+      {queued.length > 12 && onShowAllQueued && (
         <div style={{ padding: "0 12px 12px", textAlign: "center" }}>
           <button onClick={onShowAllQueued} style={{ ...pill, cursor: "pointer" }}>show all queued ({queued.length})</button>
         </div>
@@ -10668,6 +10712,7 @@ function BubbleProfile({ displayName, username, bio, isMobile, accent, stats, al
       </div>
 
       <div style={{ position: "relative", zIndex: 1, maxWidth: 864, margin: "0 auto", padding: `${pad}px ${pad}px ${pad + 30}px` }}>
+        {backButton && <div style={{ marginBottom: 14 }}>{backButton}</div>}
         {/* header: avatar | name | (settings pill + stats strip on desktop) */}
         <div style={{ display: "grid", gridTemplateColumns: `${av}px 1fr auto`, alignItems: isMobile ? "start" : "center", gap: isMobile ? 14 : 28 }}>
           {/* glass orb avatar — overlays sit on top of the round photo */}
@@ -10683,7 +10728,14 @@ function BubbleProfile({ displayName, username, bio, isMobile, accent, stats, al
             {bio && <div style={{ ...pill, marginTop: 4, cursor: "default", padding: isMobile ? "3px 10px" : "5px 14px", fontSize: isMobile ? 12 : 14, whiteSpace: isMobile ? "nowrap" : "normal", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%" }}>{bio}</div>}
           </div>
           <div style={{ display: "flex", flexDirection: "column", alignItems: isMobile ? "stretch" : "flex-end", gap: isMobile ? 8 : 10 }}>
-            <button onClick={onOpenSettings} style={{ ...pill, padding: isMobile ? "5px 12px" : "6px 16px", fontSize: isMobile ? 12 : 14, textAlign: "center" }}>settings</button>
+            {isOwn ? (
+              <button onClick={onOpenSettings} style={{ ...pill, padding: isMobile ? "5px 12px" : "6px 16px", fontSize: isMobile ? 12 : 14, textAlign: "center" }}>settings</button>
+            ) : (
+              <>
+                <button onClick={onFollow} style={{ ...pill, padding: isMobile ? "5px 12px" : "6px 16px", fontSize: isMobile ? 12 : 14, textAlign: "center" }}>{isFollowing ? "following" : "follow"}</button>
+                <button onClick={onMessage} style={{ ...pill, padding: isMobile ? "5px 12px" : "6px 16px", fontSize: isMobile ? 12 : 14, textAlign: "center" }}>message</button>
+              </>
+            )}
             {/* badges pill hidden for now (feature parked, not removed) */}
             {false && <BadgesPill badges={badges} isMobile={isMobile} fullWidth={isMobile} onOpen={onOpenBadges} />}
             {!isMobile && StatStrip}
