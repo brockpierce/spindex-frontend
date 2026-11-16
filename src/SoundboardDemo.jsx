@@ -3188,9 +3188,8 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
             date: item.date ? new Date(item.date).toISOString() : "",
           }));
           setRealFeedItems(dedupeFeed(items));
-          // Load reactions + comments for each feed item (re-listens have no
-          // review thread, so skip them — their id isn't a review id).
-          loadInteractions(items.filter((i) => !i.isRelisten).map((i) => i.id).filter(Boolean));
+          // Load reactions + comments for each feed item (re-listens included).
+          loadInteractions(items.map((i) => i.id).filter(Boolean));
           items.filter((i) => i.itemType === "sharemix" && i.mixId).forEach((i) => {
             apiFetch(BACKEND_URL + "/api/mixes/" + i.mixId)
               .then((r) => r.json())
@@ -3288,9 +3287,8 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
             setPublicFeedItems(dedupeFeed(items));
           }
           setPublicFeedCursor(data.nextCursor || null);
-          // Load reactions + comments for each public feed item (skip re-listens:
-          // their id isn't a review id, so there's no thread to load).
-          loadInteractions(items.filter((i) => !i.isRelisten).map((i) => i.id).filter(Boolean));
+          // Load reactions + comments for each public feed item (re-listens included).
+          loadInteractions(items.map((i) => i.id).filter(Boolean));
           // One batched request instead of one per album, and one state
           // update instead of N. This loop was the main source of request
           // pile-up on the backend.
@@ -3593,7 +3591,25 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
             apiFetch(BACKEND_URL + "/api/posts/" + reviewId)
               .then((pr) => (pr.ok ? pr.json() : {}))
               .then((pd) => {
-                if (!pd.post) { flash("Couldn't open that — it may have been deleted."); return; }
+                if (!pd.post) {
+                  // Not a text post either — try a re-listen (likes/comments on those notify too).
+                  apiFetch(BACKEND_URL + "/api/relistens/item/" + reviewId)
+                    .then((rr) => (rr.ok ? rr.json() : {}))
+                    .then((rd) => {
+                      if (!rd.relisten) { flash("Couldn't open that — it may have been deleted."); return; }
+                      const rl = rd.relisten;
+                      setThreadReview({ ...relistenFeedCard(rl), username: rl.username });
+                      setView({ name: "thread", reviewId, from: from || view });
+                      loadInteractions([reviewId]);
+                      if (rl.albumId && !fetchedAlbums[rl.albumId]) {
+                        apiFetch(BACKEND_URL + "/api/albums/" + rl.albumId).then((res) => res.json()).then((d) => {
+                          if (d.album) { const a = d.album; setFetchedAlbums((prev) => ({ ...prev, [a.id]: { ...a, artist: a.artistName || "", year: a.releaseYear || null } })); }
+                        }).catch(() => {});
+                      }
+                    })
+                    .catch(() => { flash("Couldn't open that."); });
+                  return;
+                }
                 const p = pd.post;
                 setThreadReview({
                   id: p.id,
@@ -4692,7 +4708,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                               )}
                             </div>
                           </div>
-                          {c.id && !c.isRelisten && (
+                          {c.id && (
                             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 14, paddingTop: 14, paddingBottom: 0, borderTop: `1px solid ${LINE}` }}>
                               <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
                                 <ReactionBar
@@ -4714,7 +4730,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                               <ShareButton kind="review" album={album} username={c.username} rating={c.rating} reviewText={c.text} />
                             </div>
                           )}
-                          {c.id && !c.isRelisten && expandedComments[c.id] && (
+                          {c.id && expandedComments[c.id] && (
                             <ReviewComments
                               reviewId={c.id}
                               comments={reviewComments[c.id] || []}
