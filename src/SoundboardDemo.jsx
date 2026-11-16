@@ -9842,7 +9842,7 @@ const THEME_ROWS = [
   { key: "terminal",  name: "terminal", sub: "keep it sleek",                    strip: ["#000000", "#3CFF5A", "#2BC444", "#1A1A1A"] },
   { key: "geocities", name: "netscape", sub: "the coolest 90s website ever",     strip: ["#C0C0C0", "#000080", "#D4D0C8", "#808080"] },
   { key: "bubble",    name: "bubble",   sub: "the webpage of the future",        strip: ["#8CC6EA", "#3A93D6", "#FFFFFF", "#7CC43A"], adminOnly: true },
-  { key: "channel",   name: "channel",  sub: "your 2007 video channel",          strip: ["#9FB3C8", "#C9D6E8", "#FFB400", "#1F388A"], adminOnly: true },
+  { key: "channel",   name: "channel",  sub: "your 2007 profile page",           strip: ["#9FB3C8", "#C9D6E8", "#FFB400", "#1F388A"], adminOnly: true },
 ];
 // ---- Profile badges (Aero theme) --------------------------------------------
 // Category gradients for earned badges; locked badges use the gray gradient.
@@ -10251,7 +10251,7 @@ function ChannelProfile({ displayName, username, bio, isMobile, isOwn = true, ac
   );
 
   const ChannelBox = (
-    <Box title={`${displayName || username}'s Channel`} right={isMobile && isOwn ? <A onClick={onOpenSettings} style={{ fontSize: 13 }}>settings</A> : null}>
+    <Box title={`${displayName || username}'s page`} right={isMobile && isOwn ? <A onClick={onOpenSettings} style={{ fontSize: 13 }}>settings</A> : null}>
       <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
         <div style={{ flexShrink: 0 }}>{avWrap(isMobile ? 88 : 96)}</div>
         <div style={{ minWidth: 0, flex: 1, textAlign: "left" }}>
