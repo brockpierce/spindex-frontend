@@ -99,6 +99,17 @@ function nowTimestamp() {
 // Collapse duplicate feed items: by id, and (since a user has one review per
 // album) by username+albumId for reviews — so an optimistic temp-id review and
 // the server's real-id copy never both show. Keeps the first (newest) occurrence.
+// Terminal theme's monospace name is wide (~0.6em per char), so a normal
+// first name broke mid-word on phones ("Samanth/a"). Shrink the font so the
+// longest word (+1 for the blinking cursor) fits; only very long names wrap.
+function terminalNameSize(theme, name, isMobile) {
+  if (theme !== "terminal") return {};
+  const longest = Math.max(1, ...String(name || "").split(/\s+/).map((w) => w.length)) + 1;
+  const avail = isMobile ? 140 : 420;
+  const size = Math.max(isMobile ? 18 : 22, Math.min(34, Math.floor(avail / (longest * 0.62))));
+  return { "--pf-name-size": size + "px" };
+}
+
 function dedupeFeed(items) {
   const seenId = new Set();
   const seenReview = new Set();
@@ -5492,7 +5503,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                 <div style={{ display: "flex", alignItems: "center", gap: isMobile ? 18 : 24, flex: 1, minWidth: 0 }}>
                   <Avatar username={user.username} size={isMobile ? 88 : 120} />
                   <div className="ui-sans" style={{ textAlign: "left", minWidth: 0 }}>
-                    <div className="pf-name" style={user.profileTheme ? { textAlign: "left" } : { fontSize: isMobile ? 24 : 30, fontWeight: 700, lineHeight: 1.15, letterSpacing: "-0.01em", textAlign: "left" }}>{user.displayName || user.username}{user.profileTheme === "terminal" && <span className="pf-cursor" style={{ marginLeft: 6 }}></span>}</div>
+                    <div className="pf-name" style={user.profileTheme ? { textAlign: "left", ...terminalNameSize(user.profileTheme, user.displayName || user.username, isMobile) } : { fontSize: isMobile ? 24 : 30, fontWeight: 700, lineHeight: 1.15, letterSpacing: "-0.01em", textAlign: "left" }}>{user.displayName || user.username}{user.profileTheme === "terminal" && <span className="pf-cursor" style={{ marginLeft: 6 }}></span>}</div>
                     <div className="pf-handle" style={user.profileTheme ? { textAlign: "left", marginTop: 3 } : { fontSize: isMobile ? 14 : 16, color: MUTE, marginTop: 3, textAlign: "left" }}>@{(user.username || "").toLowerCase()}</div>
                     {user.bio && <div className="pf-tagline" style={user.profileTheme === "web2003" ? { marginTop: 10, maxWidth: 480, textAlign: "left", fontStyle: "italic", fontWeight: 700 } : user.profileTheme ? { marginTop: 10, maxWidth: 480, textAlign: "left" } : { fontSize: isMobile ? 14 : 15, color: MUTE, marginTop: 10, maxWidth: 480, lineHeight: 1.5, textAlign: "left" }}>{user.profileTheme === "web2003" ? `"${user.bio}"` : (!isMobile && user.bio.length > 30 ? user.bio.slice(0, 30) + "…" : user.bio)}</div>}
                     {user.profileTheme === "web2003" && (
@@ -5599,13 +5610,13 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                       const fAlbum = fetchedAlbums[fid] || albumById(fid);
                       const favSize = isMobile ? 96 : 180;
                       return (
-                        <div key={fid} onClick={() => openAlbum(fid)} className="sb-cover-wrap" style={{ textAlign: user.profileTheme === "terminal" ? "left" : "center", maxWidth: favSize }}>
+                        <div key={fid} onClick={() => openAlbum(fid)} className="sb-cover-wrap" style={{ textAlign: user.profileTheme === "terminal" ? "left" : "center", maxWidth: favSize, minWidth: 0 }}>
                           {(user.profileTheme === "terminal" || user.profileTheme === "geocities") ? (
                             <div className="pf-card" style={{ display: "inline-block", lineHeight: 0 }}><AlbumCover album={fAlbum} size={favSize} /></div>
                           ) : (
                             <AlbumCover album={fAlbum} size={favSize} bordered={!user.profileTheme} />
                           )}
-                          <div className="ui-sans" style={{ fontSize: isMobile ? 11.5 : 13, fontWeight: 400, marginTop: 8 }}>{fAlbum.title}</div>
+                          <div className="ui-sans" style={{ fontSize: isMobile ? 11.5 : 13, fontWeight: 400, marginTop: 8, overflowWrap: "anywhere" }}>{fAlbum.title}</div>
                         </div>
                       );
                     })}
@@ -6901,7 +6912,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                   </div>
                 )}
                 <div className="ui-sans" style={{ textAlign: "left", minWidth: 0, display: "flex", flexDirection: "column", gap: profile.profileTheme ? 0 : 6, lineHeight: profile.profileTheme ? 1.1 : "inherit" }}>
-                  <div className="pf-name" style={profile.profileTheme ? { textAlign: "left" } : { fontSize: isMobile ? 24 : 30, fontWeight: 400, lineHeight: 1.15, letterSpacing: "-0.01em", textAlign: "left" }}>{profile.displayName}{profile.profileTheme === "terminal" && <span className="pf-cursor" style={{ marginLeft: 6 }}></span>}</div>
+                  <div className="pf-name" style={profile.profileTheme ? { textAlign: "left", ...terminalNameSize(profile.profileTheme, profile.displayName, isMobile) } : { fontSize: isMobile ? 24 : 30, fontWeight: 400, lineHeight: 1.15, letterSpacing: "-0.01em", textAlign: "left" }}>{profile.displayName}{profile.profileTheme === "terminal" && <span className="pf-cursor" style={{ marginLeft: 6 }}></span>}</div>
                   <div className="pf-handle" style={profile.profileTheme ? { textAlign: "left" } : { fontSize: isMobile ? 14 : 16, color: MUTE, textAlign: "left" }}>@{(profile.username || "").toLowerCase()}</div>
                   {profile.bio && <div className="pf-tagline" style={profile.profileTheme === "web2003" ? { maxWidth: 480, textAlign: "left", fontStyle: "italic", fontWeight: 700 } : profile.profileTheme ? { maxWidth: 480, textAlign: "left" } : { fontSize: isMobile ? 14 : 15, color: MUTE, maxWidth: 480, lineHeight: 1.5, textAlign: "left" }}>{profile.profileTheme === "web2003" ? `"${profile.bio}"` : (!isMobile && profile.bio.length > 30 ? profile.bio.slice(0, 30) + "…" : profile.bio)}</div>}
                 </div>
@@ -7068,7 +7079,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                   }
                   const favSize = isMobile ? 96 : 180;
                   return (
-                    <div key={id} style={{ textAlign: "center", maxWidth: favSize, position: "relative" }}>
+                    <div key={id} style={{ textAlign: "center", maxWidth: favSize, minWidth: 0, position: "relative" }}>
                       <div onClick={() => openAlbum(id)} className="sb-cover-wrap">
                         {(profile.profileTheme === "terminal" || profile.profileTheme === "geocities") ? (
                           <div className="pf-card" style={{ display: "inline-block", lineHeight: 0 }}><AlbumCover album={album} size={favSize} /></div>
@@ -10580,7 +10591,7 @@ function BubbleProfile({ displayName, username, bio, isMobile, accent, stats, al
             {r.artist && <span style={{ fontSize: 13, color: pal.ink, opacity: 0.65, marginLeft: 6 }}>{r.artist}</span>}
           </div>
         )}
-        {r.body && <div style={{ fontSize: isMobile ? 13 : 14, lineHeight: isMobile ? 1.45 : 1.5, color: pal.ink, opacity: 0.9, marginTop: 5, overflowWrap: "anywhere", ...(isMobile ? { display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" } : {}) }}>{r.body}</div>}
+        {r.body && <div style={{ fontSize: isMobile ? 13 : 14, lineHeight: isMobile ? 1.45 : 1.5, color: pal.ink, opacity: 0.9, marginTop: 5, overflowWrap: "anywhere", whiteSpace: "pre-wrap" }}>{r.body}</div>}
         {(r.favoriteTrack || r.leastFavoriteTrack) && (
           <div style={{ display: "flex", flexWrap: "wrap", gap: 14, marginTop: 7, fontSize: isMobile ? 11 : 12, color: pal.ink, opacity: 0.65 }}>
             {r.favoriteTrack && <span style={{ whiteSpace: "nowrap" }}>♡ {r.favoriteTrack}</span>}
