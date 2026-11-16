@@ -2416,6 +2416,9 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
     }
     // Optimistic update
     setFavorites((prev) => isFav ? prev.filter((id) => id !== albumId) : [...prev, albumId]);
+    // Adding to the top 3 also marks it listened (the backend does the same).
+    // Removing from the top 3 leaves it listened.
+    if (!isFav) setListenStatus((prev) => ({ ...prev, [albumId]: "listened" }));
     // Persist to backend
     apiJson(`${BACKEND_URL}/api/favorites/${albumId}`, {
       method: isFav ? "DELETE" : "POST",
