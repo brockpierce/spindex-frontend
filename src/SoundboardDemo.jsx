@@ -1290,12 +1290,14 @@ function RatingBlocks({ value, onChange, size = 14 }) {
   );
 }
 
-function AlbumCover({ album, size = 92, listened = false, fluid = false, bordered = false }) {
+function AlbumCover({ album, size = 92, listened = false, fluid = false, bordered = false, onMissingChange }) {
   const { BLUE } = useTheme();
   const rawUrl = album?.coverArtUrl && album.coverArtUrl !== "none" ? album.coverArtUrl.replace("http://", "https://") : null;
   const [imgFailed, setImgFailed] = useState(false);
   useEffect(() => { setImgFailed(false); }, [rawUrl]);
   const coverUrl = imgFailed ? null : rawUrl;
+  // Lets a parent know whether the placeholder (no art / art failed to load) is showing.
+  useEffect(() => { if (onMissingChange) onMissingChange(!coverUrl); }, [coverUrl, onMissingChange]);
   const radius = 0; // squared per redesign
   const edge = bordered ? { border: "1px solid #000" } : null; // 1px black border (default-theme profile covers)
   const offset = Math.round(size * 0.06);
@@ -1581,6 +1583,7 @@ export default function SoundboardDemo() {
   const [reviews, setReviews] = useState(INITIAL_REVIEWS);
   const [myRelistens, setMyRelistens] = useState([]); // all of my re-listens, for own profile + stats
   const [listenStatus, setListenStatus] = useState(INITIAL_LISTEN_STATUS);
+  const [albumCoverMissing, setAlbumCoverMissing] = useState(false); // admin "add cover" on the album page
   const [favorites, setFavorites] = useState(INITIAL_FAVORITES);
   const [albumMixes, setAlbumMixes] = useState(INITIAL_ALBUM_MIXES);
   const [siteCommunityAvg, setSiteCommunityAvg] = useState(null);
@@ -2429,6 +2432,26 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
       setFavorites((prev) => isFav ? [...prev, albumId] : prev.filter((id) => id !== albumId));
       flash(err.message);
     });
+  }
+
+  // Admin-only: upload cover art for an existing album (fills missing covers).
+  // Only offered when the album page is showing the placeholder (no art, or
+  // the art failed to load), so working MusicBrainz covers are never replaced.
+  async function setAlbumCover(album, file) {
+    try {
+      const coverDataUrl = await compressImageFile(file, 800, 0.82);
+      const r = await apiFetch(`${BACKEND_URL}/api/albums/${album.id}/cover`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ coverDataUrl }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok || !d.album) { flash((d && d.error) || "Couldn't save cover"); return; }
+      setFetchedAlbums((prev) => ({ ...prev, [album.id]: { ...(prev[album.id] || album), coverArtUrl: coverDataUrl } }));
+      flash("Cover saved");
+    } catch (e) {
+      flash("Couldn't save cover");
+    }
   }
 
   // Admin-only: add/remove an album from the browse "trending" showcase.
@@ -6074,7 +6097,7 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                 <ChevronLeft size={14} /> back
               </div>
               <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 16 : 26, alignItems: isMobile ? "center" : "flex-start" }}>
-                <AlbumCover album={album} size={isMobile ? 140 : 160} listened={status === "listened"} />
+                <AlbumCover album={album} size={isMobile ? 140 : 160} listened={status === "listened"} onMissingChange={profile.username === ADMIN_USERNAME ? setAlbumCoverMissing : undefined} />
                 <div style={{ flex: 1, width: "100%", textAlign: isMobile ? "center" : "left" }}>
                   <div className="ui-sans" style={{ fontSize: isMobile ? 20 : 24, fontWeight: 400, lineHeight: 1.2, wordBreak: "break-word" }}>{album.title}</div>
                   <div className="ui-sans" style={{ fontSize: 14, color: MUTE, marginTop: 4 }}>
@@ -6112,6 +6135,12 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                       >
                         {featuredIds.includes(album.id) ? "★ featured on browse" : "☆ feature on browse"}
                       </button>
+                    )}
+                    {profile.username === ADMIN_USERNAME && albumCoverMissing && (
+                      <label className="sb-btn" style={{ cursor: "pointer" }} title="Upload cover art for this album (admin only)">
+                        add cover
+                        <input type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => { const f = e.target.files && e.target.files[0]; e.target.value = ""; if (f) setAlbumCover(album, f); }} />
+                      </label>
                     )}
                   </div>
 
