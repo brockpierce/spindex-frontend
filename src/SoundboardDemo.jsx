@@ -1225,19 +1225,22 @@ function Spinner({ label = "loading…", size = 60 }) {
   return (
     <div className="spx-loader" style={{ padding: "28px 0" }}>
       <svg viewBox="0 0 200 200" width={size} height={size} role="img" aria-label="Loading">
+        {/* Redrawn to match the app icon (design handoff "loading mascot"): 10 simple
+            primitives, each animated part its own element, transform/opacity only.
+            Keep it that way: a traced compound path here made the loader lag on iOS. */}
         <g className="spx-inner">
-          <path d="M28,138 A72,72 0 0 1 172,138" fill="none" stroke="var(--spx-color)" strokeWidth="11" strokeLinecap="round" />
-          <path d="M37,134 A33,33 0 0 0 37,200 Z" fill="var(--spx-color)" />
-          <path d="M163,134 A33,33 0 0 1 163,200 Z" fill="var(--spx-color)" />
-          <path className="spx-hair" style={{ animationDelay: "0s" }}   d="M57,111 C55,124 55,140 58,153"   fill="none" stroke="var(--spx-color)" strokeWidth="7" strokeLinecap="round" />
-          <path className="spx-hair" style={{ animationDelay: ".13s" }} d="M72,109 C71,124 72,140 76,154"   fill="none" stroke="var(--spx-color)" strokeWidth="7" strokeLinecap="round" />
-          <path className="spx-hair" style={{ animationDelay: ".26s" }} d="M87,109 C88,124 91,139 95,152"   fill="none" stroke="var(--spx-color)" strokeWidth="7" strokeLinecap="round" />
-          <path className="spx-hair" style={{ animationDelay: ".39s" }} d="M103,110 C103,124 107,138 114,149" fill="none" stroke="var(--spx-color)" strokeWidth="7" strokeLinecap="round" />
+          <path d="M33.6,104 L33.6,98 A66.3,57.2 0 0 1 166.1,98 L166.1,104" fill="none" stroke="var(--spx-color)" strokeWidth="7.8" />
+          <path d="M40.7,97 A29.4,29.4 0 0 0 40.7,155.8 Z" fill="var(--spx-color)" />
+          <path d="M159.8,97 A29.4,29.4 0 0 1 159.8,155.8 Z" fill="var(--spx-color)" />
+          <path className="spx-hair" style={{ animationDelay: "0s" }}   d="M58.6,80.4 C54.1,96.7 54.7,112.5 65.2,126.9"   fill="none" stroke="var(--spx-color)" strokeWidth="6.3" strokeLinecap="round" />
+          <path className="spx-hair" style={{ animationDelay: ".13s" }} d="M74.8,78.3 C70.3,94.1 71.6,111.2 82.4,125.1"   fill="none" stroke="var(--spx-color)" strokeWidth="6.3" strokeLinecap="round" />
+          <path className="spx-hair" style={{ animationDelay: ".26s" }} d="M89.5,78.3 C86.1,94.1 87.9,109.9 100,124.3"    fill="none" stroke="var(--spx-color)" strokeWidth="6.3" strokeLinecap="round" />
+          <path className="spx-hair" style={{ animationDelay: ".39s" }} d="M104.6,78.3 C103.3,94.1 108.5,107.2 120.9,115.1" fill="none" stroke="var(--spx-color)" strokeWidth="6.3" strokeLinecap="round" />
           <g className="spx-eyes">
-            <circle cx="74" cy="175" r="6" fill="var(--spx-color)" />
-            <circle cx="126" cy="175" r="6" fill="var(--spx-color)" />
+            <circle cx="77" cy="144.5" r="5.3" fill="var(--spx-color)" />
+            <circle cx="124.3" cy="144.5" r="5.3" fill="var(--spx-color)" />
           </g>
-          <rect x="89" y="185" width="22" height="7" rx="3.5" fill="var(--spx-color)" />
+          <rect x="89.6" y="154.5" width="21.6" height="6.6" rx="3.3" fill="var(--spx-color)" />
         </g>
       </svg>
       {label && <span className="spx-label">{label}</span>}
@@ -4160,14 +4163,14 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
         .spx-loader svg { display: block; overflow: visible; }
         .spx-label { font-size: 13px; font-weight: 400; color: ${MUTE}; font-family: inherit; }
         .spx-inner { transform-box: fill-box; transform-origin: center; animation: spx-bob 1.5s ease-in-out infinite; }
-        .spx-eyes { transform-box: fill-box; transform-origin: center; animation: spx-blink 4s ease-in-out infinite; }
+        .spx-eyes { transform-box: fill-box; transform-origin: center; animation: spx-blink 4s infinite; }
         .spx-hair { transform-box: fill-box; transform-origin: center top; animation: spx-load 1.2s ease-in-out infinite; }
         @keyframes spx-bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
-        @keyframes spx-blink { 0%,90%,100% { transform: scaleY(1); } 95% { transform: scaleY(.12); } }
+        @keyframes spx-blink { 0%,92%,100% { transform: scaleY(1); } 95% { transform: scaleY(.12); } }
         @keyframes spx-eq { 0%,100% { transform: scaleY(.55); } 50% { transform: scaleY(1); } }
         @keyframes spx-load { 0%,100% { opacity: .28; transform: scaleY(.6); } 50% { opacity: 1; transform: scaleY(1); } }
         @keyframes spx-note { 0% { opacity: 0; transform: translate(0,8px) scale(.6); } 16% { opacity: .85; } 42% { opacity: .85; } 60% { opacity: 0; transform: translate(0,-20px) scale(1.05); } 100% { opacity: 0; transform: translate(0,-20px) scale(1.05); } }
-        @media (prefers-reduced-motion: reduce) { .spx-inner, .spx-eyes, .spx-hair { animation: none; } }
+        @media (prefers-reduced-motion: reduce) { .spx-inner, .spx-eyes, .spx-hair { animation: none; } .spx-hair { opacity: 1; transform: none; } }
         .sb-input { font-family: inherit; border: 1px solid ${LINE}; background: ${BG}; padding: 9px 12px; font-size: 13px; outline: none; color: ${INK}; border-radius: 0; width: 100%; }
         .sb-input:focus { border-color: ${BLUE}; }
         .sb-textarea { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; border: 1px solid ${LINE}; background: ${BG}; padding: 11px 12px; font-size: 13.5px; outline: none; color: ${INK}; width: 100%; border-radius: 0; resize: vertical; line-height: 1.6; }
