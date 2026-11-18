@@ -4160,17 +4160,19 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
         .sb-cover-wrap { cursor: pointer; transition: opacity 0.12s; }
         .sb-cover-wrap:hover { opacity: 0.82; }
         .spx-loader { display: inline-flex; flex-direction: column; align-items: center; gap: 12px; --spx-color: ${BLUE}; }
-        .spx-loader svg { display: block; overflow: visible; }
+        .spx-loader svg { display: block; overflow: visible; animation: spx-svg-bob 1.5s ease-in-out infinite; }
+        @keyframes spx-svg-bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3%); } }
         .spx-label { font-size: 13px; font-weight: 400; color: ${MUTE}; font-family: inherit; }
-        .spx-inner { transform-box: fill-box; transform-origin: center; animation: spx-bob 1.5s ease-in-out infinite; }
+        /* The bob runs on the <svg> element itself (composited, no redraw); the hair only fades.
+           Animating transforms inside the SVG made the loader lag on iPhone. */
         .spx-eyes { transform-box: fill-box; transform-origin: center; animation: spx-blink 4s infinite; }
-        .spx-hair { transform-box: fill-box; transform-origin: center top; animation: spx-load 1.2s ease-in-out infinite; }
+        .spx-hair { animation: spx-load 1.2s ease-in-out infinite; }
         @keyframes spx-bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
         @keyframes spx-blink { 0%,92%,100% { transform: scaleY(1); } 95% { transform: scaleY(.12); } }
         @keyframes spx-eq { 0%,100% { transform: scaleY(.55); } 50% { transform: scaleY(1); } }
-        @keyframes spx-load { 0%,100% { opacity: .28; transform: scaleY(.6); } 50% { opacity: 1; transform: scaleY(1); } }
+        @keyframes spx-load { 0%,100% { opacity: .25; } 50% { opacity: 1; } }
         @keyframes spx-note { 0% { opacity: 0; transform: translate(0,8px) scale(.6); } 16% { opacity: .85; } 42% { opacity: .85; } 60% { opacity: 0; transform: translate(0,-20px) scale(1.05); } 100% { opacity: 0; transform: translate(0,-20px) scale(1.05); } }
-        @media (prefers-reduced-motion: reduce) { .spx-inner, .spx-eyes, .spx-hair { animation: none; } .spx-hair { opacity: 1; transform: none; } }
+        @media (prefers-reduced-motion: reduce) { .spx-loader svg, .spx-eyes, .spx-hair { animation: none; } .spx-hair { opacity: 1; } }
         .sb-input { font-family: inherit; border: 1px solid ${LINE}; background: ${BG}; padding: 9px 12px; font-size: 13px; outline: none; color: ${INK}; border-radius: 0; width: 100%; }
         .sb-input:focus { border-color: ${BLUE}; }
         .sb-textarea { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; border: 1px solid ${LINE}; background: ${BG}; padding: 11px 12px; font-size: 13.5px; outline: none; color: ${INK}; width: 100%; border-radius: 0; resize: vertical; line-height: 1.6; }
