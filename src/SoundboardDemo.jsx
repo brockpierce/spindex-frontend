@@ -1248,6 +1248,22 @@ function Spinner({ label = "loading…", size = 60 }) {
   );
 }
 
+// Marker for the rating-stats comparison bars. Each person gets a shape so the
+// bar and its legend match: you = circle, the other user = square, community =
+// diamond. `onBar` centres it on its `left` position with a white outline so
+// overlapping markers stay readable.
+const COMMUNITY_GRAY = "#b4b4b4";
+function StatMark({ kind, color, size = 10, onBar = false, style }) {
+  const base = onBar
+    ? { position: "absolute", top: "50%", transform: "translate(-50%,-50%)", boxShadow: "0 0 0 2px #fff", zIndex: kind === "diamond" ? 1 : 2 }
+    : { display: "inline-block", flexShrink: 0 };
+  if (kind === "diamond") {
+    const d = Math.round(size / Math.SQRT2); // rotated square whose corners span `size`
+    return <span aria-hidden="true" style={{ ...base, width: d, height: d, background: color, ...(style || {}), transform: `${onBar ? "translate(-50%,-50%) " : ""}rotate(45deg)` }} />;
+  }
+  return <span aria-hidden="true" style={{ ...base, width: size, height: size, background: color, borderRadius: kind === "circle" ? "50%" : 0, ...(style || {}) }} />;
+}
+
 function useTheme() {
   return React.useContext(ThemeContext);
 }
@@ -6398,15 +6414,17 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                   {/* Compare bar: you + them + community */}
                   <div style={{ padding: "20px 22px" }}>
                     <div className="ui-sans" style={{ fontSize: 12, fontWeight: 600, color: MUTE, marginBottom: 10 }}>you vs. {statsName}</div>
-                    <div style={{ position: "relative", height: 10, background: LINE }}>
-                      {siteCommunityAvg !== null && <div style={{ position: "absolute", top: "50%", left: `${(siteCommunityAvg / 10 * 100)}%`, transform: "translate(-50%,-50%)", width: 2, height: 20, background: "#bcbcbc" }} />}
-                      <div style={{ position: "absolute", top: "50%", left: `${(yourAvgNum / 10 * 100)}%`, transform: "translate(-50%,-50%)", width: 14, height: 14, border: "2px solid #fff", background: "#9a9a9a" }} />
-                      <div style={{ position: "absolute", top: "50%", left: `${(numericAvg / 10 * 100)}%`, transform: "translate(-50%,-50%)", width: 14, height: 14, border: "2px solid #fff", background: BLUE }} />
+                    {/* Each person is a shape, used on the bar AND in the legend:
+                        you = gray circle, them = blue square, community = diamond. */}
+                    <div style={{ position: "relative", height: 10, background: LINE, margin: "0 8px" }}>
+                      {siteCommunityAvg !== null && <StatMark kind="diamond" color={COMMUNITY_GRAY} size={16} onBar style={{ left: `${siteCommunityAvg / 10 * 100}%` }} />}
+                      <StatMark kind="circle" color="#9a9a9a" size={16} onBar style={{ left: `${yourAvgNum / 10 * 100}%` }} />
+                      <StatMark kind="square" color={BLUE} size={15} onBar style={{ left: `${numericAvg / 10 * 100}%` }} />
                     </div>
-                    <div className="ui-sans" style={{ display: "flex", gap: 16, marginTop: 12, fontSize: 12, fontWeight: 600, flexWrap: "wrap" }}>
-                      <span style={{ color: "#9a9a9a" }}>● you {yourAvgNum.toFixed(1)}</span>
-                      <span style={{ color: BLUE }}>● {statsName} {numericAvg.toFixed(1)}</span>
-                      {siteCommunityAvg !== null && <span style={{ color: "#bcbcbc" }}>▎ community {siteCommunityAvg.toFixed(1)}</span>}
+                    <div className="ui-sans" style={{ display: "flex", gap: 16, marginTop: 14, fontSize: 12, fontWeight: 600, flexWrap: "wrap" }}>
+                      <span style={{ color: "#9a9a9a", display: "inline-flex", alignItems: "center", gap: 6 }}><StatMark kind="circle" color="#9a9a9a" size={10} />you {yourAvgNum.toFixed(1)}</span>
+                      <span style={{ color: BLUE, display: "inline-flex", alignItems: "center", gap: 6 }}><StatMark kind="square" color={BLUE} size={9} />{statsName} {numericAvg.toFixed(1)}</span>
+                      {siteCommunityAvg !== null && <span style={{ color: "#a0a0a0", display: "inline-flex", alignItems: "center", gap: 6 }}><StatMark kind="diamond" color={COMMUNITY_GRAY} size={10} />community {siteCommunityAvg.toFixed(1)}</span>}
                     </div>
                   </div>
                 </div>
@@ -6467,11 +6485,12 @@ apiFetch(`${BACKEND_URL}/api/mixes/saved`)
                       <div className="ui-sans" style={{ margin: "30px 2px 8px", fontSize: 13, fontWeight: 400, color: MUTE }}>you vs. the community</div>
                       <div style={{ position: "relative", height: 12, borderRadius: 0, background: LINE, margin: "0 2px" }}>
                         <div style={{ position: "absolute", top: 0, left: 0, height: 12, width: `${(siteCommunityAvg / 10 * 100).toFixed(1)}%`, borderRadius: 0, background: `linear-gradient(90deg, ${BLUE}99, ${BLUE})` }} />
-                        <div style={{ position: "absolute", top: "50%", left: `${(numericAvg / 10 * 100).toFixed(1)}%`, transform: "translate(-50%,-50%)", width: 2, height: 24, background: INK }} />
+                        <StatMark kind="diamond" color={COMMUNITY_GRAY} size={16} onBar style={{ left: `${siteCommunityAvg / 10 * 100}%` }} />
+                        <StatMark kind={statsIsOwn ? "circle" : "square"} color={statsIsOwn ? INK : BLUE} size={16} onBar style={{ left: `${numericAvg / 10 * 100}%` }} />
                       </div>
-                      <div className="ui-sans" style={{ display: "flex", justifyContent: "space-between", fontSize: 12, fontWeight: 400, color: MUTE, margin: "9px 2px 0" }}>
-                        <span style={{ color: BLUE }}>community avg {siteCommunityAvg.toFixed(1)}</span>
-                        <span style={{ color: INK }}>{statsIsOwn ? "you" : statsName} {numericAvg.toFixed(1)}</span>
+                      <div className="ui-sans" style={{ display: "flex", justifyContent: "space-between", fontSize: 12, fontWeight: 400, color: MUTE, margin: "11px 2px 0" }}>
+                        <span style={{ color: BLUE, display: "inline-flex", alignItems: "center", gap: 6 }}><StatMark kind="diamond" color={COMMUNITY_GRAY} size={10} />community avg {siteCommunityAvg.toFixed(1)}</span>
+                        <span style={{ color: INK, display: "inline-flex", alignItems: "center", gap: 6 }}><StatMark kind={statsIsOwn ? "circle" : "square"} color={statsIsOwn ? INK : BLUE} size={statsIsOwn ? 10 : 9} />{statsIsOwn ? "you" : statsName} {numericAvg.toFixed(1)}</span>
                       </div>
                     </>
                   )}
